@@ -6,13 +6,13 @@
   ],
   "guide": "docs/CONTENT_GUIDE.md",
   "stats": {
-    "words": 30,
-    "explanations": 3,
-    "wordsWithoutExplanation": 27,
+    "words": 50,
+    "explanations": 18,
+    "wordsWithoutExplanation": 32,
     "validatorErrors": 0,
-    "validatorWarnings": 2
+    "validatorWarnings": 5
   },
-  "teachingOrder": "人大小一二三日月水火山木口天好我你他她女子中国是不四五六八十",
+  "teachingOrder": "人大小一二三日月水火山木口天好我你他她女子中国是不四五六八十七九上下手目田石门车马鸟鱼米父母家学生年",
   "groups": {
     "people": [
       "人",
@@ -21,7 +21,9 @@
       "他",
       "她",
       "女",
-      "子"
+      "子",
+      "父",
+      "母"
     ],
     "size": [
       "大",
@@ -35,7 +37,9 @@
       "五",
       "六",
       "八",
-      "十"
+      "十",
+      "七",
+      "九"
     ],
     "nature": [
       "日",
@@ -44,10 +48,14 @@
       "火",
       "山",
       "木",
-      "天"
+      "天",
+      "田",
+      "石"
     ],
     "body": [
-      "口"
+      "口",
+      "手",
+      "目"
     ],
     "grammar": [
       "好",
@@ -56,7 +64,31 @@
     ],
     "place": [
       "中",
-      "国"
+      "国",
+      "上",
+      "下",
+      "家"
+    ],
+    "things": [
+      "门",
+      "车"
+    ],
+    "animals": [
+      "马",
+      "鸟",
+      "鱼"
+    ],
+    "food": [
+      "米"
+    ],
+    "learning": [
+      "学"
+    ],
+    "life": [
+      "生"
+    ],
+    "time": [
+      "年"
     ]
   },
   "limits": {
@@ -77,7 +109,7 @@
       "pinyin": "rén",
       "meaning": "person",
       "group": "people",
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 2,
@@ -85,7 +117,7 @@
       "pinyin": "dà",
       "meaning": "big",
       "group": "size",
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 3,
@@ -105,7 +137,7 @@
         "yí",
         "yì"
       ],
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 5,
@@ -129,7 +161,7 @@
       "pinyin": "rì",
       "meaning": "sun / day",
       "group": "nature",
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 8,
@@ -137,7 +169,7 @@
       "pinyin": "yuè",
       "meaning": "moon / month",
       "group": "nature",
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 9,
@@ -169,7 +201,7 @@
       "pinyin": "mù",
       "meaning": "wood / tree",
       "group": "nature",
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 13,
@@ -233,7 +265,7 @@
       "pinyin": "nǚ",
       "meaning": "woman / female",
       "group": "people",
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 21,
@@ -241,7 +273,7 @@
       "pinyin": "zǐ",
       "meaning": "child",
       "group": "people",
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 22,
@@ -282,7 +314,7 @@
       "alt": [
         "bú"
       ],
-      "hasExplanation": false
+      "hasExplanation": true
     },
     {
       "order": 26,
@@ -322,6 +354,166 @@
       "pinyin": "shí",
       "meaning": "ten",
       "group": "number",
+      "hasExplanation": true
+    },
+    {
+      "order": 31,
+      "hanzi": "七",
+      "pinyin": "qī",
+      "meaning": "seven",
+      "group": "number",
+      "hasExplanation": false
+    },
+    {
+      "order": 32,
+      "hanzi": "九",
+      "pinyin": "jiǔ",
+      "meaning": "nine",
+      "group": "number",
+      "hasExplanation": false
+    },
+    {
+      "order": 33,
+      "hanzi": "上",
+      "pinyin": "shàng",
+      "meaning": "above / up",
+      "group": "place",
+      "hasExplanation": true
+    },
+    {
+      "order": 34,
+      "hanzi": "下",
+      "pinyin": "xià",
+      "meaning": "below / down",
+      "group": "place",
+      "hasExplanation": true
+    },
+    {
+      "order": 35,
+      "hanzi": "手",
+      "pinyin": "shǒu",
+      "meaning": "hand",
+      "group": "body",
+      "hasExplanation": false
+    },
+    {
+      "order": 36,
+      "hanzi": "目",
+      "pinyin": "mù",
+      "meaning": "eye",
+      "group": "body",
+      "hasExplanation": true
+    },
+    {
+      "order": 37,
+      "hanzi": "田",
+      "pinyin": "tián",
+      "meaning": "field",
+      "group": "nature",
+      "hasExplanation": false
+    },
+    {
+      "order": 38,
+      "hanzi": "石",
+      "pinyin": "shí",
+      "meaning": "stone",
+      "group": "nature",
+      "hasExplanation": true
+    },
+    {
+      "order": 39,
+      "hanzi": "门",
+      "pinyin": "mén",
+      "meaning": "door / gate",
+      "group": "things",
+      "hasExplanation": false
+    },
+    {
+      "order": 40,
+      "hanzi": "车",
+      "pinyin": "chē",
+      "meaning": "vehicle / car",
+      "group": "things",
+      "hasExplanation": false
+    },
+    {
+      "order": 41,
+      "hanzi": "马",
+      "pinyin": "mǎ",
+      "meaning": "horse",
+      "group": "animals",
+      "hasExplanation": true
+    },
+    {
+      "order": 42,
+      "hanzi": "鸟",
+      "pinyin": "niǎo",
+      "meaning": "bird",
+      "group": "animals",
+      "hasExplanation": false
+    },
+    {
+      "order": 43,
+      "hanzi": "鱼",
+      "pinyin": "yú",
+      "meaning": "fish",
+      "group": "animals",
+      "hasExplanation": false
+    },
+    {
+      "order": 44,
+      "hanzi": "米",
+      "pinyin": "mǐ",
+      "meaning": "rice",
+      "group": "food",
+      "hasExplanation": false
+    },
+    {
+      "order": 45,
+      "hanzi": "父",
+      "pinyin": "fù",
+      "meaning": "father",
+      "group": "people",
+      "hasExplanation": false
+    },
+    {
+      "order": 46,
+      "hanzi": "母",
+      "pinyin": "mǔ",
+      "meaning": "mother",
+      "group": "people",
+      "hasExplanation": false
+    },
+    {
+      "order": 47,
+      "hanzi": "家",
+      "pinyin": "jiā",
+      "meaning": "home / family",
+      "group": "place",
+      "hasExplanation": false
+    },
+    {
+      "order": 48,
+      "hanzi": "学",
+      "pinyin": "xué",
+      "meaning": "study / learn",
+      "group": "learning",
+      "hasExplanation": false
+    },
+    {
+      "order": 49,
+      "hanzi": "生",
+      "pinyin": "shēng",
+      "meaning": "life / be born",
+      "group": "life",
+      "hasExplanation": false
+    },
+    {
+      "order": 50,
+      "hanzi": "年",
+      "pinyin": "nián",
+      "meaning": "year",
+      "group": "time",
       "hasExplanation": false
     }
   ],
@@ -372,13 +564,216 @@
         "子",
         "她"
       ]
+    },
+    {
+      "hanzi": "日",
+      "title": "日 (sun / day) vs 月 (moon / month)",
+      "summary": "日 can mean sun or day; 月 can mean moon or month. Both are common, box-like characters, so compare the inner strokes.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "月",
+        "口",
+        "天"
+      ]
+    },
+    {
+      "hanzi": "月",
+      "title": "月 (moon / month) vs 日 (sun / day)",
+      "summary": "月 means moon or month, while 日 means sun or day. Both meanings appear often in beginner Chinese.",
+      "sectionTypes": [
+        "compare",
+        "text"
+      ],
+      "related": [
+        "日",
+        "天"
+      ]
+    },
+    {
+      "hanzi": "人",
+      "title": "人 (person) and 大 (big)",
+      "summary": "人 means person. 大 means big. Their shapes are related-looking, but 大 has an extra stroke across the upper body.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "大",
+        "小"
+      ]
+    },
+    {
+      "hanzi": "大",
+      "title": "大 (big) and 人 (person)",
+      "summary": "大 means big; 人 means person. The added horizontal stroke is the quickest way to tell 大 apart from 人.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "人",
+        "小"
+      ]
+    },
+    {
+      "hanzi": "一",
+      "title": "一 (one) and its tone changes",
+      "summary": "一 is yī when said alone, but its tone commonly changes in connected speech. These are pronunciation changes, not different characters.",
+      "sectionTypes": [
+        "text",
+        "examples"
+      ],
+      "related": [
+        "不",
+        "二",
+        "三"
+      ]
+    },
+    {
+      "hanzi": "不",
+      "title": "不 (bù) changes before a fourth tone",
+      "summary": "不 means not. It is usually bù alone, but becomes bú before a following fourth-tone syllable in ordinary speech.",
+      "sectionTypes": [
+        "text",
+        "examples",
+        "tips"
+      ],
+      "related": [
+        "一",
+        "是",
+        "好"
+      ]
+    },
+    {
+      "hanzi": "木",
+      "title": "木 (wood / tree) and 目 (eye)",
+      "summary": "木 and 目 are both pronounced mù, but they mean different things. Look at the shape and the meaning rather than the sound alone.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "目",
+        "山"
+      ]
+    },
+    {
+      "hanzi": "十",
+      "title": "十 (ten) and 石 (stone)",
+      "summary": "十 means ten and 石 means stone. They are pronounced the same in Mandarin (shí), so the sound alone cannot distinguish them.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "石",
+        "一"
+      ]
+    },
+    {
+      "hanzi": "石",
+      "title": "石 (stone) and 十 (ten)",
+      "summary": "石 means stone and 十 means ten. Both are shí, so they are homophones: the pronunciation is the same.",
+      "sectionTypes": [
+        "compare",
+        "text"
+      ],
+      "related": [
+        "十",
+        "田"
+      ]
+    },
+    {
+      "hanzi": "女",
+      "title": "女 (woman) appears in other characters",
+      "summary": "女 means woman or female. You have already seen it as the left-hand part of 她 and as one part of 好.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "她",
+        "好",
+        "子"
+      ]
+    },
+    {
+      "hanzi": "子",
+      "title": "子 (child) appears in 好",
+      "summary": "子 means child and is one of the parts in 好 (hǎo, good). The association can help you remember the character.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "好",
+        "女"
+      ]
+    },
+    {
+      "hanzi": "上",
+      "title": "上 (above) and 下 (below)",
+      "summary": "上 means above or up; 下 means below or down. Their meanings are opposites and their short strokes sit on opposite sides of a long horizontal line.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "下",
+        "中"
+      ]
+    },
+    {
+      "hanzi": "下",
+      "title": "下 (below) and 上 (above)",
+      "summary": "下 means below or down, the opposite of 上 (above or up). Check where the short stroke sits relative to the long line.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "上",
+        "中"
+      ]
+    },
+    {
+      "hanzi": "马",
+      "title": "马 (horse)",
+      "summary": "马 means horse. Its shape is distinctive, and it is a useful early character to recognise.",
+      "sectionTypes": [
+        "text",
+        "tips"
+      ],
+      "related": [
+        "鸟",
+        "鱼"
+      ]
+    },
+    {
+      "hanzi": "目",
+      "title": "目 (eye) and 木 (wood)",
+      "summary": "目 means eye and is pronounced mù, just like 木 (wood / tree). The extra inner lines help distinguish the written forms.",
+      "sectionTypes": [
+        "compare",
+        "tips"
+      ],
+      "related": [
+        "木",
+        "日"
+      ]
     }
   ],
   "existingIssues": {
     "errors": [],
     "warnings": [
       "explanations.json[\"他\"]: uses characters outside the vocabulary (也 亻 它 们). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"她\"]: uses characters outside the vocabulary (也 亻). Fine for radicals/parts, but prefer vocabulary characters in examples"
+      "explanations.json[\"她\"]: uses characters outside the vocabulary (也 亻). Fine for radicals/parts, but prefer vocabulary characters in examples",
+      "explanations.json[\"一\"]: uses characters outside the vocabulary (个). Fine for radicals/parts, but prefer vocabulary characters in examples",
+      "explanations.json[\"女\"]: uses characters outside the vocabulary (也 妈 妹). Fine for radicals/parts, but prefer vocabulary characters in examples",
+      "explanations.json[\"目\"]: uses characters outside the vocabulary (眼 睛). Fine for radicals/parts, but prefer vocabulary characters in examples"
     ]
   }
 }

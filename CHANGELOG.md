@@ -83,6 +83,12 @@
 - Fixed: with an elite enemy (or big numbers) the scene's top bar pushed the fullscreen button off-screen; the left text now truncates and the item buttons are fixed (checked at 320–411 px wide with extreme values).
 - Verified (headless Chromium 411×650): normal and elite kill → banner, next-enemy button, reload keeps it, next enemy clears it; death scene; top bar at 4 widths; 41 unit tests, content validation, fit/stability, notes-fit, explanation popup and full e2e flows pass.
 
+## 0.4 — content: +20 words, +15 explanations (from an external content patch)
+- Source: `hanzi-hunters-content-update.zip` (plain JSON from another agent; nothing in it was executed). Words added: 七 九 上 下 手 目 田 石 门 车 马 鸟 鱼 米 父 母 家 学 生 年 (now 50). Explanations added for 日 月 人 大 一 不 木 十 石 女 子 上 下 马 目 (now 18 with 他 她 好).
+- Edited before merging (accuracy and format): rewrote the 日/月 and 木/目 and 石/十 shape descriptions (the originals were vague or wrong, e.g. "curved-looking sides"), switched 女/子 from `breakdown` (which draws "A + B", implying a false sum) to `compare`, replaced unrelated `related` links, used vocabulary examples for 一 (一天) and 不 (不好), added 日 vs 口 and 上·中·下 tips, removed `confusable` from 目/石 (it means "too close in meaning", not homophones), fixed groups (学→learning, 生→life, 年→time, 门/车→things, 米→food), removed a note that mentioned the game's limits, added the everyday word 眼睛 to 目.
+- Validator: 0 errors, 5 intentional warnings (parts/examples outside the vocabulary: 也 亻 它 们 个 妈 妹 眼 睛). 41 unit tests, pacing simulation (floors unchanged), notes-fit test over all 50 words, all 18 popups open/fit/link at 411×650, full browser flows pass.
+- **Still needs review by a fluent Mandarin speaker** (listed in the report): see the open questions in the hand-over message.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

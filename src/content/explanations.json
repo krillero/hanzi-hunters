@@ -8,8 +8,18 @@
         "heading": "Spot the difference",
         "intro": "Both are a left part plus the same right part, 也. Only the left part changes.",
         "items": [
-          { "char": "他", "pinyin": "tā", "meaning": "he / him", "note": "Left part 亻 = the “person” radical, a squashed 人." },
-          { "char": "她", "pinyin": "tā", "meaning": "she / her", "note": "Left part 女 = “woman”, the character you already know." }
+          {
+            "char": "他",
+            "pinyin": "tā",
+            "meaning": "he / him",
+            "note": "Left part 亻 = the “person” radical, a squashed 人."
+          },
+          {
+            "char": "她",
+            "pinyin": "tā",
+            "meaning": "she / her",
+            "note": "Left part 女 = “woman”, the character you already know."
+          }
         ]
       },
       {
@@ -26,8 +36,17 @@
         "type": "breakdown",
         "heading": "Built from",
         "parts": [
-          { "char": "亻", "pinyin": "rén", "meaning": "person (radical form of 人)", "note": "Radicals are reused in many characters." },
-          { "char": "也", "pinyin": "yě", "meaning": "also (here it mostly hints the sound)" }
+          {
+            "char": "亻",
+            "pinyin": "rén",
+            "meaning": "person (radical form of 人)",
+            "note": "Radicals are reused in many characters."
+          },
+          {
+            "char": "也",
+            "pinyin": "yě",
+            "meaning": "also (here it mostly hints the sound)"
+          }
         ]
       },
       {
@@ -39,12 +58,24 @@
         "type": "examples",
         "heading": "In a sentence",
         "items": [
-          { "zh": "他是中国人。", "pinyin": "Tā shì Zhōngguórén.", "en": "He is Chinese." },
-          { "zh": "她是中国人。", "pinyin": "Tā shì Zhōngguórén.", "en": "She is Chinese." }
+          {
+            "zh": "他是中国人。",
+            "pinyin": "Tā shì Zhōngguórén.",
+            "en": "He is Chinese."
+          },
+          {
+            "zh": "她是中国人。",
+            "pinyin": "Tā shì Zhōngguórén.",
+            "en": "She is Chinese."
+          }
         ]
       }
     ],
-    "related": ["她", "人", "女"]
+    "related": [
+      "她",
+      "人",
+      "女"
+    ]
   },
   "她": {
     "title": "她 (she) vs 他 (he)",
@@ -54,8 +85,17 @@
         "type": "breakdown",
         "heading": "Built from",
         "parts": [
-          { "char": "女", "pinyin": "nǚ", "meaning": "woman", "note": "Reused in 好 (hǎo, good) and many other characters." },
-          { "char": "也", "pinyin": "yě", "meaning": "also (here it mostly hints the sound)" }
+          {
+            "char": "女",
+            "pinyin": "nǚ",
+            "meaning": "woman",
+            "note": "Reused in 好 (hǎo, good) and many other characters."
+          },
+          {
+            "char": "也",
+            "pinyin": "yě",
+            "meaning": "also (here it mostly hints the sound)"
+          }
         ]
       },
       {
@@ -71,11 +111,19 @@
         "type": "examples",
         "heading": "In a sentence",
         "items": [
-          { "zh": "她是女人。", "pinyin": "Tā shì nǚrén.", "en": "She is a woman." }
+          {
+            "zh": "她是女人。",
+            "pinyin": "Tā shì nǚrén.",
+            "en": "She is a woman."
+          }
         ]
       }
     ],
-    "related": ["他", "女", "好"]
+    "related": [
+      "他",
+      "女",
+      "好"
+    ]
   },
   "好": {
     "title": "好 is built from 女 and 子",
@@ -86,8 +134,16 @@
         "heading": "Built from",
         "intro": "Many characters are built from smaller parts that you meet again and again.",
         "parts": [
-          { "char": "女", "pinyin": "nǚ", "meaning": "woman" },
-          { "char": "子", "pinyin": "zǐ", "meaning": "child" }
+          {
+            "char": "女",
+            "pinyin": "nǚ",
+            "meaning": "woman"
+          },
+          {
+            "char": "子",
+            "pinyin": "zǐ",
+            "meaning": "child"
+          }
         ]
       },
       {
@@ -102,10 +158,555 @@
         "type": "examples",
         "heading": "In a sentence",
         "items": [
-          { "zh": "你好!", "pinyin": "Nǐ hǎo!", "en": "Hello!" }
+          {
+            "zh": "你好!",
+            "pinyin": "Nǐ hǎo!",
+            "en": "Hello!"
+          }
         ]
       }
     ],
-    "related": ["女", "子", "她"]
+    "related": [
+      "女",
+      "子",
+      "她"
+    ]
+  },
+  "日": {
+    "title": "日 (sun / day) vs 月 (moon / month)",
+    "summary": "日 can mean sun or day; 月 can mean moon or month. Both are common, box-like characters, so compare the inner strokes.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Spot the difference",
+        "intro": "Compare the insides and the overall shape.",
+        "items": [
+          {
+            "char": "日",
+            "pinyin": "rì",
+            "meaning": "sun / day",
+            "note": "A squarish, closed box with ONE stroke across the middle."
+          },
+          {
+            "char": "月",
+            "pinyin": "yuè",
+            "meaning": "moon / month",
+            "note": "Narrower and taller, with TWO strokes inside; the left side sweeps outwards at the bottom."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Tips",
+        "items": [
+          "Memory aid, not etymology: imagine 日 as a little sun drawn in a box.",
+          "日 is not the same as 口 (kǒu, mouth): 口 is an empty box, 日 has a stroke across the middle.",
+          "日 and 月 each have two common meanings (sun / day, moon / month). Context tells you which one is meant."
+        ]
+      }
+    ],
+    "related": [
+      "月",
+      "口",
+      "天"
+    ]
+  },
+  "月": {
+    "title": "月 (moon / month) vs 日 (sun / day)",
+    "summary": "月 means moon or month, while 日 means sun or day. Both meanings appear often in beginner Chinese.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the shapes",
+        "items": [
+          {
+            "char": "月",
+            "pinyin": "yuè",
+            "meaning": "moon / month",
+            "note": "Narrower and taller, TWO strokes inside; the left side sweeps outwards at the bottom."
+          },
+          {
+            "char": "日",
+            "pinyin": "rì",
+            "meaning": "sun / day",
+            "note": "A squarish, closed box with ONE stroke across the middle."
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "heading": "Two meanings",
+        "body": "月 can mean the moon or a month, and 日 can mean the sun or a day. In many phrases the two meanings are not interchangeable translations, so learn them in context."
+      }
+    ],
+    "related": [
+      "日",
+      "天"
+    ]
+  },
+  "人": {
+    "title": "人 (person) and 大 (big)",
+    "summary": "人 means person. 大 means big. Their shapes are related-looking, but 大 has an extra stroke across the upper body.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "One extra stroke",
+        "items": [
+          {
+            "char": "人",
+            "pinyin": "rén",
+            "meaning": "person",
+            "note": "Two strokes, opening out like a person standing."
+          },
+          {
+            "char": "大",
+            "pinyin": "dà",
+            "meaning": "big",
+            "note": "An extra horizontal stroke crosses the figure."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "Memory aid, not character history: picture 大 as a person stretching their arms wide to look big.",
+          "Count the strokes when the two shapes blur together."
+        ]
+      }
+    ],
+    "related": [
+      "大",
+      "小"
+    ]
+  },
+  "大": {
+    "title": "大 (big) and 人 (person)",
+    "summary": "大 means big; 人 means person. The added horizontal stroke is the quickest way to tell 大 apart from 人.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Check the middle",
+        "items": [
+          {
+            "char": "大",
+            "pinyin": "dà",
+            "meaning": "big",
+            "note": "Has a horizontal stroke across the figure."
+          },
+          {
+            "char": "人",
+            "pinyin": "rén",
+            "meaning": "person",
+            "note": "Does not have that extra horizontal stroke."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "Memory aid, not etymology: imagine a person spreading their arms wide to show something is big."
+        ]
+      }
+    ],
+    "related": [
+      "人",
+      "小"
+    ]
+  },
+  "一": {
+    "title": "一 (one) and its tone changes",
+    "summary": "一 is yī when said alone, but its tone commonly changes in connected speech. These are pronunciation changes, not different characters.",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "The common rule",
+        "body": "一 is usually yí before a fourth-tone syllable and yì before a first-, second-, or third-tone syllable in common connected-speech patterns. It remains yī when counted or spoken alone."
+      },
+      {
+        "type": "examples",
+        "heading": "Listen in context",
+        "items": [
+          {
+            "zh": "一",
+            "pinyin": "yī",
+            "en": "one (said alone)"
+          },
+          {
+            "zh": "一天",
+            "pinyin": "yì tiān",
+            "en": "one day (before a first tone)"
+          },
+          {
+            "zh": "一个",
+            "pinyin": "yí ge",
+            "en": "one (of something), before a fourth tone"
+          }
+        ]
+      }
+    ],
+    "related": [
+      "不",
+      "二",
+      "三"
+    ]
+  },
+  "不": {
+    "title": "不 (bù) changes before a fourth tone",
+    "summary": "不 means not. It is usually bù alone, but becomes bú before a following fourth-tone syllable in ordinary speech.",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "The common rule",
+        "body": "不 changes from fourth tone bù to second tone bú before a following fourth-tone syllable. The written character stays 不."
+      },
+      {
+        "type": "examples",
+        "heading": "A common example",
+        "items": [
+          {
+            "zh": "不是",
+            "pinyin": "bú shì",
+            "en": "is not (before a fourth tone)"
+          },
+          {
+            "zh": "不好",
+            "pinyin": "bù hǎo",
+            "en": "not good (before a third tone, no change)"
+          },
+          {
+            "zh": "不",
+            "pinyin": "bù",
+            "en": "not (said alone)"
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Remember",
+        "items": [
+          "This is a pronunciation rule in connected speech, not a spelling change."
+        ]
+      }
+    ],
+    "related": [
+      "一",
+      "是",
+      "好"
+    ]
+  },
+  "木": {
+    "title": "木 (wood / tree) and 目 (eye)",
+    "summary": "木 and 目 are both pronounced mù, but they mean different things. Look at the shape and the meaning rather than the sound alone.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Same sound, different character",
+        "items": [
+          {
+            "char": "木",
+            "pinyin": "mù",
+            "meaning": "wood / tree",
+            "note": "Looks like a tree: a cross on top with two legs spreading out below."
+          },
+          {
+            "char": "目",
+            "pinyin": "mù",
+            "meaning": "eye",
+            "note": "A tall narrow box divided by two strokes inside."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "Memory aid, not etymology: 目 is an eye with lines inside; 木 is a tree with its roots spread out.",
+          "Both are read mù, so in a listening question you need the meaning or context, not the sound."
+        ]
+      }
+    ],
+    "related": [
+      "目",
+      "山"
+    ]
+  },
+  "十": {
+    "title": "十 (ten) and 石 (stone)",
+    "summary": "十 means ten and 石 means stone. They are pronounced the same in Mandarin (shí), so the sound alone cannot distinguish them.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Same pinyin, different meaning",
+        "items": [
+          {
+            "char": "十",
+            "pinyin": "shí",
+            "meaning": "ten",
+            "note": "Only two crossing strokes."
+          },
+          {
+            "char": "石",
+            "pinyin": "shí",
+            "meaning": "stone",
+            "note": "A long top stroke with a falling stroke, and a 口 box underneath."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "How to choose",
+        "items": [
+          "Reading: if there is a 口 box at the bottom, it is 石 (stone). A plain cross is 十 (ten).",
+          "Listening: both are shí, so use the sentence to decide which meaning fits."
+        ]
+      }
+    ],
+    "related": [
+      "石",
+      "一"
+    ]
+  },
+  "石": {
+    "title": "石 (stone) and 十 (ten)",
+    "summary": "石 means stone and 十 means ten. Both are shí, so they are homophones: the pronunciation is the same.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Look at the strokes",
+        "items": [
+          {
+            "char": "石",
+            "pinyin": "shí",
+            "meaning": "stone",
+            "note": "A long top stroke with a falling stroke, and a 口 box underneath."
+          },
+          {
+            "char": "十",
+            "pinyin": "shí",
+            "meaning": "ten",
+            "note": "Only two crossing strokes."
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "heading": "Good to know",
+        "body": "Because 石 and 十 sound the same, listening alone cannot tell you which is meant. The rest of the sentence, or the written character, decides."
+      }
+    ],
+    "related": [
+      "十",
+      "田"
+    ]
+  },
+  "女": {
+    "title": "女 (woman) appears in other characters",
+    "summary": "女 means woman or female. You have already seen it as the left-hand part of 她 and as one part of 好.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Where you will see 女",
+        "intro": "A familiar part helps you recognise a new character.",
+        "items": [
+          {
+            "char": "女",
+            "pinyin": "nǚ",
+            "meaning": "woman"
+          },
+          {
+            "char": "她",
+            "pinyin": "tā",
+            "meaning": "she / her",
+            "note": "女 on the left, 也 on the right."
+          },
+          {
+            "char": "好",
+            "pinyin": "hǎo",
+            "meaning": "good",
+            "note": "女 and 子 side by side."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Tips",
+        "items": [
+          "Many characters about women or family use 女 as a part, for example 妈 (mā, mum) and 妹 (mèi, younger sister).",
+          "Treat this as a shape-recognition trick, not a claim that a character's meaning is simply the sum of its parts."
+        ]
+      }
+    ],
+    "related": [
+      "她",
+      "好",
+      "子"
+    ]
+  },
+  "子": {
+    "title": "子 (child) appears in 好",
+    "summary": "子 means child and is one of the parts in 好 (hǎo, good). The association can help you remember the character.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Where you will see 子",
+        "intro": "A familiar character can turn up inside a new one.",
+        "items": [
+          {
+            "char": "子",
+            "pinyin": "zǐ",
+            "meaning": "child"
+          },
+          {
+            "char": "好",
+            "pinyin": "hǎo",
+            "meaning": "good",
+            "note": "女 and 子 side by side."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "A woman with a child can be a memory story for 好, but this is not a proven explanation of the character's origin."
+        ]
+      }
+    ],
+    "related": [
+      "好",
+      "女"
+    ]
+  },
+  "上": {
+    "title": "上 (above) and 下 (below)",
+    "summary": "上 means above or up; 下 means below or down. Their meanings are opposites and their short strokes sit on opposite sides of a long horizontal line.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Above or below?",
+        "items": [
+          {
+            "char": "上",
+            "pinyin": "shàng",
+            "meaning": "above / up",
+            "note": "The short stroke sits above the long line."
+          },
+          {
+            "char": "下",
+            "pinyin": "xià",
+            "meaning": "below / down",
+            "note": "The short stroke sits below the long line."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "Use the short stroke as a tiny diagram: above the line for 上, below it for 下.",
+          "With 中 (middle) you get the set 上 中 下: above, middle, below."
+        ]
+      }
+    ],
+    "related": [
+      "下",
+      "中"
+    ]
+  },
+  "下": {
+    "title": "下 (below) and 上 (above)",
+    "summary": "下 means below or down, the opposite of 上 (above or up). Check where the short stroke sits relative to the long line.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the pair",
+        "items": [
+          {
+            "char": "下",
+            "pinyin": "xià",
+            "meaning": "below / down",
+            "note": "The short stroke sits below the long line."
+          },
+          {
+            "char": "上",
+            "pinyin": "shàng",
+            "meaning": "above / up",
+            "note": "The short stroke sits above the long line."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "This is a visual memory aid: the short stroke shows on which side of the line the meaning lies.",
+          "With 中 (middle) you get the set 上 中 下: above, middle, below."
+        ]
+      }
+    ],
+    "related": [
+      "上",
+      "中"
+    ]
+  },
+  "马": {
+    "title": "马 (horse)",
+    "summary": "马 means horse. Its shape is distinctive, and it is a useful early character to recognise.",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "Meaning and sound",
+        "body": "马 is pronounced with a third tone. Keep the pitch low in careful isolated pronunciation; in natural speech, the exact contour depends on context."
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "You may imagine the shape as a stylised horse, but treat this as a memory aid rather than a full account of the character's history."
+        ]
+      }
+    ],
+    "related": [
+      "鸟",
+      "鱼"
+    ]
+  },
+  "目": {
+    "title": "目 (eye) and 木 (wood)",
+    "summary": "目 means eye and is pronounced mù, just like 木 (wood / tree). The extra inner lines help distinguish the written forms.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Look at the inside",
+        "items": [
+          {
+            "char": "目",
+            "pinyin": "mù",
+            "meaning": "eye",
+            "note": "A tall narrow box divided by two strokes inside."
+          },
+          {
+            "char": "木",
+            "pinyin": "mù",
+            "meaning": "wood / tree",
+            "note": "A cross with two legs spreading out below."
+          }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "Imagine 目 as an eye with lines inside. This is a memory aid, not a claim about the character's history.",
+          "目 is mostly seen inside longer words. In everyday speech people usually say 眼睛 (yǎnjing) for eye."
+        ]
+      }
+    ],
+    "related": [
+      "木",
+      "日"
+    ]
   }
 }

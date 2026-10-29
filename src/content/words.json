@@ -221,5 +221,145 @@
     "meaning": "ten",
     "group": "number",
     "note": "Second tone. 十 means ten."
+  },
+  {
+    "hanzi": "七",
+    "pinyin": "qī",
+    "meaning": "seven",
+    "group": "number",
+    "note": "First tone: keep the pitch high and level. 七 is a horizontal stroke crossed by a bent stroke."
+  },
+  {
+    "hanzi": "九",
+    "pinyin": "jiǔ",
+    "meaning": "nine",
+    "group": "number",
+    "note": "Third tone: the pitch dips low. 九 is written with two strokes; the second is bent and ends in a hook."
+  },
+  {
+    "hanzi": "上",
+    "pinyin": "shàng",
+    "meaning": "above / up",
+    "group": "place",
+    "note": "Fourth tone: let the pitch fall. The short stroke sits above the longer horizontal line, like something above a surface."
+  },
+  {
+    "hanzi": "下",
+    "pinyin": "xià",
+    "meaning": "below / down",
+    "group": "place",
+    "note": "Fourth tone. The short stroke sits below the long horizontal line, a useful memory aid for 下."
+  },
+  {
+    "hanzi": "手",
+    "pinyin": "shǒu",
+    "meaning": "hand",
+    "group": "body",
+    "note": "Third tone. 手 means hand. In longer words it often appears as a part, for example in 手机 (shǒujī, mobile phone)."
+  },
+  {
+    "hanzi": "目",
+    "pinyin": "mù",
+    "meaning": "eye",
+    "group": "body",
+    "note": "Fourth tone. 目 is the character for eye, mostly seen inside longer words. In everyday speech people usually say 眼睛 (yǎnjing). It sounds exactly like 木 (mù)."
+  },
+  {
+    "hanzi": "田",
+    "pinyin": "tián",
+    "meaning": "field",
+    "group": "nature",
+    "note": "Second tone rises. The lines divide 田 into sections, a handy memory aid for a field."
+  },
+  {
+    "hanzi": "石",
+    "pinyin": "shí",
+    "meaning": "stone",
+    "group": "nature",
+    "note": "Second tone. 石 (stone) and 十 (ten) are homophones: both are shí. Only the character tells them apart."
+  },
+  {
+    "hanzi": "门",
+    "pinyin": "mén",
+    "meaning": "door / gate",
+    "group": "things",
+    "note": "Second tone rises. 门 is the simplified form; its shape can remind you of a doorway."
+  },
+  {
+    "hanzi": "车",
+    "pinyin": "chē",
+    "meaning": "vehicle / car",
+    "group": "things",
+    "note": "First tone: high and level. 车 is the simplified character for vehicle or car."
+  },
+  {
+    "hanzi": "马",
+    "pinyin": "mǎ",
+    "meaning": "horse",
+    "group": "animals",
+    "note": "Third tone. 马 is a common word for horse; treat any picture-like association as a memory aid, not a claim about its history."
+  },
+  {
+    "hanzi": "鸟",
+    "pinyin": "niǎo",
+    "meaning": "bird",
+    "group": "animals",
+    "note": "Third tone. 鸟 means bird. Notice the small dot near the top when writing it."
+  },
+  {
+    "hanzi": "鱼",
+    "pinyin": "yú",
+    "meaning": "fish",
+    "group": "animals",
+    "note": "Second tone rises. 鱼 means fish; the lower strokes can serve as a memory aid for a tail."
+  },
+  {
+    "hanzi": "米",
+    "pinyin": "mǐ",
+    "meaning": "rice",
+    "group": "food",
+    "note": "Third tone. 米 means rice, especially uncooked rice or grains in many contexts."
+  },
+  {
+    "hanzi": "父",
+    "pinyin": "fù",
+    "meaning": "father",
+    "group": "people",
+    "note": "Fourth tone. 父 means father and appears in family vocabulary."
+  },
+  {
+    "hanzi": "母",
+    "pinyin": "mǔ",
+    "meaning": "mother",
+    "group": "people",
+    "note": "Third tone. 母 means mother; compare its shape carefully with other characters that have inner marks."
+  },
+  {
+    "hanzi": "家",
+    "pinyin": "jiā",
+    "meaning": "home / family",
+    "group": "place",
+    "note": "First tone. 家 can mean home or family; its meaning depends on context."
+  },
+  {
+    "hanzi": "学",
+    "pinyin": "xué",
+    "meaning": "study / learn",
+    "group": "learning",
+    "note": "Second tone rises. 学 means to study or learn. You will meet it in 学生 (xuésheng, student) and 学校 (xuéxiào, school)."
+  },
+  {
+    "hanzi": "生",
+    "pinyin": "shēng",
+    "meaning": "life / be born",
+    "group": "life",
+    "note": "First tone: high and level. 生 has several related meanings, such as life and to be born. It appears in 学生 (student) and 生日 (shēngrì, birthday)."
+  },
+  {
+    "hanzi": "年",
+    "pinyin": "nián",
+    "meaning": "year",
+    "group": "time",
+    "note": "Second tone rises. 年 means year and is common in dates and age expressions."
   }
 ]

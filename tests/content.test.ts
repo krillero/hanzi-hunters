@@ -15,7 +15,7 @@ test('the shipped content has no validation errors', () => {
 })
 
 test('shipped explanations: him/her are explained, link to each other, and are reachable via the API', () => {
-  assert.ok(hasExplanation('他') && hasExplanation('她') && !hasExplanation('人'))
+  assert.ok(hasExplanation('他') && hasExplanation('她') && !hasExplanation('七'))
   assert.ok(getExplanation('她')!.related!.includes('他') && getExplanation('他')!.related!.includes('她'))
   assert.ok(Object.keys(EXPLANATIONS).length >= 3)
 })
