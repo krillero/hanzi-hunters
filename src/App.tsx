@@ -10,7 +10,7 @@ import { hasExplanation } from './content'
 import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appInfo'
 import { parseBackup, serializeBackup } from './game/backup'
 import { ENEMIES, GEAR, WORDS, type Word } from './data'
-import { MAX_LV, MASTERY_DAMAGE, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
+import { MAX_LV, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
 import { buildQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import {
   ENEMIES_PER_FLOOR, advance, isElite, bankRun, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
