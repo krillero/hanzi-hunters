@@ -291,7 +291,7 @@ export default function App() {
 
   const equipItem = (name: string) => {
     if (!run) return
-    const next = equipGear(run, name, GEAR)
+    const next = equipGear(run, name, GEAR, bonuses)
     if (!next) return
     patch(s => ({ ...s, run: next }))
     setToast(`Equipped ${name}.`)
