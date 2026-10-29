@@ -597,3 +597,45 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 
 /* Anchor the fixed help/audio cluster to the word card itself. */
 .stage-card{position:relative}
+
+
+/* Mobile readability pass: enlarge answer choices and success/failure copy without
+   changing the reserved question, feedback, or action-bar geometry. */
+.answer-text{font-size:22px;line-height:1.2}
+.opt-hanzi .answer-text{font-size:34px;line-height:1}
+.result-line strong{font-size:17px}
+.result-line span{font-size:13px}
+.result-note{font-size:15px;line-height:1.4;-webkit-line-clamp:3}
+.result-mastery{font-size:14px;line-height:1.3;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.result-rewards span{font-size:12px}
+.stage-fb .fb-head{font-size:18px}
+.stage-fb .fb-note{font-size:15px;line-height:1.4;-webkit-line-clamp:3}
+.stage-fb .fb-mastery{font-size:15px;line-height:1.35;white-space:normal}
+.stage-fb .fb-chips span{font-size:12px}
+@media(max-width:850px){
+  .answer-text{font-size:clamp(20px,3dvh,24px)}
+  .opt-hanzi .answer-text{font-size:clamp(28px,4.6dvh,36px)}
+  .result-line strong{font-size:clamp(15px,2.3dvh,18px)}
+  .result-line span{font-size:clamp(12px,1.9dvh,14px)}
+  .result-note{font-size:clamp(14px,2.2dvh,16px);line-height:1.35;-webkit-line-clamp:3}
+  .result-mastery{font-size:clamp(13px,2dvh,15px);line-height:1.3}
+  .result-rewards span{font-size:clamp(11px,1.7dvh,13px);padding:5px 4px}
+  .stage-fb .fb-head{font-size:clamp(17px,2.7dvh,20px)}
+  .stage-fb .fb-note{font-size:clamp(14px,2.2dvh,16px);line-height:1.35;-webkit-line-clamp:3}
+  .stage-fb .fb-mastery{font-size:clamp(14px,2.1dvh,16px);line-height:1.3}
+  .stage-fb .fb-chips span{font-size:clamp(11px,1.7dvh,13px)}
+}
+@media(max-width:480px){
+  .answer-text{font-size:clamp(20px,2.8dvh,23px)}
+  .opt-hanzi .answer-text{font-size:clamp(28px,4.4dvh,34px)}
+  .result-line{gap:6px;flex-wrap:wrap}
+  .result-line strong{font-size:16px}
+  .result-line span{font-size:12px;white-space:normal}
+  .result-note{font-size:14px;line-height:1.35;-webkit-line-clamp:3}
+  .result-mastery{font-size:13px}
+  .result-rewards span{font-size:11px}
+  .stage-fb .fb-head{font-size:17px}
+  .stage-fb .fb-note{font-size:14px;line-height:1.35;-webkit-line-clamp:3}
+  .stage-fb .fb-mastery{font-size:14px}
+  .stage-fb .fb-chips span{font-size:11px}
+}
