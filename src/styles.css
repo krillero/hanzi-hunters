@@ -468,3 +468,30 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 @media(max-width:380px){.scene-label .scene-where{gap:4px}.scene-label .scene-where .scene-gold{margin-left:2px}}
 .sf-narrow{display:none}
 @media(max-width:380px){.sf-wide{display:none}.sf-narrow{display:inline}}
+
+
+/* Keep the question and answer recap anchored to the same panel geometry.
+   The stage and answer rows already share a reserved height; these rules stop
+   variable feedback copy and headings from changing the panel's internal rhythm. */
+@media(max-width:850px){
+  .question-panel{align-content:start}
+  .question-title{flex:0 0 clamp(34px,5.4dvh,46px);min-height:0;overflow:hidden}
+  .question-title .title-text{min-width:0;overflow:hidden}
+  .question-title h2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.25}
+  .stage-card,.stage-wide{flex-shrink:0;min-height:0;box-sizing:border-box}
+  .stage-fb{min-width:0;overflow:hidden}
+  .stage-fb .fb-head{min-height:1.25em;max-width:100%;text-overflow:ellipsis}
+  .stage-fb .fb-word{flex-shrink:0;min-height:clamp(62px,10dvh,82px);align-items:center}
+  .stage-fb .fb-info{min-width:0}
+  .stage-fb .fb-meaning{overflow-wrap:anywhere}
+  .stage-fb .fb-note,.stage-fb .fb-mastery{overflow-wrap:anywhere}
+  .stage-fb .fb-chips{flex-shrink:0}
+  .action-bar{flex-shrink:0}
+}
+@media(max-width:480px){
+  .question-panel{overflow:hidden}
+  .question-title{flex-basis:clamp(34px,5.4dvh,42px)}
+  .stage-fb .fb-word{min-height:clamp(58px,9dvh,72px)}
+  .stage-fb .fb-chips{gap:5px}
+  .stage-fb .fb-chips span{min-width:0;padding:6px 2px;font-size:clamp(10px,1.7dvh,12px)}
+}
