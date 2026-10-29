@@ -10,7 +10,7 @@ type Props = {
 }
 
 const SPEEDS: { id: AutoContinue; label: string; hint: string }[] = [
-  { id: 'quick', label: 'Quick', hint: '1 s' }, { id: 'relaxed', label: 'Relaxed', hint: '2.5 s' }, { id: 'off', label: 'Off', hint: 'tap' }
+  { id: 'learning', label: 'Learn first', hint: 'Lv 2 · 0.5 s' }, { id: 'quick', label: 'Quick', hint: '1 s' }, { id: 'relaxed', label: 'Relaxed', hint: '2.5 s' }, { id: 'off', label: 'Off', hint: 'tap' }
 ]
 
 /** Settings sheet: sound, auto-continue, fullscreen, and app/data tools. */
@@ -39,7 +39,7 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
             <div className="segmented" role="radiogroup" aria-label="Auto-continue speed">
               {SPEEDS.map(o => <button key={o.id} role="radio" aria-checked={settings.autoContinue === o.id} className={settings.autoContinue === o.id ? 'on' : ''} onClick={() => onChange({ ...settings, autoContinue: o.id })}>{o.label}<small>{o.hint}</small></button>)}
             </div>
-            <p className="hint-text">The game always waits after a wrong answer, defeat and clearing a floor.</p>
+            <p className="hint-text">Learn first pauses on every answer until that word reaches mastery level 2, then advances after 0.5 seconds. All modes pause after a wrong answer, defeat and clearing a floor.</p>
           </section>
           {fullscreen.supported && <section><h3>Screen</h3><button className="secondary-btn menu-wide" onClick={fullscreen.toggle}>{fullscreen.on ? '🗗 Exit fullscreen' : '⛶ Fullscreen'}</button></section>}
           <AppData outdated={outdated} onUpdate={onUpdate} onExport={onExport} onImport={onImport} />
