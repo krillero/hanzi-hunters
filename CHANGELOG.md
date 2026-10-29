@@ -109,6 +109,14 @@
 - The big placeholder was the fullwidth `？`, whose glyph sits left of centre in its box, and the `? ? ?` row had trailing letter-spacing; the big mark appeared between the 1st and 2nd `?` below it. It is now a regular `?` (Manrope bold) and the pinyin placeholder is padded to cancel the trailing space.
 - Measured with `centre.mjs` (pixel analysis of screenshots at 3× DPR, 411×650, 411×860, 320×568, 1100×800, kinds character / meaning→pinyin / pinyin→character): the big `?` is within 0.3 px of the card centre and `? ? ?` within 1.5 px. `slots.mjs`, fit, unit and e2e suites still pass.
 
+## 0.6 — safe updates and progress backup
+- Problem: the PWA's service worker keeps serving the cached old version, and the only way users could force a refresh was "Clear site data", which also deletes the save (localStorage).
+- **Update app** button (camp → App & data): unregisters the service worker, deletes the offline caches and reloads with a cache-busting URL; localStorage is never touched.
+- **New-version banner:** each build writes `version.json` (git commit + time). The app fetches it (no cache) at start and when returning to the foreground; if it differs from the running build a dismissible banner offers "Update" (progress and a mid-run state are kept). The running build id is shown in the camp.
+- **Export / import progress:** downloads `hanzi-hunters-progress-<date>.json` (validated and sanitised again on import; v1 prototype saves and bare v2 saves are accepted; wrong files are rejected with a message).
+- Verified on the production build (headless Chromium, service worker active): a planted stale cache is deleted and progress is intact after Update; the banner appears mid-run against a newer `version.json` and updating keeps the run; export → wipe → import restores gold, upgrades and mastery; wrong file rejected; no page errors. +3 unit tests (48).
+- Not verified: behaviour inside an *installed* PWA on a real phone, iOS Safari.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

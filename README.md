@@ -81,6 +81,9 @@ hanzi-hunters/
 3. Test the main combat loop, save/load, mobile layout and browser console.
 4. Only then begin the next milestone from the development brief.
 
+## Seeing the newest version (without losing progress)
+The game caches itself for offline use, so a normal reload can show an old version. In the game: **camp → App & data → Update app** (or tap **Update** on the "new version available" banner). Your progress is stored separately and is not deleted. **Export progress** there saves a backup file you can import again, for example before clearing browser data. Do not use the browser's "Clear site data": it deletes the save.
+
 ## Adding words and explanations
 Vocabulary and the "more about this word" popups are JSON files in `src/content/`. See **`docs/CONTENT_GUIDE.md`** (format, rules, checklist and a ready-made prompt for another agent). Validate with `npm run validate:content`; preview any word with `/?word=她`. To hand content work to another agent use `docs/AGENT_PROMPT.md`; `npm run inventory` regenerates `docs/content-inventory.json` (what exists now).
 

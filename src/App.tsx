@@ -4,6 +4,8 @@ import { PixelScene } from './game/PixelScene'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
 import { hasExplanation } from './content'
+import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appInfo'
+import { parseBackup, serializeBackup } from './game/backup'
 import { ENEMIES, GEAR, WORDS, type Word } from './data'
 import { MAX_LV, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
 import { buildQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
@@ -87,6 +89,8 @@ export default function App() {
   const [showBag, setShowBag] = useState(false)
   const [showWords, setShowWords] = useState(false)
   const [explain, setExplain] = useState<string[]>([])
+  const [latestBuild, setLatestBuild] = useState<BuildInfo | null>(null)
+  const [updateDismissed, setUpdateDismissed] = useState(false)
   const closeExplain = useMemo(() => () => setExplain([]), [])
   useFitText(noteRef, [feedback])
   useEffect(() => {
@@ -126,6 +130,15 @@ export default function App() {
     check()
     try { window.speechSynthesis.addEventListener('voiceschanged', check) } catch { /* no speech support */ }
     return () => { try { window.speechSynthesis.removeEventListener('voiceschanged', check) } catch { /* ignore */ } }
+  }, [])
+  // Is a newer build deployed? Checked at start and whenever the app comes back to the foreground.
+  useEffect(() => {
+    let alive = true
+    const check = () => { fetchLatestBuild().then(b => { if (alive) setLatestBuild(b) }) }
+    check()
+    const onVisible = () => { if (document.visibilityState === 'visible') check() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { alive = false; document.removeEventListener('visibilitychange', onVisible) }
   }, [])
   useEffect(() => { if (!card && run) setCard(makeCard()) /* eslint-disable-next-line */ }, [inCamp])
 
@@ -266,6 +279,25 @@ export default function App() {
     setCampMsg(`Bought ${nodeById(id)?.name}!`)
   }
 
+  const exportProgress = () => {
+    try {
+      const blob = new Blob([serializeBackup(save)], { type: 'application/json' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `hanzi-hunters-progress-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a); a.click(); a.remove()
+      window.setTimeout(() => URL.revokeObjectURL(a.href), 4000)
+      setCampMsg('Progress exported. Keep the file somewhere safe.')
+    } catch { setCampMsg('Could not export on this browser.') }
+  }
+  const importProgress = async (file: File) => {
+    const restored = parseBackup(await file.text().catch(() => ''))
+    if (!restored) { setCampMsg('That file is not a Hanzi Hunters progress file.'); return }
+    if (!window.confirm(`Replace your current progress with the file? (${Object.keys(restored.mastery).length} words, ${restored.meta.gold} gold banked, ${restored.meta.upgrades.length} upgrades)`)) return
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(restored)) } catch { setCampMsg('Could not write the save.'); return }
+    window.location.reload()
+  }
+
   const resetAll = () => {
     if (!window.confirm('Delete ALL progress — upgrades, gold and word mastery — and start over?')) return
     try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
@@ -288,7 +320,7 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        <CampScreen save={save} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} />
+        <CampScreen save={save} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} />
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       </main>
     )
@@ -402,6 +434,7 @@ export default function App() {
         </div>
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
+      {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
       {explain.length > 0 && <ExplainModal stack={explain} onClose={closeExplain} onBack={() => setExplain(st => st.slice(0, -1))} onOpen={h => setExplain(st => [...st, h])} onSpeak={speak} />}
     </main>
   )
