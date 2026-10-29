@@ -451,17 +451,24 @@ export default function App() {
               <div className="character-section-title">BONUSES</div>
               <div className="character-stat-list">
                 <div><span>🛡️ Armor</span><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</strong></div>
-                <div><span>XP gain</span><strong>+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</strong></div>
-                <div><span>Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</strong></div>
+                <div><span>✨ XP gain</span><strong>+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</strong></div>
+                <div><span>🪙 Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</strong></div>
               </div>
             </section>
-            <section className="character-section">
-              <div className="character-section-title">GEAR LOADOUT <span>{equipped.length} / 3 SLOTS</span></div>
-              {(['Weapon', 'Armor', 'Accessory'] as const).map(slot => {
-                const item = GEAR.find(g => g.name === run.loadout[slot])
-                return <div className="gear-line gear-slot-line" key={slot}><span className="gear-icon">{item?.icon ?? '◇'}</span><div><b>{slot}</b><small>{item ? `${item.name} · ${item.bonus}` : 'Empty slot'}</small></div><span className={item ? 'gear-state owned' : 'gear-state locked'}>{item ? 'Equipped' : 'Empty'}</span></div>
-              })}
-              <div className="character-section-title gear-inventory-title">INVENTORY <span>{run.gear.length} / {GEAR.length} FOUND</span></div>
+            <section className="character-section gear-overview">
+              <div className="character-section-title">EQUIPPED GEAR <span>{equipped.length}/3</span></div>
+              <div className="gear-slot-cards">
+                {(['Weapon', 'Armor', 'Accessory'] as const).map(slot => {
+                  const item = GEAR.find(g => g.name === run.loadout[slot])
+                  return <div className={`gear-slot-card ${item ? 'is-filled' : 'is-empty'}`} key={slot}>
+                    <div className="gear-slot-card-top"><span className="gear-icon">{item?.icon ?? '◇'}</span><small>{slot.toUpperCase()}</small></div>
+                    <b>{item?.name ?? 'Empty slot'}</b>
+                    <span className="gear-slot-bonus">{item?.bonus ?? 'Find gear to equip'}</span>
+                    {item && <span className="gear-equipped-tag">✓ Equipped</span>}
+                  </div>
+                })}
+              </div>
+              <div className="character-section-title gear-inventory-title">YOUR INVENTORY <span>{run.gear.length} / {GEAR.length}</span></div>
               {selectedGearName && (() => {
                 const candidate = GEAR.find(g => g.name === selectedGearName)
                 if (!candidate || !run.gear.includes(candidate.name) || run.loadout[candidate.slot] === candidate.name) return null
@@ -474,9 +481,9 @@ export default function App() {
                   { label: 'Mastery damage', key: 'masteryPct' as const, icon: '📖', pct: true },
                   { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙', pct: false }
                 ]
-                const changes = fields.map(field => ({ ...field, before: current?.[field.key] ?? 0, after: candidate[field.key], delta: candidate[field.key] - (current?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
+                const changes = fields.map(field => ({ ...field, delta: candidate[field.key] - (current?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
                 return <div className="gear-compare" aria-label={`Compare ${candidate.name}`}>
-                  <div className="gear-compare-head"><strong>COMPARE · {candidate.slot.toUpperCase()}</strong><button className="text-btn" onClick={() => setSelectedGearName(null)}>Close</button></div>
+                  <div className="gear-compare-head"><strong>ITEM COMPARISON</strong><button className="text-btn" onClick={() => setSelectedGearName(null)}>Close</button></div>
                   <div className="gear-compare-cards">
                     <div className="gear-compare-card"><small>CURRENT</small><span className="gear-compare-icon">{current?.icon ?? '◇'}</span><b>{current?.name ?? 'Empty slot'}</b><span>{current?.bonus ?? 'No bonus'}</span></div>
                     <div className="gear-compare-card candidate"><small>NEW ITEM</small><span className="gear-compare-icon">{candidate.icon}</span><b>{candidate.name}</b><span>{candidate.bonus}</span></div>
@@ -487,12 +494,24 @@ export default function App() {
                   <button className="secondary-btn gear-equip-btn" onClick={() => equipItem(candidate.name)}>Equip {candidate.name}</button>
                 </div>
               })()}
-              {GEAR.map(item => {
-                const owned = run.gear.includes(item.name)
-                const isEquipped = run.loadout[item.slot] === item.name
-                return <div className="gear-line" key={item.name}><span className="gear-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div>{!owned ? <span className="gear-state locked">🔒 Not found</span> : isEquipped ? <span className="gear-state owned">✓ Equipped</span> : <button onClick={() => setSelectedGearName(item.name)} aria-label={`Compare ${item.name} with currently equipped ${item.slot}`}>{selectedGearName === item.name ? 'Comparing' : 'Compare'}</button>}</div>
-              })}
-              <p className="hint-text">Choose Compare to see how found gear changes your stats before equipping. Only one item per slot gives bonuses; gear is lost when a run ends.</p>
+              <div className="gear-inventory-grid">
+                {GEAR.filter(item => run.gear.includes(item.name)).map(item => {
+                  const isEquipped = run.loadout[item.slot] === item.name
+                  return <div className={`gear-item-card ${isEquipped ? 'is-equipped' : ''}`} key={item.name}>
+                    <span className="gear-item-icon">{item.icon}</span>
+                    <div className="gear-item-info"><b>{item.name}</b><small>{item.slot}</small><span>{item.bonus}</span></div>
+                    {isEquipped ? <span className="gear-state owned">✓ Equipped</span> : <button onClick={() => setSelectedGearName(item.name)} aria-label={`Compare ${item.name} with currently equipped ${item.slot}`}>{selectedGearName === item.name ? 'Selected' : 'Compare'}</button>}
+                  </div>
+                })}
+                {!run.gear.length && <p className="hint-text">Gear you discover during a run will appear here.</p>}
+              </div>
+              <details className="gear-undiscovered">
+                <summary>Undiscovered gear <span>{GEAR.length - run.gear.length} items</span></summary>
+                <div className="gear-locked-grid">
+                  {GEAR.filter(item => !run.gear.includes(item.name)).map(item => <div className="gear-locked-item" key={item.name}><span>{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div><span className="gear-state locked">🔒</span></div>)}
+                </div>
+              </details>
+              <p className="hint-text">Gear is lost when a run ends. Compare found items before swapping them into a slot.</p>
             </section>
             <details className="character-details">
               <summary>All bonuses & passive skills <span>{ownedUpgrades.length} upgrades</span></summary>
