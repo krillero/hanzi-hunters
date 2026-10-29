@@ -34,3 +34,7 @@
 ## Not done yet (honest list)
 - Milestone 3: emoji/Unicode icons (🧪🎒📚⚔🛡 etc.) in the UI are still emoji; no pixel icon set, no pixel buttons/health-bar art, no death/walk animations, no start/menu screen, no map.
 - Milestones 4–5: vocabulary is still the unreviewed 30-word starter set, all prompts are `meaning`/`pinyin` (the `character` mode exists in code but no data uses it), no tutorial, PWA has no icons.
+
+## Hosting
+- `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
+- `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.
