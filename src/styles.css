@@ -594,3 +594,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .result-mastery{font-size:clamp(9px,1.35dvh,11px)}
   .result-rewards span{font-size:clamp(8px,1.2dvh,10px);padding:3px 2px}
 }
+
+/* Anchor the fixed help/audio cluster to the word card itself. */
+.stage-card{position:relative}
