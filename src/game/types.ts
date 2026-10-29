@@ -11,7 +11,7 @@ export type Run = {
   gold: number; potions: number; gear: string[]; streak: number
   hintsLeft: number; secondLeft: number
   phase: RunPhase
-  reward: { xp: number; gold: number; loot: string; levelUps: number }
+  reward: { xp: number; gold: number; loot: string; levelUps: number; dupGold: number }
 }
 export type RunSummary = { floor: number; kills: number; level: number; goldBanked: number }
 

@@ -38,7 +38,7 @@ export function playerStats(run: Pick<Run, 'level' | 'gear'>, b: Bonuses, allGea
   }
 }
 
-const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0 }
+const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0, dupGold: 0 }
 
 export function startFight(run: Run, b: Bonuses, enemies: Enemy[]): Run {
   return { ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: b.hints, secondLeft: b.secondChance, reward: noReward }
@@ -120,7 +120,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
       ...next, hp,
       gold: run.gold + goldGained, kills: run.kills + (killed ? 1 : 0),
       phase: outcome === 'continue' ? 'fighting' : outcome,
-      reward: killed ? { xp: xpGained, gold: goldGained, loot: loot?.name ?? '', levelUps } : noReward
+      reward: killed ? { xp: xpGained, gold: goldGained, loot: loot?.name ?? '', levelUps, dupGold: duplicateGold } : noReward
     }
   }
 }

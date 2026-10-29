@@ -13,7 +13,7 @@ import type { Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
-type Feedback = { correct: boolean; text: string; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string }
+type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string; title: string }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -32,8 +32,9 @@ function useFitText(ref: { current: HTMLElement | null }, deps: unknown[]) {
     if (!el) return
     const fit = () => {
       el.style.fontSize = ''
+      const box = el.parentElement ?? el
       let size = parseFloat(getComputedStyle(el).fontSize)
-      while (el.scrollHeight > el.clientHeight + 1 && size > 10.5) { size -= 0.5; el.style.fontSize = `${size}px` }
+      while ((box.scrollHeight > box.clientHeight + 1 || el.scrollHeight > el.clientHeight + 1) && size > 10.5) { size -= 0.5; el.style.fontSize = `${size}px` }
     }
     fit()
     window.addEventListener('resize', fit)
@@ -159,6 +160,7 @@ export default function App() {
   const answerQuestion = (option: string) => {
     if (!run || !card || answerLock.current || feedback || run.phase !== 'fighting' || eliminated.includes(option)) return
     answerLock.current = true
+    sceneRef.current?.clearFloats()
     const { word, question } = card
     const entry = save.mastery[word.hanzi]
     const isCorrect = option === question.answer
@@ -171,6 +173,7 @@ export default function App() {
     sceneRef.current?.playHit('monster', r.damage)
     if (r.outcome === 'victory') sceneRef.current?.hideMonster()
     else if (r.counter > 0) sceneRef.current?.playHit('hero', r.counter)
+    else if (r.savedBySecondChance) sceneRef.current?.float('hero', 'BLOCKED', '#8ed1ff')
 
     patch(s => ({ ...s, run: r.run, mastery }))
     const masteryNote = !entry ? 'New word added to your wordbook.'
@@ -179,20 +182,20 @@ export default function App() {
           : isCorrect ? 'One more correct answer to level this word up.' : 'Review this one — it will come back.'
     setFeedback({
       correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, chosen: option, answer: question.answer,
-      text: isCorrect
-        ? `${r.damage} damage${r.comboHit ? ' · combo!' : ''}`
-        : `${r.damage} damage${r.outcome === 'victory' ? ' · still a win!' : r.savedBySecondChance ? ' · Second Chance!' : ` · you took ${r.counter}`}`
+      title: isCorrect ? (r.comboHit ? '✦ Combo strike!' : '✦ Excellent strike!')
+        : r.outcome === 'victory' ? '↻ Wrong, but enough to win!'
+          : r.savedBySecondChance ? '↻ Second Chance: no counterattack!' : '↻ Keep learning!'
     })
     if (r.outcome === 'victory') {
-      setToast(r.run.reward.levelUps ? `Level up! You are now level ${r.run.level}.`
-        : r.loot ? `Loot found: ${r.loot.icon} ${r.loot.name}!`
-          : r.duplicateGold ? 'Duplicate gear converted into 4 bonus gold!'
-            : foe?.elite ? 'Elite defeated!' : 'Enemy defeated! Gold and XP earned.')
+      // Rewards live in the scene and the recap chips; no toast.
+      const lines = [r.loot ? `LOOT: ${r.loot.name}` : r.duplicateGold ? `Duplicate gear → +${r.duplicateGold} gold` : ''].filter(Boolean)
+      if (lines.length) sceneRef.current?.float('banner', lines.join('\n'), '#f4d58c')
     }
   }
 
   const dismissFeedback = () => {
     setFeedback(null)
+    sceneRef.current?.clearFloats()
     if (run?.phase === 'fighting') { setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
   }
 
@@ -201,8 +204,9 @@ export default function App() {
     const next = advance(run, bonuses, ENEMIES)
     patch(s => ({ ...s, run: next }))
     setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); setFeedback(null); answerLock.current = false
+    sceneRef.current?.clearFloats()
     sceneRef.current?.resetMonster()
-    if (next.floor > run.floor) setToast(`Floor ${next.floor}! Enemies grow stronger — and so do the rewards.`)
+    if (next.floor > run.floor) { sceneRef.current?.float('banner', `FLOOR ${next.floor}`, '#f0cb78'); window.setTimeout(() => sceneRef.current?.clearBanner(), 1800) }
   }
 
   const usePotion = () => {
@@ -210,7 +214,7 @@ export default function App() {
     const next = drinkPotion(run, bonuses, GEAR)
     if (!next) return
     patch(s => ({ ...s, run: next }))
-    setToast(`Potion used: restored up to ${12 + bonuses.potionHeal} HP.`)
+    sceneRef.current?.float('hero', `+${next.hp - run.hp}`, '#8ee0a9')
   }
 
   const useHint = () => {
@@ -231,7 +235,7 @@ export default function App() {
   const startRun = () => {
     const fresh = newRun(bonuses, GEAR, ENEMIES)
     patch(s => ({ ...s, run: fresh }))
-    setCard(makeCard()); setEliminated([]); setFeedback(null); setToast('A new run begins at level 1. Your upgrades and word mastery remain.'); setCampMsg(''); answerLock.current = false
+    setCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); answerLock.current = false
   }
 
   const buy = (id: string) => {
@@ -246,7 +250,7 @@ export default function App() {
     try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
     const fresh = sanitizeSave(null)
     setSave({ ...fresh, run: newRun(computeBonuses([]), GEAR, ENEMIES) })
-    setCard(null); setFeedback(null); setEliminated([]); setCampMsg(''); setToast('Everything reset. A fresh adventure awaits.'); answerLock.current = false
+    setCard(null); setFeedback(null); setEliminated([]); setCampMsg(''); answerLock.current = false
   }
 
   // ---- camp -----------------------------------------------------------------------------
@@ -341,7 +345,7 @@ export default function App() {
             {(feedback || !fighting) && <div className={`stage stage-wide stage-fb ${feedback ? (feedback.correct ? 'good' : 'bad') : run.phase === 'victory' ? 'good' : 'bad'}`}>
               {feedback
                 ? <>
-                    <p className="fb-head"><strong>{feedback.correct ? '✦ Excellent strike!' : '↻ Keep learning!'}</strong><span>{feedback.text}</span></p>
+                    <p className="fb-head"><strong>{feedback.title}</strong></p>
                     {!feedback.correct && <p className="fb-answer">You chose <s>{feedback.chosen}</s> · answer <b>{feedback.answer}</b></p>}
                     <div className="fb-word">
                       <span className="fb-hanzi">{feedback.word.hanzi}</span>
@@ -352,7 +356,7 @@ export default function App() {
                     {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
                   </>
                 : <div className="stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div></div>}
-              {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>◈ +{run.reward.gold}</span>{run.reward.levelUps > 0 ? <span className="hot">Level {run.level}!</span> : run.reward.loot ? <span className="hot">{run.reward.loot}</span> : <span>Slain {run.kills}</span>}</div>}
+              {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>◈ +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.loot && <span className="hot wide">{run.reward.loot}</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}◈</span>}</div>}
               {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
 

@@ -57,6 +57,12 @@
 - Fixed: the panel width depended on its content (`align-items:start` leaked into the phone flex layout).
 - Tests (headless Chromium, DPR 2.25): `fit.mjs` — stage+choices area and action bar identical in asking / wrong / right states at 411×650, 375×560, 390×664, 411×860, 320×480, 768×1024, no scroll, no horizontal overflow, canvas present; `notes.mjs` — all 30 teaching notes fit the recap box at 650/560/480 px heights (smallest font 14.5 px); e2e flow, 35 unit tests, build all pass.
 
+## 0.2.3 — combat numbers stay in the scene, no duplicate text
+- Damage dealt (`-13` over the monster) and taken (`-5` over the hero) now pop in with the hit animation and **stay on screen** until the next question; they were fading after < 1 s. `BLOCKED` shows when Second Chance prevents a counter, potions show `+HP` over the hero.
+- Loot (or the duplicate-gear gold) appears once as a single line in the scene; XP, gold, level-up and loot are listed once in the victory recap. The "Loot found / Enemy defeated" toasts and the damage text in the feedback box are gone; toasts remain only for speech warnings.
+- Recap content stacks naturally with the reward chips pinned to the bottom; `Run.reward` gained `dupGold` (old saves default it to 0).
+- Verified (headless Chromium, 411×650 and 375×560): 8+ real victories incl. level-ups, loot and duplicates — chips fit, no clipping (smallest note font 14 px), no console errors; stability/fit suites and 35 unit tests pass.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

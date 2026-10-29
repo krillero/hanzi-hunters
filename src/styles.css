@@ -325,3 +325,12 @@
   .stage-fb .fb-note{font-size:clamp(15px,2.5dvh,18px);line-height:1.35}
   .stage-fb .fb-mastery{font-size:clamp(13px,2.1dvh,16px)}
 }
+.fb-chips{flex-wrap:wrap}
+.fb-chips span{flex:1 1 28%}
+.fb-chips .wide{flex-basis:100%}
+.stage-fb .fb-head{display:block}
+/* recap stacks naturally; chips sit at the bottom; otherwise the content is centred */
+.stage-fb .fb-note{flex:0 1 auto!important;min-height:0}
+.stage-fb{justify-content:center}
+.stage-fb:has(.fb-chips),.stage-fb:has(.fb-defeat){justify-content:flex-start}
+.stage-fb .fb-chips{margin-top:auto}

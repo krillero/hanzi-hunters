@@ -21,7 +21,10 @@ export class PixelScene extends Phaser.Scene {
   private hero?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Rectangle
   private monster?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Rectangle
   private chest?: Phaser.GameObjects.Sprite
-  private floatText?: Phaser.GameObjects.Text
+  /** Floating numbers/banners stay on screen until clearFloats() so the player can read them. */
+  private floats: Partial<Record<'hero' | 'monster' | 'banner', { text: string; color: string }>> = {}
+  private floatObjs: Partial<Record<'hero' | 'monster' | 'banner', Phaser.GameObjects.Text>> = {}
+  private floorY = 0
   private heroHome = { x: 0, y: 0 }
   private monsterHome = { x: 0, y: 0 }
   private actorScale = 3
@@ -59,7 +62,8 @@ export class PixelScene extends Phaser.Scene {
     if (width < 2 || height < 2) return
     this.tweens.killAll()
     this.layer?.destroy(true)
-    this.floatText?.destroy()
+    for (const k of ['hero', 'monster', 'banner'] as const) this.floatObjs[k]?.destroy()
+    this.floatObjs = {}
     this.layer = this.add.container(0, 0)
     this.cameras.main.setSize(width, height)
 
@@ -67,6 +71,7 @@ export class PixelScene extends Phaser.Scene {
     const step = TILE * tileScale
     const wallRows = Math.max(2, Math.round(height * 0.34 / step))
     const floorY = wallRows * step
+    this.floorY = floorY
     this.actorScale = Phaser.Math.Clamp(Math.floor(height / 62), 2, 5)
     const feetY = floorY + (height - floorY) * 0.72
     this.heroHome = { x: Math.round(width * 0.27), y: Math.round(feetY) }
@@ -75,6 +80,7 @@ export class PixelScene extends Phaser.Scene {
     if (this.assetsOk) this.buildTextured(width, height, tileScale, step, wallRows, floorY)
     else this.buildFallback(width, height, floorY)
     this.spawnActors()
+    this.drawFloats(false)
   }
 
   private buildTextured(width: number, height: number, ts: number, step: number, wallRows: number, floorY: number) {
@@ -148,12 +154,51 @@ export class PixelScene extends Phaser.Scene {
       obj.setTint(target === 'monster' ? 0xffffff : 0xff6666)
       this.time.delayedCall(180, () => obj.active && obj.clearTint())
     }
-    this.floatText?.destroy()
-    this.floatText = this.add.text(home.x, home.y - 24 * this.actorScale, `-${damage}`, {
-      fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color: target === 'monster' ? '#ffd166' : '#ff7777',
-      stroke: '#0d1220', strokeThickness: 4
-    }).setOrigin(0.5)
-    this.tweens.add({ targets: this.floatText, y: this.floatText.y - 26, alpha: 0, duration: 700, delay: 120, onComplete: () => this.floatText?.destroy() })
+    this.float(target, `-${damage}`, target === 'monster' ? '#ffd166' : '#ff7777')
+  }
+
+  // ---- persistent floating text ----------------------------------------------------------
+
+  /** Shows (or replaces) a label above the hero or monster, or a banner mid-floor, and keeps it visible. */
+  float(slot: 'hero' | 'monster' | 'banner', text: string, color: string) {
+    this.floats[slot] = { text, color }
+    if (this.ready) this.drawFloat(slot, true)
+  }
+
+  /** Removes only the mid-floor banner (used for short-lived announcements like the floor number). */
+  clearBanner() {
+    delete this.floats.banner
+    this.floatObjs.banner?.destroy()
+    delete this.floatObjs.banner
+  }
+
+  clearFloats() {
+    this.floats = {}
+    for (const k of ['hero', 'monster', 'banner'] as const) this.floatObjs[k]?.destroy()
+    this.floatObjs = {}
+  }
+
+  private drawFloats(animate: boolean) {
+    for (const k of ['hero', 'monster', 'banner'] as const) if (this.floats[k]) this.drawFloat(k, animate)
+  }
+
+  private drawFloat(slot: 'hero' | 'monster' | 'banner', animate: boolean) {
+    const f = this.floats[slot]
+    this.floatObjs[slot]?.destroy()
+    if (!f) return
+    const { width } = this.scale
+    const big = slot !== 'banner'
+    const x = slot === 'banner' ? Math.round(width / 2) : (slot === 'hero' ? this.heroHome : this.monsterHome).x
+    const y = slot === 'banner' ? Math.round(this.scale.height - 14) : (slot === 'hero' ? this.heroHome : this.monsterHome).y - 24 * this.actorScale - 6
+    const t = this.add.text(x, y, f.text, {
+      fontFamily: 'monospace', fontSize: big ? '20px' : '14px', fontStyle: 'bold', color: f.color,
+      stroke: '#0d1220', strokeThickness: 5, align: 'center', wordWrap: { width: Math.max(120, width - 24) }
+    }).setOrigin(0.5).setDepth(10)
+    this.floatObjs[slot] = t
+    if (animate) {
+      t.setScale(0.5).setAlpha(0.2).setY(y + 14)
+      this.tweens.add({ targets: t, scale: 1, alpha: 1, y, duration: 260, ease: 'Back.out', delay: slot === 'hero' ? 160 : 90 })
+    }
   }
 
   resetMonster() {
