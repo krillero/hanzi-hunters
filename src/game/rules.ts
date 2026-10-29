@@ -1,5 +1,5 @@
 // Pure run / combat rules: no React, Phaser or DOM. Covered by tests/.
-import type { Enemy, GearItem } from '../data.ts'
+import type { Enemy, GearItem, GearSlot } from '../data.ts'
 import type { Meta, Run, RunSummary } from './types.ts'
 import type { Bonuses } from './upgrades.ts'
 import { MASTERY_DAMAGE } from './mastery.ts'
@@ -13,8 +13,18 @@ export const POTION_HEAL = 12
 export const xpForLevel = (level: number) => level * 30
 
 export const isElite = (kill: number) => kill === ENEMIES_PER_FLOOR - 1
-export const equippedGear = (all: GearItem[], owned: string[]) => all.filter(g => owned.includes(g.name))
-const gearSum = (gear: GearItem[], key: 'attack' | 'hp') => gear.reduce((n, g) => n + g[key], 0)
+export const equippedGear = (all: GearItem[], loadout: Partial<Record<GearSlot, string>>) =>
+  all.filter(g => loadout[g.slot] === g.name)
+const gearSum = (gear: GearItem[], key: 'attack' | 'hp' | 'armor') => gear.reduce((n, g) => n + g[key], 0)
+const gearPct = (gear: GearItem[], key: 'xpPct' | 'masteryPct') => gear.reduce((n, g) => n + g[key], 0)
+export function equipGear(run: Run, name: string, allGear: GearItem[], b: Bonuses): Run | null {
+  const item = allGear.find(g => g.name === name)
+  if (!item || !run.gear.includes(name) || run.loadout[item.slot] === name) return null
+  const beforeMax = playerStats(run, b, allGear).maxHp
+  const next = { ...run, loadout: { ...run.loadout, [item.slot]: name } }
+  const afterMax = playerStats(next, b, allGear).maxHp
+  return { ...next, hp: Math.max(0, Math.min(afterMax, run.hp + (afterMax - beforeMax))) }
+}
 
 export type EnemyStats = { enemy: Enemy; hp: number; damage: number; xp: number; gold: number; elite: boolean }
 /** Per floor (compounding): enemy HP +16 %, damage +11 %, rewards +8 %; the last enemy of a floor is an elite. */
@@ -30,8 +40,8 @@ export function enemyStats(enemies: Enemy[], floor: number, kill: number): Enemy
   }
 }
 
-export function playerStats(run: Pick<Run, 'level' | 'gear'>, b: Bonuses, allGear: GearItem[]) {
-  const gear = equippedGear(allGear, run.gear)
+export function playerStats(run: Pick<Run, 'level' | 'gear' | 'loadout'>, b: Bonuses, allGear: GearItem[]) {
+  const gear = equippedGear(allGear, run.loadout)
   return {
     maxHp: BASE_HP + b.maxHp + HP_PER_LEVEL * (run.level - 1) + gearSum(gear, 'hp'),
     attack: BASE_ATTACK + b.attack + ATTACK_PER_LEVEL * (run.level - 1) + gearSum(gear, 'attack')
@@ -47,7 +57,7 @@ export function startFight(run: Run, b: Bonuses, enemies: Enemy[]): Run {
 export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[]): Run {
   const base: Run = {
     floor: 1, kill: 0, kills: 0, level: 1, xp: 0, hp: 0, enemyHp: 0, gold: 0, potions: 1 + b.startPotions,
-    gear: allGear.filter(g => b.startGear.includes(g.name)).map(g => g.name), streak: 0, hintsLeft: 0, secondLeft: 0,
+    gear: allGear.filter(g => b.startGear.includes(g.name)).map(g => g.name), loadout: Object.fromEntries(allGear.filter(g => b.startGear.includes(g.name)).map(g => [g.slot, g.name])) as Partial<Record<GearSlot, string>>, streak: 0, hintsLeft: 0, secondLeft: 0,
     phase: 'fighting', reward: noReward
   }
   return startFight({ ...base, hp: playerStats(base, b, allGear).maxHp }, b, enemies)
@@ -73,13 +83,13 @@ export type AnswerResult = {
 
 export function resolveAnswer(i: AnswerInput): AnswerResult {
   const { run, bonuses: b, isCorrect } = i
-  const gear = equippedGear(i.allGear, run.gear)
+  const gear = equippedGear(i.allGear, run.loadout)
   const stats = playerStats(run, b, i.allGear)
   const foe = enemyStats(i.enemies, run.floor, run.kill)
 
   let damage = 2, comboHit = false
   if (isCorrect) {
-    let pct = MASTERY_DAMAGE[Math.min(i.lv, MASTERY_DAMAGE.length - 1)] + (i.lv >= 1 ? b.masteryDmgPct : 0)
+    let pct = MASTERY_DAMAGE[Math.min(i.lv, MASTERY_DAMAGE.length - 1)] + (i.lv >= 1 ? b.masteryDmgPct : 0) + gearPct(gear, 'masteryPct')
     if (run.streak >= 2) { pct += b.streakDmgPct; comboHit = b.streakDmgPct > 0 }
     if (run.enemyHp <= foe.hp * 0.35) pct += b.executeDmgPct
     damage = Math.round((8 + stats.attack) * (1 + pct))
@@ -90,26 +100,28 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   let counter = 0, savedBySecondChance = false, secondLeft = run.secondLeft
   if (!killed) {
     if (!isCorrect && secondLeft > 0) { secondLeft -= 1; savedBySecondChance = true }
-    else counter = Math.max(1, foe.damage - b.armor)
+    else counter = Math.max(1, foe.damage - b.armor - gearSum(gear, 'armor'))
   }
   let hp = Math.max(0, run.hp - counter)
 
-  let xpGained = Math.round((isCorrect ? 5 : 2) * (1 + b.xpPct + (gear.some(g => g.name === 'Scholar Charm') ? 0.1 : 0)))
-  let goldGained = 0, loot: GearItem | null = null, duplicateGold = 0, owned = run.gear
+  let xpGained = Math.round((isCorrect ? 5 : 2) * (1 + b.xpPct + gearPct(gear, 'xpPct')))
+  let goldGained = 0, loot: GearItem | null = null, duplicateGold = 0, owned = run.gear, loadout = run.loadout
   if (killed) {
     xpGained += foe.xp
-    goldGained = Math.round(foe.gold * (1 + b.goldPct)) + (gear.some(g => g.name === 'Lucky Coin') ? 3 : 0)
+    goldGained = Math.round(foe.gold * (1 + b.goldPct)) + gear.reduce((n, g) => n + g.goldFlat, 0)
     const dropChance = Math.min(0.95, 0.5 + b.lootPct + (foe.elite ? 0.3 : 0))
     if (i.roll.drop < dropChance) {
       const item = i.allGear[Math.min(i.allGear.length - 1, Math.floor(i.roll.item * i.allGear.length))]
-      if (owned.includes(item.name)) { duplicateGold = 4; goldGained += 4 } else { loot = item; owned = [...owned, item.name] }
+      if (owned.includes(item.name)) { duplicateGold = 4; goldGained += 4 } else { loot = item; owned = [...owned, item.name]; if (!loadout[item.slot]) loadout = { ...loadout, [item.slot]: item.name } }
     }
   }
 
   let xp = run.xp + xpGained, level = run.level, levelUps = 0
   while (xp >= xpForLevel(level)) { xp -= xpForLevel(level); level += 1; levelUps += 1 }
-  const next: Run = { ...run, level, xp, gear: owned, enemyHp, hp, secondLeft, streak: isCorrect ? run.streak + 1 : 0 }
+  const next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hp, secondLeft, streak: isCorrect ? run.streak + 1 : 0 }
   const grown = playerStats(next, b, i.allGear)
+  const oldMax = playerStats(run, b, i.allGear).maxHp
+  if (loadout !== run.loadout && grown.maxHp > oldMax && hp > 0) hp = Math.min(grown.maxHp, hp + grown.maxHp - oldMax)
   if (levelUps && hp > 0) hp = Math.min(grown.maxHp, hp + 8 * levelUps)
   if (killed && hp > 0) hp = Math.min(grown.maxHp, hp + b.healOnKill)
 

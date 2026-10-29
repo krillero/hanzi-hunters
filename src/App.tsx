@@ -13,7 +13,7 @@ import { ENEMIES, GEAR, WORDS, type Word } from './data'
 import { MAX_LV, MASTERY_DAMAGE, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
 import { buildQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import {
-  ENEMIES_PER_FLOOR, advance, isElite, bankRun, drinkPotion, enemyStats, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
+  ENEMIES_PER_FLOOR, advance, isElite, bankRun, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
 import type { Run, Saved } from './game/types'
@@ -114,7 +114,7 @@ export default function App() {
   const bonuses = useMemo(() => computeBonuses(save.meta.upgrades), [save.meta.upgrades])
   const stats = run ? playerStats(run, bonuses, GEAR) : null
   const foe = run ? enemyStats(ENEMIES, run.floor, run.kill) : null
-  const equipped = run ? equippedGear(GEAR, run.gear) : []
+  const equipped = run ? equippedGear(GEAR, run.loadout) : []
   const enemyKey = foe ? `${foe.enemy.sprite}:${foe.elite}` : ''
   const enemyKeyRef = useRef(enemyKey)
   enemyKeyRef.current = enemyKey
@@ -289,6 +289,14 @@ export default function App() {
   }, [reveal, blockingOpen])
   useEffect(() => { if (!pop) return; const t = window.setTimeout(() => setPop(null), 1800); return () => window.clearTimeout(t) }, [pop])
 
+  const equipItem = (name: string) => {
+    if (!run) return
+    const next = equipGear(run, name, GEAR, bonuses)
+    if (!next) return
+    patch(s => ({ ...s, run: next }))
+    setToast(`Equipped ${name}.`)
+  }
+
   const usePotion = () => {
     if (!run || feedback || reveal) return
     const next = drinkPotion(run, bonuses, GEAR)
@@ -392,9 +400,11 @@ export default function App() {
   const pips = entry ? entry.lv : -1
   const equippedAttack = equipped.reduce((n, item) => n + item.attack, 0)
   const equippedHp = equipped.reduce((n, item) => n + item.hp, 0)
-  const hasScholarCharm = equipped.some(item => item.name === 'Scholar Charm')
-  const hasLuckyCoin = equipped.some(item => item.name === 'Lucky Coin')
-  const masteryPct = entry && entry.lv >= 1 ? (MASTERY_DAMAGE[Math.min(entry.lv, MASTERY_DAMAGE.length - 1)] + bonuses.masteryDmgPct) : MASTERY_DAMAGE[0]
+  const gearXpPct = equipped.reduce((n, item) => n + item.xpPct, 0)
+  const gearMasteryPct = equipped.reduce((n, item) => n + item.masteryPct, 0)
+  const gearArmor = equipped.reduce((n, item) => n + item.armor, 0)
+  const gearGoldFlat = equipped.reduce((n, item) => n + item.goldFlat, 0)
+  const masteryPct = (entry && entry.lv >= 1 ? (MASTERY_DAMAGE[Math.min(entry.lv, MASTERY_DAMAGE.length - 1)] + bonuses.masteryDmgPct) : MASTERY_DAMAGE[0]) + gearMasteryPct
   const streakPct = run.streak >= 2 ? bonuses.streakDmgPct : 0
   const executePct = run.enemyHp <= foe.hp * 0.35 ? bonuses.executeDmgPct : 0
   const estimatedHit = Math.round((8 + stats.attack) * (1 + masteryPct + streakPct + executePct))
@@ -450,17 +460,26 @@ export default function App() {
                 <div><span>Mastery damage</span><strong>+{Math.round(masteryPct * 100)}%</strong></div>
                 <div><span>Combo damage {run.streak >= 2 ? '(active)' : '(at 2+ streak)'}</span><strong>{streakPct ? '+' + Math.round(streakPct * 100) + '%' : Math.round(bonuses.streakDmgPct * 100) + '%'}</strong></div>
                 <div><span>Execute damage {run.enemyHp <= foe.hp * 0.35 ? '(active)' : '(enemy below 35% HP)'}</span><strong>{Math.round(bonuses.executeDmgPct * 100)}%</strong></div>
-                <div><span>Incoming hit after armor</span><strong>{Math.max(1, foe.damage - bonuses.armor)} dmg</strong></div>
-                <div><span>Armor</span><strong>{bonuses.armor}</strong></div>
-                <div><span>XP gain</span><strong>+{Math.round((bonuses.xpPct + (hasScholarCharm ? 0.1 : 0)) * 100)}%</strong></div>
-                <div><span>Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{hasLuckyCoin ? ' + 3 per win' : ''}</strong></div>
+                <div><span>Incoming hit after armor</span><strong>{Math.max(1, foe.damage - bonuses.armor - gearArmor)} dmg</strong></div>
+                <div><span>Armor</span><strong>{bonuses.armor + gearArmor}</strong></div>
+                <div><span>XP gain</span><strong>+{Math.round((bonuses.xpPct + gearXpPct) * 100)}%</strong></div>
+                <div><span>Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{gearGoldFlat ? ` + ${gearGoldFlat} per win` : ''}</strong></div>
               </div>
               <p className="hint-text">Estimated hit uses the current word's mastery, your streak, and this enemy's HP. Actual damage can vary with your answer and combat state.</p>
             </section>
             <section className="character-section">
-              <div className="character-section-title">GEAR THIS RUN <span>{equipped.length} / {GEAR.length} ITEMS</span></div>
-              {GEAR.map(item => <div className="gear-line" key={item.name}><span className="gear-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div><span className={`gear-state ${run.gear.includes(item.name) ? 'owned' : 'locked'}`}>{run.gear.includes(item.name) ? '✓ Equipped' : '🔒 Not found'}</span></div>)}
-              <p className="hint-text">Run gear is lost when the run ends. Fortune upgrades can grant starting gear.</p>
+              <div className="character-section-title">GEAR LOADOUT <span>{equipped.length} / 3 SLOTS</span></div>
+              {(['Weapon', 'Armor', 'Accessory'] as const).map(slot => {
+                const item = GEAR.find(g => g.name === run.loadout[slot])
+                return <div className="gear-line gear-slot-line" key={slot}><span className="gear-icon">{item?.icon ?? '◇'}</span><div><b>{slot}</b><small>{item ? `${item.name} · ${item.bonus}` : 'Empty slot'}</small></div><span className={item ? 'gear-state owned' : 'gear-state locked'}>{item ? 'Equipped' : 'Empty'}</span></div>
+              })}
+              <div className="character-section-title gear-inventory-title">INVENTORY <span>{run.gear.length} / {GEAR.length} FOUND</span></div>
+              {GEAR.map(item => {
+                const owned = run.gear.includes(item.name)
+                const isEquipped = run.loadout[item.slot] === item.name
+                return <div className="gear-line" key={item.name}><span className="gear-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div>{!owned ? <span className="gear-state locked">🔒 Not found</span> : isEquipped ? <span className="gear-state owned">✓ Equipped</span> : <button onClick={() => equipItem(item.name)} aria-label={`Equip ${item.name} in ${item.slot} slot`}>{run.loadout[item.slot] ? 'Replace' : 'Equip'}</button>}</div>
+              })}
+              <p className="hint-text">Only one item per slot gives bonuses. New loot auto-equips only when its slot is empty; otherwise choose Equip or Replace here. Gear is lost when a run ends.</p>
             </section>
             <details className="character-details">
               <summary>All bonuses & passive skills <span>{ownedUpgrades.length} upgrades</span></summary>
@@ -539,7 +558,7 @@ export default function App() {
             </div>
           </section>
           {toast && <div className="toast"><span>{toast}</span><button onClick={() => setToast('')} aria-label="Dismiss">×</button></div>}
-          <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear this run</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div><button className="reset-btn" onClick={resetAll}>Reset ALL progress</button></section>
+          <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear found</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div><button className="reset-btn" onClick={resetAll}>Reset ALL progress</button></section>
         </div>
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>

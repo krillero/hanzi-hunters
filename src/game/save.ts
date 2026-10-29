@@ -1,5 +1,5 @@
 // Save format v2 with a safe migration from the v1 prototype save. Never throws.
-import { ENEMIES, GEAR, WORDS } from '../data.ts'
+import { ENEMIES, GEAR, WORDS, type GearSlot } from '../data.ts'
 import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
 import { ENEMIES_PER_FLOOR, enemyStats, playerStats } from './rules.ts'
@@ -40,15 +40,24 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   if (!isObj(raw)) return null
   const b = computeBonuses(upgrades)
   const gear = strs(raw.gear, GEAR.map(g => g.name))
+  const rawLoadout = isObj(raw.loadout) ? raw.loadout : {}
+  const loadout: Partial<Record<GearSlot, string>> = {}
+  for (const slot of ['Weapon', 'Armor', 'Accessory'] as GearSlot[]) {
+    const candidate = rawLoadout[slot]
+    const valid = typeof candidate === 'string' && gear.includes(candidate) && GEAR.some(g => g.name === candidate && g.slot === slot)
+    const legacy = gear.find(name => GEAR.some(g => g.name === name && g.slot === slot))
+    const chosen = valid ? candidate as string : legacy
+    if (chosen) loadout[slot] = chosen
+  }
   const floor = int(raw.floor, 1, 1e6, 1), kill = int(raw.kill, 0, ENEMIES_PER_FLOOR - 1, 0), level = int(raw.level, 1, 999, 1)
-  const stats = playerStats({ level, gear }, b, GEAR)
+  const stats = playerStats({ level, gear, loadout }, b, GEAR)
   const foeHp = enemyStats(ENEMIES, floor, kill).hp
   const phase = raw.phase === 'victory' || raw.phase === 'defeat' ? raw.phase : 'fighting'
   const hp = int(raw.hp, 0, stats.maxHp, stats.maxHp)
   if (hp <= 0 && phase !== 'defeat') return null
   const rw = isObj(raw.reward) ? raw.reward : {}
   const run: Run = {
-    floor, kill, level, gear, phase, hp,
+    floor, kill, level, gear, loadout, phase, hp,
     kills: int(raw.kills, 0, 1e9, 0), xp: int(raw.xp, 0, 1e9, 0), gold: int(raw.gold, 0, 1e9, 0),
     potions: int(raw.potions, 0, 999, 0), streak: int(raw.streak, 0, 999, 0),
     enemyHp: phase === 'victory' ? 0 : int(raw.enemyHp, 1, foeHp, foeHp),

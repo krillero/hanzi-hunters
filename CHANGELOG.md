@@ -141,3 +141,10 @@
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.
+
+
+## Gear loadout foundation (in progress)
+- Added three mutually exclusive gear slots (Weapon, Armor, Accessory) and expanded the loot pool to eight items with distinct attack, HP, armor, XP, mastery-damage and gold effects.
+- Inventory now distinguishes found items from equipped items. Loot auto-equips only into an empty slot; players can equip or replace owned gear from the character panel.
+- Existing v2 saves are sanitized into a compatible loadout by equipping the first owned item in each slot; no save key change or progress reset.
+- Automated test/build results pending review of the feature branch.

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { ENEMIES, GEAR } from '../src/data.ts'
 import { NO_BONUSES, computeBonuses, type Bonuses } from '../src/game/upgrades.ts'
 import {
-  ENEMIES_PER_FLOOR, advance, bankRun, drinkPotion, enemyStats, newRun, playerStats, resolveAnswer, startFight
+  ENEMIES_PER_FLOOR, advance, bankRun, drinkPotion, enemyStats, equipGear, newRun, playerStats, resolveAnswer, startFight
 } from '../src/game/rules.ts'
 
 const none: Bonuses = { ...NO_BONUSES }
@@ -21,7 +21,7 @@ test('upgrades shape the start of a run but gear/level never carry over', () => 
   const b = computeBonuses(['G1', 'G2', 'S1', 'S3', 'F3'])
   const r = newRun(b, GEAR, ENEMIES)
   assert.equal(r.hp, 38); assert.equal(r.potions, 2); assert.equal(r.hintsLeft, 1); assert.equal(r.secondLeft, 1)
-  assert.deepEqual(r.gear, ['Copper Blade']); assert.equal(r.level, 1); assert.equal(r.gold, 0)
+  assert.deepEqual(r.gear, ['Copper Blade']); assert.equal(r.loadout.Weapon, 'Copper Blade'); assert.equal(r.level, 1); assert.equal(r.gold, 0)
   assert.equal(playerStats(r, b, GEAR).attack, 7)
 })
 
@@ -54,6 +54,8 @@ test('killing blow: no counterattack, rewards once, hp never below 0 or above ma
 test('armor reduces counters (min 1); second chance blocks one counter per fight', () => {
   const arm = { ...none, armor: 2 }
   assert.equal(ask(run0(), { bonuses: arm, isCorrect: false }).run.hp, 27)
+  const bootsRun = { ...run0(), gear: ['Windrunner Boots'], loadout: { Armor: 'Windrunner Boots' } }
+  assert.equal(ask(bootsRun, { isCorrect: false }).run.hp, 26)
   assert.equal(ask(run0(), { bonuses: { ...none, armor: 99 }, isCorrect: false }).run.hp, 29)
   const b = { ...none, secondChance: 1 }, r = startFight(run0(), b, ENEMIES)
   const first = ask(r, { bonuses: b, isCorrect: false }); assert.ok(first.savedBySecondChance); assert.equal(first.run.hp, 30)
@@ -69,7 +71,7 @@ test('combo and execute bonuses', () => {
 
 test('loot: new gear is added, duplicates become gold; elites drop more often', () => {
   const r = { ...run0(), enemyHp: 1 }
-  const drop = ask(r, { roll: { drop: 0.1, item: 0 } }); assert.equal(drop.loot?.name, GEAR[0].name); assert.deepEqual(drop.run.gear, [GEAR[0].name])
+  const drop = ask(r, { roll: { drop: 0.1, item: 0 } }); assert.equal(drop.loot?.name, GEAR[0].name); assert.deepEqual(drop.run.gear, [GEAR[0].name]); assert.equal(drop.run.loadout.Weapon, GEAR[0].name)
   const dup = ask({ ...r, gear: [GEAR[0].name] }, { roll: { drop: 0.1, item: 0 } }); assert.equal(dup.loot, null); assert.equal(dup.duplicateGold, 4)
   const elite = { ...r, kill: ENEMIES_PER_FLOOR - 1 }
   assert.ok(ask(elite, { roll: { drop: 0.7, item: 0.5 } }).loot, 'elite drops at 0.7')
@@ -80,7 +82,7 @@ test('gold, xp, heal-on-kill bonuses and gear', () => {
   const b = computeBonuses(['F1', 'S2', 'G1', 'G2', 'G3', 'G4'])
   const r = { ...newRun(b, GEAR, ENEMIES), enemyHp: 1, hp: 20 }
   const k = ask(r, { bonuses: b }); assert.equal(k.run.reward.gold, Math.round(ENEMIES[0].gold * 1.2)); assert.equal(k.run.hp, 25)
-  assert.equal(ask({ ...r, gear: ['Lucky Coin'] }, { bonuses: none }).run.reward.gold, ENEMIES[0].gold + 3)
+  assert.equal(ask({ ...r, gear: ['Lucky Coin'], loadout: { Accessory: 'Lucky Coin' } }, { bonuses: none }).run.reward.gold, ENEMIES[0].gold + 3)
 })
 
 test('multiple level-ups in one fight; level raises max hp and attack', () => {
@@ -96,6 +98,15 @@ test('advance walks 4 enemies then the next floor, resetting per-fight charges',
   let r = newRun(b, GEAR, ENEMIES)
   for (let i = 1; i < ENEMIES_PER_FLOOR; i++) { r = advance({ ...r, hintsLeft: 0 }, b, ENEMIES); assert.equal(r.floor, 1); assert.equal(r.kill, i); assert.equal(r.hintsLeft, 2) }
   r = advance(r, b, ENEMIES); assert.deepEqual([r.floor, r.kill], [2, 0]); assert.equal(r.enemyHp, enemyStats(ENEMIES, 2, 0).hp); assert.equal(r.phase, 'fighting')
+})
+
+test('gear can be swapped within a slot and HP adjusts safely', () => {
+  const r = { ...run0(), gear: ['Mossy Vest', 'Guardian Helm'], loadout: { Armor: 'Mossy Vest' }, hp: 38 }
+  const swapped = equipGear(r, 'Guardian Helm', GEAR, none)!
+  assert.equal(swapped.loadout.Armor, 'Guardian Helm')
+  assert.equal(playerStats(swapped, none, GEAR).maxHp, 34)
+  assert.equal(swapped.hp, 34)
+  assert.equal(equipGear(swapped, 'Copper Blade', GEAR, none), null, 'cannot equip an item not owned')
 })
 
 test('potions', () => {

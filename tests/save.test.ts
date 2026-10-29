@@ -31,9 +31,17 @@ test('a saved run round-trips; impossible values are clamped', () => {
   const ok = sanitizeSave({ run: { ...run, gold: 12, floor: 3, kill: 2 } }).run!
   assert.deepEqual([ok.gold, ok.floor, ok.kill, ok.hp], [12, 3, 2, 30])
   const wild = sanitizeSave({ run: { ...run, hp: 9999, enemyHp: 9999, kill: 99, gear: ['Copper Blade', 'Fake'], potions: -3 } }).run!
-  assert.ok(wild.hp <= 35 && wild.kill === 3 && wild.potions === 0 && wild.enemyHp < 100); assert.deepEqual(wild.gear, ['Copper Blade'])
+  assert.ok(wild.hp <= 35 && wild.kill === 3 && wild.potions === 0 && wild.enemyHp < 100); assert.deepEqual(wild.gear, ['Copper Blade']); assert.equal(wild.loadout.Weapon, 'Copper Blade')
   assert.equal(sanitizeSave({ run: { ...run, hp: 0 } }).run, null, 'a 0-hp fighting run is not resumable')
   assert.equal(sanitizeSave({ run: { ...run, hp: 0, phase: 'defeat' } }).run!.phase, 'defeat', 'but a defeat screen is')
+})
+
+test('legacy gear is equipped once per slot and saved loadouts are validated', () => {
+  const run = newRun(NO_BONUSES, GEAR, ENEMIES)
+  const legacy = sanitizeSave({ run: { ...run, gear: ['Copper Blade', 'Mossy Vest', 'Lucky Coin'] } }).run!
+  assert.deepEqual(legacy.loadout, { Weapon: 'Copper Blade', Armor: 'Mossy Vest', Accessory: 'Lucky Coin' })
+  const invalid = sanitizeSave({ run: { ...run, gear: ['Copper Blade', 'Mossy Vest'], loadout: { Weapon: 'Mossy Vest', Armor: 'Copper Blade' } } }).run!
+  assert.deepEqual(invalid.loadout, { Weapon: 'Copper Blade', Armor: 'Mossy Vest' })
 })
 
 test('v1 prototype saves migrate: learned -> level 1, gold banked, floor -> best floor', () => {
