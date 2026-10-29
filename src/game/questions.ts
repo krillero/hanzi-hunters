@@ -92,12 +92,21 @@ function poolFor(word: Word, all: Word[], known?: Set<string>) {
   return pool
 }
 
-/** Up to n fair wrong answers: not too close in meaning; same group first; extra filter per question kind. */
-function distractors(word: Word, pool: Word[], all: Word[], rng: () => number, n: number, ok: (w: Word) => boolean = () => true) {
+/** How confusable the wrong answers are: easy = clearly different words, normal = mixed, hard = same family first. */
+export type Difficulty = 'easy' | 'normal' | 'hard'
+export const difficultyFor = (lv: number): Difficulty => (lv <= 0 ? 'easy' : lv === 1 ? 'normal' : 'hard')
+
+/** Up to n fair wrong answers: not too close in meaning; ordered by difficulty; extra filter per question kind. */
+function distractors(word: Word, pool: Word[], all: Word[], rng: () => number, n: number, ok: (w: Word) => boolean = () => true, difficulty: Difficulty = 'hard') {
   const fair = (w: Word) => w.hanzi !== word.hanzi && !tooClose(w, word) && ok(w)
+  const look = new Set(lookalikesOf(word, all).map(w => w.hanzi))
   const ranked = (list: Word[]) => {
     const s = shuffle(list.filter(fair), rng)
-    return [...s.filter(w => w.group === word.group), ...s.filter(w => w.group !== word.group)]
+    const same = s.filter(w => w.group === word.group), other = s.filter(w => w.group !== word.group)
+    if (difficulty === 'hard') return [...same, ...other]
+    if (difficulty === 'normal') return s
+    // easy: other families first, and look-alike characters last
+    return [...other.filter(w => !look.has(w.hanzi)), ...same.filter(w => !look.has(w.hanzi)), ...s.filter(w => look.has(w.hanzi))]
   }
   const out = ranked(pool).slice(0, n)
   if (out.length < n) for (const w of ranked(all)) { if (out.length >= n) break; if (!out.includes(w)) out.push(w) }
@@ -122,6 +131,9 @@ const SOUND_ONLY: QKind[] = ['listen', 'pinyin2char', 'listen2meaning']
 const AUDIO: QKind[] = ['listen', 'listen2meaning', 'listen2pinyin']
 
 /** Relative frequency of each kind. Early: recognise. Developing: all directions. Higher: mixed recall + discrimination. */
+/** A word that was just introduced (or dropped back to level 0) gets its easiest question first: the character and pinyin are on screen. */
+export const FIRST_STEP: Partial<Record<QKind, number>> = { meaning: 1 }
+
 export const KIND_WEIGHTS: Record<number, Partial<Record<QKind, number>>> = {
   0: { meaning: 4, listen: 2, character: 2 },
   1: { pinyin: 3, pinyin2char: 2, character: 2, listen2meaning: 2, homophone: 2, lookalike: 2 },
@@ -144,7 +156,7 @@ export function isFeasible(kind: QKind, word: Word, all: Word[], opts: Pick<Ques
 export function chooseKind(word: Word, entry: MasteryEntry | undefined, all: Word[], opts: QuestionOptions = {}): QKind {
   if (!entry) return 'intro'
   const rng = opts.rng ?? Math.random
-  const table = KIND_WEIGHTS[Math.min(entry.lv, 4)]
+  const table = entry.lv === 0 && entry.ok === 0 ? FIRST_STEP : KIND_WEIGHTS[Math.min(entry.lv, 4)]
   const history = opts.history ?? []
   const recent = history.slice(-2).map(h => h.kind)
   const weights: [QKind, number][] = []
@@ -172,10 +184,11 @@ export function buildQuestion(word: Word, entry: MasteryEntry | undefined, words
   if (kind !== 'intro' && !isFeasible(kind, word, words, opts)) kind = 'meaning'
 
   const pool = poolFor(word, words, opts.known)
+  const difficulty = difficultyFor(lv)
   const meaningOptions = (soundOnly = false) =>
-    shuffle([word.meaning, ...distractors(word, pool, words, rng, 3, soundOnly ? w => w.pinyin !== word.pinyin : undefined).map(w => w.meaning)], rng)
+    shuffle([word.meaning, ...distractors(word, pool, words, rng, 3, soundOnly ? w => w.pinyin !== word.pinyin : undefined, difficulty).map(w => w.meaning)], rng)
   const hanziOptions = (soundOnly = false) =>
-    shuffle([word.hanzi, ...distractors(word, pool, words, rng, 3, soundOnly ? w => w.pinyin !== word.pinyin && !word.alt?.includes(w.pinyin) : undefined).map(w => w.hanzi)], rng)
+    shuffle([word.hanzi, ...distractors(word, pool, words, rng, 3, soundOnly ? w => w.pinyin !== word.pinyin && !word.alt?.includes(w.pinyin) : undefined, difficulty).map(w => w.hanzi)], rng)
   const q = (p: Omit<Question, 'audio'> & { audio?: boolean }): Question => ({ audio: false, ...p })
 
   switch (kind) {
@@ -217,7 +230,7 @@ export function buildQuestion(word: Word, entry: MasteryEntry | undefined, words
     })
     case 'homophone': {
       const partners = shuffle(usableHomophones(word, words, opts.known), rng).slice(0, 2)
-      const fillers = distractors(word, pool, words, rng, 3 - partners.length, w => w.pinyin !== word.pinyin && !partners.some(p => tooClose(p, w) || p.hanzi === w.hanzi))
+      const fillers = distractors(word, pool, words, rng, 3 - partners.length, w => w.pinyin !== word.pinyin && !partners.some(p => tooClose(p, w) || p.hanzi === w.hanzi), difficulty)
       return q({
         kind, text: `Same sound! Which character is “${word.pinyin}” and means “${word.meaning}”?`,
         options: shuffle([word.hanzi, ...partners.map(p => p.hanzi), ...fillers.map(f => f.hanzi)], rng), answer: word.hanzi,
@@ -226,7 +239,7 @@ export function buildQuestion(word: Word, entry: MasteryEntry | undefined, words
     }
     case 'lookalike': {
       const partners = shuffle(usableLookalikes(word, words, opts.known), rng).slice(0, 3)
-      const fillers = distractors(word, pool, words, rng, 3 - partners.length, w => !partners.some(p => tooClose(p, w) || p.hanzi === w.hanzi))
+      const fillers = distractors(word, pool, words, rng, 3 - partners.length, w => !partners.some(p => tooClose(p, w) || p.hanzi === w.hanzi), difficulty)
       return q({
         kind, text: `These look alike. Which one means “${word.meaning}”?`,
         options: shuffle([word.hanzi, ...partners.map(p => p.hanzi), ...fillers.map(f => f.hanzi)], rng), answer: word.hanzi,

@@ -131,6 +131,13 @@
 - Removed the ELITE tag from the scene's top bar (the enemy card says "Elite …" and the kill banner says ELITE SLAIN). The floor text is shortened (`F3 · 4/4`, `F3·4/4` below 380 px) and shrinks before the gold amount does; the redundant `+N` gold pop next to the counter was removed (the scene reward popup shows it). Hidden below 340 px.
 - Tests (`pop.mjs`, dev-only scene handle `window.__hhScene` compiled out of production): popup survives a rebuild and is gone after its lifetime; mid-life alpha < 0.95; four quick popups → one on screen; real kill → next monster → no leftovers; top bar has no ELITE tag, coin present, gold colour, nothing overlaps (411/375/360/320 px, extreme values). All earlier suites still pass.
 
+## 0.7.2 — level 0 is easier
+- Feedback: a level-0 word was asked as "Which character means “four”?" with 四 六 九 五 (all numbers) as options — too hard right after meeting the word.
+- **Easy first step:** a word at level 0 with no correct answer yet (new, or demoted back to 0) now always gets character → meaning with the pinyin shown. After one correct answer, listening and meaning → character can appear (`FIRST_STEP` in `questions.ts`).
+- **Wrong answers scale with the level:** level 0 and the intro use clearly different words (other families first, look-alikes last); level 1 mixed; level 2+ same family first (as before). Applies to every question kind that offers hanzi or meanings.
+- Tests: 53 unit tests (new: first-step kinds; zero same-family wrong answers at level 0, many at level 3, mixed at level 1; no look-alikes at level 0; easy intro). Browser (`lv0.mjs`): 14 fresh level-0 questions for 四 were all character → meaning with no other numbers offered; after one correct answer, a mix with still no other numbers. Existing suites pass.
+- Not verified: whether the difficulty curve now feels right to real learners (it is tunable in `KIND_WEIGHTS` / `difficultyFor`).
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

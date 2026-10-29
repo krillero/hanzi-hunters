@@ -43,8 +43,11 @@ test('every word, level and kind: 4 unique options, exactly one correct, answer 
 test('level tables: early = recognise, developing = all directions, higher = mixed; audio only when allowed', () => {
   const w = WORDS.find(x => x.hanzi === '水')!    // no homophone, no look-alike
   const seen = (lv: number, canListen: boolean) => { const k = new Set<string>(); for (let i = 0; i < 400; i++) k.add(chooseKind(w, { lv, ok: 0 }, WORDS, { canListen, known: new Set(WORDS.map(x => x.hanzi)) })); return k }
-  assert.deepEqual([...seen(0, true)].sort(), ['character', 'listen', 'meaning'])
-  assert.deepEqual([...seen(0, false)].sort(), ['character', 'meaning'])
+  // level 0: a fresh word (no correct answer yet) always gets the easiest kind first; recognition and listening only after one success
+  const lv0 = (ok: number, canListen: boolean) => { const k = new Set<string>(); for (let i = 0; i < 400; i++) k.add(chooseKind(w, { lv: 0, ok }, WORDS, { canListen, known: new Set(WORDS.map(x => x.hanzi)) })); return [...k].sort() }
+  assert.deepEqual(lv0(0, true), ['meaning'])
+  assert.deepEqual(lv0(1, true), ['character', 'listen', 'meaning'])
+  assert.deepEqual(lv0(1, false), ['character', 'meaning'])
   for (const k of seen(1, true)) assert.ok(['pinyin', 'pinyin2char', 'character', 'listen2meaning'].includes(k), `lv1 ${k}`)
   assert.ok(seen(1, true).has('pinyin2char') && seen(1, true).has('listen2meaning'))
   for (const lv of [2, 3, 4]) { const k = seen(lv, false); assert.ok(![...k].some(x => x.startsWith('listen')), `no audio at lv${lv}`); assert.ok(k.size >= 3, `variety at lv${lv}`) }
@@ -133,4 +136,31 @@ test('unfair wrong answers never appear in any kind: tone-change readings, overl
     const zhong = buildQuestion(get('中'), { lv: 2, ok: 0 }, WORDS, { canListen: true, kind, known })
     assert.ok(!zhong.options.includes('country') && !zhong.options.includes('国'), `中 ${kind} offered 国/country`)
   }
+})
+
+test('level 0 is easy: clearly different wrong answers, never look-alikes; higher levels get harder wrong answers', () => {
+  const known = new Set(WORDS.map(x => x.hanzi)); const get = (h: string) => WORDS.find(x => x.hanzi === h)!
+  const sameGroupCount = (word: Word, lv: number, kind: QKind) => {
+    let same = 0, total = 0
+    for (let i = 0; i < 300; i++) {
+      const q = buildQuestion(word, { lv, ok: 1 }, WORDS, { canListen: true, kind, known })
+      if (q.kind !== kind) continue
+      for (const o of q.options) {
+        if (o === q.answer) continue
+        const w = q.optionsAreHanzi ? WORDS.find(x => x.hanzi === o) : WORDS.find(x => x.meaning === o)
+        if (w) { total++; if (w.group === word.group) same++ }
+      }
+    }
+    return { same, total }
+  }
+  const four = get('四')   // numbers are the hardest wrong answers for each other
+  for (const kind of ['character', 'meaning'] as QKind[]) {
+    assert.equal(sameGroupCount(four, 0, kind).same, 0, `level 0 ${kind}: no other numbers among the wrong answers`)
+    assert.ok(sameGroupCount(four, 3, kind).same > 300, `level 3 ${kind}: same-family wrong answers are the norm`)
+    const mid = sameGroupCount(four, 1, kind); assert.ok(mid.same > 0 && mid.same < mid.total * 0.6, `level 1 ${kind}: mixed`)
+  }
+  // look-alike characters are not used as wrong answers at level 0 (木 vs 目 is a later skill)
+  for (let i = 0; i < 300; i++) assert.ok(!buildQuestion(get('木'), { lv: 0, ok: 1 }, WORDS, { kind: 'character', known }).options.includes('目'), 'look-alike offered at level 0')
+  // the intro question is easy too
+  for (let i = 0; i < 100; i++) { const q = buildQuestion(four, undefined, WORDS, { known }); for (const o of q.options) if (o !== q.answer) assert.notEqual(WORDS.find(x => x.meaning === o)!.group, 'number') }
 })
