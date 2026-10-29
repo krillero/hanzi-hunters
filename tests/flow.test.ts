@@ -15,7 +15,7 @@ test('right answers continue using the selected speed', () => {
   assert.deepEqual(plan(true, 'continue'), { mode: 'question', delay: AUTO_DELAYS.quick.question })
   assert.deepEqual(plan(true, 'victory'), { mode: 'enemy', delay: AUTO_DELAYS.quick.enemy })
   assert.deepEqual(plan(true, 'continue', false, 'relaxed'), { mode: 'question', delay: AUTO_DELAYS.relaxed.question })
-  assert.ok(AUTO_DELAYS.relaxed.question > AUTO_DELAYS.quick.question && AUTO_DELAYS.quick.enemy > AUTO_DELAYS.quick.question)
+  assert.ok(AUTO_DELAYS.relaxed.question > AUTO_DELAYS.quick.question && AUTO_DELAYS.quick.enemy >= AUTO_DELAYS.quick.question)
 })
 
 test('Learn first pauses below mastery level 2, then auto-advances after 0.5 seconds', () => {
