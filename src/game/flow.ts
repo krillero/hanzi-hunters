@@ -3,7 +3,7 @@ export type AutoContinue = 'learning' | 'quick' | 'relaxed' | 'off'
 export type AutoPlan = { mode: 'question' | 'enemy'; delay: number } | null
 
 export const AUTO_DELAYS: Record<Exclude<AutoContinue, 'off' | 'learning'>, { question: number; enemy: number }> = {
-  quick: { question: 1000, enemy: 1500 },
+  quick: { question: 500, enemy: 500 },
   relaxed: { question: 2500, enemy: 3000 }
 }
 
