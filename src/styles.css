@@ -387,3 +387,29 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 @media(max-width:380px){.scene-gold{display:none}.chip-btn{min-width:40px}}
 /* the big card line when the cue is the meaning or the pinyin instead of the character */
 .stage-card .hanzi.big-latin{font-size:clamp(26px,5.2dvh,44px);font-weight:700;line-height:1.15;padding:0 8px;max-width:100%;overflow-wrap:anywhere;color:#f0cb78}
+
+/* ======== Word card: every field has its own fixed slot; one speaker button, always in the same corner ======== */
+.stage{position:relative}
+.stage-card{justify-content:center;gap:0}
+.slot{width:100%;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;white-space:nowrap;margin:0}
+.slot-hanzi{font-size:80px;height:92px;line-height:1;font-weight:600}
+.slot-pinyin{font-size:30px;height:38px;font-weight:700;letter-spacing:.5px}
+.slot-meaning{font-size:18px;height:28px}
+.slot.on.slot-hanzi{color:#f7f4eb;text-shadow:0 4px 0 #273347}
+.slot.on.slot-pinyin{color:#f0cb78}
+.slot.on.slot-meaning{color:#cbd7e6}
+.slot.dim{color:#9aabc0;opacity:.22}
+.slot.ask{color:#f0cb78;opacity:1;text-shadow:0 0 14px #f0cb7855}
+.slot-pinyin.ask,.slot-pinyin.dim{letter-spacing:3px}
+.speak-btn{position:absolute;top:8px;right:8px;z-index:2;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:1px solid #3b526b;background:#1a2c40;color:#c4d8eb;font-size:19px;padding:0}
+.speak-btn.cue{border-color:#f0cb78;background:#2a2518;animation:tip-pulse 1.4s ease-in-out infinite}
+.corner-btns{position:absolute;top:8px;right:8px;z-index:2;display:flex;gap:8px}
+.corner-btns .speak-btn{position:static}
+.stage-fb .fb-head,.stage-fb .fb-answer{padding-right:108px}
+.bar-hint{margin:0;flex:1;display:grid;place-items:center;color:#7d8da3;font-size:14px;letter-spacing:.3px}
+@media(max-width:850px){
+  .slot-hanzi{font-size:clamp(44px,8.6dvh,72px);height:clamp(54px,10dvh,88px)}
+  .slot-pinyin{font-size:clamp(22px,3.4dvh,30px);height:clamp(28px,4.2dvh,36px)}
+  .slot-meaning{font-size:clamp(15px,2.4dvh,19px);height:clamp(22px,3.6dvh,28px)}
+}
+@media(prefers-reduced-motion:reduce){.speak-btn.cue{animation:none}}

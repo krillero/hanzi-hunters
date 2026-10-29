@@ -300,11 +300,8 @@ export default function App() {
   const entry = save.mastery[word.hanzi]
   const revealed = !!feedback
   const show = { hanzi: question.show.hanzi || revealed, pinyin: question.show.pinyin || revealed, meaning: question.show.meaning || revealed }
-  // The big line of the word card: the character when shown, else the meaning or pinyin that is being given as the cue.
-  const main = show.hanzi ? { text: word.hanzi, latin: false, hidden: false, usesPinyin: false, usesMeaning: false }
-    : show.meaning && question.ask !== 'meaning' && !(show.pinyin && question.kind === 'homophone') ? { text: word.meaning, latin: true, hidden: false, usesPinyin: false, usesMeaning: true }
-      : show.pinyin && question.ask !== 'pinyin' && !show.meaning ? { text: word.pinyin, latin: true, hidden: false, usesPinyin: true, usesMeaning: false }
-        : { text: '？', latin: false, hidden: true, usesPinyin: false, usesMeaning: false }
+  // Each field of the word card has its OWN fixed slot. A hidden field shows the same placeholder; the asked one is highlighted.
+  const slot = (shown: boolean, asked: boolean) => (shown ? 'on' : asked ? 'ask' : 'dim')
   const fighting = run.phase === 'fighting'
   const lastOfFloor = run.kill + 1 >= ENEMIES_PER_FLOOR
   const pips = entry ? entry.lv : -1
@@ -355,11 +352,10 @@ export default function App() {
             {/* Fixed-size regions: stage, choices, action bar never change size or position. */}
             {fighting && !feedback && <>
               <div className="stage stage-card"><span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
-                {question.audio
-                  ? <button className="listen-big" onClick={() => speak(word.hanzi)} aria-label="Play the word again">🔊<span>Tap to hear it again</span></button>
-                  : <div className={`hanzi ${main.latin ? 'big-latin' : ''} ${main.hidden ? 'is-hidden' : ''}`}>{main.text}</div>}
-                <div className="pinyin-line"><span className={`pinyin ${show.pinyin ? '' : 'is-hidden'}`}>{main.usesPinyin ? '\u00a0' : show.pinyin ? word.pinyin : question.ask === 'pinyin' ? '? ? ?' : '\u00a0'}</span></div>
-                <div className={`word-meaning ${show.meaning ? '' : 'is-hidden'}`}>{main.usesMeaning ? '\u00a0' : show.meaning ? word.meaning : question.ask === 'meaning' ? '“ ? ”' : '\u00a0'}</div>
+                <button className={`speak-btn ${question.audio ? 'cue' : ''}`} onClick={() => speak(word.hanzi)} aria-label="Hear the word">🔊</button>
+                <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')}`}>{show.hanzi ? word.hanzi : '？'}</div>
+                <div className={`slot slot-pinyin ${slot(show.pinyin, question.ask === 'pinyin')}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
+                <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
               </div>
               <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
@@ -376,8 +372,10 @@ export default function App() {
                     <div className="fb-word">
                       <span className="fb-hanzi">{feedback.word.hanzi}</span>
                       <div className="fb-info"><span className="fb-pinyin">{feedback.word.pinyin}</span><span className="fb-meaning">{feedback.word.meaning}</span></div>
-                      {hasExplanation(feedback.word.hanzi) && <button className={`icon-btn tip-btn ${feedback.correct ? '' : 'pulse'}`} onClick={() => setExplain([feedback.word.hanzi])} aria-label={`More about ${feedback.word.hanzi}`}>💡</button>}
-                      <button className="icon-btn" onClick={() => speak(feedback.word.hanzi)} aria-label="Hear pronunciation">🔊</button>
+                    </div>
+                    <div className="corner-btns">
+                      {hasExplanation(feedback.word.hanzi) && <button className={`speak-btn tip-btn ${feedback.correct ? '' : 'pulse'}`} onClick={() => setExplain([feedback.word.hanzi])} aria-label={`More about ${feedback.word.hanzi}`}>💡</button>}
+                      <button className="speak-btn" onClick={() => speak(feedback.word.hanzi)} aria-label="Hear the word">🔊</button>
                     </div>
                     <p className="fb-note" ref={noteRef}>{feedback.word.note}</p>
                     {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
@@ -390,8 +388,9 @@ export default function App() {
             <div className="action-bar">
               {fighting && !feedback
                 ? <>
-                    <button className="bar-btn ghost" onClick={() => speak(word.hanzi)} aria-label="Hear pronunciation">🔊 Listen</button>
-                    {bonuses.hints > 0 && <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>}
+                    {bonuses.hints > 0
+                      ? <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>
+                      : <p className="bar-hint">Choose an answer</p>}
                   </>
                 : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? nextEnemy : endRun}>
                     {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? `Descend to floor ${run.floor + 1}` : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>

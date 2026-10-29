@@ -100,6 +100,11 @@
 - Tests: 45 unit tests (every word × level × kind: 4 unique options, exactly one correct; level tables; homophone/look-alike/known-words rules; repeat rate and weak-area boost); browser: all 10 kinds rendered at 411×650, a 61-question seeded session served 7 kinds with 5 % repeats and 0 unanswerable questions, full e2e + explanation, death/kill, fit suites still pass.
 - Not verified: real Mandarin voices on a phone (audio kinds were exercised with a stubbed voice), balance with real players, whether the weights feel right.
 
+## 0.5.1 — stable word card (nothing jumps between question types)
+- The word card is now three fixed slots — character, pinyin, meaning — each with its own height and font size for every question kind. A hidden field always shows the same placeholder (`？`, `? ? ?`, `“ ? ”`); the field being asked is gold, the others are dimmed; revealed cues use the normal style. The earlier layout swapped the meaning or the pinyin into the big character slot depending on the kind.
+- One speaker button, 44 px round, always in the card's top-right corner: in the question (pulsing gold ring when listening is the cue) and in the answer recap (same box, with 💡 beside it when an explanation exists). The old big speaker block, the bar "Listen" button and the recap's inline speaker are gone. The action bar shows Hint, or "Choose an answer" when there are no hints.
+- Test (`slots.mjs`, headless Chromium, 411×650, 411×860, 320×568, 1100×800): for all 11 kinds the slot rectangles, speaker, card, choices and action bar are pixel-identical, and the speaker keeps the same right edge/top/size from question to answer. Plus the unit, fit, notes-fit, explanation, death/kill, variety and full e2e suites.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.
