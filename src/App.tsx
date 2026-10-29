@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Phaser from 'phaser'
 import { PixelScene } from './game/PixelScene'
 import CampScreen from './CampScreen'
@@ -13,7 +13,7 @@ import type { Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
-type Feedback = { correct: boolean; text: string; word: Word; mastery: string; masteryUp: boolean; chosen: string }
+type Feedback = { correct: boolean; text: string; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -25,6 +25,41 @@ function initialSave(): Saved {
   return s
 }
 
+/** Shrinks the text until it fits its fixed-size box (teaching notes vary from 40 to 100 characters). */
+function useFitText(ref: { current: HTMLElement | null }, deps: unknown[]) {
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const fit = () => {
+      el.style.fontSize = ''
+      let size = parseFloat(getComputedStyle(el).fontSize)
+      while (el.scrollHeight > el.clientHeight + 1 && size > 10.5) { size -= 0.5; el.style.fontSize = `${size}px` }
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+}
+
+function useFullscreen() {
+  const supported = typeof document !== 'undefined' && !!document.fullscreenEnabled
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    const f = () => setOn(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', f)
+    return () => document.removeEventListener('fullscreenchange', f)
+  }, [])
+  const toggle = async () => {
+    try {
+      if (document.fullscreenElement) { await document.exitFullscreen(); return }
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' })
+      try { await (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('portrait') } catch { /* not supported */ }
+    } catch { /* denied or unsupported */ }
+  }
+  return { supported, on, toggle }
+}
+
 function hasChineseVoice() {
   try { return window.speechSynthesis.getVoices().some(v => v.lang.toLowerCase().startsWith('zh')) } catch { return false }
 }
@@ -33,6 +68,8 @@ export default function App() {
   const sceneRef = useRef<PixelScene | null>(null)
   const mountRef = useRef<HTMLDivElement | null>(null)
   const answerLock = useRef(false)
+  const fs = useFullscreen()
+  const noteRef = useRef<HTMLParagraphElement | null>(null)
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
   const [canListen, setCanListen] = useState(false)
   const [card, setCard] = useState<Card | null>(null)
@@ -42,6 +79,12 @@ export default function App() {
   const [campMsg, setCampMsg] = useState('')
   const [showBag, setShowBag] = useState(false)
   const [showWords, setShowWords] = useState(false)
+  useFitText(noteRef, [feedback])
+  useEffect(() => {
+    if (!toast) return
+    const t = window.setTimeout(() => setToast(''), toast.length > 70 ? 7000 : 3500)
+    return () => window.clearTimeout(t)
+  }, [toast])
 
   const run = save.run
   const inCamp = !run
@@ -89,7 +132,9 @@ export default function App() {
       if (sprite) scene.setEnemy(sprite as 'slime' | 'imp' | 'bat', elite === 'true')
       if (phaseRef.current === 'victory') scene.hideMonster()
     })
-    return () => { game.destroy(true); sceneRef.current = null }
+    const ro = new ResizeObserver(() => game.scale.refresh())
+    ro.observe(mountRef.current)
+    return () => { ro.disconnect(); game.destroy(true); sceneRef.current = null }
   }, [inCamp, hasCard])
 
   useEffect(() => {
@@ -131,12 +176,12 @@ export default function App() {
     const masteryNote = !entry ? 'New word added to your wordbook.'
       : after > before ? (after >= MAX_LV ? `Mastered! ${word.hanzi} is now level ${MAX_LV}.` : `Word level up! ${word.hanzi} is now level ${after}.`)
         : after < before ? `${word.hanzi} slipped back to level ${after}. It will return for review.`
-          : isCorrect ? 'One more correct answer to level this word up.' : ''
+          : isCorrect ? 'One more correct answer to level this word up.' : 'Review this one — it will come back.'
     setFeedback({
-      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, chosen: option,
+      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, chosen: option, answer: question.answer,
       text: isCorrect
-        ? `Direct hit${r.comboHit ? ' with a combo bonus' : ''}: ${r.damage} damage.`
-        : `Not quite. You dealt ${r.damage} damage. ${r.outcome === 'victory' ? 'It was still enough to win!' : r.savedBySecondChance ? 'Second Chance! The counterattack missed.' : `The monster hits back for ${r.counter}.`}`
+        ? `${r.damage} damage${r.comboHit ? ' · combo!' : ''}`
+        : `${r.damage} damage${r.outcome === 'victory' ? ' · still a win!' : r.savedBySecondChance ? ' · Second Chance!' : ` · you took ${r.counter}`}`
     })
     if (r.outcome === 'victory') {
       setToast(r.run.reward.levelUps ? `Level up! You are now level ${r.run.level}.`
@@ -210,12 +255,13 @@ export default function App() {
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
       <div className="top-stats">
         {run ? <><span>✦ LVL {run.level}</span><span>◈ {run.gold} G</span></> : <span>◈ {save.meta.gold} G</span>}
+        {fs.supported && <button className="chip-btn fs-btn" onClick={fs.toggle} aria-label={fs.on ? 'Exit fullscreen' : 'Fullscreen'}>{fs.on ? '🗗' : '⛶'}</button>}
       </div>
     </header>
   )
   if (!run || !stats || !foe) {
     return (
-      <main className="app-shell">
+      <main className="app-shell in-camp">
         {topbar}
         <CampScreen save={save} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} />
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
@@ -234,7 +280,7 @@ export default function App() {
   const pips = entry ? entry.lv : -1
 
   return (
-    <main className="app-shell">
+    <main className="app-shell in-battle">
       {topbar}
 
       <section className="hero-strip">
@@ -245,19 +291,20 @@ export default function App() {
       <section className="game-layout">
         <div className="left-column">
           <div className="scene-frame">
-            <div className="scene-label"><span className="live-dot"></span><span className="scene-where">F{pad(run.floor)} <span>·</span> {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.elite && <b className="elite-tag">ELITE</b>}</span>
+            <div className="scene-label"><span className="live-dot"></span><span className="scene-where">F{pad(run.floor)} <span>·</span> {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.elite && <b className="elite-tag">ELITE</b>}<span className="scene-gold">◈ {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
                 <button className="chip-btn" onClick={() => setShowBag(v => !v)} aria-label="Gear">🎒<b>{equipped.length}</b></button>
                 <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
+                {fs.supported && <button className="chip-btn fs-btn" onClick={fs.toggle} aria-label={fs.on ? 'Exit fullscreen' : 'Fullscreen'}>{fs.on ? '🗗' : '⛶'}</button>}
               </div></div>
             <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle scene" />
             <div className="scene-footer"><span>✦ Mosslight Cavern</span><span>RUN GOLD ◈ {run.gold}</span></div>
           </div>
           <div className="combatant-row">
             <div className="combatant player-card">
-              <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer</strong><small>Level {run.level} Adventurer</small></div></div>
-              <div className="bar-label"><span>HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div>
+              <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Level {run.level} Adventurer</small></div></div>
+              <div className="bar-label"><span>HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               <div className="mini-stats"><span>⚔ ATK {stats.attack}</span><span>✦ XP {run.xp}/{xpForLevel(run.level)}</span></div>
             </div>
             <div className="versus">VS</div>
@@ -273,44 +320,41 @@ export default function App() {
 
         <div className="right-column">
           <section className="question-panel">
-            <div className="panel-kicker"><span>SCROLL OF KNOWLEDGE</span><span className="mastery-kicker">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i><span className="streak">×{run.streak}</span></span></div>
-            <div className="question-title"><span className="question-icon">文</span><div><h2>{fighting ? question.text : run.phase === 'victory' ? (lastOfFloor ? 'Floor cleared!' : 'Victory, adventurer!') : 'You have fallen...'}</h2><p>{fighting ? 'Answer correctly to unleash a stronger attack.' : run.phase === 'victory' ? 'The cavern rewards your growing knowledge.' : 'Your gold and word mastery are safe.'}</p></div></div>
+            <div className="question-title"><span className="question-icon">文</span><div className="title-text"><h2>{fighting ? question.text : run.phase === 'victory' ? (lastOfFloor ? 'Floor cleared!' : 'Victory, adventurer!') : 'You have fallen...'}</h2><p>{fighting ? 'Answer correctly to unleash a stronger attack.' : run.phase === 'victory' ? 'The cavern rewards your growing knowledge.' : 'Your gold and word mastery are safe.'}</p></div><span className="streak-chip" aria-label="streak">🔥 ×{run.streak}</span></div>
 
             {/* Fixed-size regions: stage, choices, action bar never change size or position. */}
-            {feedback
-              ? <div className={`stage stage-fb ${feedback.correct ? 'good' : 'bad'}`}>
-                  <p className="fb-head"><strong>{feedback.correct ? '✦ Excellent strike!' : '↻ Keep learning!'}</strong> {feedback.text}</p>
-                  <div className="fb-word">
-                    <span className="fb-hanzi">{feedback.word.hanzi}</span>
-                    <div className="fb-info"><span className="fb-pinyin">{feedback.word.pinyin}</span><span className="fb-meaning">{feedback.word.meaning}</span></div>
-                    <button className="icon-btn" onClick={() => speak(feedback.word.hanzi)} aria-label="Hear pronunciation">🔊</button>
-                  </div>
-                  <p className="fb-note">{feedback.word.note}</p>
-                  {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
-                </div>
-              : fighting
-                ? <div className="stage stage-card">
-                    {question.kind === 'listen'
-                      ? <button className="listen-big" onClick={() => speak(word.hanzi)} aria-label="Play the word again">🔊<span>Tap to hear it again</span></button>
-                      : <div className={`hanzi ${show.hanzi ? '' : 'is-hidden'}`}>{show.hanzi ? word.hanzi : '？'}</div>}
-                    <div className="pinyin-line"><span className={`pinyin ${show.pinyin ? '' : 'is-hidden'}`}>{show.pinyin ? word.pinyin : question.kind === 'pinyin' ? '? ? ?' : '\u00a0'}</span></div>
-                    <div className={`word-meaning ${show.meaning ? '' : 'is-hidden'}`}>{show.meaning ? word.meaning : question.kind === 'meaning' || question.kind === 'intro' ? '“ ? ”' : '\u00a0'}</div>
-                  </div>
-                : <div className="stage stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div><p>{run.phase === 'victory' ? 'Read your rewards below, then move on.' : 'Your run is over.'}</p></div>}
+            {fighting && !feedback && <>
+              <div className="stage stage-card"><span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
+                {question.kind === 'listen'
+                  ? <button className="listen-big" onClick={() => speak(word.hanzi)} aria-label="Play the word again">🔊<span>Tap to hear it again</span></button>
+                  : <div className={`hanzi ${show.hanzi ? '' : 'is-hidden'}`}>{show.hanzi ? word.hanzi : '？'}</div>}
+                <div className="pinyin-line"><span className={`pinyin ${show.pinyin ? '' : 'is-hidden'}`}>{show.pinyin ? word.pinyin : question.kind === 'pinyin' ? '? ? ?' : '\u00a0'}</span></div>
+                <div className={`word-meaning ${show.meaning ? '' : 'is-hidden'}`}>{show.meaning ? word.meaning : question.kind === 'meaning' || question.kind === 'intro' ? '“ ? ”' : '\u00a0'}</div>
+              </div>
+              <div className="answer-list">{question.options.map((option, i) => {
+                const gone = eliminated.includes(option)
+                return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${gone ? 'answer-gone' : ''}`} disabled={gone} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
+              })}</div>
+            </>}
 
-            {fighting
-              ? <div className="answer-list">{question.options.map((option, i) => {
-                  const gone = eliminated.includes(option)
-                  const wrongPick = !!feedback && !feedback.correct && option === feedback.chosen
-                  return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${gone ? 'answer-gone' : ''} ${feedback && option === question.answer ? 'answer-correct' : ''} ${wrongPick ? 'answer-wrong' : ''}`} disabled={!!feedback || gone} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
-                })}</div>
-              : run.phase === 'victory'
-                ? <div className="answer-list reward-grid">
-                    <div><small>XP</small><b>+{run.reward.xp}</b></div>
-                    <div><small>Gold</small><b>+{run.reward.gold}</b></div>
-                    <div className="wide"><small>{run.reward.levelUps ? 'Level up!' : run.reward.loot ? 'Loot' : 'Slain this run'}</small><b>{run.reward.levelUps ? `Level ${run.level}` : run.reward.loot ? run.reward.loot : run.kills}</b></div>
-                  </div>
-                : <div className="answer-list reward-grid defeat-grid"><p>You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b>. It is banked for permanent upgrades. Next run: level 1, no gear. Word mastery stays.</p></div>}
+            {/* After answering, the recap takes over the stage + choices area; the action bar below never moves. */}
+            {(feedback || !fighting) && <div className={`stage stage-wide stage-fb ${feedback ? (feedback.correct ? 'good' : 'bad') : run.phase === 'victory' ? 'good' : 'bad'}`}>
+              {feedback
+                ? <>
+                    <p className="fb-head"><strong>{feedback.correct ? '✦ Excellent strike!' : '↻ Keep learning!'}</strong><span>{feedback.text}</span></p>
+                    {!feedback.correct && <p className="fb-answer">You chose <s>{feedback.chosen}</s> · answer <b>{feedback.answer}</b></p>}
+                    <div className="fb-word">
+                      <span className="fb-hanzi">{feedback.word.hanzi}</span>
+                      <div className="fb-info"><span className="fb-pinyin">{feedback.word.pinyin}</span><span className="fb-meaning">{feedback.word.meaning}</span></div>
+                      <button className="icon-btn" onClick={() => speak(feedback.word.hanzi)} aria-label="Hear pronunciation">🔊</button>
+                    </div>
+                    <p className="fb-note" ref={noteRef}>{feedback.word.note}</p>
+                    {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
+                  </>
+                : <div className="stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div></div>}
+              {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>◈ +{run.reward.gold}</span>{run.reward.levelUps > 0 ? <span className="hot">Level {run.level}!</span> : run.reward.loot ? <span className="hot">{run.reward.loot}</span> : <span>Slain {run.kills}</span>}</div>}
+              {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
+            </div>}
 
             <div className="action-bar">
               {fighting && !feedback

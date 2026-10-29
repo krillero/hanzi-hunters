@@ -81,6 +81,9 @@ hanzi-hunters/
 3. Test the main combat loop, save/load, mobile layout and browser console.
 4. Only then begin the next milestone from the development brief.
 
+## Playing on a phone
+Use the ⛶ button (top right) for fullscreen. For the best experience install it: Android Chrome/Brave menu → *Install app* / *Add to Home screen*; iPhone Safari Share → *Add to Home Screen*. The installed app runs without browser bars.
+
 ## Game loop (0.2)
 See `docs/GAME_DESIGN.md`. Short version: fight through floors of 4 enemies (last one is an elite), answer questions to deal damage, die, bank your gold, buy permanent upgrades at camp, and restart at level 1 with no gear — your word mastery persists and unlocks harder question types.
 

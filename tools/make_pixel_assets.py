@@ -185,3 +185,29 @@ if os.environ.get('PREVIEW'):
     for p in ('characters/hero.png', 'enemies/slime.png', 'enemies/imp.png', 'enemies/bat.png', 'tiles/dungeon.png', 'props/torch.png', 'props/chest.png'):
         im = Image.open(f'{ROOT}/{p}'); prev.paste(im, (x, 0), im); x += im.width + 2
     prev.resize((prev.width * 4, prev.height * 4), Image.NEAREST).save(os.environ['PREVIEW'])
+
+# ---------------------------------------------------------------- PWA / home-screen icons (hero vs slime on a dungeon floor)
+def app_icon(size, maskable):
+    bg = Image.new('RGBA', (size, size), RGB['t'])
+    px = max(1, size // 64)                     # logical pixel for the backdrop
+    for y in range(0, size, px * 8):            # floor tile lines
+        for x in range(0, size, px * 8):
+            for i in range(px * 8):
+                if y + px * 8 - 1 < size and x + i < size: bg.putpixel((x + i, min(size - 1, y + px * 8 - 1)), RGB['T'])
+    pad = 0.22 if maskable else 0.08            # maskable icons need a larger safe zone
+    inner = int(size * (1 - 2 * pad))
+    k = max(1, inner // 44)                      # hero 24px + slime 16px + gap, integer scale
+    hero_im = Image.open(f'{ROOT}/characters/hero.png').crop((0, 0, 24, 24))
+    slime_im = Image.open(f'{ROOT}/enemies/slime.png').crop((0, 0, 16, 16))
+    hero_im = hero_im.resize((24 * k, 24 * k), Image.NEAREST); slime_im = slime_im.resize((16 * k, 16 * k), Image.NEAREST)
+    total_w = hero_im.width + 4 * k + slime_im.width
+    x0 = (size - total_w) // 2; y0 = (size - hero_im.height) // 2
+    bg.paste(hero_im, (x0, y0), hero_im); bg.paste(slime_im, (x0 + hero_im.width + 4 * k, y0 + hero_im.height - slime_im.height), slime_im)
+    if not maskable:
+        for t in range(max(2, size // 64)):     # gold frame
+            for i in range(size):
+                for xy in ((i, t), (i, size - 1 - t), (t, i), (size - 1 - t, i)): bg.putpixel(xy, RGB['g'])
+    return bg
+os.makedirs(f'{ROOT}/../icons', exist_ok=True)
+app_icon(192, False).save(f'{ROOT}/../icons/icon-192.png'); app_icon(512, False).save(f'{ROOT}/../icons/icon-512.png')
+app_icon(512, True).save(f'{ROOT}/../icons/icon-512-maskable.png'); app_icon(180, False).save(f'{ROOT}/../icons/apple-touch-icon.png')
