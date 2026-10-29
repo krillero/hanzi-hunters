@@ -467,12 +467,12 @@ export default function App() {
                 if (!candidate || !run.gear.includes(candidate.name) || run.loadout[candidate.slot] === candidate.name) return null
                 const current = GEAR.find(g => g.name === run.loadout[candidate.slot])
                 const fields = [
-                  { label: 'Attack', key: 'attack' as const, icon: '⚔️' },
-                  { label: 'Max HP', key: 'hp' as const, icon: '❤️' },
-                  { label: 'Armor', key: 'armor' as const, icon: '🛡️' },
+                  { label: 'Attack', key: 'attack' as const, icon: '⚔️', pct: false },
+                  { label: 'Max HP', key: 'hp' as const, icon: '❤️', pct: false },
+                  { label: 'Armor', key: 'armor' as const, icon: '🛡️', pct: false },
                   { label: 'XP gain', key: 'xpPct' as const, icon: '✨', pct: true },
                   { label: 'Mastery damage', key: 'masteryPct' as const, icon: '📖', pct: true },
-                  { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙' }
+                  { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙', pct: false }
                 ]
                 const changes = fields.map(field => ({ ...field, before: current?.[field.key] ?? 0, after: candidate[field.key], delta: candidate[field.key] - (current?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
                 return <div className="gear-compare" aria-label={`Compare ${candidate.name}`}>
