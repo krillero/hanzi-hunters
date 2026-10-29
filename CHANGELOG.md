@@ -63,6 +63,13 @@
 - Recap content stacks naturally with the reward chips pinned to the bottom; `Run.reward` gained `dupGold` (old saves default it to 0).
 - Verified (headless Chromium, 411×650 and 375×560): 8+ real victories incl. level-ups, loot and duplicates — chips fit, no clipping (smallest note font 14 px), no console errors; stability/fit suites and 35 unit tests pass.
 
+## 0.3 — explanation popups + content pipeline
+- New popup (💡) with extra explanations per word: opens from the answer recap (pulses after a wrong answer) and from the Wordbook; supports text, tips, breakdown ("built from"), compare (look-alikes) and example blocks, related-word buttons with back navigation, Escape/backdrop to close. Shipped examples: 他, 她 (he/she: look at the left part 亻 vs 女) and 好 (= 女 + 子).
+- Vocabulary moved to `src/content/words.json`; explanations in `src/content/explanations.json`; strict validator (`npm run validate:content`, also run in CI and in `npm test`) with precise error paths; `docs/CONTENT_GUIDE.md` with formats, rules, patterns, checklist and an agent prompt; `?word=<hanzi>` preview aid.
+- Fixed a leak: the Wordbook showed the pinyin/meaning of the word currently being asked; it is now hidden until answered.
+- Tests: 41 unit tests (6 new content/validator tests incl. negative cases); browser test (phone 411×650 + desktop): forced 她 question → wrong answer → pulsing 💡 → popup fits viewport, related chip + back, Escape, layout unchanged, Wordbook entry opens popup, no console errors.
+- The explanation text is **not yet reviewed by a Mandarin speaker**.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

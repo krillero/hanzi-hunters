@@ -4,7 +4,7 @@ import { WORDS } from '../src/data.ts'
 import { buildQuestion, toneVariants } from '../src/game/questions.ts'
 
 test('vocabulary data is consistent', () => {
-  assert.equal(WORDS.length, 30)
+  assert.ok(WORDS.length >= 8, 'need enough words for 4 distinct options')
   assert.equal(new Set(WORDS.map(w => w.hanzi)).size, WORDS.length, 'duplicate hanzi')
   for (const w of WORDS) {
     assert.equal(w.pinyin.normalize('NFC'), w.pinyin, `${w.hanzi}: pinyin not NFC`)

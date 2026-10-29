@@ -81,6 +81,9 @@ hanzi-hunters/
 3. Test the main combat loop, save/load, mobile layout and browser console.
 4. Only then begin the next milestone from the development brief.
 
+## Adding words and explanations
+Vocabulary and the "more about this word" popups are JSON files in `src/content/`. See **`docs/CONTENT_GUIDE.md`** (format, rules, checklist and a ready-made prompt for another agent). Validate with `npm run validate:content`; preview any word with `/?word=她`.
+
 ## Playing on a phone
 Use the ⛶ button (top right) for fullscreen. For the best experience install it: Android Chrome/Brave menu → *Install app* / *Add to Home screen*; iPhone Safari Share → *Add to Home Screen*. The installed app runs without browser bars.
 

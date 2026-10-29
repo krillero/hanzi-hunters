@@ -1,0 +1,111 @@
+{
+  "他": {
+    "title": "他 (he) vs 她 (she)",
+    "summary": "他 and 她 sound exactly the same: tā. Only the writing tells them apart, so learn to spot the left-hand side.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Spot the difference",
+        "intro": "Both are a left part plus the same right part, 也. Only the left part changes.",
+        "items": [
+          { "char": "他", "pinyin": "tā", "meaning": "he / him", "note": "Left part 亻 = the “person” radical, a squashed 人." },
+          { "char": "她", "pinyin": "tā", "meaning": "she / her", "note": "Left part 女 = “woman”, the character you already know." }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Tips for telling them apart",
+        "items": [
+          "Look left first. A thin, upright 亻 means a person (he). A curvy 女 means a woman (she).",
+          "女 is the same character as in 女 (nǚ, woman), so 她 literally contains “woman”.",
+          "In speech they are identical. You only know who is meant from the conversation, so in a listening question you must use context.",
+          "Memory aid (not etymology): the right part 也 is shared, so cover it with your thumb and look only at the left."
+        ]
+      },
+      {
+        "type": "breakdown",
+        "heading": "Built from",
+        "parts": [
+          { "char": "亻", "pinyin": "rén", "meaning": "person (radical form of 人)", "note": "Radicals are reused in many characters." },
+          { "char": "也", "pinyin": "yě", "meaning": "also (here it mostly hints the sound)" }
+        ]
+      },
+      {
+        "type": "text",
+        "heading": "Good to know",
+        "body": "A third tā, 它, is used for things and animals (“it”). Adding 们 makes it plural: 他们 (tāmen) is a group of men or a mixed group, and 她们 (tāmen) is a group of women."
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          { "zh": "他是中国人。", "pinyin": "Tā shì Zhōngguórén.", "en": "He is Chinese." },
+          { "zh": "她是中国人。", "pinyin": "Tā shì Zhōngguórén.", "en": "She is Chinese." }
+        ]
+      }
+    ],
+    "related": ["她", "人", "女"]
+  },
+  "她": {
+    "title": "她 (she) vs 他 (he)",
+    "summary": "她 is tā, “she”. It sounds the same as 他 (he), but the left part is 女, “woman”.",
+    "sections": [
+      {
+        "type": "breakdown",
+        "heading": "Built from",
+        "parts": [
+          { "char": "女", "pinyin": "nǚ", "meaning": "woman", "note": "Reused in 好 (hǎo, good) and many other characters." },
+          { "char": "也", "pinyin": "yě", "meaning": "also (here it mostly hints the sound)" }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Tips for telling them apart",
+        "items": [
+          "If the left part is 女 you are looking at 她 (she). If it is the thin 亻 it is 他 (he).",
+          "Say “woman + also” to yourself when you see 她. It is a memory aid, not the real history.",
+          "The two are written differently but spoken identically, so a wrong answer between them is very common. Do not worry, just look left."
+        ]
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          { "zh": "她是女人。", "pinyin": "Tā shì nǚrén.", "en": "She is a woman." }
+        ]
+      }
+    ],
+    "related": ["他", "女", "好"]
+  },
+  "好": {
+    "title": "好 is built from 女 and 子",
+    "summary": "好 (hǎo, good) is a small picture made from two characters you already know: 女 (woman) and 子 (child).",
+    "sections": [
+      {
+        "type": "breakdown",
+        "heading": "Built from",
+        "intro": "Many characters are built from smaller parts that you meet again and again.",
+        "parts": [
+          { "char": "女", "pinyin": "nǚ", "meaning": "woman" },
+          { "char": "子", "pinyin": "zǐ", "meaning": "child" }
+        ]
+      },
+      {
+        "type": "tips",
+        "heading": "Memory aid",
+        "items": [
+          "A woman with her child: something good. This is a story to help you remember, scholars debate the real origin.",
+          "You will meet 女 again inside 她 (she), so learning the parts pays off twice."
+        ]
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          { "zh": "你好!", "pinyin": "Nǐ hǎo!", "en": "Hello!" }
+        ]
+      }
+    ],
+    "related": ["女", "子", "她"]
+  }
+}

@@ -14,6 +14,8 @@ You are continuing an existing prototype. Read `README.md`, `DEVELOPMENT_BRIEF.m
 9. **Protect user progress when changing saves.** `SAVE_KEY` currently identifies the persisted schema. If changing the shape, add a versioned migration or safe fallback instead of assuming every stored value is current.
 10. **Document asset rights.** Use original artwork, commissioned art, or assets with a license compatible with the project. Keep source/credits/license information for third-party assets.
 
+11. **Content tasks (words, explanations) follow `docs/CONTENT_GUIDE.md`.** Edit only `src/content/*.json`, run `npm run validate:content` and `npm test`, and report anything you were unsure about for human review.
+
 ## Definition of done for a change
 - The requested behavior is implemented, not only represented in a mockup.
 - `npm run build` passes (or any failure is explained and clearly unrelated).

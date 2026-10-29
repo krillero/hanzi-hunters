@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Phaser from 'phaser'
 import { PixelScene } from './game/PixelScene'
 import CampScreen from './CampScreen'
+import ExplainModal from './ExplainModal'
+import { hasExplanation } from './content'
 import { ENEMIES, GEAR, WORDS, type Word } from './data'
 import { MAX_LV, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
 import { buildQuestion, shuffle, type Question } from './game/questions'
@@ -70,6 +72,8 @@ export default function App() {
   const mountRef = useRef<HTMLDivElement | null>(null)
   const answerLock = useRef(false)
   const fs = useFullscreen()
+  // Content preview aid: /?word=她 makes that word the first question (see docs/CONTENT_GUIDE.md).
+  const forcedWord = useRef(new URLSearchParams(window.location.search).get('word'))
   const noteRef = useRef<HTMLParagraphElement | null>(null)
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
   const [canListen, setCanListen] = useState(false)
@@ -80,6 +84,8 @@ export default function App() {
   const [campMsg, setCampMsg] = useState('')
   const [showBag, setShowBag] = useState(false)
   const [showWords, setShowWords] = useState(false)
+  const [explain, setExplain] = useState<string[]>([])
+  const closeExplain = useMemo(() => () => setExplain([]), [])
   useFitText(noteRef, [feedback])
   useEffect(() => {
     if (!toast) return
@@ -101,7 +107,9 @@ export default function App() {
   phaseRef.current = run?.phase ?? 'fighting'
 
   const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen): Card => {
-    const word = pickWord(WORDS, mastery, current)
+    // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
+    const forced = current === null && forcedWord.current ? WORDS.find(w => w.hanzi === forcedWord.current) : undefined
+    const word = forced ?? pickWord(WORDS, mastery, current)
     return { word, question: buildQuestion(word, mastery[word.hanzi], WORDS, { canListen: listen }) }
   }
   const patch = (fn: (s: Saved) => Saved) => setSave(fn)
@@ -227,6 +235,7 @@ export default function App() {
 
   const endRun = () => {
     if (!run) return
+    forcedWord.current = null
     const { meta, summary } = bankRun(save.meta, run)
     patch(s => ({ ...s, meta, run: null, lastRun: summary }))
     setCampMsg(''); setFeedback(null); setCard(null); setShowBag(false); setShowWords(false); answerLock.current = false
@@ -319,7 +328,7 @@ export default function App() {
             </div>
           </div>
           {showBag && <div className="drawer"><div className="drawer-title">GEAR THIS RUN <button onClick={() => setShowBag(false)} aria-label="Close gear">×</button></div>{GEAR.map(item => <div className="gear-line" key={item.name}><span className="gear-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div><span className={`gear-state ${run.gear.includes(item.name) ? 'owned' : 'locked'}`}>{run.gear.includes(item.name) ? '✓ Equipped' : '🔒 Not found'}</span></div>)}<p className="hint-text">Gear drops from monsters and stacks, but is lost when your run ends. Start-of-run gear comes from the Fortune upgrades.</p></div>}
-          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi]).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; return <div className={`wordbook-word lv${lv}`} key={w.hanzi}><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i></div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
+          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain([w.hanzi])} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
 
         <div className="right-column">
@@ -350,6 +359,7 @@ export default function App() {
                     <div className="fb-word">
                       <span className="fb-hanzi">{feedback.word.hanzi}</span>
                       <div className="fb-info"><span className="fb-pinyin">{feedback.word.pinyin}</span><span className="fb-meaning">{feedback.word.meaning}</span></div>
+                      {hasExplanation(feedback.word.hanzi) && <button className={`icon-btn tip-btn ${feedback.correct ? '' : 'pulse'}`} onClick={() => setExplain([feedback.word.hanzi])} aria-label={`More about ${feedback.word.hanzi}`}>💡</button>}
                       <button className="icon-btn" onClick={() => speak(feedback.word.hanzi)} aria-label="Hear pronunciation">🔊</button>
                     </div>
                     <p className="fb-note" ref={noteRef}>{feedback.word.note}</p>
@@ -376,6 +386,7 @@ export default function App() {
         </div>
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
+      {explain.length > 0 && <ExplainModal stack={explain} onClose={closeExplain} onBack={() => setExplain(st => st.slice(0, -1))} onOpen={h => setExplain(st => [...st, h])} onSpeak={speak} />}
     </main>
   )
 }
