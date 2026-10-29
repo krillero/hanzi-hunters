@@ -105,6 +105,10 @@
 - One speaker button, 44 px round, always in the card's top-right corner: in the question (pulsing gold ring when listening is the cue) and in the answer recap (same box, with 💡 beside it when an explanation exists). The old big speaker block, the bar "Listen" button and the recap's inline speaker are gone. The action bar shows Hint, or "Choose an answer" when there are no hints.
 - Test (`slots.mjs`, headless Chromium, 411×650, 411×860, 320×568, 1100×800): for all 11 kinds the slot rectangles, speaker, card, choices and action bar are pixel-identical, and the speaker keeps the same right edge/top/size from question to answer. Plus the unit, fit, notes-fit, explanation, death/kill, variety and full e2e suites.
 
+## 0.5.2 — placeholders optically centred
+- The big placeholder was the fullwidth `？`, whose glyph sits left of centre in its box, and the `? ? ?` row had trailing letter-spacing; the big mark appeared between the 1st and 2nd `?` below it. It is now a regular `?` (Manrope bold) and the pinyin placeholder is padded to cancel the trailing space.
+- Measured with `centre.mjs` (pixel analysis of screenshots at 3× DPR, 411×650, 411×860, 320×568, 1100×800, kinds character / meaning→pinyin / pinyin→character): the big `?` is within 0.3 px of the card centre and `? ? ?` within 1.5 px. `slots.mjs`, fit, unit and e2e suites still pass.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

@@ -413,3 +413,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .slot-meaning{font-size:clamp(15px,2.4dvh,19px);height:clamp(22px,3.6dvh,28px)}
 }
 @media(prefers-reduced-motion:reduce){.speak-btn.cue{animation:none}}
+/* centre the placeholders optically: a plain "?" (the fullwidth one sits left in its box) and no trailing letter-space */
+.slot-hanzi.ask,.slot-hanzi.dim{font-family:Manrope,system-ui,sans-serif;font-weight:700}
+.slot-pinyin.ask,.slot-pinyin.dim{letter-spacing:.35em;padding-left:.35em}
