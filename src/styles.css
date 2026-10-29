@@ -62,3 +62,66 @@
   .pinyin{font-size:24px}
   .word-meaning{font-size:13px}
 }
+
+/* ---- Mastery, hints, listening ---- */
+.pips{display:inline-flex;gap:3px;margin-left:8px;vertical-align:middle}
+.pips u{width:8px;height:8px;background:#26354a;border:1px solid #3b4f68;display:block}
+.pips u.on{background:var(--gold);border-color:#9b7535}
+.mastery-kicker{display:inline-flex;align-items:center}
+.mastery-note{margin-top:6px;color:#f0cb78!important}
+.hint-btn{border-color:#6c5a2d;color:#f3d995}.hint-btn b{color:#fff;margin-left:4px}
+.answer-gone{opacity:.3!important}
+.opt-hanzi>span:nth-child(2){font-size:34px;line-height:1;font-weight:500}
+.opt-hanzi{justify-content:flex-start}
+.hanzi.is-hidden{opacity:.35;letter-spacing:0}
+.listen-big{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;min-height:120px;justify-content:center;background:transparent;border:0;color:#f0cb78;font-size:44px}
+.listen-big span{font-size:13px;color:#9aabc0}
+.wordbook-word{position:relative}.wordbook-word .pips{margin:6px 0 0}
+.wordbook-word.lv4{border:1px solid #9b7535;background:#2a2416}
+.elite-tag{margin-left:10px;color:#ff9d6e;border:1px solid #8a4a2e;padding:2px 6px;font-size:9px;letter-spacing:1px}
+
+/* ---- Camp / upgrade tree ---- */
+.camp{max-width:980px;margin:0 auto;padding:18px 0 8px}
+.camp-head .eyebrow{color:#e3b95e;margin:0 0 8px}
+.camp-head h1{font-size:clamp(24px,5vw,34px);margin:0;letter-spacing:-1px}
+.camp-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.camp-summary>div{display:flex;flex-direction:column;align-items:center;padding:10px 4px;background:#182537;border:1px solid #26374b}
+.camp-summary small{font-size:10px;color:#94a5ba}.camp-summary b{font:20px 'DM Mono',monospace;color:#f2d183;margin-top:4px}
+.camp-summary .gain b{color:#8ee0a9}
+.camp-bank{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:14px 0 4px;padding:12px 14px;background:#111b29;border:1px solid #2c3b50;font:12px 'DM Mono',monospace;color:#aab9ca}
+.camp-bank .bank-gold{font-size:20px;color:#f4d58c;font-weight:500}
+.camp-toast{margin:8px 0}
+.tree-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 10px}
+.tree-tabs button{min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#111c2a;border:1px solid #2a3a4f;color:#c6d3e3;font-size:12px;padding:6px 2px}
+.tree-tabs button span{font-size:18px}.tree-tabs button small{font:10px 'DM Mono',monospace;color:#8fa0b7}
+.tree-tabs button.on{border-color:var(--gold);background:#1d2a3c;color:#fff}
+.branch{display:none;background:linear-gradient(160deg,#152235,#101925);border:1px solid var(--line);padding:12px}
+.branch.show{display:block}
+.branch-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.branch-icon{font-size:26px}.branch-head strong{display:block;font-size:15px}.branch-head small{display:block;color:#8fa0b7;font-size:11px;margin-top:2px}
+.branch-count{margin-left:auto;font:11px 'DM Mono',monospace;color:#f0cc78}
+.branch ol{list-style:none;margin:0;padding:0 0 0 14px;border-left:3px solid #26374b}
+.node{position:relative;margin:0 0 8px}
+.node::before{content:'';position:absolute;left:-14px;top:50%;width:14px;height:3px;background:#26374b}
+.node button{width:100%;min-height:60px;display:flex;align-items:center;gap:10px;text-align:left;padding:8px 10px;background:#141f2e;border:1px solid #2b3b50;color:#dfe7f2}
+.node-icon{font-size:22px;flex-shrink:0}
+.node-text{flex:1;min-width:0}.node-text b{display:block;font-size:14px}.node-text small{display:block;font-size:12px;color:#9aabc0;margin-top:2px;line-height:1.35}
+.node-cost{flex-shrink:0;text-align:right;font:13px 'DM Mono',monospace;color:#aab9ca}.node-cost small{display:block;font-size:10px;color:#ff9d9d;margin-top:2px}
+.node.owned button{border-color:#3d805e;background:#16302a;opacity:1}.node.owned .node-cost{color:#8ee0a9;font-size:18px}
+.node.owned::before{background:#3d805e}
+.node.affordable button{border-color:var(--gold);background:#2a2518;box-shadow:0 0 0 1px #9b7535 inset}.node.affordable .node-cost{color:#f4d58c}
+.node.locked button{opacity:.45}
+.node button:disabled{cursor:default}
+.camp-start{margin-top:16px}
+.camp-note{text-align:center;margin-top:8px}
+@media(min-width:851px){
+  .tree-tabs{display:none}
+  .tree{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .branch{display:block}
+  .node button{flex-wrap:wrap}.node-cost{width:100%;text-align:left;display:flex;gap:8px;align-items:baseline}
+  .camp-summary{max-width:520px}
+}
+@media(max-width:480px){
+  .camp-summary b{font-size:17px}
+  .opt-hanzi>span:nth-child(2){font-size:30px}
+}

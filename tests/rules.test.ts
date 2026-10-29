@@ -1,102 +1,115 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { ENEMIES, GEAR, WORDS } from '../src/data.ts'
+import { ENEMIES, GEAR } from '../src/data.ts'
+import { NO_BONUSES, computeBonuses, type Bonuses } from '../src/game/upgrades.ts'
 import {
-  buildQuestion, defaultSave, enemyMaxHp, pickWord, resolveAnswer, sanitizeSave, usePotion, type AnswerInput
+  ENEMIES_PER_FLOOR, advance, bankRun, drinkPotion, enemyStats, newRun, playerStats, resolveAnswer, startFight
 } from '../src/game/rules.ts'
 
-const hanzi = WORDS.map(w => w.hanzi)
-const base = (over: Partial<AnswerInput> = {}): AnswerInput => ({
-  save: defaultSave, battleHp: 30, enemyHp: 24, enemy: ENEMIES[0], gear: [], word: WORDS[0], isCorrect: true,
-  roll: { drop: 0.99, item: 0 }, allGear: GEAR, ...over
+const none: Bonuses = { ...NO_BONUSES }
+const run0 = () => newRun(none, GEAR, ENEMIES)
+const ask = (run = run0(), over: Partial<Parameters<typeof resolveAnswer>[0]> = {}) =>
+  resolveAnswer({ run, bonuses: none, enemies: ENEMIES, allGear: GEAR, lv: 0, isCorrect: true, roll: { drop: 0.99, item: 0 }, ...over })
+
+test('a new run is level 1, no gear, full hp, floor 1', () => {
+  const r = run0()
+  assert.deepEqual([r.floor, r.kill, r.level, r.gear.length, r.hp, r.potions], [1, 0, 1, 0, 30, 1])
+  assert.equal(r.enemyHp, ENEMIES[0].hp)
 })
 
-test('vocabulary data is consistent', () => {
-  assert.equal(new Set(hanzi).size, WORDS.length, 'duplicate hanzi')
-  for (const w of WORDS) {
-    assert.ok(w.choices.includes(w.answer), `${w.hanzi}: answer not in choices`)
-    assert.equal(new Set(w.choices).size, w.choices.length, `${w.hanzi}: duplicate choices`)
-    assert.equal(w.answer, w.prompt === 'pinyin' ? w.pinyin : w.meaning, `${w.hanzi}: answer does not match prompt type`)
-    if (w.prompt === 'pinyin') for (const c of w.choices) assert.equal(c.normalize('NFC'), c, `${w.hanzi}: choice not NFC`)
-  }
+test('upgrades shape the start of a run but gear/level never carry over', () => {
+  const b = computeBonuses(['G1', 'G2', 'S1', 'S3', 'F3'])
+  const r = newRun(b, GEAR, ENEMIES)
+  assert.equal(r.hp, 38); assert.equal(r.potions, 2); assert.equal(r.hintsLeft, 1); assert.equal(r.secondLeft, 1)
+  assert.deepEqual(r.gear, ['Copper Blade']); assert.equal(r.level, 1); assert.equal(r.gold, 0)
+  assert.equal(playerStats(r, b, GEAR).attack, 7)
 })
 
-test('every question has exactly one correct option', () => {
-  for (const w of WORDS) {
-    const q = buildQuestion(w, WORDS)
-    const correct = q.options.filter(o => o === (q.type === 'character' ? w.hanzi : w.answer))
-    assert.equal(correct.length, 1, w.hanzi)
-    assert.equal(q.options.length, 4)
-  }
-  const ch = buildQuestion({ ...WORDS[0], prompt: 'character' }, WORDS)
-  assert.ok(ch.options.includes(WORDS[0].hanzi))
+test('enemies scale with floor; the 4th enemy is an elite', () => {
+  const f1 = enemyStats(ENEMIES, 1, 0), f5 = enemyStats(ENEMIES, 5, 0)
+  assert.ok(f5.hp > f1.hp && f5.damage > f1.damage && f5.xp > f1.xp && f5.gold > f1.gold)
+  const elite = enemyStats(ENEMIES, 1, ENEMIES_PER_FLOOR - 1), normal = enemyStats(ENEMIES, 1, ENEMIES_PER_FLOOR - 2)
+  assert.ok(elite.elite && !normal.elite && elite.xp >= normal.xp * 1.5 && elite.gold >= normal.gold * 1.5)
+  assert.equal(enemyStats(ENEMIES, 1, 0).hp, 24)
 })
 
-test('correct answer damages, learns, awards xp; wrong answer takes counterattack', () => {
-  const ok = resolveAnswer(base())
-  assert.equal(ok.playerDamage, 13); assert.equal(ok.enemyHp, 11); assert.equal(ok.battleHp, 25)
-  assert.deepEqual(ok.save.learned, ['人']); assert.equal(ok.save.xp, 5)
-  const bad = resolveAnswer(base({ isCorrect: false }))
-  assert.equal(bad.playerDamage, 2); assert.equal(bad.battleHp, 25); assert.deepEqual(bad.save.missed, ['人'])
-  assert.deepEqual(bad.save.learned, [])
+test('correct answer: damage, learning xp; wrong answer: weak hit and counterattack', () => {
+  const ok = ask(); assert.equal(ok.damage, 13); assert.equal(ok.run.enemyHp, 11); assert.equal(ok.run.hp, 25); assert.equal(ok.run.xp, 5)
+  const bad = ask(run0(), { isCorrect: false }); assert.equal(bad.damage, 2); assert.equal(bad.run.hp, 25); assert.equal(bad.run.streak, 0)
 })
 
-test('killing blow: no counterattack, rewards once, floor advances', () => {
-  const r = resolveAnswer(base({ enemyHp: 5 }))
-  assert.equal(r.outcome, 'victory'); assert.equal(r.battleHp, 30)
-  assert.equal(r.goldGained, ENEMIES[0].gold); assert.equal(r.save.floor, 2); assert.equal(r.save.xp, 5 + ENEMIES[0].xp)
+test('harder (higher mastery) questions deal more damage', () => {
+  const dmg = [0, 1, 2, 3, 4].map(lv => ask(run0(), { lv }).damage)
+  assert.deepEqual(dmg, [13, 14, 16, 18, 18])
+  assert.ok(ask(run0(), { lv: 3, bonuses: computeBonuses(['S1', 'S2', 'S3', 'S4']) }).damage > 18)
 })
 
-test('wrong answer that kills still counts as a kill', () => {
-  const r = resolveAnswer(base({ enemyHp: 2, isCorrect: false }))
-  assert.equal(r.outcome, 'victory'); assert.equal(r.battleHp, 30)
+test('killing blow: no counterattack, rewards once, hp never below 0 or above max', () => {
+  const r = { ...run0(), enemyHp: 5 }
+  const k = ask(r); assert.equal(k.outcome, 'victory'); assert.equal(k.run.hp, 30); assert.equal(k.run.phase, 'victory')
+  assert.equal(k.run.gold, ENEMIES[0].gold); assert.equal(k.run.kills, 1); assert.equal(k.run.reward.gold, ENEMIES[0].gold)
+  const d = ask({ ...run0(), hp: 3 }); assert.equal(d.outcome, 'defeat'); assert.equal(d.run.hp, 0); assert.equal(d.run.phase, 'defeat')
 })
 
-test('defeat clamps hp at 0', () => {
-  const r = resolveAnswer(base({ battleHp: 3 }))
-  assert.equal(r.outcome, 'defeat'); assert.equal(r.battleHp, 0); assert.equal(r.save.hp, 0)
+test('armor reduces counters (min 1); second chance blocks one counter per fight', () => {
+  const arm = { ...none, armor: 2 }
+  assert.equal(ask(run0(), { bonuses: arm, isCorrect: false }).run.hp, 27)
+  assert.equal(ask(run0(), { bonuses: { ...none, armor: 99 }, isCorrect: false }).run.hp, 29)
+  const b = { ...none, secondChance: 1 }, r = startFight(run0(), b, ENEMIES)
+  const first = ask(r, { bonuses: b, isCorrect: false }); assert.ok(first.savedBySecondChance); assert.equal(first.run.hp, 30)
+  const second = ask(first.run, { bonuses: b, isCorrect: false }); assert.ok(!second.savedBySecondChance); assert.equal(second.run.hp, 25)
 })
 
-test('loot: new item granted, duplicate converts to gold', () => {
-  const drop = resolveAnswer(base({ enemyHp: 1, roll: { drop: 0.1, item: 0 } }))
-  assert.equal(drop.loot?.name, GEAR[0].name); assert.deepEqual(drop.save.gear, [GEAR[0].name])
-  const dup = resolveAnswer(base({ enemyHp: 1, roll: { drop: 0.1, item: 0 }, save: { ...defaultSave, gear: [GEAR[0].name] } }))
-  assert.equal(dup.loot, null); assert.equal(dup.duplicateGold, 4); assert.equal(dup.goldGained, ENEMIES[0].gold + 4)
+test('combo and execute bonuses', () => {
+  const b = { ...none, streakDmgPct: 0.25, executeDmgPct: 0.35 }
+  assert.equal(ask({ ...run0(), streak: 1 }, { bonuses: b }).damage, 13)
+  assert.equal(ask({ ...run0(), streak: 2 }, { bonuses: b }).damage, Math.round(13 * 1.25))
+  assert.equal(ask({ ...run0(), enemyHp: 8 }, { bonuses: b }).damage, Math.round(13 * 1.35))
 })
 
-test('gear bonuses apply: blade attack, charm xp, coin gold', () => {
-  const g = (n: string) => GEAR.find(x => x.name === n)!
-  assert.equal(resolveAnswer(base({ gear: [g('Copper Blade')] })).playerDamage, 15)
-  assert.equal(resolveAnswer(base({ gear: [g('Scholar Charm')], isCorrect: true })).xpGained, 6)
-  assert.equal(resolveAnswer(base({ gear: [g('Lucky Coin')], enemyHp: 1 })).goldGained, ENEMIES[0].gold + 3)
+test('loot: new gear is added, duplicates become gold; elites drop more often', () => {
+  const r = { ...run0(), enemyHp: 1 }
+  const drop = ask(r, { roll: { drop: 0.1, item: 0 } }); assert.equal(drop.loot?.name, GEAR[0].name); assert.deepEqual(drop.run.gear, [GEAR[0].name])
+  const dup = ask({ ...r, gear: [GEAR[0].name] }, { roll: { drop: 0.1, item: 0 } }); assert.equal(dup.loot, null); assert.equal(dup.duplicateGold, 4)
+  const elite = { ...r, kill: ENEMIES_PER_FLOOR - 1 }
+  assert.ok(ask(elite, { roll: { drop: 0.7, item: 0.5 } }).loot, 'elite drops at 0.7')
+  assert.equal(ask(r, { roll: { drop: 0.7, item: 0.5 } }).loot, null, 'normal does not')
 })
 
-test('multiple level-ups in one fight and hp heal capped', () => {
-  const r = resolveAnswer(base({ enemyHp: 1, save: { ...defaultSave, xp: 29, level: 1 }, battleHp: 20 }))
-  assert.equal(r.leveledUp, 1); assert.equal(r.save.level, 2); assert.equal(r.save.maxHp, 35)
-  const big = resolveAnswer(base({ enemyHp: 1, save: { ...defaultSave, xp: 0, level: 1 }, enemy: { ...ENEMIES[0], xp: 200 } }))
-  assert.ok(big.leveledUp >= 2); assert.ok(big.battleHp <= big.save.maxHp)
+test('gold, xp, heal-on-kill bonuses and gear', () => {
+  const b = computeBonuses(['F1', 'S2', 'G1', 'G2', 'G3', 'G4'])
+  const r = { ...newRun(b, GEAR, ENEMIES), enemyHp: 1, hp: 20 }
+  const k = ask(r, { bonuses: b }); assert.equal(k.run.reward.gold, Math.round(ENEMIES[0].gold * 1.2)); assert.equal(k.run.hp, 25)
+  assert.equal(ask({ ...r, gear: ['Lucky Coin'] }, { bonuses: none }).run.reward.gold, ENEMIES[0].gold + 3)
 })
 
-test('potion rules', () => {
-  assert.deepEqual(usePotion(10, 30, 1), { battleHp: 22, potions: 0 })
-  assert.equal(usePotion(30, 30, 1), null); assert.equal(usePotion(10, 30, 0), null); assert.equal(usePotion(0, 30, 1), null)
-  assert.equal(usePotion(25, 30, 2)?.battleHp, 30)
+test('multiple level-ups in one fight; level raises max hp and attack', () => {
+  const r = { ...run0(), enemyHp: 1, xp: 29 }
+  const k = ask(r); assert.equal(k.run.level, 2); assert.equal(k.run.reward.levelUps, 1)
+  assert.deepEqual([playerStats(k.run, none, GEAR).maxHp, playerStats(k.run, none, GEAR).attack], [35, 6])
+  const big = resolveAnswer({ run: { ...r, xp: 0 }, bonuses: none, enemies: ENEMIES, allGear: GEAR, lv: 0, isCorrect: true, roll: { drop: 1, item: 0 } })
+  assert.ok(big.run.hp <= playerStats(big.run, none, GEAR).maxHp)
 })
 
-test('enemy hp scaling', () => { assert.equal(enemyMaxHp(ENEMIES[0], 1), 24); assert.equal(enemyMaxHp(ENEMIES[0], 4), 33) })
-
-test('sanitizeSave handles garbage and old shapes', () => {
-  for (const bad of [null, undefined, 5, 'x', [], { level: 'a', gear: 'x', hp: NaN, learned: [1, 2] }]) {
-    const s = sanitizeSave(bad, GEAR, hanzi)
-    assert.equal(s.level, 1); assert.deepEqual(s.gear, []); assert.deepEqual(s.learned, []); assert.ok(s.hp > 0)
-  }
-  const old = sanitizeSave({ level: 3, xp: 4, gold: 9, maxHp: 40, hp: 0, attack: 6, learned: ['人', '??'], gear: ['Mossy Vest', 'Nope'], potions: 2, floor: 4 }, GEAR, hanzi)
-  assert.deepEqual(old.learned, ['人']); assert.deepEqual(old.gear, ['Mossy Vest']); assert.equal(old.hp, 48); assert.deepEqual(old.missed, [])
-  assert.equal(sanitizeSave({ hp: 9999 }, GEAR, hanzi).hp, 30)
+test('advance walks 4 enemies then the next floor, resetting per-fight charges', () => {
+  const b = { ...none, hints: 2 }
+  let r = newRun(b, GEAR, ENEMIES)
+  for (let i = 1; i < ENEMIES_PER_FLOOR; i++) { r = advance({ ...r, hintsLeft: 0 }, b, ENEMIES); assert.equal(r.floor, 1); assert.equal(r.kill, i); assert.equal(r.hintsLeft, 2) }
+  r = advance(r, b, ENEMIES); assert.deepEqual([r.floor, r.kill], [2, 0]); assert.equal(r.enemyHp, enemyStats(ENEMIES, 2, 0).hp); assert.equal(r.phase, 'fighting')
 })
 
-test('pickWord never repeats the current word and can revisit missed words', () => {
-  for (let i = 0; i < 200; i++) assert.notEqual(pickWord(WORDS, [], '人').hanzi, '人')
-  assert.equal(pickWord(WORDS, ['火'], '人', () => 0).hanzi, '火')
+test('potions', () => {
+  const r = { ...run0(), hp: 10 }
+  assert.equal(drinkPotion(r, none, GEAR)?.hp, 22)
+  assert.equal(drinkPotion(r, { ...none, potionHeal: 8 }, GEAR)?.hp, 30)
+  assert.equal(drinkPotion(run0(), none, GEAR), null); assert.equal(drinkPotion({ ...r, potions: 0 }, none, GEAR), null)
+  assert.equal(drinkPotion({ ...r, hp: 0 }, none, GEAR), null); assert.equal(drinkPotion({ ...r, phase: 'victory' }, none, GEAR), null)
+})
+
+test('dying banks all gold, records best floor, and loses nothing else permanent', () => {
+  const meta = { gold: 10, upgrades: ['W1'], bestFloor: 3, runs: 2 }
+  const { meta: m, summary } = bankRun(meta, { ...run0(), gold: 55, floor: 5, kills: 17, level: 4 })
+  assert.deepEqual(m, { gold: 65, upgrades: ['W1'], bestFloor: 5, runs: 3 })
+  assert.deepEqual(summary, { floor: 5, kills: 17, level: 4, goldBanked: 55 })
+  assert.equal(bankRun(meta, { ...run0(), floor: 2 }).meta.bestFloor, 3)
 })

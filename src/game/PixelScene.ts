@@ -25,6 +25,7 @@ export class PixelScene extends Phaser.Scene {
   private heroHome = { x: 0, y: 0 }
   private monsterHome = { x: 0, y: 0 }
   private actorScale = 3
+  private elite = false
 
   constructor() { super('PixelScene') }
 
@@ -106,11 +107,11 @@ export class PixelScene extends Phaser.Scene {
     const s = this.actorScale
     this.hero?.destroy(); this.monster?.destroy(); this.chest?.destroy()
     const shadow = (x: number, w: number) => this.layer!.add(this.add.ellipse(x, this.heroHome.y, w, w * 0.22, 0x070b12, 0.45))
-    shadow(this.heroHome.x, 24 * s * 0.9); shadow(this.monsterHome.x, 16 * (s + 1) * 0.9)
+    shadow(this.heroHome.x, 24 * s * 0.9); shadow(this.monsterHome.x, 16 * this.monsterScale() * 0.9)
 
     if (this.assetsOk) {
       this.hero = this.add.sprite(this.heroHome.x, this.heroHome.y, 'hero').setOrigin(0.5, 1).setScale(s).play('hero:idle')
-      this.monster = this.add.sprite(this.monsterHome.x, this.monsterHome.y, this.enemyKey).setOrigin(0.5, 1).setScale(s + 1).play(`${this.enemyKey}:idle`)
+      this.monster = this.add.sprite(this.monsterHome.x, this.monsterHome.y, this.enemyKey).setOrigin(0.5, 1).setScale(this.monsterScale()).play(`${this.enemyKey}:idle`)
     } else {
       this.hero = this.add.rectangle(this.heroHome.x, this.heroHome.y, 10 * s, 18 * s, 0x3e78b8).setOrigin(0.5, 1)
       this.monster = this.add.rectangle(this.monsterHome.x, this.monsterHome.y, 12 * s, 12 * s, 0x4eb879).setOrigin(0.5, 1)
@@ -122,8 +123,11 @@ export class PixelScene extends Phaser.Scene {
 
   // ---- public API used by React ------------------------------------------------------
 
-  setEnemy(key: EnemySprite) {
+  private monsterScale() { return this.actorScale + 1 + (this.elite ? 1 : 0) }
+
+  setEnemy(key: EnemySprite, elite = false) {
     this.enemyKey = key
+    this.elite = elite
     if (this.ready) this.build()
   }
 
@@ -156,8 +160,8 @@ export class PixelScene extends Phaser.Scene {
     this.monsterAlive = true; this.showingChest = false
     this.chest?.destroy(); this.chest = undefined
     if (!this.ready || !this.monster) return
-    this.monster.setVisible(true).setAlpha(1).setScale(this.actorScale + 1)
-    this.tweens.add({ targets: this.monster, scale: { from: (this.actorScale + 1) * 0.4, to: this.actorScale + 1 }, alpha: { from: 0, to: 1 }, duration: 250 })
+    this.monster.setVisible(true).setAlpha(1).setScale(this.monsterScale())
+    this.tweens.add({ targets: this.monster, scale: { from: this.monsterScale() * 0.4, to: this.monsterScale() }, alpha: { from: 0, to: 1 }, duration: 250 })
   }
 
   hideMonster() {
@@ -173,9 +177,9 @@ export class PixelScene extends Phaser.Scene {
     this.showingChest = true
     if (!this.assetsOk) return
     this.chest?.destroy()
-    this.chest = this.add.sprite(this.monsterHome.x, this.monsterHome.y, 'chest', 0).setOrigin(0.5, 1).setScale(this.actorScale + 1)
+    this.chest = this.add.sprite(this.monsterHome.x, this.monsterHome.y, 'chest', 0).setOrigin(0.5, 1).setScale(this.monsterScale())
     if (!pop) { this.chest.setFrame(1); return }
-    this.tweens.add({ targets: this.chest, scale: { from: 0.1, to: this.actorScale + 1 }, duration: 180, ease: 'Back.out' })
+    this.tweens.add({ targets: this.chest, scale: { from: 0.1, to: this.monsterScale() }, duration: 180, ease: 'Back.out' })
     this.time.delayedCall(420, () => this.chest?.active && this.chest.setFrame(1))
   }
 }

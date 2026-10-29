@@ -81,5 +81,8 @@ hanzi-hunters/
 3. Test the main combat loop, save/load, mobile layout and browser console.
 4. Only then begin the next milestone from the development brief.
 
-## Controls / game loop
+## Game loop (0.2)
+See `docs/GAME_DESIGN.md`. Short version: fight through floors of 4 enemies (last one is an elite), answer questions to deal damage, die, bank your gold, buy permanent upgrades at camp, and restart at level 1 with no gear — your word mastery persists and unlocks harder question types.
+
+## Controls / game loop (original handoff text, partly outdated)
 Choose one of the answer options for the displayed Chinese word. Correct answers deal a stronger attack; wrong answers deal a weaker attack and usually let the enemy counterattack. Defeating enemies awards XP and gold, with a chance of gear. Potions heal during combat. The wordbook lists words learned through correct answers. If the player is defeated, they can restart the run while retaining persistent progression as implemented in the prototype.

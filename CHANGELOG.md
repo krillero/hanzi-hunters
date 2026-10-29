@@ -35,6 +35,13 @@
 - Milestone 3: emoji/Unicode icons (🧪🎒📚⚔🛡 etc.) in the UI are still emoji; no pixel icon set, no pixel buttons/health-bar art, no death/walk animations, no start/menu screen, no map.
 - Milestones 4–5: vocabulary is still the unreviewed 30-word starter set, all prompts are `meaning`/`pinyin` (the `character` mode exists in code but no data uses it), no tutorial, PWA has no icons.
 
+## 0.2 — roguelite loop, word mastery, upgrade tree
+- See `docs/GAME_DESIGN.md` for the rules. New: runs of floors × 4 enemies (elite last), compounding enemy scaling, death → banked gold → permanent 4-branch upgrade tree at camp, per-word mastery (5 question types), active word pool, hints, second chance, save v2 + v1 migration, "no Mandarin voice" warning.
+- Fixed while rewriting: the "learned after one lucky answer" model, the answer being fixed to one question type per word.
+- Tests: `npm test` → 35 tests (questions, mastery, upgrades, rules, save, balance simulation).
+- Browser E2E (headless Chromium, 390×844 + 320/375/430 checks; scripted bot using the real DOM): new player intro → perfect play to floor 2 with an elite → deliberate death → camp → buy tiers (locked/affordable/unaffordable states) → new run at level 1 without gear, mastery intact → hint removes exactly one wrong option → reload resumes run → v1 save migration → no horizontal overflow, buttons ≥ 44 px, no console errors. Passed twice in a row.
+- Not verified: listening questions (headless browser has no Mandarin voice, so they were exercised only by unit tests), real devices, the balance with real players.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.
