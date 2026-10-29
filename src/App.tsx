@@ -13,7 +13,7 @@ import type { Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
-type Feedback = { correct: boolean; text: string; word: Word; mastery: string }
+type Feedback = { correct: boolean; text: string; word: Word; mastery: string; masteryUp: boolean }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -33,6 +33,7 @@ export default function App() {
   const sceneRef = useRef<PixelScene | null>(null)
   const mountRef = useRef<HTMLDivElement | null>(null)
   const answerLock = useRef(false)
+  const continueRef = useRef<HTMLButtonElement | null>(null)
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
   const [canListen, setCanListen] = useState(false)
   const [card, setCard] = useState<Card | null>(null)
@@ -96,6 +97,11 @@ export default function App() {
     if (sprite) sceneRef.current?.setEnemy(sprite as 'slime' | 'imp' | 'bat', elite === 'true')
   }, [enemyKey])
 
+  // Keep the Continue button on screen after answering (phones put it below the fold).
+  useEffect(() => {
+    if (feedback) requestAnimationFrame(() => continueRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
+  }, [feedback])
+
   // ---- audio ----------------------------------------------------------------------------
   const speak = (hanzi: string) => {
     if (!('speechSynthesis' in window)) { setToast('Speech playback is not supported in this browser.'); return }
@@ -132,10 +138,10 @@ export default function App() {
         : after < before ? `${word.hanzi} slipped back to level ${after}. It will return for review.`
           : isCorrect ? 'One more correct answer to level this word up.' : ''
     setFeedback({
-      correct: isCorrect, word, mastery: masteryNote,
+      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0,
       text: isCorrect
-        ? `Direct hit${r.comboHit ? ' — combo bonus' : ''}! ${word.hanzi} (${word.pinyin}) means “${word.meaning}”.`
-        : `Not quite. ${word.hanzi} is ${word.pinyin} — “${word.meaning}”. ${r.outcome === 'victory' ? 'It was still enough to win!' : r.savedBySecondChance ? 'Second Chance! The counterattack missed.' : 'The monster counterattacks!'}`
+        ? `Direct hit${r.comboHit ? ' with a combo bonus' : ''}: ${r.damage} damage.`
+        : `Not quite. You dealt ${r.damage} damage. ${r.outcome === 'victory' ? 'It was still enough to win!' : r.savedBySecondChance ? 'Second Chance! The counterattack missed.' : `The monster hits back for ${r.counter}.`}`
     })
     if (r.outcome === 'victory') {
       setToast(r.run.reward.levelUps ? `Level up! You are now level ${r.run.level}.`
@@ -275,7 +281,7 @@ export default function App() {
             <div className="panel-kicker"><span>SCROLL OF KNOWLEDGE</span><span className="mastery-kicker">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span></div>
             <div className="question-title"><span className="question-icon">文</span><div><h2>{fighting ? question.text : run.phase === 'victory' ? (lastOfFloor ? 'Floor cleared!' : 'Victory, adventurer!') : 'You have fallen...'}</h2><p>{fighting ? 'Answer correctly to unleash a stronger attack.' : run.phase === 'victory' ? 'The cavern rewards your growing knowledge.' : 'Your gold and word mastery are safe.'}</p></div></div>
 
-            {fighting && <div className="word-card">
+            {fighting && !feedback && <div className="word-card">
               {question.kind === 'listen'
                 ? <button className="listen-big" onClick={() => speak(word.hanzi)} aria-label="Play the word again">🔊<span>Tap to hear it again</span></button>
                 : <div className={`hanzi ${show.hanzi ? '' : 'is-hidden'}`}>{show.hanzi ? word.hanzi : '？'}</div>}
@@ -291,7 +297,17 @@ export default function App() {
               return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${gone ? 'answer-gone' : ''} ${feedback && option === question.answer ? 'answer-correct' : ''}`} disabled={!!feedback || gone} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span>{gone ? '—' : option}</span><span className="answer-arrow">↗</span></button>
             })}</div>}
 
-            {feedback && <div className={`feedback-box ${feedback.correct ? 'good' : 'bad'}`}><strong>{feedback.correct ? '✦ Excellent strike!' : '↻ Keep learning!'}</strong><p>{feedback.text}</p><small>{feedback.word.note}</small>{feedback.mastery && <small className="mastery-note">{feedback.mastery}</small>}<button className="continue-btn" onClick={dismissFeedback}>Continue →</button></div>}
+            {feedback && <div className={`feedback-box ${feedback.correct ? 'good' : 'bad'}`}>
+              <div className="fb-head"><strong>{feedback.correct ? '✦ Excellent strike!' : '↻ Keep learning!'}</strong><span className="fb-text">{feedback.text}</span></div>
+              <div className="fb-word">
+                <span className="fb-hanzi">{feedback.word.hanzi}</span>
+                <div className="fb-info"><span className="fb-pinyin">{feedback.word.pinyin}</span><span className="fb-meaning">{feedback.word.meaning}</span></div>
+                <button className="audio-btn fb-listen" onClick={() => speak(feedback.word.hanzi)} aria-label="Hear pronunciation">🔊 Listen</button>
+              </div>
+              <p className="fb-note">{feedback.word.note}</p>
+              {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
+              <button ref={continueRef} className="continue-btn" onClick={dismissFeedback}>Continue →</button>
+            </div>}
 
             {run.phase === 'victory' && !feedback && <div className="end-panel"><div className="reward-row"><span>✦ XP earned</span><b>+{run.reward.xp}</b></div><div className="reward-row"><span>◈ Gold found</span><b>+{run.reward.gold} G</b></div><button className="primary-btn" onClick={nextEnemy}>{lastOfFloor ? `Descend to floor ${run.floor + 1}` : 'Next enemy'} <span>→</span></button></div>}
             {run.phase === 'victory' && feedback && <p className="hint-text">Read the feedback, then continue.</p>}

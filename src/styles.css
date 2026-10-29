@@ -125,3 +125,24 @@
   .camp-summary b{font-size:17px}
   .opt-hanzi>span:nth-child(2){font-size:30px}
 }
+
+/* ---- Feedback box: roomy recap of the word ---- */
+.feedback-box{padding:16px}
+.fb-head{display:flex;flex-direction:column;gap:4px}
+.feedback-box .fb-head strong{font-size:17px}
+.fb-text{font-size:15px;line-height:1.45;color:#e4edf6}
+.fb-word{display:flex;align-items:center;gap:16px;margin:14px 0 12px;padding:12px 14px;background:#0d1622aa;border:1px solid #2f4258}
+.fb-hanzi{font-size:64px;line-height:1;font-weight:500;color:#f7f4eb;flex-shrink:0}
+.fb-info{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.fb-pinyin{font-size:28px;font-weight:700;color:#f0cb78;line-height:1.1}
+.fb-meaning{font-size:18px;color:#dbe6f0;line-height:1.25}
+.fb-listen{align-self:flex-start;flex-shrink:0}
+.feedback-box .fb-note{font-size:15px;line-height:1.55;color:#c9d6e4;margin:0 0 8px}
+.fb-mastery{font-size:14px;font-weight:700;color:#f0cb78;margin:0 0 8px}.fb-mastery.up{color:#8ee0a9}
+.continue-btn{font-size:16px;font-weight:700;min-height:50px}
+@media(max-width:480px){
+  .fb-word{gap:12px;padding:10px 12px;flex-wrap:wrap}
+  .fb-hanzi{font-size:54px}.fb-pinyin{font-size:24px}.fb-meaning{font-size:17px}
+  .fb-listen{width:100%;align-self:stretch}
+  .feedback-box{padding:12px}
+}
