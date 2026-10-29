@@ -448,7 +448,7 @@ export default function App() {
             <section className="character-section">
               <div className="character-section-title">BONUSES</div>
               <div className="character-stat-list">
-                <div><span>Armor</span><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</strong></div>
+                <div><span>🛡️ Armor</span><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</strong></div>
                 <div><span>XP gain</span><strong>+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</strong></div>
                 <div><span>Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</strong></div>
               </div>
