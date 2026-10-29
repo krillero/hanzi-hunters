@@ -536,3 +536,61 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .stage-fb .fb-chips{gap:4px}
   .stage-fb .fb-chips span{font-size:clamp(10px,1.6dvh,12px)}
 }
+
+
+/* Answer feedback occupies the former options slot. Keep the question card and
+   its top-right help/audio controls mounted in the same position after a choice. */
+.stage-card .corner-btns{position:absolute;top:8px;right:8px;z-index:3;display:flex;gap:8px}
+.stage-card .corner-btns .speak-btn{position:static;flex-shrink:0}
+.stage-card .tip-btn{border-color:#6c5a2d;color:#f3d995;background:#2a2518}
+.stage-card.ok .slot-hanzi,.stage-card.ok .slot-pinyin,.stage-card.ok .slot-meaning{color:inherit;opacity:1}
+.stage-card.ok .slot-pinyin{color:#f0cb78}
+.stage-card.ok .slot-meaning{color:#cbd7e6}
+.stage-card.wrong{border-color:#714349}
+.answer-feedback{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:4px;
+  height:calc(var(--row-h) * 2 + 8px);
+  min-height:0;
+  padding:7px 9px;
+  overflow:hidden;
+  border:1px solid #355c49;
+  background:#12251f;
+}
+.answer-feedback.is-incorrect{border-color:#714349;background:#2a1c23}
+.result-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0;line-height:1.2}
+.result-line strong{flex-shrink:0;font-size:14px;color:#8ee0a9}
+.answer-feedback.is-incorrect .result-line strong{color:#ffaaaa}
+.result-line span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#c9d6e4}
+.result-line s{color:#ffaaaa}
+.result-line b{color:#8ee0a9}
+.result-note{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:0!important;color:#c9d6e4;font-size:12px;line-height:1.25}
+.result-mastery{margin:0!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:1.2;font-weight:700;color:#f0cb78}
+.result-mastery.up{color:#8ee0a9}
+.result-rewards{display:flex;align-items:center;gap:5px;flex-wrap:wrap;overflow:hidden;margin-top:auto;max-height:34px}
+.result-rewards span{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;padding:4px 5px;background:#182537;border:1px solid #26374b;color:#f2d183;font:11px 'DM Mono',monospace}
+.result-rewards .hot{border-color:#9b7535;background:#2a2518;color:#fff}
+@media(max-width:850px){
+  .stage-card .corner-btns{top:7px;right:7px;gap:6px}
+  .stage-card .corner-btns .speak-btn{width:40px;height:40px;font-size:16px}
+  .answer-feedback{gap:3px;padding:6px 7px}
+  .result-line strong{font-size:13px}
+  .result-line span{font-size:10px}
+  .result-note{font-size:clamp(11px,1.7dvh,13px)}
+  .result-mastery{font-size:clamp(10px,1.5dvh,12px)}
+  .result-rewards{gap:4px;max-height:30px}
+  .result-rewards span{font-size:clamp(9px,1.4dvh,11px);padding:4px 3px}
+}
+@media(max-width:480px){
+  .stage-card .corner-btns .speak-btn{width:36px;height:36px;font-size:15px}
+  .stage-card .corner-btns{gap:5px}
+  .answer-feedback{padding:5px 6px}
+  .result-line strong{font-size:12px}
+  .result-line span{font-size:9px}
+  .result-note{font-size:clamp(10px,1.55dvh,12px)}
+  .result-mastery{font-size:clamp(9px,1.35dvh,11px)}
+  .result-rewards span{font-size:clamp(8px,1.2dvh,10px);padding:3px 2px}
+}
