@@ -18,8 +18,8 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
+      # Cleanup on a closed PR still needs a checked-out repository for the deploy action.
       - uses: actions/checkout@v4
-        if: github.event.action != 'closed'
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v4
