@@ -17,12 +17,12 @@ export const equippedGear = (all: GearItem[], loadout: Partial<Record<GearSlot, 
   all.filter(g => loadout[g.slot] === g.name)
 const gearSum = (gear: GearItem[], key: 'attack' | 'hp' | 'armor') => gear.reduce((n, g) => n + g[key], 0)
 const gearPct = (gear: GearItem[], key: 'xpPct' | 'masteryPct') => gear.reduce((n, g) => n + g[key], 0)
-export function equipGear(run: Run, name: string, allGear: GearItem[]): Run | null {
+export function equipGear(run: Run, name: string, allGear: GearItem[], b: Bonuses): Run | null {
   const item = allGear.find(g => g.name === name)
   if (!item || !run.gear.includes(name) || run.loadout[item.slot] === name) return null
-  const beforeMax = BASE_HP + HP_PER_LEVEL * (run.level - 1) + gearSum(equippedGear(allGear, run.loadout), 'hp')
+  const beforeMax = playerStats(run, b, allGear).maxHp
   const next = { ...run, loadout: { ...run.loadout, [item.slot]: name } }
-  const afterMax = BASE_HP + HP_PER_LEVEL * (run.level - 1) + gearSum(equippedGear(allGear, next.loadout), 'hp')
+  const afterMax = playerStats(next, b, allGear).maxHp
   return { ...next, hp: Math.max(0, Math.min(afterMax, run.hp + (afterMax - beforeMax))) }
 }
 
