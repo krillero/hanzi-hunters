@@ -10,7 +10,7 @@ import { hasExplanation } from './content'
 import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appInfo'
 import { parseBackup, serializeBackup } from './game/backup'
 import { ENEMIES, GEAR, WORDS, type Word } from './data'
-import { MAX_LV, MASTERY_DAMAGE, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
+import { MAX_LV, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
 import { buildQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import {
   ENEMIES_PER_FLOOR, advance, isElite, bankRun, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
@@ -400,14 +400,6 @@ export default function App() {
   const pips = entry ? entry.lv : -1
   const equippedAttack = equipped.reduce((n, item) => n + item.attack, 0)
   const equippedHp = equipped.reduce((n, item) => n + item.hp, 0)
-  const gearXpPct = equipped.reduce((n, item) => n + item.xpPct, 0)
-  const gearMasteryPct = equipped.reduce((n, item) => n + item.masteryPct, 0)
-  const gearArmor = equipped.reduce((n, item) => n + item.armor, 0)
-  const gearGoldFlat = equipped.reduce((n, item) => n + item.goldFlat, 0)
-  const masteryPct = (entry && entry.lv >= 1 ? (MASTERY_DAMAGE[Math.min(entry.lv, MASTERY_DAMAGE.length - 1)] + bonuses.masteryDmgPct) : MASTERY_DAMAGE[0]) + gearMasteryPct
-  const streakPct = run.streak >= 2 ? bonuses.streakDmgPct : 0
-  const executePct = run.enemyHp <= foe.hp * 0.35 ? bonuses.executeDmgPct : 0
-  const estimatedHit = Math.round((8 + stats.attack) * (1 + masteryPct + streakPct + executePct))
   const lootChance = Math.min(0.95, 0.5 + bonuses.lootPct + (foe.elite ? 0.3 : 0))
   const ownedUpgrades = save.meta.upgrades.map(id => nodeById(id)).filter((node): node is NonNullable<typeof node> => !!node)
 
@@ -454,18 +446,12 @@ export default function App() {
               <div><small>MAX HP</small><strong>♥ {stats.maxHp}</strong><span>{run.hp} current · +{bonuses.maxHp + equippedHp} bonus HP</span></div>
             </div>
             <section className="character-section">
-              <div className="character-section-title">DERIVED COMBAT STATS <span>LIVE</span></div>
+              <div className="character-section-title">BONUSES</div>
               <div className="character-stat-list">
-                <div><span>Estimated next correct hit</span><strong className="stat-gold">{estimatedHit} dmg</strong></div>
-                <div><span>Mastery damage</span><strong>+{Math.round(masteryPct * 100)}%</strong></div>
-                <div><span>Combo damage {run.streak >= 2 ? '(active)' : '(at 2+ streak)'}</span><strong>{streakPct ? '+' + Math.round(streakPct * 100) + '%' : Math.round(bonuses.streakDmgPct * 100) + '%'}</strong></div>
-                <div><span>Execute damage {run.enemyHp <= foe.hp * 0.35 ? '(active)' : '(enemy below 35% HP)'}</span><strong>{Math.round(bonuses.executeDmgPct * 100)}%</strong></div>
-                <div><span>Incoming hit after armor</span><strong>{Math.max(1, foe.damage - bonuses.armor - gearArmor)} dmg</strong></div>
-                <div><span>Armor</span><strong>{bonuses.armor + gearArmor}</strong></div>
-                <div><span>XP gain</span><strong>+{Math.round((bonuses.xpPct + gearXpPct) * 100)}%</strong></div>
-                <div><span>Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{gearGoldFlat ? ` + ${gearGoldFlat} per win` : ''}</strong></div>
+                <div><span>🛡️ Armor</span><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</strong></div>
+                <div><span>XP gain</span><strong>+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</strong></div>
+                <div><span>Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</strong></div>
               </div>
-              <p className="hint-text">Estimated hit uses the current word's mastery, your streak, and this enemy's HP. Actual damage can vary with your answer and combat state.</p>
             </section>
             <section className="character-section">
               <div className="character-section-title">GEAR LOADOUT <span>{equipped.length} / 3 SLOTS</span></div>
