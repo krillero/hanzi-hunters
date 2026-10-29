@@ -385,7 +385,7 @@ export default function App() {
   const fighting = run.phase === 'fighting'
   const revealing = !!reveal   // a right answer is being shown in place before the game moves on
   const show = { hanzi: question.show.hanzi || revealed || revealing, pinyin: question.show.pinyin || revealed || revealing, meaning: question.show.meaning || revealed || revealing }
-  const showCard = (fighting && !feedback) || revealing
+  const showCard = (fighting && !feedback) || revealing || !!feedback
   // Each field of the word card has its OWN fixed slot. A hidden field shows the same placeholder; the asked one is highlighted.
   const slot = (shown: boolean, asked: boolean) => (shown ? 'on' : asked ? 'ask' : 'dim')
   const lastOfFloor = run.kill + 1 >= ENEMIES_PER_FLOOR
@@ -432,42 +432,46 @@ export default function App() {
 
         <div className="right-column">
           <section className="question-panel">
-            <div className={`question-title ${run.phase}`}><div className="title-text"><h2>{fighting || revealing ? question.text : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
+            <div className={`question-title ${run.phase}`}><div className="title-text"><h2>{fighting || revealing || feedback ? question.text : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
 
-            {/* Fixed-size regions: stage, choices, action bar never change size or position. */}
+            {/* The word card never leaves its slot. Feedback replaces the choices below it. */}
             {showCard && <>
-              <div className={`stage stage-card ${revealing ? 'ok' : ''}`} onClick={revealing ? advanceAuto : undefined}><span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
-                <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
+              <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
+                <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
+                <div className="corner-btns">
+                  {hasExplanation(word.hanzi) && <button className="speak-btn tip-btn" onClick={e => { e.stopPropagation(); setExplain([word.hanzi]) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
+                  <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
+                </div>
                 <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')}`}>{show.hanzi ? word.hanzi : '?'}</div>
                 <div className={`slot slot-pinyin ${slot(show.pinyin, question.ask === 'pinyin')}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
                 <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
               </div>
-              <div className="answer-list">{question.options.map((option, i) => {
+              {feedback && !revealing ? (
+                <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'}`}>
+                  <div className="result-line">
+                    <strong>{feedback.correct ? '✓ Correct!' : 'Not quite'}</strong>
+                    {!feedback.correct && <span>You chose <s>{feedback.chosen}</s> · answer <b>{feedback.answer}</b></span>}
+                  </div>
+                  <p className="result-note" ref={noteRef}>{feedback.word.note}</p>
+                  {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
+                  {run.phase === 'victory' && <div className="result-rewards">
+                    <span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>
+                    {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
+                    {run.reward.loot && <span className="hot">{run.reward.loot}</span>}
+                    {run.reward.dupGold > 0 && <span>Dupe +{run.reward.dupGold}🪙</span>}
+                  </div>}
+                </div>
+              ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
                 return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${gone ? 'answer-gone' : ''} ${revealing && option === question.answer ? 'answer-correct' : ''}`} disabled={gone || revealing} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
-              })}</div>
+              })}</div>}
             </>}
 
-            {/* After answering, the recap takes over the stage + choices area; the action bar below never moves. */}
-            {(feedback || !fighting) && !revealing && <div className={`stage stage-wide stage-fb ${run.phase === 'defeat' ? 'dead' : feedback ? (feedback.correct ? 'good' : 'bad') : run.phase === 'victory' ? 'good' : 'bad'}`}>
-              {feedback
-                ? <>
-                    {run.phase === 'defeat' ? <p className="fb-head"><strong className="dead-title">The {feedback.foeName} struck the final blow.</strong></p> : <p className="fb-head"><strong>{feedback.title}</strong></p>}
-                    {!feedback.correct && <p className="fb-answer">You chose <s>{feedback.chosen}</s> · answer <b>{feedback.answer}</b></p>}
-                    <div className="fb-word">
-                      <span className="fb-hanzi">{feedback.word.hanzi}</span>
-                      <div className="fb-info"><span className="fb-pinyin">{feedback.word.pinyin}</span><span className="fb-meaning">{feedback.word.meaning}</span></div>
-                    </div>
-                    <div className="corner-btns">
-                      {hasExplanation(feedback.word.hanzi) && <button className={`speak-btn tip-btn ${feedback.correct ? '' : 'pulse'}`} onClick={() => setExplain([feedback.word.hanzi])} aria-label={`More about ${feedback.word.hanzi}`}>💡</button>}
-                      <button className={`speak-btn ${settings.muted ? 'muted' : ''}`} onClick={() => pressSpeaker(feedback.word.hanzi)} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
-                    </div>
-                    <p className="fb-note" ref={noteRef}>{feedback.word.note}</p>
-                    {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
-                  </>
-                : <div className="stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div></div>}
+            {/* Only terminal states without answer feedback use the fallback stage. */}
+            {(!fighting && !feedback) && !revealing && <div className={`stage stage-wide stage-fb ${run.phase === 'victory' ? 'good' : 'bad'}`}>
+              <div className="stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div></div>
               {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.loot && <span className="hot wide">{run.reward.loot}</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}🪙</span>}</div>}
-              {run.phase === 'defeat' && !feedback && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
+              {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
 
             <div className="action-bar">
