@@ -694,3 +694,23 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .character-summary strong{font-size:16px}
   .character-summary span{font-size:8px}
 }
+
+
+/* Compact equipment comparison, tuned for narrow mobile drawers. */
+.gear-compare{margin:10px 0;padding:11px;border:1px solid #3a4c63;border-radius:9px;background:#0d1623}
+.gear-compare-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px;font:10px 'DM Mono',monospace;letter-spacing:.6px;color:var(--gold)}
+.gear-compare-head .text-btn{background:transparent;border:0;color:var(--muted);font-size:10px;padding:3px}
+.gear-compare-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gear-compare-card{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:4px;padding:9px;border-radius:7px;background:#172336;border:1px solid #29384c}
+.gear-compare-card.candidate{border-color:#6a5835;background:#211f1b}
+.gear-compare-card>small{font:9px 'DM Mono',monospace;color:var(--muted);letter-spacing:.4px}
+.gear-compare-icon{font-size:22px;line-height:1.2}
+.gear-compare-card>b{font-size:11px;overflow-wrap:anywhere}
+.gear-compare-card>span:last-child{font-size:10px;line-height:1.35;color:#aab8ca}
+.gear-deltas{margin:8px 0}
+.gear-deltas>div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #243246;font-size:10px}
+.gear-deltas>div>span{color:#b7c5d7}
+.gear-deltas strong{font:500 11px 'DM Mono',monospace}
+.gear-deltas .delta-up{color:var(--green)}
+.gear-deltas .delta-down{color:var(--red)}
+.gear-equip-btn{width:100%;margin-top:3px}
