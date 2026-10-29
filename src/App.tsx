@@ -475,7 +475,6 @@ export default function App() {
                   { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙' }
                 ]
                 const changes = fields.map(field => ({ ...field, before: current?.[field.key] ?? 0, after: candidate[field.key], delta: candidate[field.key] - (current?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
-                const format = (field: typeof fields[number], value: number) => field.pct ? `+${Math.round(value * 100)}%` : field.key === 'goldFlat' ? `+${value}` : `+${value}`
                 return <div className="gear-compare" aria-label={`Compare ${candidate.name}`}>
                   <div className="gear-compare-head"><strong>COMPARE · {candidate.slot.toUpperCase()}</strong><button className="text-btn" onClick={() => setSelectedGearName(null)}>Close</button></div>
                   <div className="gear-compare-cards">
