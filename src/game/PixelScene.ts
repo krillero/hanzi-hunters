@@ -30,6 +30,8 @@ export class PixelScene extends Phaser.Scene {
   private defeatObjs: Phaser.GameObjects.GameObject[] = []
   private victoryText: string | null = null
   private victoryObjs: Phaser.GameObjects.GameObject[] = []
+  /** The live reward popup (only one at a time). Not part of the rebuilt layer, so it must clean itself up. */
+  private rewardPop?: { c: Phaser.GameObjects.Container; endAt: number }
   private floorY = 0
   private heroHome = { x: 0, y: 0 }
   private monsterHome = { x: 0, y: 0 }
@@ -89,6 +91,11 @@ export class PixelScene extends Phaser.Scene {
     if (this.assetsOk) this.buildTextured(width, height, tileScale, step, wallRows, floorY)
     else this.buildFallback(width, height, floorY)
     this.spawnActors()
+    if (this.rewardPop) {
+      const left = this.rewardPop.endAt - this.time.now
+      if (left <= 0) this.dropRewardPop()
+      else { this.tweens.add({ targets: this.rewardPop.c, y: this.rewardPop.c.y - 6, duration: left }); this.fadeRewardPop() }
+    }
     this.drawFloats(false)
     this.drawCombo(false)
     if (this.defeated) this.applyDefeat(false)
@@ -184,9 +191,10 @@ export class PixelScene extends Phaser.Scene {
     delete this.floatObjs.banner
   }
 
-  /** Reward lines (XP, gold, loot, level-up) that rise above the monster's spot and fade on their own, even after the next fight starts. */
-  popReward(lines: { text: string; color: string }[], ttl = 3200) {
+  /** Reward lines (XP, gold, loot, level-up) shown at the bottom centre; one popup at a time, slow fade, never stranded. */
+  popReward(lines: { text: string; color: string }[], ttl = 2800) {
     if (!this.ready || !lines.length) return
+    this.dropRewardPop()                       // a new reward replaces the old one: never stack
     const { width, height } = this.scale
     // Bottom centre of the floor, between the two characters: clear of the banner on the wall and of the damage numbers.
     const lineH = 16
@@ -195,9 +203,25 @@ export class PixelScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '13px', fontStyle: 'bold', color: l.color, stroke: '#0d1220', strokeThickness: 4, align: 'center'
     }).setOrigin(0.5, 0))
     const c = this.add.container(Math.round(width / 2), y0, texts).setDepth(14).setScale(0.6).setAlpha(0)
+    this.rewardPop = { c, endAt: this.time.now + ttl }
     this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 220, ease: 'Back.out' })
-    this.tweens.add({ targets: c, y: y0 - 10, duration: ttl, ease: 'Sine.out' })
-    this.tweens.add({ targets: c, alpha: 0, duration: 600, delay: Math.max(0, ttl - 600), onComplete: () => c.destroy() })
+    this.tweens.add({ targets: c, y: y0 - 12, duration: ttl, ease: 'Sine.out' })
+    this.fadeRewardPop()
+    // Guaranteed removal even if a rebuild cancels the tweens (scene timers are not cancelled by tweens.killAll).
+    this.time.delayedCall(ttl + 80, () => { if (this.rewardPop?.c === c) this.dropRewardPop() })
+  }
+
+  /** Slow fade over the second half of the popup's life; restarted after a rebuild so it still ends on time. */
+  private fadeRewardPop() {
+    const pop = this.rewardPop
+    if (!pop) return
+    const remaining = Math.max(0, pop.endAt - this.time.now)
+    this.tweens.add({ targets: pop.c, alpha: 0, duration: Math.max(150, remaining * 0.7), delay: remaining * 0.3, ease: 'Sine.in' })
+  }
+
+  private dropRewardPop() {
+    this.rewardPop?.c.destroy()
+    this.rewardPop = undefined
   }
 
   clearFloats() {

@@ -173,6 +173,7 @@ export default function App() {
     game.events.once(Phaser.Core.Events.READY, () => {
       const scene = game.scene.getScene('PixelScene') as PixelScene
       sceneRef.current = scene
+      if (import.meta.env.DEV) (window as unknown as { __hhScene?: PixelScene }).__hhScene = scene   // dev-only handle for browser tests
       const [sprite, elite] = enemyKeyRef.current.split(':')
       if (sprite) scene.setEnemy(sprite as 'slime' | 'imp' | 'bat', elite === 'true')
       if (phaseRef.current === 'victory') { scene.hideMonster(); scene.showVictory(killRef.current >= ENEMIES_PER_FLOOR - 1 ? 'ELITE SLAIN!' : 'ENEMY SLAIN!', false) }
@@ -244,11 +245,11 @@ export default function App() {
     if (r.outcome === 'victory') {
       // Rewards pop up in the scene and tick the counters; they fade on their own, so the game can keep going.
       const rw = r.run.reward
-      const lines = [{ text: `+${rw.xp} XP   ◈ +${rw.gold}`, color: '#f4d58c' }]
+      const lines = [{ text: `+${rw.xp} XP   🪙 +${rw.gold}`, color: '#f4d58c' }]
       if (rw.levelUps > 0) lines.push({ text: `LEVEL UP!  Lv ${r.run.level}`, color: '#8ee0a9' })
       if (r.loot) lines.push({ text: `LOOT: ${r.loot.name}`, color: '#ffd166' })
       else if (r.duplicateGold) lines.push({ text: `Duplicate gear → +${r.duplicateGold} gold`, color: '#c9d6e4' })
-      sceneRef.current?.popReward(lines, plan ? 3600 : 3000)
+      sceneRef.current?.popReward(lines)
       setPop({ key: Date.now(), gold: rw.gold, xp: rw.xp })
       if (r.loot) setNewLoot(true)
     }
@@ -360,7 +361,7 @@ export default function App() {
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
       <div className="top-stats">
-        {run ? <><span>✦ LVL {run.level}</span><span>◈ {run.gold} G</span></> : <span>◈ {save.meta.gold} G</span>}
+        {run ? <><span>✦ LVL {run.level}</span><span>🪙 {run.gold} G</span></> : <span>🪙 {save.meta.gold} G</span>}
         <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
       </div>
     </header>
@@ -402,7 +403,7 @@ export default function App() {
       <section className="game-layout">
         <div className="left-column">
           <div className="scene-frame">
-            <div className="scene-label"><span className="live-dot"></span><span className="scene-where">F{pad(run.floor)} <span>·</span> {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.elite && <b className="elite-tag">ELITE</b>}<span className="scene-gold">◈ {run.gold}{pop && <em key={pop.key} className="gold-pop">+{pop.gold}</em>}</span></span>
+            <div className="scene-label"><span className="live-dot"></span><span className="scene-where"><span className="scene-floor"><span className="sf-wide">F{run.floor} · {run.kill + 1}/{ENEMIES_PER_FLOOR}</span><span className="sf-narrow">F{run.floor}·{run.kill + 1}/{ENEMIES_PER_FLOOR}</span></span><span className="scene-gold">🪙 {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
                 <button className="chip-btn" onClick={() => { setShowBag(v => !v); setNewLoot(false) }} aria-label={newLoot ? 'Gear, new item found' : 'Gear'}>🎒<b>{equipped.length}</b>{newLoot && <i className="new-dot" aria-hidden />}</button>
@@ -410,7 +411,7 @@ export default function App() {
                 <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
               </div></div>
             <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle scene" />
-            <div className="scene-footer"><span>✦ Mosslight Cavern</span><span>RUN GOLD ◈ {run.gold}</span></div>
+            <div className="scene-footer"><span>✦ Mosslight Cavern</span><span>RUN GOLD 🪙 {run.gold}</span></div>
           </div>
           <div className="combatant-row">
             <div className="combatant player-card">
@@ -465,7 +466,7 @@ export default function App() {
                     {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
                   </>
                 : <div className="stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div></div>}
-              {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>◈ +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.loot && <span className="hot wide">{run.reward.loot}</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}◈</span>}</div>}
+              {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.loot && <span className="hot wide">{run.reward.loot}</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}🪙</span>}</div>}
               {run.phase === 'defeat' && !feedback && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
 

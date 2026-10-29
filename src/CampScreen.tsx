@@ -28,7 +28,7 @@ export default function CampScreen({ save, onBuy, onStart, onReset, message, out
       </div>
 
       <div className="camp-bank" role="status">
-        <span className="bank-gold">◈ {meta.gold} G</span>
+        <span className="bank-gold">🪙 {meta.gold} G</span>
         <span>Best floor {meta.bestFloor}</span>
         <span>Runs {meta.runs}</span>
         <span>Mastered {masteredCount(mastery)}/{WORDS.length}</span>
@@ -58,7 +58,7 @@ export default function CampScreen({ save, onBuy, onStart, onReset, message, out
                       <span className="node-icon">{n.icon}</span>
                       <span className="node-text"><b>{n.name}</b><small>{n.desc}</small></span>
                       <span className="node-cost">
-                        {state === 'owned' ? '✓' : state === 'locked' ? `🔒 ${cost}` : canBuy ? `◈ ${cost}` : `◈ ${cost}`}
+                        {state === 'owned' ? '✓' : state === 'locked' ? `🔒 ${cost}` : canBuy ? `🪙 ${cost}` : `🪙 ${cost}`}
                         {state === 'available' && !canBuy && <small>need {cost - meta.gold}</small>}
                       </span>
                     </button>
