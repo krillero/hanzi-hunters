@@ -13,7 +13,7 @@ import type { Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
-type Feedback = { correct: boolean; text: string; word: Word; mastery: string; masteryUp: boolean }
+type Feedback = { correct: boolean; text: string; word: Word; mastery: string; masteryUp: boolean; chosen: string }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -33,7 +33,6 @@ export default function App() {
   const sceneRef = useRef<PixelScene | null>(null)
   const mountRef = useRef<HTMLDivElement | null>(null)
   const answerLock = useRef(false)
-  const continueRef = useRef<HTMLButtonElement | null>(null)
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
   const [canListen, setCanListen] = useState(false)
   const [card, setCard] = useState<Card | null>(null)
@@ -46,6 +45,7 @@ export default function App() {
 
   const run = save.run
   const inCamp = !run
+  const hasCard = !!card // the battle UI (and its Phaser mount point) only exists once a card does
   const bonuses = useMemo(() => computeBonuses(save.meta.upgrades), [save.meta.upgrades])
   const stats = run ? playerStats(run, bonuses, GEAR) : null
   const foe = run ? enemyStats(ENEMIES, run.floor, run.kill) : null
@@ -76,7 +76,7 @@ export default function App() {
   }, [save])
 
   useEffect(() => {
-    if (inCamp || !mountRef.current) return
+    if (inCamp || !hasCard || !mountRef.current) return
     const game = new Phaser.Game({
       type: Phaser.CANVAS, parent: mountRef.current, width: 640, height: 300, backgroundColor: '#101827',
       pixelArt: true, antialias: false, scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
@@ -90,17 +90,12 @@ export default function App() {
       if (phaseRef.current === 'victory') scene.hideMonster()
     })
     return () => { game.destroy(true); sceneRef.current = null }
-  }, [inCamp])
+  }, [inCamp, hasCard])
 
   useEffect(() => {
     const [sprite, elite] = enemyKey.split(':')
     if (sprite) sceneRef.current?.setEnemy(sprite as 'slime' | 'imp' | 'bat', elite === 'true')
   }, [enemyKey])
-
-  // Keep the Continue button on screen after answering (phones put it below the fold).
-  useEffect(() => {
-    if (feedback) requestAnimationFrame(() => continueRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
-  }, [feedback])
 
   // ---- audio ----------------------------------------------------------------------------
   const speak = (hanzi: string) => {
@@ -138,7 +133,7 @@ export default function App() {
         : after < before ? `${word.hanzi} slipped back to level ${after}. It will return for review.`
           : isCorrect ? 'One more correct answer to level this word up.' : ''
     setFeedback({
-      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0,
+      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, chosen: option,
       text: isCorrect
         ? `Direct hit${r.comboHit ? ' with a combo bonus' : ''}: ${r.damage} damage.`
         : `Not quite. You dealt ${r.damage} damage. ${r.outcome === 'victory' ? 'It was still enough to win!' : r.savedBySecondChance ? 'Second Chance! The counterattack missed.' : `The monster hits back for ${r.counter}.`}`
@@ -250,7 +245,12 @@ export default function App() {
       <section className="game-layout">
         <div className="left-column">
           <div className="scene-frame">
-            <div className="scene-label"><span className="live-dot"></span> FLOOR {pad(run.floor)} <span>•</span> ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.elite && <b className="elite-tag">ELITE</b>}</div>
+            <div className="scene-label"><span className="live-dot"></span><span className="scene-where">F{pad(run.floor)} <span>·</span> {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.elite && <b className="elite-tag">ELITE</b>}</span>
+              <div className="scene-actions">
+                <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
+                <button className="chip-btn" onClick={() => setShowBag(v => !v)} aria-label="Gear">🎒<b>{equipped.length}</b></button>
+                <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
+              </div></div>
             <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle scene" />
             <div className="scene-footer"><span>✦ Mosslight Cavern</span><span>RUN GOLD ◈ {run.gold}</span></div>
           </div>
@@ -267,53 +267,61 @@ export default function App() {
               <div className="mini-stats"><span>☠ DMG {Math.max(1, foe.damage - bonuses.armor)}</span><span>✦ XP {foe.xp}</span></div>
             </div>
           </div>
-          <div className="quick-actions">
-            <button className="secondary-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback}>🧪 Potion <b>{run.potions}</b></button>
-            <button className="secondary-btn" onClick={() => setShowBag(v => !v)}>🎒 Gear <b>{equipped.length}</b></button>
-            <button className="secondary-btn" onClick={() => setShowWords(v => !v)}>📚 Words <b>{seenCount(save.mastery)}</b></button>
-          </div>
           {showBag && <div className="drawer"><div className="drawer-title">GEAR THIS RUN <button onClick={() => setShowBag(false)} aria-label="Close gear">×</button></div>{GEAR.map(item => <div className="gear-line" key={item.name}><span className="gear-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div><span className={`gear-state ${run.gear.includes(item.name) ? 'owned' : 'locked'}`}>{run.gear.includes(item.name) ? '✓ Equipped' : '🔒 Not found'}</span></div>)}<p className="hint-text">Gear drops from monsters and stacks, but is lost when your run ends. Start-of-run gear comes from the Fortune upgrades.</p></div>}
           {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi]).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; return <div className={`wordbook-word lv${lv}`} key={w.hanzi}><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i></div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
 
         <div className="right-column">
           <section className="question-panel">
-            <div className="panel-kicker"><span>SCROLL OF KNOWLEDGE</span><span className="mastery-kicker">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span></div>
+            <div className="panel-kicker"><span>SCROLL OF KNOWLEDGE</span><span className="mastery-kicker">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i><span className="streak">×{run.streak}</span></span></div>
             <div className="question-title"><span className="question-icon">文</span><div><h2>{fighting ? question.text : run.phase === 'victory' ? (lastOfFloor ? 'Floor cleared!' : 'Victory, adventurer!') : 'You have fallen...'}</h2><p>{fighting ? 'Answer correctly to unleash a stronger attack.' : run.phase === 'victory' ? 'The cavern rewards your growing knowledge.' : 'Your gold and word mastery are safe.'}</p></div></div>
 
-            {fighting && !feedback && <div className="word-card">
-              {question.kind === 'listen'
-                ? <button className="listen-big" onClick={() => speak(word.hanzi)} aria-label="Play the word again">🔊<span>Tap to hear it again</span></button>
-                : <div className={`hanzi ${show.hanzi ? '' : 'is-hidden'}`}>{show.hanzi ? word.hanzi : '？'}</div>}
-              {(question.kind !== 'listen' || revealed) && <div className="word-meta"><span className={`pinyin ${show.pinyin ? '' : 'is-hidden'}`}>{show.pinyin ? word.pinyin : question.kind === 'pinyin' ? '? ? ?' : ''}</span>
-                {question.kind !== 'listen' && <button className="audio-btn" onClick={() => speak(word.hanzi)} aria-label="Hear pronunciation">🔊 Listen</button>}
-                {bonuses.hints > 0 && <button className="audio-btn hint-btn" onClick={useHint} disabled={run.hintsLeft < 1 || !!feedback} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>}</div>}
-              {question.kind === 'listen' && !revealed && bonuses.hints > 0 && <div className="word-meta"><button className="audio-btn hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button></div>}
-              <div className={`word-meaning ${show.meaning ? '' : 'is-hidden'}`}>{show.meaning ? word.meaning : question.kind === 'meaning' || question.kind === 'intro' ? '“ ? ”' : ''}</div>
-            </div>}
+            {/* Fixed-size regions: stage, choices, action bar never change size or position. */}
+            {feedback
+              ? <div className={`stage stage-fb ${feedback.correct ? 'good' : 'bad'}`}>
+                  <p className="fb-head"><strong>{feedback.correct ? '✦ Excellent strike!' : '↻ Keep learning!'}</strong> {feedback.text}</p>
+                  <div className="fb-word">
+                    <span className="fb-hanzi">{feedback.word.hanzi}</span>
+                    <div className="fb-info"><span className="fb-pinyin">{feedback.word.pinyin}</span><span className="fb-meaning">{feedback.word.meaning}</span></div>
+                    <button className="icon-btn" onClick={() => speak(feedback.word.hanzi)} aria-label="Hear pronunciation">🔊</button>
+                  </div>
+                  <p className="fb-note">{feedback.word.note}</p>
+                  {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
+                </div>
+              : fighting
+                ? <div className="stage stage-card">
+                    {question.kind === 'listen'
+                      ? <button className="listen-big" onClick={() => speak(word.hanzi)} aria-label="Play the word again">🔊<span>Tap to hear it again</span></button>
+                      : <div className={`hanzi ${show.hanzi ? '' : 'is-hidden'}`}>{show.hanzi ? word.hanzi : '？'}</div>}
+                    <div className="pinyin-line"><span className={`pinyin ${show.pinyin ? '' : 'is-hidden'}`}>{show.pinyin ? word.pinyin : question.kind === 'pinyin' ? '? ? ?' : '\u00a0'}</span></div>
+                    <div className={`word-meaning ${show.meaning ? '' : 'is-hidden'}`}>{show.meaning ? word.meaning : question.kind === 'meaning' || question.kind === 'intro' ? '“ ? ”' : '\u00a0'}</div>
+                  </div>
+                : <div className="stage stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div><p>{run.phase === 'victory' ? 'Read your rewards below, then move on.' : 'Your run is over.'}</p></div>}
 
-            {fighting && <div className="answer-list">{question.options.map((option, i) => {
-              const gone = eliminated.includes(option)
-              return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${gone ? 'answer-gone' : ''} ${feedback && option === question.answer ? 'answer-correct' : ''}`} disabled={!!feedback || gone} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span>{gone ? '—' : option}</span><span className="answer-arrow">↗</span></button>
-            })}</div>}
+            {fighting
+              ? <div className="answer-list">{question.options.map((option, i) => {
+                  const gone = eliminated.includes(option)
+                  const wrongPick = !!feedback && !feedback.correct && option === feedback.chosen
+                  return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${gone ? 'answer-gone' : ''} ${feedback && option === question.answer ? 'answer-correct' : ''} ${wrongPick ? 'answer-wrong' : ''}`} disabled={!!feedback || gone} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
+                })}</div>
+              : run.phase === 'victory'
+                ? <div className="answer-list reward-grid">
+                    <div><small>XP</small><b>+{run.reward.xp}</b></div>
+                    <div><small>Gold</small><b>+{run.reward.gold}</b></div>
+                    <div className="wide"><small>{run.reward.levelUps ? 'Level up!' : run.reward.loot ? 'Loot' : 'Slain this run'}</small><b>{run.reward.levelUps ? `Level ${run.level}` : run.reward.loot ? run.reward.loot : run.kills}</b></div>
+                  </div>
+                : <div className="answer-list reward-grid defeat-grid"><p>You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b>. It is banked for permanent upgrades. Next run: level 1, no gear. Word mastery stays.</p></div>}
 
-            {feedback && <div className={`feedback-box ${feedback.correct ? 'good' : 'bad'}`}>
-              <div className="fb-head"><strong>{feedback.correct ? '✦ Excellent strike!' : '↻ Keep learning!'}</strong><span className="fb-text">{feedback.text}</span></div>
-              <div className="fb-word">
-                <span className="fb-hanzi">{feedback.word.hanzi}</span>
-                <div className="fb-info"><span className="fb-pinyin">{feedback.word.pinyin}</span><span className="fb-meaning">{feedback.word.meaning}</span></div>
-                <button className="audio-btn fb-listen" onClick={() => speak(feedback.word.hanzi)} aria-label="Hear pronunciation">🔊 Listen</button>
-              </div>
-              <p className="fb-note">{feedback.word.note}</p>
-              {feedback.mastery && <p className={`fb-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
-              <button ref={continueRef} className="continue-btn" onClick={dismissFeedback}>Continue →</button>
-            </div>}
-
-            {run.phase === 'victory' && !feedback && <div className="end-panel"><div className="reward-row"><span>✦ XP earned</span><b>+{run.reward.xp}</b></div><div className="reward-row"><span>◈ Gold found</span><b>+{run.reward.gold} G</b></div><button className="primary-btn" onClick={nextEnemy}>{lastOfFloor ? `Descend to floor ${run.floor + 1}` : 'Next enemy'} <span>→</span></button></div>}
-            {run.phase === 'victory' && feedback && <p className="hint-text">Read the feedback, then continue.</p>}
-            {run.phase === 'defeat' && !feedback && <div className="end-panel"><p>You fell on floor {run.floor} with <b>{run.gold} gold</b>. It is banked — spend it on permanent upgrades. You will start again at level 1 with no gear, but your word mastery stays.</p><button className="primary-btn" onClick={endRun}>Go to camp <span>⛺</span></button></div>}
-            {run.phase === 'defeat' && feedback && <p className="hint-text">Read the feedback, then continue.</p>}
-            <div className="panel-foot"><span>🧠 Words you miss drop a level and return</span><span>STREAK ×{run.streak}</span></div>
+            <div className="action-bar">
+              {fighting && !feedback
+                ? <>
+                    <button className="bar-btn ghost" onClick={() => speak(word.hanzi)} aria-label="Hear pronunciation">🔊 Listen</button>
+                    {bonuses.hints > 0 && <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>}
+                  </>
+                : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? nextEnemy : endRun}>
+                    {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? `Descend to floor ${run.floor + 1}` : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>
+                  </button>}
+            </div>
           </section>
           {toast && <div className="toast"><span>{toast}</span><button onClick={() => setToast('')} aria-label="Dismiss">×</button></div>}
           <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear this run</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div><button className="reset-btn" onClick={resetAll}>Reset ALL progress</button></section>

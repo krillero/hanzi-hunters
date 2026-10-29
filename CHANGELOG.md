@@ -42,6 +42,12 @@
 - Browser E2E (headless Chromium, 390×844 + 320/375/430 checks; scripted bot using the real DOM): new player intro → perfect play to floor 2 with an elite → deliberate death → camp → buy tiers (locked/affordable/unaffordable states) → new run at level 1 without gear, mastery intact → hint removes exactly one wrong option → reload resumes run → v1 save migration → no horizontal overflow, buttons ≥ 44 px, no console errors. Passed twice in a row.
 - Not verified: listening questions (headless browser has no Mandarin voice, so they were exercised only by unit tests), real devices, the balance with real players.
 
+## 0.2.1 — stable battle layout
+- The question panel is now four fixed regions (title, **stage**, **choices**, **action bar**). The stage shows the word card, then the feedback recap, then the victory/defeat banner in the same box; choices become the reward tiles after a win; the action bar shows Listen/Hint, then a single Continue / Next enemy / Descend / Go to camp button in the same place. Victory and defeat now need one tap instead of two.
+- Potion/Gear/Words buttons moved into the scene's top bar; combat cards compacted; on phones the scene height is calc(100dvh - 690px) so a whole fight fits one screen at 390×844 and up.
+- Verified by `stable.mjs` (headless Chromium): stage, choices and action bar have identical top/left/size in the asking, wrong-feedback, right-feedback and victory states at 390×844, 430×932, 375×667, 320×568 and 1100×800. The page fits with no scrolling at 390×844, 430×932 and desktop; 375×667 scrolls ~51 px and 320×568 ~150 px (positions still identical in page coordinates).
+- Fixed a 0.2 regression: the Phaser scene did not appear on first load or after reloading mid-run (the mount point only existed one render later). Added a browser-test assertion for both cases.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.
