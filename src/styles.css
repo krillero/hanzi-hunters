@@ -48,3 +48,17 @@
   .topbar{height:48px}
   .question-title{margin:8px 0 6px}
 }
+
+/* ---- Legibility: answers and pinyin were 10-11px ---- */
+.answer-btn{font-size:19px;font-weight:600;letter-spacing:.2px;line-height:1.2;color:#f1f5fb;font-family:Manrope,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.answer-key{width:26px;height:26px;font-size:12px}
+.answer-arrow{font-size:14px}
+.pinyin{font-size:28px;font-weight:700;letter-spacing:.5px;line-height:1.1}
+.pinyin.is-hidden{font-size:24px}
+.word-meaning{font-size:14px}
+@media(max-width:480px){
+  .answer-btn{font-size:18px;padding:10px 8px;gap:8px}
+  .answer-key{width:24px;height:24px;font-size:11px}
+  .pinyin{font-size:24px}
+  .word-meaning{font-size:13px}
+}
