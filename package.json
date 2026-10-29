@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test tests/*.test.ts",
     "typecheck": "tsc -b",
-    "validate:content": "node tools/validate-content.ts"
+    "validate:content": "node tools/validate-content.ts",
+    "inventory": "node tools/content-inventory.ts"
   },
   "dependencies": {
     "phaser": "^3.90.0",

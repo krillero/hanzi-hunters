@@ -127,6 +127,8 @@ Example items: `{ "zh": "她是女人。", "pinyin": "Tā shì nǚrén.", "en": 
 
 ## Copy-paste prompt for another agent
 
+A complete, ready-to-use version lives in `docs/AGENT_PROMPT.md`; the current state of the content is in `docs/content-inventory.json` (regenerate with `npm run inventory`). Short version:
+
 > You are adding learning content to the Hanzi Hunters project. Read `docs/CONTENT_GUIDE.md` first and follow it exactly.
 > Edit only `src/content/words.json` and/or `src/content/explanations.json`; do not change code.
 > Task: **<describe the task, e.g. “add explanations for 日 and 月 explaining that 日 is a sun shape and 月 a moon shape, why they are
