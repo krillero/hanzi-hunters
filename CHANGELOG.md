@@ -89,6 +89,17 @@
 - Validator: 0 errors, 5 intentional warnings (parts/examples outside the vocabulary: 也 亻 它 们 个 妈 妹 眼 睛). 41 unit tests, pacing simulation (floors unchanged), notes-fit test over all 50 words, all 18 popups open/fit/link at 411×650, full browser flows pass.
 - **Still needs review by a fluent Mandarin speaker** (listed in the report): see the open questions in the hand-over message.
 
+## 0.5 — question variety (Phase 1)
+- **10 question kinds** instead of 4 (intro, char→meaning, char→pinyin, meaning→char, audio→char, **meaning→pinyin, pinyin→char, audio→meaning, audio→pinyin, homophone, look-alike**). Every kind counts the same for mastery (2 right in a row = level up, a miss = down).
+- **Scheduler** (`chooseKind`): per-level weight tables (early = recognise; developing = all directions; higher = mixed + discrimination), fair-only filtering, no back-to-back repeats, and a session-only weak-area boost for kinds the player keeps missing. No save-format change.
+- **Homophone safety:** sound-only questions are never asked when the learner already knows a word that sounds identical (木/目, 他/她, 十/石); a homophone question with a meaning cue is used instead. Pinyin-answer questions are unaffected.
+- **Wrong answers only from words the learner has met** (padded with the earliest words while the known list is tiny), never overlapping/confusable meanings, tone-change readings or homophones where that would be ambiguous.
+- New optional `lookalike` field in `words.json` (validated; seeded for 日 月 口 · 人 大 天 · 木 目 · 十 石 · 他 她 · 上 下 · 一 二 三); `?kind=<kind>` preview parameter next to `?word=`.
+- The word card now shows the meaning or the pinyin as the big cue when the character is hidden; audio kinds use a big speaker button.
+- Fixed: the first question of a session could never be an audio question because the voice check ran after the first card was built; speech failures can no longer throw out of the effect.
+- Tests: 45 unit tests (every word × level × kind: 4 unique options, exactly one correct; level tables; homophone/look-alike/known-words rules; repeat rate and weak-area boost); browser: all 10 kinds rendered at 411×650, a 61-question seeded session served 7 kinds with 5 % repeats and 0 unanswerable questions, full e2e + explanation, death/kill, fit suites still pass.
+- Not verified: real Mandarin voices on a phone (audio kinds were exercised with a stubbed voice), balance with real players, whether the weights feel right.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

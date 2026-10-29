@@ -20,7 +20,7 @@ export function validateContent(words: unknown, explanations: unknown): Issues {
   const vocab = new Set<string>()
   if (!Array.isArray(words)) err('words.json: must be an array of word objects')
   else {
-    const allowed = new Set(['hanzi', 'pinyin', 'meaning', 'group', 'note', 'alt', 'confusable'])
+    const allowed = new Set(['hanzi', 'pinyin', 'meaning', 'group', 'note', 'alt', 'confusable', 'lookalike'])
     words.forEach((w, i) => {
       const at = `words.json[${i}]${isObj(w) && isStr(w.hanzi) ? ` (${w.hanzi})` : ''}`
       if (!isObj(w)) return err(`${at}: must be an object`)
@@ -39,10 +39,14 @@ export function validateContent(words: unknown, explanations: unknown): Issues {
         if (w.pinyin !== w.pinyin.toLowerCase()) err(`${at}: pinyin must be lowercase`)
       }
       if (isStr(w.meaning) && w.meaning.length > 40) warn(`${at}: meaning is long (${w.meaning.length} chars); it must fit an answer button`)
-      for (const k of ['alt', 'confusable'] as const) if (w[k] !== undefined && !(Array.isArray(w[k]) && (w[k] as unknown[]).every(isStr))) err(`${at}: "${k}" must be an array of strings`)
+      for (const k of ['alt', 'confusable', 'lookalike'] as const) if (w[k] !== undefined && !(Array.isArray(w[k]) && (w[k] as unknown[]).every(isStr))) err(`${at}: "${k}" must be an array of strings`)
     })
     words.forEach((w, i) => {
       if (isObj(w) && Array.isArray(w.confusable)) for (const c of w.confusable) if (isStr(c) && !vocab.has(c)) err(`words.json[${i}] (${w.hanzi}): confusable "${c}" is not a word in the list`)
+      if (isObj(w) && Array.isArray(w.lookalike)) for (const c of w.lookalike) {
+        if (isStr(c) && !vocab.has(c)) err(`words.json[${i}] (${w.hanzi}): lookalike "${c}" is not a word in the list`)
+        else if (c === w.hanzi) err(`words.json[${i}] (${w.hanzi}): lookalike must not list the word itself`)
+      }
     })
   }
 

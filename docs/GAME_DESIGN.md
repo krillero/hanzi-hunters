@@ -8,18 +8,30 @@
 5. At **camp** you spend banked gold on the upgrade tree, then start a new run.
 
 ## Word mastery (per word, saved)
-| Level | Question | Card shows before you answer |
-|---|---|---|
-| new | "New word! What does X mean?" (first exposure, no mastery credit) | hanzi, pinyin, meaning |
-| 0 | hanzi → meaning | hanzi + pinyin |
-| 1 | hanzi → pinyin (3 tone variants as distractors) | hanzi only |
-| 2 | hanzi → meaning | hanzi only |
-| 3, 4 | meaning → hanzi, or listen → hanzi when the device has a Mandarin voice | meaning / nothing |
+Each word has a level 0-4 (4 = mastered). **Every question kind counts the same**: 2 correct in a row promote, a miss demotes one level.
+A new word is first shown once with everything visible ("New word!", pick the meaning; no mastery credit).
 
+The level decides which kinds can be asked (weights in `KIND_WEIGHTS`, `src/game/questions.ts`):
+
+| Level | Kinds (most frequent first) |
+|---|---|
+| 0 early | char→meaning (pinyin shown), audio→char, meaning→char |
+| 1 developing | char→pinyin, pinyin→char, meaning→char, audio→meaning, homophone, look-alike |
+| 2 | char→meaning (char only), meaning→pinyin, audio→pinyin, pinyin→char, look-alike, homophone, + meaning→char, audio→meaning, audio→char |
+| 3-4 higher | mixed: meaning→char, audio→char, pinyin→char, audio→pinyin, audio→meaning, meaning→pinyin, look-alike, homophone, + char→pinyin, char→meaning |
+
+Which kind a word gets is a weighted draw: the level table, filtered by what is *fair* for that word, x 0.15 if it was the previous kind,
+x 0.5 if it was one of the last two, x (1 + 2 x miss rate) for kinds missed in this session (weak areas). Audio kinds need a Mandarin voice.
+Not yet: spaced review by time, per-kind history across sessions, sentence/context questions (see the roadmap discussion).
+
+**Fairness rules** (all enforced by `tests/questions.test.ts`):
+- Wrong answers come from words the learner has met (padded with the earliest words while fewer than ~9 are known); never a word whose meaning overlaps or is listed as `confusable`.
+- **Homophones** (same pinyin, e.g. 木/目 mù, 他/她 tā, 十/石 shí): sound-only kinds (audio→char, pinyin→char, audio→meaning) are not asked for a word whose homophone the learner already knows; the homophone question (pinyin + meaning → character, both homophones offered) is used instead. If the partner is unknown it is never offered as an option.
+- **Look-alikes** come from the `lookalike` field in `words.json`; they are only used once the partner has been met.
+- Tone-change readings (`alt`, e.g. 不 bú, 一 yí/yì) are never offered as wrong pinyin.
 - 2 correct answers in a row promote a word; a miss drops it one level. Level 4 = mastered (asked rarely).
 - Harder levels deal bonus damage (+0/10/25/40 %).
 - The pool of words starts at 6 and grows by one per word that reaches level 1; no new word is introduced while 4 words are still at level 0.
-- Distractors never include: overlapping meanings (日 "sun / day" vs 天 "sky / day"), listed confusables (中/国), homophones in listening (他/她), or tone-sandhi readings (不 bú, 一 yí/yì).
 
 ## Upgrade tree (permanent; 4 branches × 5 tiers, bought in order)
 Cost = 25 × tier × (tier+1) / 2 → **25, 75, 150, 250, 375** per branch (875 each, 3 500 total).

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { LIMITS, validateContent } from '../src/content/validate.ts'
 
 const read = (f: string) => JSON.parse(readFileSync(new URL(`../src/content/${f}`, import.meta.url), 'utf8'))
-const words = read('words.json') as { hanzi: string; pinyin: string; meaning: string; group: string; note: string; alt?: string[]; confusable?: string[] }[]
+const words = read('words.json') as { hanzi: string; pinyin: string; meaning: string; group: string; note: string; alt?: string[]; confusable?: string[]; lookalike?: string[] }[]
 const explanations = read('explanations.json') as Record<string, { title?: string; summary: string; sections: { type: string; heading?: string }[]; related?: string[] }>
 const { errors, warnings } = validateContent(words, explanations)
 
@@ -27,7 +27,7 @@ const inventory = {
   limits: LIMITS,
   words: words.map((w, i) => ({
     order: i + 1, hanzi: w.hanzi, pinyin: w.pinyin, meaning: w.meaning, group: w.group,
-    ...(w.alt ? { alt: w.alt } : {}), ...(w.confusable ? { confusable: w.confusable } : {}),
+    ...(w.alt ? { alt: w.alt } : {}), ...(w.confusable ? { confusable: w.confusable } : {}), ...(w.lookalike ? { lookalike: w.lookalike } : {}),
     hasExplanation: w.hanzi in explanations
   })),
   explanations: Object.entries(explanations).map(([hanzi, e]) => ({

@@ -385,3 +385,5 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .scene-label .scene-actions{flex:none}
 .scene-label .live-dot{flex:none}
 @media(max-width:380px){.scene-gold{display:none}.chip-btn{min-width:40px}}
+/* the big card line when the cue is the meaning or the pinyin instead of the character */
+.stage-card .hanzi.big-latin{font-size:clamp(26px,5.2dvh,44px);font-weight:700;line-height:1.15;padding:0 8px;max-width:100%;overflow-wrap:anywhere;color:#f0cb78}

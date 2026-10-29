@@ -9,6 +9,8 @@ export type Word = {
   alt?: string[]
   /** Hanzi whose meaning is too close to be a fair wrong answer. */
   confusable?: string[]
+  /** Hanzi that LOOK similar (used for look-alike discrimination questions). Symmetry is applied in code. */
+  lookalike?: string[]
 }
 
 // Vocabulary lives in src/content/words.json (see docs/CONTENT_GUIDE.md).

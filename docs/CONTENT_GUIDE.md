@@ -18,7 +18,10 @@ npm test                   # also validates, plus game-logic tests (must stay gr
 npm run dev                # then open  http://localhost:5173/?word=她  to preview a word
 ```
 
-`?word=<hanzi>` forces that word as the first question of the session. Answer (wrongly, to see the pulsing 💡 button)
+`?word=<hanzi>` forces that word as the first question of the session; add `&kind=<kind>` to force a question type
+(`meaning`, `pinyin`, `character`, `listen`, `meaning2pinyin`, `pinyin2char`, `listen2meaning`, `listen2pinyin`, `homophone`, `lookalike`; the game still
+falls back to a normal question if the kind is not possible for that word). The word is treated as already known, so give it a save with
+some mastery, or just play a few questions first. Answer (wrongly, to see the pulsing 💡 button)
 and open the popup. Remove the parameter to play normally. Always run the validator before committing.
 
 ---
@@ -46,6 +49,14 @@ Append an object (or insert it where it should be taught; earlier = introduced e
 | `note` | yes | 1–2 sentences shown after answering. Teach, never shame. Pronunciation tip, tone tip, or usage hint. Plain text. |
 | `alt` | no | Other **valid readings in context** (tone change) so they are never offered as a wrong pinyin option. e.g. `不`: `["bú"]`, `一`: `["yí","yì"]`. |
 | `confusable` | no | Hanzi (from this list) whose meaning is too close to be a fair wrong answer, e.g. `中` ↔ `国`. List both directions. |
+| `lookalike` | no | Hanzi (from this list) that **look** similar to this one, e.g. `日` → `["月","口"]`, `大` → `["人","天"]`. Used for "These look alike. Which one means …?" questions. The relation is applied in both directions, so listing it once is enough. Only list pairs a beginner really mixes up by shape (not same-meaning or same-sound words). |
+
+**What the game builds from this data** (nothing extra to write):
+meaning/pinyin/character/listening questions at every mastery level (see `docs/GAME_DESIGN.md`), and a **homophone question**
+for every pair with exactly the same pinyin, e.g. 木/目 (mù): "Same sound! Which character is “mù” and means “eye”?". Sound-only
+questions (listen → character, pinyin → character, listen → meaning) are never used for a word whose homophone partner the learner
+already knows, because the sound alone would be ambiguous; the meaning cue is used instead.
+Wrong answers are drawn from words the learner has already met.
 
 **Meaning overlap is handled automatically.** Words that share a gloss part (`"sun / day"` and `"sky / day"` both contain "day") are
 never shown as wrong answers for each other. Homophones (same pinyin, like 他/她) are never offered together in listening questions.

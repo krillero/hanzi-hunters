@@ -6,7 +6,7 @@ import ExplainModal from './ExplainModal'
 import { hasExplanation } from './content'
 import { ENEMIES, GEAR, WORDS, type Word } from './data'
 import { MAX_LV, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
-import { buildQuestion, shuffle, type Question } from './game/questions'
+import { buildQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import {
   ENEMIES_PER_FLOOR, advance, isElite, bankRun, drinkPotion, enemyStats, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
 } from './game/rules'
@@ -73,10 +73,12 @@ export default function App() {
   const answerLock = useRef(false)
   const fs = useFullscreen()
   // Content preview aid: /?word=她 makes that word the first question (see docs/CONTENT_GUIDE.md).
+  const kindHistory = useRef<KindResult[]>([])   // this session's question kinds + results: drives variety and weak-area focus
   const forcedWord = useRef(new URLSearchParams(window.location.search).get('word'))
+  const forcedKind = useRef(new URLSearchParams(window.location.search).get('kind') as QKind | null)   // preview aid: /?word=木&kind=homophone
   const noteRef = useRef<HTMLParagraphElement | null>(null)
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
-  const [canListen, setCanListen] = useState(false)
+  const [canListen, setCanListen] = useState(hasChineseVoice)
   const [card, setCard] = useState<Card | null>(null)
   const [eliminated, setEliminated] = useState<string[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
@@ -114,7 +116,7 @@ export default function App() {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
     const forced = current === null && forcedWord.current ? WORDS.find(w => w.hanzi === forcedWord.current) : undefined
     const word = forced ?? pickWord(WORDS, mastery, current)
-    return { word, question: buildQuestion(word, mastery[word.hanzi], WORDS, { canListen: listen }) }
+    return { word, question: buildQuestion(word, mastery[word.hanzi], WORDS, { canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind: forced && forcedKind.current ? forcedKind.current : undefined }) }
   }
   const patch = (fn: (s: Saved) => Saved) => setSave(fn)
 
@@ -161,14 +163,17 @@ export default function App() {
   const speak = (hanzi: string) => {
     if (!('speechSynthesis' in window)) { setToast('Speech playback is not supported in this browser.'); return }
     if (!hasChineseVoice()) setToast('No Mandarin voice found on this device. Install a Chinese (Simplified) text-to-speech voice in your system settings.')
-    window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(hanzi)
-    u.lang = 'zh-CN'; u.rate = 0.82
-    const voice = window.speechSynthesis.getVoices().find(v => v.lang.toLowerCase().replace('_', '-').startsWith('zh-cn')) ?? window.speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('zh'))
-    if (voice) u.voice = voice
-    window.speechSynthesis.speak(u)
+    try {
+      window.speechSynthesis.cancel()
+      const u = new SpeechSynthesisUtterance(hanzi)
+      u.lang = 'zh-CN'; u.rate = 0.82
+      const voices = window.speechSynthesis.getVoices()
+      const voice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith('zh-cn')) ?? voices.find(v => v.lang.toLowerCase().startsWith('zh'))
+      if (voice) u.voice = voice
+      window.speechSynthesis.speak(u)
+    } catch { /* speech is optional: never let it break the game */ }
   }
-  useEffect(() => { if (card?.question.kind === 'listen' && !feedback) speak(card.word.hanzi) /* eslint-disable-next-line */ }, [card])
+  useEffect(() => { if (card?.question.audio && !feedback) speak(card.word.hanzi) /* eslint-disable-next-line */ }, [card])
 
   // ---- actions --------------------------------------------------------------------------
   const answerQuestion = (option: string) => {
@@ -183,6 +188,7 @@ export default function App() {
       roll: { drop: Math.random(), item: Math.random() }
     })
     const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
+    if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
     const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
     sceneRef.current?.playHit('monster', r.damage, r.comboHit ? 'COMBO!' : !isCorrect ? 'WEAK HIT' : undefined)
     if (r.outcome === 'victory') { sceneRef.current?.hideMonster(); sceneRef.current?.showVictory(isElite(run.kill) ? 'ELITE SLAIN!' : 'ENEMY SLAIN!') }
@@ -294,6 +300,11 @@ export default function App() {
   const entry = save.mastery[word.hanzi]
   const revealed = !!feedback
   const show = { hanzi: question.show.hanzi || revealed, pinyin: question.show.pinyin || revealed, meaning: question.show.meaning || revealed }
+  // The big line of the word card: the character when shown, else the meaning or pinyin that is being given as the cue.
+  const main = show.hanzi ? { text: word.hanzi, latin: false, hidden: false, usesPinyin: false, usesMeaning: false }
+    : show.meaning && question.ask !== 'meaning' && !(show.pinyin && question.kind === 'homophone') ? { text: word.meaning, latin: true, hidden: false, usesPinyin: false, usesMeaning: true }
+      : show.pinyin && question.ask !== 'pinyin' && !show.meaning ? { text: word.pinyin, latin: true, hidden: false, usesPinyin: true, usesMeaning: false }
+        : { text: '？', latin: false, hidden: true, usesPinyin: false, usesMeaning: false }
   const fighting = run.phase === 'fighting'
   const lastOfFloor = run.kill + 1 >= ENEMIES_PER_FLOOR
   const pips = entry ? entry.lv : -1
@@ -344,11 +355,11 @@ export default function App() {
             {/* Fixed-size regions: stage, choices, action bar never change size or position. */}
             {fighting && !feedback && <>
               <div className="stage stage-card"><span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
-                {question.kind === 'listen'
+                {question.audio
                   ? <button className="listen-big" onClick={() => speak(word.hanzi)} aria-label="Play the word again">🔊<span>Tap to hear it again</span></button>
-                  : <div className={`hanzi ${show.hanzi ? '' : 'is-hidden'}`}>{show.hanzi ? word.hanzi : '？'}</div>}
-                <div className="pinyin-line"><span className={`pinyin ${show.pinyin ? '' : 'is-hidden'}`}>{show.pinyin ? word.pinyin : question.kind === 'pinyin' ? '? ? ?' : '\u00a0'}</span></div>
-                <div className={`word-meaning ${show.meaning ? '' : 'is-hidden'}`}>{show.meaning ? word.meaning : question.kind === 'meaning' || question.kind === 'intro' ? '“ ? ”' : '\u00a0'}</div>
+                  : <div className={`hanzi ${main.latin ? 'big-latin' : ''} ${main.hidden ? 'is-hidden' : ''}`}>{main.text}</div>}
+                <div className="pinyin-line"><span className={`pinyin ${show.pinyin ? '' : 'is-hidden'}`}>{main.usesPinyin ? '\u00a0' : show.pinyin ? word.pinyin : question.ask === 'pinyin' ? '? ? ?' : '\u00a0'}</span></div>
+                <div className={`word-meaning ${show.meaning ? '' : 'is-hidden'}`}>{main.usesMeaning ? '\u00a0' : show.meaning ? word.meaning : question.ask === 'meaning' ? '“ ? ”' : '\u00a0'}</div>
               </div>
               <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)

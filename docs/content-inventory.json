@@ -109,6 +109,9 @@
       "pinyin": "rén",
       "meaning": "person",
       "group": "people",
+      "lookalike": [
+        "大"
+      ],
       "hasExplanation": true
     },
     {
@@ -117,6 +120,10 @@
       "pinyin": "dà",
       "meaning": "big",
       "group": "size",
+      "lookalike": [
+        "人",
+        "天"
+      ],
       "hasExplanation": true
     },
     {
@@ -137,6 +144,10 @@
         "yí",
         "yì"
       ],
+      "lookalike": [
+        "二",
+        "三"
+      ],
       "hasExplanation": true
     },
     {
@@ -145,6 +156,10 @@
       "pinyin": "èr",
       "meaning": "two",
       "group": "number",
+      "lookalike": [
+        "一",
+        "三"
+      ],
       "hasExplanation": false
     },
     {
@@ -153,6 +168,10 @@
       "pinyin": "sān",
       "meaning": "three",
       "group": "number",
+      "lookalike": [
+        "一",
+        "二"
+      ],
       "hasExplanation": false
     },
     {
@@ -161,6 +180,10 @@
       "pinyin": "rì",
       "meaning": "sun / day",
       "group": "nature",
+      "lookalike": [
+        "月",
+        "口"
+      ],
       "hasExplanation": true
     },
     {
@@ -169,6 +192,9 @@
       "pinyin": "yuè",
       "meaning": "moon / month",
       "group": "nature",
+      "lookalike": [
+        "日"
+      ],
       "hasExplanation": true
     },
     {
@@ -201,6 +227,9 @@
       "pinyin": "mù",
       "meaning": "wood / tree",
       "group": "nature",
+      "lookalike": [
+        "目"
+      ],
       "hasExplanation": true
     },
     {
@@ -217,6 +246,9 @@
       "pinyin": "tiān",
       "meaning": "sky / day",
       "group": "nature",
+      "lookalike": [
+        "大"
+      ],
       "hasExplanation": false
     },
     {
@@ -249,6 +281,9 @@
       "pinyin": "tā",
       "meaning": "he / him",
       "group": "people",
+      "lookalike": [
+        "她"
+      ],
       "hasExplanation": true
     },
     {
@@ -257,6 +292,9 @@
       "pinyin": "tā",
       "meaning": "she / her",
       "group": "people",
+      "lookalike": [
+        "他"
+      ],
       "hasExplanation": true
     },
     {
@@ -354,6 +392,9 @@
       "pinyin": "shí",
       "meaning": "ten",
       "group": "number",
+      "lookalike": [
+        "石"
+      ],
       "hasExplanation": true
     },
     {
@@ -378,6 +419,9 @@
       "pinyin": "shàng",
       "meaning": "above / up",
       "group": "place",
+      "lookalike": [
+        "下"
+      ],
       "hasExplanation": true
     },
     {
@@ -386,6 +430,9 @@
       "pinyin": "xià",
       "meaning": "below / down",
       "group": "place",
+      "lookalike": [
+        "上"
+      ],
       "hasExplanation": true
     },
     {
@@ -402,6 +449,9 @@
       "pinyin": "mù",
       "meaning": "eye",
       "group": "body",
+      "lookalike": [
+        "木"
+      ],
       "hasExplanation": true
     },
     {
@@ -418,6 +468,9 @@
       "pinyin": "shí",
       "meaning": "stone",
       "group": "nature",
+      "lookalike": [
+        "十"
+      ],
       "hasExplanation": true
     },
     {
