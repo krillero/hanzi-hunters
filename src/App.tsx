@@ -8,7 +8,7 @@ import { ENEMIES, GEAR, WORDS, type Word } from './data'
 import { MAX_LV, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
 import { buildQuestion, shuffle, type Question } from './game/questions'
 import {
-  ENEMIES_PER_FLOOR, advance, bankRun, drinkPotion, enemyStats, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
+  ENEMIES_PER_FLOOR, advance, isElite, bankRun, drinkPotion, enemyStats, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
 import type { Run, Saved } from './game/types'
@@ -105,6 +105,8 @@ export default function App() {
   enemyKeyRef.current = enemyKey
   const phaseRef = useRef<Run['phase']>('fighting')
   phaseRef.current = run?.phase ?? 'fighting'
+  const killRef = useRef(0)
+  killRef.current = run?.kill ?? 0
   const streakRef = useRef(0)
   streakRef.current = run?.streak ?? 0
 
@@ -141,7 +143,7 @@ export default function App() {
       sceneRef.current = scene
       const [sprite, elite] = enemyKeyRef.current.split(':')
       if (sprite) scene.setEnemy(sprite as 'slime' | 'imp' | 'bat', elite === 'true')
-      if (phaseRef.current === 'victory') scene.hideMonster()
+      if (phaseRef.current === 'victory') { scene.hideMonster(); scene.showVictory(killRef.current >= ENEMIES_PER_FLOOR - 1 ? 'ELITE SLAIN!' : 'ENEMY SLAIN!', false) }
       scene.setCombo(streakRef.current)
       if (phaseRef.current === 'defeat') scene.showDefeat(false)
     })
@@ -183,8 +185,8 @@ export default function App() {
     const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
     const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
     sceneRef.current?.playHit('monster', r.damage, r.comboHit ? 'COMBO!' : !isCorrect ? 'WEAK HIT' : undefined)
-    if (r.outcome === 'victory') sceneRef.current?.hideMonster()
-    else if (r.counter > 0) sceneRef.current?.playHit('hero', r.counter, 'COUNTER!')
+    if (r.outcome === 'victory') { sceneRef.current?.hideMonster(); sceneRef.current?.showVictory(isElite(run.kill) ? 'ELITE SLAIN!' : 'ENEMY SLAIN!') }
+    else if (r.counter > 0) sceneRef.current?.playHit('hero', r.counter)
     else if (r.savedBySecondChance) sceneRef.current?.float('hero', 'BLOCKED', '#8ed1ff')
 
     sceneRef.current?.setCombo(r.run.streak)

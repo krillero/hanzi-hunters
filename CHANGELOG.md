@@ -77,6 +77,12 @@
 - Removed the 文 icon next to the question (a leftover from the prototype, no meaning in the game).
 - Verified (headless Chromium 411×650): seeded streak-2 run → correct answer shows COMBO! + counter 3; 1-HP run → wrong answer shows the death scene, recap fits, camp button present, reload keeps the death screen, no console errors; 41 unit tests, content validation, fit/stability, notes-fit and the full e2e flow pass.
 
+## 0.3.2 — clearer kills, no always-on COUNTER tag
+- The `COUNTER!` tag was shown on every enemy hit; it is removed. **A stronger counter after a wrong answer is NOT implemented** (monster counters still do the same damage after right or wrong answers; this was tried, then backed out at the user's request, rules/balance unchanged). `COMBO!` and `WEAK HIT` tags on the damage dealt remain.
+- **Kills are clearer:** white flash + pixel burst + short screen shake, then a persistent gold `ENEMY SLAIN!` / `ELITE SLAIN!` banner on the wall between the torches (until the next enemy) and the chest. `YOU DIED` moved to the same wall spot so neither covers the characters. Both banners survive a reload.
+- Fixed: with an elite enemy (or big numbers) the scene's top bar pushed the fullscreen button off-screen; the left text now truncates and the item buttons are fixed (checked at 320–411 px wide with extreme values).
+- Verified (headless Chromium 411×650): normal and elite kill → banner, next-enemy button, reload keeps it, next enemy clears it; death scene; top bar at 4 widths; 41 unit tests, content validation, fit/stability, notes-fit, explanation popup and full e2e flows pass.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

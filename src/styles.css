@@ -380,3 +380,8 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .stage-fb .dead-title{color:#ff8a94!important;font-size:clamp(15px,2.5dvh,19px)!important}
 .stage-fb .fb-dead-sub{font-size:clamp(13px,2.1dvh,15px);color:#f0c6cb;margin-top:-2px!important}
 .stage-fb.dead .fb-defeat{color:#f6dfe2}
+/* top bar of the scene: the left text may shrink/truncate, the item buttons never move off screen */
+.scene-label .scene-where{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.scene-label .scene-actions{flex:none}
+.scene-label .live-dot{flex:none}
+@media(max-width:380px){.scene-gold{display:none}.chip-btn{min-width:40px}}

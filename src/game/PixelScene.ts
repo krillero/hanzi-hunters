@@ -28,6 +28,8 @@ export class PixelScene extends Phaser.Scene {
   private comboObj?: Phaser.GameObjects.Text
   private defeated = false
   private defeatObjs: Phaser.GameObjects.GameObject[] = []
+  private victoryText: string | null = null
+  private victoryObjs: Phaser.GameObjects.GameObject[] = []
   private floorY = 0
   private heroHome = { x: 0, y: 0 }
   private monsterHome = { x: 0, y: 0 }
@@ -70,6 +72,7 @@ export class PixelScene extends Phaser.Scene {
     this.floatObjs = {}
     this.comboObj?.destroy(); this.comboObj = undefined
     this.defeatObjs.forEach(o => o.destroy()); this.defeatObjs = []
+    this.victoryObjs.forEach(o => o.destroy()); this.victoryObjs = []
     this.layer = this.add.container(0, 0)
     this.cameras.main.setSize(width, height)
 
@@ -89,6 +92,7 @@ export class PixelScene extends Phaser.Scene {
     this.drawFloats(false)
     this.drawCombo(false)
     if (this.defeated) this.applyDefeat(false)
+    if (this.victoryText && !this.defeated) this.applyVictory(false)
   }
 
   private buildTextured(width: number, height: number, ts: number, step: number, wallRows: number, floorY: number) {
@@ -182,6 +186,8 @@ export class PixelScene extends Phaser.Scene {
 
   clearFloats() {
     this.floats = {}
+    this.victoryText = null
+    this.victoryObjs.forEach(o => o.destroy()); this.victoryObjs = []
     for (const k of ['hero', 'monster', 'banner'] as const) this.floatObjs[k]?.destroy()
     this.floatObjs = {}
   }
@@ -250,8 +256,8 @@ export class PixelScene extends Phaser.Scene {
     const { width, height } = this.scale
     this.defeatObjs.forEach(o => o.destroy()); this.defeatObjs = []
     const veil = this.add.rectangle(0, 0, width, height, 0x8b1020, animate ? 0 : 0.32).setOrigin(0).setDepth(8)
-    const size = Phaser.Math.Clamp(Math.round(height / 5), 22, 40)
-    const title = this.add.text(Math.round(width / 2), Math.round(height * 0.68), 'YOU DIED', {
+    const size = Phaser.Math.Clamp(Math.round(this.floorY * 0.55), 18, 40)
+    const title = this.add.text(Math.round(width / 2), Math.round(this.floorY * 0.5), 'YOU DIED', {
       fontFamily: 'monospace', fontSize: `${size}px`, fontStyle: 'bold', color: '#ff5a6a', stroke: '#1a0508', strokeThickness: 7
     }).setOrigin(0.5).setDepth(12)
     this.defeatObjs.push(veil, title)
@@ -274,13 +280,49 @@ export class PixelScene extends Phaser.Scene {
     this.tweens.add({ targets: this.monster, scale: { from: this.monsterScale() * 0.4, to: this.monsterScale() }, alpha: { from: 0, to: 1 }, duration: 250 })
   }
 
+  /** The kill: white flash, pixel burst, little shake, then the monster fades into a chest. */
   hideMonster() {
     this.monsterAlive = false
     if (!this.ready || !this.monster) return
+    const m = this.monster
+    if (m instanceof Phaser.GameObjects.Sprite) { m.setTintFill(0xffffff); this.time.delayedCall(130, () => m.active && m.clearTint()) }
+    this.cameras.main.shake(180, 0.006)
+    this.burst(this.monsterHome.x, this.monsterHome.y - 8 * this.monsterScale())
     this.tweens.add({
-      targets: this.monster, alpha: 0, scale: this.actorScale * 0.5, y: this.monsterHome.y + 4, duration: 260, delay: 200,
+      targets: m, alpha: 0, scale: this.actorScale * 0.5, y: this.monsterHome.y + 4, duration: 260, delay: 200,
       onComplete: () => { if (this.monsterAlive) return; this.monster?.setVisible(false); this.monster && (this.monster.y = this.monsterHome.y); this.showChest(true) }
     })
+  }
+
+  private burst(x: number, y: number) {
+    const colors = [0xffd166, 0xffffff, 0xff9d6e, 0xf4d58c]
+    for (let i = 0; i < 14; i++) {
+      const size = Phaser.Math.Between(4, 7)
+      const p = this.add.rectangle(x, y, size, size, colors[i % colors.length]).setDepth(13)
+      const ang = (i / 14) * Math.PI * 2 + Phaser.Math.FloatBetween(-0.2, 0.2), dist = Phaser.Math.Between(26, 52) + this.actorScale * 6
+      this.tweens.add({ targets: p, x: x + Math.cos(ang) * dist, y: y + Math.sin(ang) * dist * 0.8, alpha: 0, duration: 650, ease: 'Quad.out', onComplete: () => p.destroy() })
+    }
+  }
+
+  /** Persistent gold banner mid-floor (the counterpart of YOU DIED) until the next fight starts. */
+  showVictory(text: string, animate = true) {
+    this.victoryText = text
+    if (this.ready && !this.defeated) this.applyVictory(animate)
+  }
+
+  private applyVictory(animate: boolean) {
+    this.victoryObjs.forEach(o => o.destroy()); this.victoryObjs = []
+    if (!this.victoryText) return
+    const { width, height } = this.scale
+    const size = Phaser.Math.Clamp(Math.round(this.floorY * 0.5), 16, 34)
+    const t = this.add.text(Math.round(width / 2), Math.round(this.floorY * 0.5), this.victoryText, {
+      fontFamily: 'monospace', fontSize: `${size}px`, fontStyle: 'bold', color: '#ffd166', stroke: '#1d1405', strokeThickness: 7
+    }).setOrigin(0.5).setDepth(12)
+    this.victoryObjs.push(t)
+    if (animate) {
+      t.setScale(0.3).setAlpha(0)
+      this.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 380, delay: 420, ease: 'Back.out' })
+    }
   }
 
   private showChest(pop: boolean) {
