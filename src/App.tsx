@@ -10,14 +10,14 @@ import { hasExplanation } from './content'
 import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appInfo'
 import { parseBackup, serializeBackup } from './game/backup'
 import { ENEMIES, GEAR, WORDS, type Word } from './data'
-import { MAX_LV, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
+import { MAX_LV, MASTERY_DAMAGE, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
 import { buildQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import {
   ENEMIES_PER_FLOOR, advance, isElite, bankRun, drinkPotion, enemyStats, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
 import type { Run, Saved } from './game/types'
-import { buyUpgrade, computeBonuses, nodeById } from './game/upgrades'
+import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string; title: string; foeName: string }
@@ -390,6 +390,16 @@ export default function App() {
   const slot = (shown: boolean, asked: boolean) => (shown ? 'on' : asked ? 'ask' : 'dim')
   const lastOfFloor = run.kill + 1 >= ENEMIES_PER_FLOOR
   const pips = entry ? entry.lv : -1
+  const equippedAttack = equipped.reduce((n, item) => n + item.attack, 0)
+  const equippedHp = equipped.reduce((n, item) => n + item.hp, 0)
+  const hasScholarCharm = equipped.some(item => item.name === 'Scholar Charm')
+  const hasLuckyCoin = equipped.some(item => item.name === 'Lucky Coin')
+  const masteryPct = entry && entry.lv >= 1 ? (MASTERY_DAMAGE[Math.min(entry.lv, MASTERY_DAMAGE.length - 1)] + bonuses.masteryDmgPct) : MASTERY_DAMAGE[0]
+  const streakPct = run.streak >= 2 ? bonuses.streakDmgPct : 0
+  const executePct = run.enemyHp <= foe.hp * 0.35 ? bonuses.executeDmgPct : 0
+  const estimatedHit = Math.round((8 + stats.attack) * (1 + masteryPct + streakPct + executePct))
+  const lootChance = Math.min(0.95, 0.5 + bonuses.lootPct + (foe.elite ? 0.3 : 0))
+  const ownedUpgrades = save.meta.upgrades.map(id => nodeById(id)).filter((node): node is NonNullable<typeof node> => !!node)
 
   return (
     <main className="app-shell in-battle">
@@ -426,7 +436,47 @@ export default function App() {
               <div className="mini-stats"><span>☠ DMG {Math.max(1, foe.damage - bonuses.armor)}</span><span>✦ XP {foe.xp}</span></div>
             </div>
           </div>
-          {showBag && <div className="drawer"><div className="drawer-title">GEAR THIS RUN <button onClick={() => setShowBag(false)} aria-label="Close gear">×</button></div>{GEAR.map(item => <div className="gear-line" key={item.name}><span className="gear-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div><span className={`gear-state ${run.gear.includes(item.name) ? 'owned' : 'locked'}`}>{run.gear.includes(item.name) ? '✓ Equipped' : '🔒 Not found'}</span></div>)}<p className="hint-text">Gear drops from monsters and stacks, but is lost when your run ends. Start-of-run gear comes from the Fortune upgrades.</p></div>}
+          {showBag && <section className="drawer character-drawer">
+            <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => setShowBag(false)} aria-label="Close character inventory">×</button></div>
+            <div className="character-summary">
+              <div><small>LEVEL</small><strong>{run.level}</strong><span>{run.xp} / {xpForLevel(run.level)} XP</span></div>
+              <div><small>ATTACK</small><strong>⚔ {stats.attack}</strong><span>{5 + run.level - 1} base + {bonuses.attack} upgrades + {equippedAttack} gear</span></div>
+              <div><small>MAX HP</small><strong>♥ {stats.maxHp}</strong><span>{run.hp} current · +{bonuses.maxHp + equippedHp} bonus HP</span></div>
+            </div>
+            <section className="character-section">
+              <div className="character-section-title">DERIVED COMBAT STATS <span>LIVE</span></div>
+              <div className="character-stat-list">
+                <div><span>Estimated next correct hit</span><strong className="stat-gold">{estimatedHit} dmg</strong></div>
+                <div><span>Mastery damage</span><strong>+{Math.round(masteryPct * 100)}%</strong></div>
+                <div><span>Combo damage {run.streak >= 2 ? '(active)' : '(at 2+ streak)'}</span><strong>{streakPct ? '+' + Math.round(streakPct * 100) + '%' : Math.round(bonuses.streakDmgPct * 100) + '%'}</strong></div>
+                <div><span>Execute damage {run.enemyHp <= foe.hp * 0.35 ? '(active)' : '(enemy below 35% HP)'}</span><strong>{Math.round(bonuses.executeDmgPct * 100)}%</strong></div>
+                <div><span>Incoming hit after armor</span><strong>{Math.max(1, foe.damage - bonuses.armor)} dmg</strong></div>
+                <div><span>Armor</span><strong>{bonuses.armor}</strong></div>
+                <div><span>XP gain</span><strong>+{Math.round((bonuses.xpPct + (hasScholarCharm ? 0.1 : 0)) * 100)}%</strong></div>
+                <div><span>Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{hasLuckyCoin ? ' + 3 per win' : ''}</strong></div>
+              </div>
+              <p className="hint-text">Estimated hit uses the current word's mastery, your streak, and this enemy's HP. Actual damage can vary with your answer and combat state.</p>
+            </section>
+            <section className="character-section">
+              <div className="character-section-title">GEAR THIS RUN <span>{equipped.length} / {GEAR.length} ITEMS</span></div>
+              {GEAR.map(item => <div className="gear-line" key={item.name}><span className="gear-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div><span className={`gear-state ${run.gear.includes(item.name) ? 'owned' : 'locked'}`}>{run.gear.includes(item.name) ? '✓ Equipped' : '🔒 Not found'}</span></div>)}
+              <p className="hint-text">Run gear is lost when the run ends. Fortune upgrades can grant starting gear.</p>
+            </section>
+            <details className="character-details">
+              <summary>All bonuses & passive skills <span>{ownedUpgrades.length} upgrades</span></summary>
+              <div className="character-section">
+                <div className="character-section-title">PERMANENT UPGRADES</div>
+                {ownedUpgrades.length ? ownedUpgrades.map(node => <div className="bonus-line" key={node.id}><span>{node.icon} {node.name}<small>{node.branch} · Tier {node.tier}</small></span><b>{node.desc}</b></div>) : <p className="hint-text">No permanent upgrades purchased yet.</p>}
+                <div className="character-section-title">RUN & GEAR EFFECTS</div>
+                <div className="bonus-line"><span>🧪 Potions<small>Available now</small></span><b>{run.potions} remaining · heal {12 + bonuses.potionHeal} HP</b></div>
+                <div className="bonus-line"><span>💡 Hints<small>Per fight</small></span><b>{run.hintsLeft} remaining</b></div>
+                <div className="bonus-line"><span>🔁 Second chance<small>Per fight</small></span><b>{run.secondLeft} remaining</b></div>
+                <div className="bonus-line"><span>💚 Heal on kill</span><b>{bonuses.healOnKill} HP</b></div>
+                <div className="bonus-line"><span>🎒 Loot chance</span><b>{Math.round(lootChance * 100)}% this enemy</b></div>
+                <div className="bonus-line"><span>🧪 Potion bonus</span><b>+{bonuses.potionHeal} healing</b></div>
+              </div>
+            </details>
+          </section>}
           {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain([w.hanzi])} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
 
