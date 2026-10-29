@@ -102,11 +102,11 @@ test('advance walks 4 enemies then the next floor, resetting per-fight charges',
 
 test('gear can be swapped within a slot and HP adjusts safely', () => {
   const r = { ...run0(), gear: ['Mossy Vest', 'Guardian Helm'], loadout: { Armor: 'Mossy Vest' }, hp: 38 }
-  const swapped = equipGear(r, 'Guardian Helm', GEAR)!
+  const swapped = equipGear(r, 'Guardian Helm', GEAR, none)!
   assert.equal(swapped.loadout.Armor, 'Guardian Helm')
   assert.equal(playerStats(swapped, none, GEAR).maxHp, 34)
   assert.equal(swapped.hp, 34)
-  assert.equal(equipGear(swapped, 'Copper Blade', GEAR), null, 'cannot equip an item not owned')
+  assert.equal(equipGear(swapped, 'Copper Blade', GEAR, none), null, 'cannot equip an item not owned')
 })
 
 test('potions', () => {
