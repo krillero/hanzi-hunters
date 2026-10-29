@@ -33,6 +33,9 @@ Not yet: spaced review by time, per-kind history across sessions, sentence/conte
 - Harder levels deal bonus damage (+0/10/25/40 %).
 - The pool of words starts at 6 and grows by one per word that reaches level 1; no new word is introduced while 4 words are still at level 0.
 
+## Flow after an answer
+Right answer: the card reveals the word in place and the game continues by itself (Quick 1 s / Relaxed 2.5 s / Off in settings); after a normal kill the next monster follows ~1.5 s later. Always paused: wrong answer, defeat, floor cleared (elite). Rewards are shown in the scene and counters, loot sets a NEW dot on Gear. Sound off = no audio and no listening questions.
+
 ## Upgrade tree (permanent; 4 branches × 5 tiers, bought in order)
 Cost = 25 × tier × (tier+1) / 2 → **25, 75, 150, 250, 375** per branch (875 each, 3 500 total).
 - **Blade** — attack, combo damage (3rd correct in a row), execute bonus.

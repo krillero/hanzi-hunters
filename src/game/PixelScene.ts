@@ -184,6 +184,22 @@ export class PixelScene extends Phaser.Scene {
     delete this.floatObjs.banner
   }
 
+  /** Reward lines (XP, gold, loot, level-up) that rise above the monster's spot and fade on their own, even after the next fight starts. */
+  popReward(lines: { text: string; color: string }[], ttl = 3200) {
+    if (!this.ready || !lines.length) return
+    const { width, height } = this.scale
+    // Bottom centre of the floor, between the two characters: clear of the banner on the wall and of the damage numbers.
+    const lineH = 16
+    const y0 = height - 8 - lines.length * lineH
+    const texts = lines.map((l, i) => this.add.text(0, i * lineH, l.text, {
+      fontFamily: 'monospace', fontSize: '13px', fontStyle: 'bold', color: l.color, stroke: '#0d1220', strokeThickness: 4, align: 'center'
+    }).setOrigin(0.5, 0))
+    const c = this.add.container(Math.round(width / 2), y0, texts).setDepth(14).setScale(0.6).setAlpha(0)
+    this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 220, ease: 'Back.out' })
+    this.tweens.add({ targets: c, y: y0 - 10, duration: ttl, ease: 'Sine.out' })
+    this.tweens.add({ targets: c, alpha: 0, duration: 600, delay: Math.max(0, ttl - 600), onComplete: () => c.destroy() })
+  }
+
   clearFloats() {
     this.floats = {}
     this.victoryText = null

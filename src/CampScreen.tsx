@@ -3,7 +3,7 @@ import { WORDS } from './data'
 import { BRANCHES, branchNodes, nodeState, upgradeCost } from './game/upgrades'
 import { MAX_LV, masteredCount } from './game/mastery'
 import type { Saved } from './game/types'
-import { BUILD, formatBuild } from './appInfo'
+import AppData from './AppData'
 
 type Props = { save: Saved; onBuy: (id: string) => void; onStart: () => void; onReset: () => void; message: string; outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void }
 
@@ -71,16 +71,7 @@ export default function CampScreen({ save, onBuy, onStart, onReset, message, out
       </div>
 
       <button className="primary-btn camp-start" onClick={onStart}>Start new run <span>→</span></button>
-      <section className="app-data" aria-label="App and data">
-        <h3>App &amp; data</h3>
-        <p className="hint-text">Version {formatBuild(BUILD)}{outdated ? ' — a newer version is available' : ''}</p>
-        <div className="app-data-row">
-          <button className={`secondary-btn ${outdated ? 'attention' : ''}`} onClick={onUpdate}>⟳ Update app</button>
-          <button className="secondary-btn" onClick={onExport}>⬇ Export progress</button>
-          <label className="secondary-btn file-btn">⬆ Import progress<input type="file" accept="application/json,.json" onChange={e => { const f = e.target.files?.[0]; if (f) onImport(f); e.target.value = '' }} /></label>
-        </div>
-        <p className="hint-text">“Update app” fetches the newest version and never deletes your progress. Export a backup before clearing browser data.</p>
-      </section>
+      <AppData outdated={outdated} onUpdate={onUpdate} onExport={onExport} onImport={onImport} />
       <button className="reset-btn" onClick={onReset}>Reset ALL progress</button>
       <p className="hint-text camp-note">Max mastery level is {MAX_LV}. Upgrades never answer questions for you.</p>
     </section>
