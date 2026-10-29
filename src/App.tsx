@@ -447,24 +447,29 @@ export default function App() {
               <div><small>ATTACK</small><strong>⚔ {stats.attack}</strong><span>{5 + run.level - 1} base + {bonuses.attack} upgrades + {equippedAttack} gear</span></div>
               <div><small>MAX HP</small><strong>♥ {stats.maxHp}</strong><span>{run.hp} current · +{bonuses.maxHp + equippedHp} bonus HP</span></div>
             </div>
-            <section className="character-section">
-              <div className="character-section-title">BONUSES</div>
-              <div className="character-stat-list">
-                <div><span>🛡️ Armor</span><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</strong></div>
-                <div><span>✨ XP gain</span><strong>+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</strong></div>
-                <div><span>🪙 Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</strong></div>
+            <section className="character-section active-bonuses-section">
+              <div className="character-section-title">ACTIVE BONUSES <span>WHAT AFFECTS THIS RUN</span></div>
+              <div className="active-bonus-list">
+                <div className="active-bonus-row"><span className="active-bonus-icon">🛡️</span><strong>Armor</strong><span className="active-bonus-value">{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</span><small className="bonus-source gear-source">GEAR / UPGRADES</small></div>
+                <div className="active-bonus-row"><span className="active-bonus-icon">✨</span><strong>XP gain</strong><span className="active-bonus-value">+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</span><small className="bonus-source upgrade-source">UPGRADES + GEAR</small></div>
+                <div className="active-bonus-row"><span className="active-bonus-icon">🪙</span><strong>Gold gain</strong><span className="active-bonus-value">+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</span><small className="bonus-source gear-source">GEAR / UPGRADES</small></div>
+                {bonuses.healOnKill > 0 && <div className="active-bonus-row"><span className="active-bonus-icon">💚</span><strong>Heal on kill</strong><span className="active-bonus-value">Restore {bonuses.healOnKill} HP</span><small className="bonus-source upgrade-source">UPGRADE</small></div>}
+                {bonuses.potionHeal > 0 && <div className="active-bonus-row"><span className="active-bonus-icon">🧪</span><strong>Potion strength</strong><span className="active-bonus-value">+{bonuses.potionHeal} healing</span><small className="bonus-source upgrade-source">UPGRADE</small></div>}
+                {bonuses.lootPct > 0 && <div className="active-bonus-row"><span className="active-bonus-icon">🎒</span><strong>Loot chance</strong><span className="active-bonus-value">+{Math.round(bonuses.lootPct * 100)}% base chance</span><small className="bonus-source upgrade-source">UPGRADE</small></div>}
+                {equipped.some(item => item.masteryPct > 0) && <div className="active-bonus-row"><span className="active-bonus-icon">📖</span><strong>Mastery damage</strong><span className="active-bonus-value">+{Math.round(equipped.reduce((n, item) => n + item.masteryPct, 0) * 100)}%</span><small className="bonus-source gear-source">GEAR</small></div>}
               </div>
             </section>
             <section className="character-section gear-overview">
               <div className="character-section-title">EQUIPPED GEAR <span>{equipped.length}/3</span></div>
-              <div className="gear-slot-cards">
+              <div className="gear-equipped-list">
                 {(['Weapon', 'Armor', 'Accessory'] as const).map(slot => {
                   const item = GEAR.find(g => g.name === run.loadout[slot])
-                  return <div className={`gear-slot-card ${item ? 'is-filled' : 'is-empty'}`} key={slot}>
-                    <div className="gear-slot-card-top"><span className="gear-icon">{item?.icon ?? '◇'}</span><small>{slot.toUpperCase()}</small></div>
-                    <b>{item?.name ?? 'Empty slot'}</b>
-                    <span className="gear-slot-bonus">{item?.bonus ?? 'Find gear to equip'}</span>
-                    {item && <span className="gear-equipped-tag">✓ Equipped</span>}
+                  const alternative = GEAR.find(g => g.slot === slot && run.gear.includes(g.name) && run.loadout[slot] !== g.name)
+                  return <div className={`gear-equipped-row ${item ? 'is-filled' : 'is-empty'}`} key={slot}>
+                    <span className="gear-equipped-icon">{item?.icon ?? '◇'}</span>
+                    <div className="gear-equipped-info"><b>{item?.name ?? 'Empty slot'}</b><small>{slot.toUpperCase()}</small></div>
+                    <span className="gear-equipped-effect">{item?.bonus ?? 'Find gear to equip'}</span>
+                    {item && <button className="gear-change-btn" onClick={() => alternative ? setSelectedGearName(alternative.name) : setToast(`Find another ${slot.toLowerCase()} to compare it here.`)}>{alternative ? 'CHANGE' : 'EQUIPPED'}</button>}
                   </div>
                 })}
               </div>
@@ -513,20 +518,19 @@ export default function App() {
               </details>
               <p className="hint-text">Gear is lost when a run ends. Compare found items before swapping them into a slot.</p>
             </section>
-            <details className="character-details">
-              <summary>All bonuses & passive skills <span>{ownedUpgrades.length} upgrades</span></summary>
-              <div className="character-section">
-                <div className="character-section-title">PERMANENT UPGRADES</div>
-                {ownedUpgrades.length ? ownedUpgrades.map(node => <div className="bonus-line" key={node.id}><span>{node.icon} {node.name}<small>{node.branch} · Tier {node.tier}</small></span><b>{node.desc}</b></div>) : <p className="hint-text">No permanent upgrades purchased yet.</p>}
-                <div className="character-section-title">RUN & GEAR EFFECTS</div>
-                <div className="bonus-line"><span>🧪 Potions<small>Available now</small></span><b>{run.potions} remaining · heal {12 + bonuses.potionHeal} HP</b></div>
-                <div className="bonus-line"><span>💡 Hints<small>Per fight</small></span><b>{run.hintsLeft} remaining</b></div>
-                <div className="bonus-line"><span>🔁 Second chance<small>Per fight</small></span><b>{run.secondLeft} remaining</b></div>
-                <div className="bonus-line"><span>💚 Heal on kill</span><b>{bonuses.healOnKill} HP</b></div>
-                <div className="bonus-line"><span>🎒 Loot chance</span><b>{Math.round(lootChance * 100)}% this enemy</b></div>
-                <div className="bonus-line"><span>🧪 Potion bonus</span><b>+{bonuses.potionHeal} healing</b></div>
-              </div>
-            </details>
+            <section className="character-section upgrade-passives-section">
+              <div className="character-section-title">UPGRADE PASSIVES <span>{ownedUpgrades.length} UNLOCKED</span></div>
+              {ownedUpgrades.length ? <div className="upgrade-passive-list">{ownedUpgrades.map(node => <div className="upgrade-passive-row" key={node.id}><span className="upgrade-passive-icon">{node.icon}</span><div><b>{node.name}</b><small>{node.branch} · Tier {node.tier}</small></div><span className="upgrade-passive-effect">{node.desc}</span><span className="bonus-source upgrade-source">UPGRADE</span></div>)}</div> : <p className="hint-text">Unlock upgrades at camp to gain passive effects.</p>}
+              <details className="character-details run-resources-details">
+                <summary>Run resources & other effects <span>VIEW</span></summary>
+                <div className="character-section">
+                  <div className="bonus-line"><span>🧪 Potions<small>Available now</small></span><b>{run.potions} remaining · heal {12 + bonuses.potionHeal} HP</b></div>
+                  <div className="bonus-line"><span>💡 Hints<small>Per fight</small></span><b>{run.hintsLeft} remaining</b></div>
+                  <div className="bonus-line"><span>🔁 Second chance<small>Per fight</small></span><b>{run.secondLeft} remaining</b></div>
+                  <div className="bonus-line"><span>🎒 Loot chance<small>Current enemy</small></span><b>{Math.round(lootChance * 100)}%</b></div>
+                </div>
+              </details>
+            </section>
           </section>}
           {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain([w.hanzi])} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
