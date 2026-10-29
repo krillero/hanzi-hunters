@@ -25,7 +25,7 @@ npm run build
 npm run preview
 ```
 
-`npm run build` runs TypeScript project builds followed by Vite. **Build status at handoff: not verified.** A previous dependency-install attempt timed out in the build environment, so a future developer/agent should install dependencies and run the build before treating the code as validated. Fix errors before starting major feature work.
+`npm run build` runs TypeScript project builds followed by Vite. **Build status: verified** (see `CHANGELOG.md` for exactly what was run). `npm test` runs the rules/save/data tests (13 tests, no extra dependency; needs Node 22.18+ for built-in TypeScript stripping).
 
 ## Project map
 
@@ -34,6 +34,10 @@ hanzi-hunters/
 ├── AGENTS.md                 # instructions for coding agents
 ├── DEVELOPMENT_BRIEF.md      # product, architecture, state and roadmap handoff
 ├── ASSET_PIPELINE.md         # visual-art requirements and integration guidance
+├── ASSET_CREDITS.md          # provenance/licence of every asset
+├── CHANGELOG.md              # what changed, how it was tested, what is still missing
+├── tools/make_pixel_assets.py# generates public/assets/*.png (Pillow; output is committed)
+├── tests/rules.test.ts       # node --test suite for src/game/rules.ts and data integrity
 ├── README.md                 # setup and overview
 ├── package.json              # scripts and dependencies
 ├── index.html                # page shell and document metadata
@@ -48,7 +52,8 @@ hanzi-hunters/
     ├── data.ts                # vocabulary, enemy and gear data
     ├── styles.css             # responsive visual styling
     └── game/
-        └── PixelScene.ts      # Phaser scene and procedural graphics/animations
+        ├── rules.ts           # pure combat/progression/save/question logic (tested)
+        └── PixelScene.ts      # Phaser scene: textured dungeon, sprites, animations, fallback
 ```
 
 ## Current prototype features
@@ -61,7 +66,8 @@ hanzi-hunters/
 - Responsive layout and Vite PWA plugin configuration. Production install/offline behavior still requires testing.
 
 ## Important limitations
-- The current Phaser scene draws simple graphics from code. It does **not** include the polished, full pixel-art sprite/tile/UI asset pack shown in the concept mockup.
+- The Phaser scene now uses a small original pixel-art set (hero, 3 enemies, tiles, torch, chest, UI frame). It is a proof of concept, **not** the full asset pack shown in the concept mockup; UI icons are still emoji.
+- Screenshots in `docs/screenshots/` are of the real running game (headless Chromium, mobile emulation).
 - The mockup is a visual target/reference, not a screenshot of the running application and not a bundle of production assets.
 - There is no backend, account system, cloud save, analytics or multiplayer.
 - Local progress is stored in the browser using `localStorage`; different browsers/devices do not share progress.

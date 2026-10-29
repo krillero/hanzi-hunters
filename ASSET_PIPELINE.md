@@ -3,7 +3,10 @@
 ## Goal
 Move the current code-drawn prototype toward a consistent 16-bit pixel-art fantasy style while preserving mobile readability. Start with a small, integrated proof of concept instead of producing a large disconnected collection of images.
 
-## Current state
+## Current state (updated)
+Milestone 2 proof of concept is implemented: see `public/assets/README.md` (sheet layouts), `ASSET_CREDITS.md` and `tools/make_pixel_assets.py`. The text below describes the original handoff state and the remaining goals.
+
+## Original state at handoff
 `src/game/PixelScene.ts` creates the dungeon floor, tile lines, small moss/stone details, torches, hero and slime using Phaser `Graphics`. React UI elements are styled in `src/styles.css`; many icon-like details use emoji or Unicode characters. No external production art is bundled at this handoff.
 
 The previously generated promo/mockup is only a design reference. It is not a screenshot of the actual application, and the image should not be sliced up and treated as production-ready UI/sprites.
