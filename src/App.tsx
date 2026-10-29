@@ -15,7 +15,7 @@ import type { Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
-type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string; title: string }
+type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string; title: string; foeName: string }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -105,6 +105,8 @@ export default function App() {
   enemyKeyRef.current = enemyKey
   const phaseRef = useRef<Run['phase']>('fighting')
   phaseRef.current = run?.phase ?? 'fighting'
+  const streakRef = useRef(0)
+  streakRef.current = run?.streak ?? 0
 
   const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen): Card => {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
@@ -140,6 +142,8 @@ export default function App() {
       const [sprite, elite] = enemyKeyRef.current.split(':')
       if (sprite) scene.setEnemy(sprite as 'slime' | 'imp' | 'bat', elite === 'true')
       if (phaseRef.current === 'victory') scene.hideMonster()
+      scene.setCombo(streakRef.current)
+      if (phaseRef.current === 'defeat') scene.showDefeat(false)
     })
     const ro = new ResizeObserver(() => game.scale.refresh())
     ro.observe(mountRef.current)
@@ -178,11 +182,13 @@ export default function App() {
     })
     const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
     const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
-    sceneRef.current?.playHit('monster', r.damage)
+    sceneRef.current?.playHit('monster', r.damage, r.comboHit ? 'COMBO!' : !isCorrect ? 'WEAK HIT' : undefined)
     if (r.outcome === 'victory') sceneRef.current?.hideMonster()
-    else if (r.counter > 0) sceneRef.current?.playHit('hero', r.counter)
+    else if (r.counter > 0) sceneRef.current?.playHit('hero', r.counter, 'COUNTER!')
     else if (r.savedBySecondChance) sceneRef.current?.float('hero', 'BLOCKED', '#8ed1ff')
 
+    sceneRef.current?.setCombo(r.run.streak)
+    if (r.outcome === 'defeat') sceneRef.current?.showDefeat(true)
     patch(s => ({ ...s, run: r.run, mastery }))
     const masteryNote = !entry ? 'New word added to your wordbook.'
       : after > before ? (after >= MAX_LV ? `Mastered! ${word.hanzi} is now level ${MAX_LV}.` : `Word level up! ${word.hanzi} is now level ${after}.`)
@@ -190,9 +196,7 @@ export default function App() {
           : isCorrect ? 'One more correct answer to level this word up.' : 'Review this one — it will come back.'
     setFeedback({
       correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, chosen: option, answer: question.answer,
-      title: isCorrect ? (r.comboHit ? '✦ Combo strike!' : '✦ Excellent strike!')
-        : r.outcome === 'victory' ? '↻ Wrong, but enough to win!'
-          : r.savedBySecondChance ? '↻ Second Chance: no counterattack!' : '↻ Keep learning!'
+      title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster'
     })
     if (r.outcome === 'victory') {
       // Rewards live in the scene and the recap chips; no toast.
@@ -333,7 +337,7 @@ export default function App() {
 
         <div className="right-column">
           <section className="question-panel">
-            <div className="question-title"><span className="question-icon">文</span><div className="title-text"><h2>{fighting ? question.text : run.phase === 'victory' ? (lastOfFloor ? 'Floor cleared!' : 'Victory, adventurer!') : 'You have fallen...'}</h2><p>{fighting ? 'Answer correctly to unleash a stronger attack.' : run.phase === 'victory' ? 'The cavern rewards your growing knowledge.' : 'Your gold and word mastery are safe.'}</p></div><span className="streak-chip" aria-label="streak">🔥 ×{run.streak}</span></div>
+            <div className={`question-title ${run.phase}`}><div className="title-text"><h2>{fighting ? question.text : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
 
             {/* Fixed-size regions: stage, choices, action bar never change size or position. */}
             {fighting && !feedback && <>
@@ -351,10 +355,10 @@ export default function App() {
             </>}
 
             {/* After answering, the recap takes over the stage + choices area; the action bar below never moves. */}
-            {(feedback || !fighting) && <div className={`stage stage-wide stage-fb ${feedback ? (feedback.correct ? 'good' : 'bad') : run.phase === 'victory' ? 'good' : 'bad'}`}>
+            {(feedback || !fighting) && <div className={`stage stage-wide stage-fb ${run.phase === 'defeat' ? 'dead' : feedback ? (feedback.correct ? 'good' : 'bad') : run.phase === 'victory' ? 'good' : 'bad'}`}>
               {feedback
                 ? <>
-                    <p className="fb-head"><strong>{feedback.title}</strong></p>
+                    {run.phase === 'defeat' ? <p className="fb-head"><strong className="dead-title">The {feedback.foeName} struck the final blow.</strong></p> : <p className="fb-head"><strong>{feedback.title}</strong></p>}
                     {!feedback.correct && <p className="fb-answer">You chose <s>{feedback.chosen}</s> · answer <b>{feedback.answer}</b></p>}
                     <div className="fb-word">
                       <span className="fb-hanzi">{feedback.word.hanzi}</span>
@@ -367,7 +371,7 @@ export default function App() {
                   </>
                 : <div className="stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div></div>}
               {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>◈ +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.loot && <span className="hot wide">{run.reward.loot}</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}◈</span>}</div>}
-              {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
+              {run.phase === 'defeat' && !feedback && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
 
             <div className="action-bar">

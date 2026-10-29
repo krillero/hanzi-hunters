@@ -70,6 +70,13 @@
 - Tests: 41 unit tests (6 new content/validator tests incl. negative cases); browser test (phone 411×650 + desktop): forced 她 question → wrong answer → pulsing 💡 → popup fits viewport, related chip + back, Escape, layout unchanged, Wordbook entry opens popup, no console errors.
 - The explanation text is **not yet reviewed by a Mandarin speaker**.
 
+## 0.3.1 — clearer death screen, combo counter, tags on the numbers
+- **Death:** the hero collapses (grey, on its side), the scene turns red with a persistent `YOU DIED`, the title row reads `💀 You have fallen` in red, and the recap becomes a dark-red card naming the killer ("The Moss Slime struck the final blow."). The long "you fell on floor N…" text was removed from the recap (the camp screen shows it) and the note font recovered from 10 px to 16 px. Reloading on a death screen restores it.
+- **Combo counter** (`COMBO ×N`, from 2 in a row) sits in the scene's top-left corner; the streak chip in the panel is gone.
+- **Tags on the floating numbers:** `COMBO!` / `WEAK HIT` on the damage dealt, `COUNTER!` on the damage taken; the recap title now only says `✦ Correct!` or `↻ Not quite`.
+- Removed the 文 icon next to the question (a leftover from the prototype, no meaning in the game).
+- Verified (headless Chromium 411×650): seeded streak-2 run → correct answer shows COMBO! + counter 3; 1-HP run → wrong answer shows the death scene, recap fits, camp button present, reload keeps the death screen, no console errors; 41 unit tests, content validation, fit/stability, notes-fit and the full e2e flow pass.
+
 ## Hosting
 - `.github/workflows/pages.yml` runs `npm ci`, `npm test`, `npm run build` (with `BASE_PATH=/<repo>/`) and deploys `dist/` to GitHub Pages on every push to `main`. One-time setup: repo Settings → Pages → Source = "GitHub Actions".
 - `vite.config.ts` reads `BASE_PATH` (default `/`). Verified locally by building with `BASE_PATH=/hanzi-hunters/` and serving with `vite preview --base`: all assets 200, textures render. The deployed Pages site itself has not been verified yet.

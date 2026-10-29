@@ -22,8 +22,12 @@ export class PixelScene extends Phaser.Scene {
   private monster?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Rectangle
   private chest?: Phaser.GameObjects.Sprite
   /** Floating numbers/banners stay on screen until clearFloats() so the player can read them. */
-  private floats: Partial<Record<'hero' | 'monster' | 'banner', { text: string; color: string }>> = {}
-  private floatObjs: Partial<Record<'hero' | 'monster' | 'banner', Phaser.GameObjects.Text>> = {}
+  private floats: Partial<Record<'hero' | 'monster' | 'banner', { text: string; color: string; caption?: string }>> = {}
+  private floatObjs: Partial<Record<'hero' | 'monster' | 'banner', Phaser.GameObjects.Container>> = {}
+  private combo = 0
+  private comboObj?: Phaser.GameObjects.Text
+  private defeated = false
+  private defeatObjs: Phaser.GameObjects.GameObject[] = []
   private floorY = 0
   private heroHome = { x: 0, y: 0 }
   private monsterHome = { x: 0, y: 0 }
@@ -64,6 +68,8 @@ export class PixelScene extends Phaser.Scene {
     this.layer?.destroy(true)
     for (const k of ['hero', 'monster', 'banner'] as const) this.floatObjs[k]?.destroy()
     this.floatObjs = {}
+    this.comboObj?.destroy(); this.comboObj = undefined
+    this.defeatObjs.forEach(o => o.destroy()); this.defeatObjs = []
     this.layer = this.add.container(0, 0)
     this.cameras.main.setSize(width, height)
 
@@ -81,6 +87,8 @@ export class PixelScene extends Phaser.Scene {
     else this.buildFallback(width, height, floorY)
     this.spawnActors()
     this.drawFloats(false)
+    this.drawCombo(false)
+    if (this.defeated) this.applyDefeat(false)
   }
 
   private buildTextured(width: number, height: number, ts: number, step: number, wallRows: number, floorY: number) {
@@ -137,7 +145,7 @@ export class PixelScene extends Phaser.Scene {
     if (this.ready) this.build()
   }
 
-  playHit(target: 'hero' | 'monster', damage: number) {
+  playHit(target: 'hero' | 'monster', damage: number, caption?: string) {
     const obj = target === 'hero' ? this.hero : this.monster
     if (!this.ready || !obj) return
     const home = target === 'hero' ? this.heroHome : this.monsterHome
@@ -154,14 +162,14 @@ export class PixelScene extends Phaser.Scene {
       obj.setTint(target === 'monster' ? 0xffffff : 0xff6666)
       this.time.delayedCall(180, () => obj.active && obj.clearTint())
     }
-    this.float(target, `-${damage}`, target === 'monster' ? '#ffd166' : '#ff7777')
+    this.float(target, `-${damage}`, target === 'monster' ? '#ffd166' : '#ff7777', caption)
   }
 
   // ---- persistent floating text ----------------------------------------------------------
 
   /** Shows (or replaces) a label above the hero or monster, or a banner mid-floor, and keeps it visible. */
-  float(slot: 'hero' | 'monster' | 'banner', text: string, color: string) {
-    this.floats[slot] = { text, color }
+  float(slot: 'hero' | 'monster' | 'banner', text: string, color: string, caption?: string) {
+    this.floats[slot] = { text, color, caption }
     if (this.ready) this.drawFloat(slot, true)
   }
 
@@ -190,15 +198,72 @@ export class PixelScene extends Phaser.Scene {
     const big = slot !== 'banner'
     const x = slot === 'banner' ? Math.round(width / 2) : (slot === 'hero' ? this.heroHome : this.monsterHome).x
     const y = slot === 'banner' ? Math.round(this.scale.height - 14) : (slot === 'hero' ? this.heroHome : this.monsterHome).y - 24 * this.actorScale - 6
-    const t = this.add.text(x, y, f.text, {
+    const num = this.add.text(0, 0, f.text, {
       fontFamily: 'monospace', fontSize: big ? '20px' : '14px', fontStyle: 'bold', color: f.color,
       stroke: '#0d1220', strokeThickness: 5, align: 'center', wordWrap: { width: Math.max(120, width - 24) }
-    }).setOrigin(0.5).setDepth(10)
-    this.floatObjs[slot] = t
-    if (animate) {
-      t.setScale(0.5).setAlpha(0.2).setY(y + 14)
-      this.tweens.add({ targets: t, scale: 1, alpha: 1, y, duration: 260, ease: 'Back.out', delay: slot === 'hero' ? 160 : 90 })
+    }).setOrigin(0.5)
+    const parts: Phaser.GameObjects.Text[] = [num]
+    if (f.caption) {
+      parts.push(this.add.text(0, -num.height / 2 - 7, f.caption, {
+        fontFamily: 'monospace', fontSize: '12px', fontStyle: 'bold', color: '#ffffff', stroke: '#0d1220', strokeThickness: 4, backgroundColor: slot === 'hero' ? '#a3323acc' : '#b8893fcc', padding: { x: 4, y: 1 }
+      }).setOrigin(0.5))
     }
+    // keep the label inside the scene horizontally
+    const half = Math.max(...parts.map(t => t.width)) / 2 + 4
+    const cx = Phaser.Math.Clamp(x, half, width - half)
+    const c = this.add.container(cx, y, parts).setDepth(10)
+    this.floatObjs[slot] = c
+    if (animate) {
+      c.setScale(0.5).setAlpha(0.2).setY(y + 14)
+      this.tweens.add({ targets: c, scale: 1, alpha: 1, y, duration: 260, ease: 'Back.out', delay: slot === 'hero' ? 160 : 90 })
+    }
+  }
+
+  // ---- combo counter (top-left of the scene) -----------------------------------------------
+
+  setCombo(n: number) {
+    const grew = n > this.combo
+    this.combo = n
+    if (this.ready) this.drawCombo(grew)
+  }
+
+  private drawCombo(pop: boolean) {
+    this.comboObj?.destroy(); this.comboObj = undefined
+    if (this.combo < 2 || this.defeated) return
+    const t = this.add.text(6, 3, `COMBO ×${this.combo}`, {
+      fontFamily: 'monospace', fontSize: '14px', fontStyle: 'bold', color: '#ffd166', stroke: '#0d1220', strokeThickness: 5
+    }).setOrigin(0, 0).setDepth(11)
+    this.comboObj = t
+    if (pop) { t.setScale(1.5); this.tweens.add({ targets: t, scale: 1, duration: 220, ease: 'Back.out' }) }
+  }
+
+  // ---- defeat -------------------------------------------------------------------------------
+
+  /** The hero collapses, the scene turns red and "YOU DIED" stays on screen until the run is left. */
+  showDefeat(animate = true) {
+    this.defeated = true
+    this.comboObj?.destroy(); this.comboObj = undefined
+    if (this.ready) this.applyDefeat(animate)
+  }
+
+  private applyDefeat(animate: boolean) {
+    const { width, height } = this.scale
+    this.defeatObjs.forEach(o => o.destroy()); this.defeatObjs = []
+    const veil = this.add.rectangle(0, 0, width, height, 0x8b1020, animate ? 0 : 0.32).setOrigin(0).setDepth(8)
+    const size = Phaser.Math.Clamp(Math.round(height / 5), 22, 40)
+    const title = this.add.text(Math.round(width / 2), Math.round(height * 0.68), 'YOU DIED', {
+      fontFamily: 'monospace', fontSize: `${size}px`, fontStyle: 'bold', color: '#ff5a6a', stroke: '#1a0508', strokeThickness: 7
+    }).setOrigin(0.5).setDepth(12)
+    this.defeatObjs.push(veil, title)
+    const hero = this.hero
+    if (hero instanceof Phaser.GameObjects.Sprite) { hero.anims.stop(); hero.setFrame(0) }
+    if (hero) { this.tweens.killTweensOf(hero); hero.setOrigin(0.5, 1).setY(this.heroHome.y); if (hero instanceof Phaser.GameObjects.Sprite) hero.setTint(0x7a7f8c) }
+    if (animate) {
+      this.tweens.add({ targets: veil, fillAlpha: 0.32, duration: 500, delay: 250 })
+      this.tweens.add({ targets: hero, angle: -90, duration: 420, delay: 200, ease: 'Bounce.out' })
+      title.setScale(0.4).setAlpha(0)
+      this.tweens.add({ targets: title, scale: 1, alpha: 1, duration: 420, delay: 450, ease: 'Back.out' })
+    } else if (hero) hero.setAngle(-90)
   }
 
   resetMonster() {

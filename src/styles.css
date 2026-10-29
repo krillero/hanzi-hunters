@@ -372,3 +372,11 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .ex-chip span{font-size:26px;line-height:1}.ex-chip small{font-size:12px;color:#f0cb78;margin-top:2px}
 .ex-chip:disabled{border-color:#2f4258;opacity:.6}
 @media(min-width:700px){.modal-backdrop{align-items:center;padding:24px}.modal{max-height:86dvh}}
+
+/* ---- title row without the old decorative icon; defeat styling ---- */
+.question-title{align-items:center}
+.question-title.defeat h2{color:#ff8a94}.question-title.victory h2{color:#f4d58c}
+.stage-fb.dead{border-color:#8a2f3a;background:linear-gradient(#3a1119,#240b11)}
+.stage-fb .dead-title{color:#ff8a94!important;font-size:clamp(15px,2.5dvh,19px)!important}
+.stage-fb .fb-dead-sub{font-size:clamp(13px,2.1dvh,15px);color:#f0c6cb;margin-top:-2px!important}
+.stage-fb.dead .fb-defeat{color:#f6dfe2}
