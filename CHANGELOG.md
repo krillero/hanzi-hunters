@@ -4,6 +4,7 @@
 - New default **Learn first** setting pauses after every answer until the current word reaches mastery level 2; then correct answers auto-advance after 0.5 seconds.
 - Keeps Quick (1 s), Relaxed (2.5 s), and Off available; existing saved preferences remain valid.
 - Adds flow and settings tests for the mastery threshold and delay.
+- Quick mode also uses a 0.5-second delay for both next questions and next enemies.
 
 ## Milestone 0 — baseline (handoff 0.1)
 - `npm install` OK (Node 22.22, 4 low-severity advisories in dev tooling, not addressed).
