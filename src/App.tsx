@@ -17,7 +17,7 @@ import {
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
 import type { Run, Saved } from './game/types'
-import { buyUpgrade, computeBonuses, nodeById } from './game/upgrades'
+import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string; title: string; foeName: string }
@@ -97,6 +97,7 @@ export default function App() {
   const [campMsg, setCampMsg] = useState('')
   const [showBag, setShowBag] = useState(false)
   const [selectedGearName, setSelectedGearName] = useState<string | null>(null)
+  const [selectedGearSlot, setSelectedGearSlot] = useState<import('./data').GearSlot | null>(null)
   const [showWords, setShowWords] = useState(false)
   const [explain, setExplain] = useState<string[]>([])
   const [latestBuild, setLatestBuild] = useState<BuildInfo | null>(null)
@@ -296,6 +297,7 @@ export default function App() {
     if (!next) return
     patch(s => ({ ...s, run: next }))
     setSelectedGearName(null)
+    setSelectedGearSlot(null)
     setToast(`Equipped ${name}.`)
   }
 
@@ -420,7 +422,7 @@ export default function App() {
             <div className="scene-label"><span className="live-dot"></span><span className="scene-where"><span className="scene-floor"><span className="sf-wide">F{run.floor} · {run.kill + 1}/{ENEMIES_PER_FLOOR}</span><span className="sf-narrow">F{run.floor}·{run.kill + 1}/{ENEMIES_PER_FLOOR}</span></span><span className="scene-gold">🪙 {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
-                <button className="chip-btn" onClick={() => { setShowBag(v => !v); setNewLoot(false) }} aria-label={newLoot ? 'Gear, new item found' : 'Gear'}>🎒<b>{equipped.length}</b>{newLoot && <i className="new-dot" aria-hidden />}</button>
+                <button className="chip-btn" onClick={() => { setShowBag(v => { const next = !v; if (next) { setSelectedGearSlot(null); setSelectedGearName(null) } return next }); setNewLoot(false) }} aria-label={newLoot ? 'Character stats, new gear found' : 'Character stats'}>⚔️{newLoot && <i className="new-dot" aria-hidden />}</button>
                 <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
                 <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
               </div></div>
@@ -441,73 +443,133 @@ export default function App() {
             </div>
           </div>
           {showBag && <section className="drawer character-drawer">
-            <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => setShowBag(false)} aria-label="Close character inventory">×</button></div>
+            <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => { setShowBag(false); setSelectedGearSlot(null); setSelectedGearName(null) }} aria-label="Close character inventory">✕</button></div>
+            {selectedGearSlot ? <section className="gear-picker-screen">
+              <div className="gear-picker-heading">
+                <button className="text-btn" onClick={() => { setSelectedGearSlot(null); setSelectedGearName(null) }}>Back to Character</button>
+                <div><small>CHANGE EQUIPMENT</small><h3>{selectedGearSlot}</h3></div>
+                <span>{run.gear.filter(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot).length} OWNED</span>
+              </div>
+              <p className="gear-picker-hint">Choose an item to equip in your {selectedGearSlot.toLowerCase()} slot.</p>
+              <div className="gear-picker-list">
+                {GEAR.filter(item => item.slot === selectedGearSlot && run.gear.includes(item.name)).map(item => {
+                  const current = run.loadout[selectedGearSlot] === item.name
+                  const selected = selectedGearName === item.name
+                  const equippedItem = GEAR.find(g => g.name === run.loadout[selectedGearSlot])
+                  const fields = [
+                    { label: 'Attack', key: 'attack' as const, icon: '⚔️', pct: false },
+                    { label: 'Max HP', key: 'hp' as const, icon: '❤️', pct: false },
+                    { label: 'Armor', key: 'armor' as const, icon: '🛡️', pct: false },
+                    { label: 'XP gain', key: 'xpPct' as const, icon: '✨', pct: true },
+                    { label: 'Mastery damage', key: 'masteryPct' as const, icon: '📖', pct: true },
+                    { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙', pct: false }
+                  ]
+                  const changes = fields.map(field => ({ ...field, delta: item[field.key] - (equippedItem?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
+                  return <div className={`gear-picker-choice ${selected ? 'is-selected' : ''}`} key={item.name}>
+                    <div className={`gear-picker-item ${current ? 'is-current' : ''} ${selected ? 'is-selected' : ''}`}>
+                      <span className="gear-picker-icon">{item.icon}</span>
+                      <div className="gear-picker-info"><b>{item.name}</b><small>{item.bonus}</small>{current && <em>Currently equipped</em>}</div>
+                      {current ? <span className="gear-picker-state">EQUIPPED</span> : <button onClick={() => setSelectedGearName(selected ? null : item.name)}>{selected ? 'CLOSE' : 'COMPARE'}</button>}
+                    </div>
+                    {selected && !current && <div className="gear-picker-inline-compare">
+                      <div className="gear-inline-current"><small>CURRENT</small><b>{equippedItem?.name ?? 'Empty slot'}</b></div>
+                      <div className="gear-inline-candidate"><small>NEW ITEM</small><b>{item.name}</b></div>
+                      <div className="gear-inline-deltas">{changes.length ? changes.map(field => <div key={field.key}><span>{field.icon} {field.label}</span><strong className={field.delta > 0 ? 'delta-up' : 'delta-down'}>{field.delta > 0 ? '+' : '−'}{field.pct ? Math.abs(Math.round(field.delta * 100)) + '%' : Math.abs(field.delta)}</strong></div>) : <p>No numeric stat changes.</p>}</div>
+                      <button className="secondary-btn gear-equip-btn" onClick={() => { equipItem(item.name); setSelectedGearSlot(null); setSelectedGearName(null) }}>Equip {item.name}</button>
+                    </div>}
+                  </div>
+                })}
+                {!run.gear.some(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot) && <p className="hint-text">You haven't found any {selectedGearSlot.toLowerCase()} items yet.</p>}
+              </div>
+            </section> : <>
             <div className="character-summary">
-              <div><small>LEVEL</small><strong>{run.level}</strong><span>{run.xp} / {xpForLevel(run.level)} XP</span></div>
-              <div><small>ATTACK</small><strong>⚔ {stats.attack}</strong><span>{5 + run.level - 1} base + {bonuses.attack} upgrades + {equippedAttack} gear</span></div>
-              <div><small>MAX HP</small><strong>♥ {stats.maxHp}</strong><span>{run.hp} current · +{bonuses.maxHp + equippedHp} bonus HP</span></div>
+              <div className="character-stat-card level-stat-card">
+                <small>LEVEL</small><strong>{run.level}</strong>
+                <div className="stat-progress-track"><span style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <span className="stat-context">{run.xp} / {xpForLevel(run.level)} XP to next level</span>
+              </div>
+              <div className="character-stat-card attack-stat-card">
+                <small>ATTACK</small><strong>⚔ {stats.attack}</strong>
+                <span className="stat-context">Base {5 + run.level - 1} <i>·</i> Upgrades +{bonuses.attack} <i>·</i> Gear +{equippedAttack}</span>
+              </div>
+              <div className="character-stat-card hp-stat-card">
+                <small>MAX HP</small><strong>♥ {stats.maxHp}</strong>
+                <span className="stat-context">{run.hp} current <i>·</i> +{bonuses.maxHp + equippedHp} bonus</span>
+              </div>
             </div>
-            <section className="character-section">
-              <div className="character-section-title">BONUSES</div>
-              <div className="character-stat-list">
-                <div><span>🛡️ Armor</span><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</strong></div>
-                <div><span>XP gain</span><strong>+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</strong></div>
-                <div><span>Gold gain</span><strong>+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</strong></div>
+            <section className="character-section active-bonuses-section">
+              <div className="character-section-title">ACTIVE BONUSES <span>EXPAND FOR SOURCES</span></div>
+              <div className="bonus-accordion-list">
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">🛡️</span><b>Defense</b><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)} armor · +{bonuses.maxHp + equipped.reduce((n, item) => n + item.hp, 0)} HP</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && (node.fx.armor || node.fx.maxHp)).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>{node.fx.armor ? `+${node.fx.armor} armor` : ''}{node.fx.armor && node.fx.maxHp ? ' · ' : ''}{node.fx.maxHp ? `+${node.fx.maxHp} max HP` : ''}</b></div>)}
+                    {equipped.filter(item => item.armor || item.hp).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>{item.armor ? `+${item.armor} armor` : ''}{item.armor && item.hp ? ' · ' : ''}{item.hp ? `+${item.hp} max HP` : ''}</b></div>)}
+                    {!bonuses.armor && !bonuses.maxHp && !equipped.some(item => item.armor || item.hp) && <p>No armor or health bonuses are active.</p>}
+                  </div>
+                </details>
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">✨</span><b>XP gain</b><strong>+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && node.fx.xpPct).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>+{Math.round((node.fx.xpPct ?? 0) * 100)}%</b></div>)}
+                    {equipped.filter(item => item.xpPct).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>+{Math.round(item.xpPct * 100)}%</b></div>)}
+                  </div>
+                </details>
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">🪙</span><b>Gold gain</b><strong>+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && node.fx.goldPct).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>+{Math.round((node.fx.goldPct ?? 0) * 100)}%</b></div>)}
+                    {equipped.filter(item => item.goldFlat).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>+{item.goldFlat} gold per win</b></div>)}
+                  </div>
+                </details>
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">💚</span><b>Recovery</b><strong>{bonuses.healOnKill} HP / win · +{bonuses.potionHeal} potion</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && (node.fx.healOnKill || node.fx.potionHeal || node.fx.startPotions)).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>{[node.fx.healOnKill ? `Heal ${node.fx.healOnKill} HP after victory` : '',node.fx.potionHeal ? `+${node.fx.potionHeal} potion healing` : '',node.fx.startPotions ? `+${node.fx.startPotions} starting potion` : ''].filter(Boolean).join(' · ')}</b></div>)}
+                    <div><span>🧪 Current potions</span><b>{run.potions} remaining · heal {12 + bonuses.potionHeal} HP</b></div>
+                  </div>
+                </details>
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">🎒</span><b>Loot chance</b><strong>+{Math.round(bonuses.lootPct * 100)}% base chance</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && node.fx.lootPct).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>+{Math.round((node.fx.lootPct ?? 0) * 100)}%</b></div>)}
+                  </div>
+                </details>
               </div>
             </section>
-            <section className="character-section">
-              <div className="character-section-title">GEAR LOADOUT <span>{equipped.length} / 3 SLOTS</span></div>
-              {(['Weapon', 'Armor', 'Accessory'] as const).map(slot => {
-                const item = GEAR.find(g => g.name === run.loadout[slot])
-                return <div className="gear-line gear-slot-line" key={slot}><span className="gear-icon">{item?.icon ?? '◇'}</span><div><b>{slot}</b><small>{item ? `${item.name} · ${item.bonus}` : 'Empty slot'}</small></div><span className={item ? 'gear-state owned' : 'gear-state locked'}>{item ? 'Equipped' : 'Empty'}</span></div>
-              })}
-              <div className="character-section-title gear-inventory-title">INVENTORY <span>{run.gear.length} / {GEAR.length} FOUND</span></div>
-              {selectedGearName && (() => {
-                const candidate = GEAR.find(g => g.name === selectedGearName)
-                if (!candidate || !run.gear.includes(candidate.name) || run.loadout[candidate.slot] === candidate.name) return null
-                const current = GEAR.find(g => g.name === run.loadout[candidate.slot])
-                const fields = [
-                  { label: 'Attack', key: 'attack' as const, icon: '⚔️', pct: false },
-                  { label: 'Max HP', key: 'hp' as const, icon: '❤️', pct: false },
-                  { label: 'Armor', key: 'armor' as const, icon: '🛡️', pct: false },
-                  { label: 'XP gain', key: 'xpPct' as const, icon: '✨', pct: true },
-                  { label: 'Mastery damage', key: 'masteryPct' as const, icon: '📖', pct: true },
-                  { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙', pct: false }
-                ]
-                const changes = fields.map(field => ({ ...field, before: current?.[field.key] ?? 0, after: candidate[field.key], delta: candidate[field.key] - (current?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
-                return <div className="gear-compare" aria-label={`Compare ${candidate.name}`}>
-                  <div className="gear-compare-head"><strong>COMPARE · {candidate.slot.toUpperCase()}</strong><button className="text-btn" onClick={() => setSelectedGearName(null)}>Close</button></div>
-                  <div className="gear-compare-cards">
-                    <div className="gear-compare-card"><small>CURRENT</small><span className="gear-compare-icon">{current?.icon ?? '◇'}</span><b>{current?.name ?? 'Empty slot'}</b><span>{current?.bonus ?? 'No bonus'}</span></div>
-                    <div className="gear-compare-card candidate"><small>NEW ITEM</small><span className="gear-compare-icon">{candidate.icon}</span><b>{candidate.name}</b><span>{candidate.bonus}</span></div>
+            <section className="character-section gear-overview">
+              <div className="character-section-title">EQUIPPED GEAR <span>{equipped.length}/3</span></div>
+              <div className="gear-equipped-list">
+                {(['Weapon', 'Armor', 'Accessory'] as const).map(slot => {
+                  const item = GEAR.find(g => g.name === run.loadout[slot])
+                  const alternative = GEAR.find(g => g.slot === slot && run.gear.includes(g.name) && run.loadout[slot] !== g.name)
+                  return <div className={`gear-equipped-row ${item ? 'is-filled' : 'is-empty'}`} key={slot}>
+                    <span className="gear-equipped-icon">{item?.icon ?? '◇'}</span>
+                    <div className="gear-equipped-info"><b>{item?.name ?? 'Empty slot'}</b><small>{slot.toUpperCase()}</small></div>
+                    <span className="gear-equipped-effect">{item?.bonus ?? 'Find gear to equip'}</span>
+                    {item && <button className="gear-change-btn" onClick={() => { setSelectedGearSlot(slot); setSelectedGearName(alternative?.name ?? null) }}>{alternative ? 'CHANGE' : 'EQUIPPED'}</button>}
                   </div>
-                  <div className="gear-deltas">
-                    {changes.length ? changes.map(field => <div key={field.key}><span>{field.icon} {field.label}</span><strong className={field.delta > 0 ? 'delta-up' : 'delta-down'}>{field.delta > 0 ? '+' : '−'}{field.pct ? Math.abs(Math.round(field.delta * 100)) + '%' : Math.abs(field.delta)}</strong></div>) : <p className="hint-text">This item changes no numeric stats.</p>}
-                  </div>
-                  <button className="secondary-btn gear-equip-btn" onClick={() => equipItem(candidate.name)}>Equip {candidate.name}</button>
+                })}
+              </div>
+
+            </section>
+            <section className="character-section upgrade-passives-section">
+              <div className="character-section-title">UPGRADE PASSIVES <span>{ownedUpgrades.length} UNLOCKED</span></div>
+              {ownedUpgrades.length ? <>
+                <div className="upgrade-passive-list">{ownedUpgrades.slice(0, 3).map(node => <div className="upgrade-passive-row" key={node.id}><span className="upgrade-passive-icon">{node.icon}</span><div><b>{node.name}</b><small>{node.branch} · Tier {node.tier}</small></div><span className="upgrade-passive-effect">{node.desc}</span><span className="bonus-source upgrade-source">ACTIVE</span></div>)}</div>
+                {ownedUpgrades.length > 3 && <details className="more-passives-details"><summary>Show all passives <span>{ownedUpgrades.length - 3} more</span></summary><div className="upgrade-passive-list">{ownedUpgrades.slice(3).map(node => <div className="upgrade-passive-row" key={node.id}><span className="upgrade-passive-icon">{node.icon}</span><div><b>{node.name}</b><small>{node.branch} · Tier {node.tier}</small></div><span className="upgrade-passive-effect">{node.desc}</span><span className="bonus-source upgrade-source">ACTIVE</span></div>)}</div></details>}
+              </> : <p className="hint-text">Unlock upgrades at camp to gain passive effects.</p>}
+              <details className="character-details run-resources-details">
+                <summary>Run resources & other effects <span>VIEW</span></summary>
+                <div className="character-section">
+                  <div className="bonus-line"><span>🧪 Potions<small>Available now</small></span><b>{run.potions} remaining · heal {12 + bonuses.potionHeal} HP</b></div>
+                  <div className="bonus-line"><span>💡 Hints<small>Per fight</small></span><b>{run.hintsLeft} remaining</b></div>
+                  <div className="bonus-line"><span>🔁 Second chance<small>Per fight</small></span><b>{run.secondLeft} remaining</b></div>
+                  <div className="bonus-line"><span>🎒 Loot chance<small>Current enemy</small></span><b>{Math.round(lootChance * 100)}%</b></div>
                 </div>
-              })()}
-              {GEAR.map(item => {
-                const owned = run.gear.includes(item.name)
-                const isEquipped = run.loadout[item.slot] === item.name
-                return <div className="gear-line" key={item.name}><span className="gear-icon">{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div>{!owned ? <span className="gear-state locked">🔒 Not found</span> : isEquipped ? <span className="gear-state owned">✓ Equipped</span> : <button onClick={() => setSelectedGearName(item.name)} aria-label={`Compare ${item.name} with currently equipped ${item.slot}`}>{selectedGearName === item.name ? 'Comparing' : 'Compare'}</button>}</div>
-              })}
-              <p className="hint-text">Choose Compare to see how found gear changes your stats before equipping. Only one item per slot gives bonuses; gear is lost when a run ends.</p>
+              </details>
             </section>
-            <details className="character-details">
-              <summary>All bonuses & passive skills <span>{ownedUpgrades.length} upgrades</span></summary>
-              <div className="character-section">
-                <div className="character-section-title">PERMANENT UPGRADES</div>
-                {ownedUpgrades.length ? ownedUpgrades.map(node => <div className="bonus-line" key={node.id}><span>{node.icon} {node.name}<small>{node.branch} · Tier {node.tier}</small></span><b>{node.desc}</b></div>) : <p className="hint-text">No permanent upgrades purchased yet.</p>}
-                <div className="character-section-title">RUN & GEAR EFFECTS</div>
-                <div className="bonus-line"><span>🧪 Potions<small>Available now</small></span><b>{run.potions} remaining · heal {12 + bonuses.potionHeal} HP</b></div>
-                <div className="bonus-line"><span>💡 Hints<small>Per fight</small></span><b>{run.hintsLeft} remaining</b></div>
-                <div className="bonus-line"><span>🔁 Second chance<small>Per fight</small></span><b>{run.secondLeft} remaining</b></div>
-                <div className="bonus-line"><span>💚 Heal on kill</span><b>{bonuses.healOnKill} HP</b></div>
-                <div className="bonus-line"><span>🎒 Loot chance</span><b>{Math.round(lootChance * 100)}% this enemy</b></div>
-                <div className="bonus-line"><span>🧪 Potion bonus</span><b>+{bonuses.potionHeal} healing</b></div>
-              </div>
-            </details>
+            </>}
           </section>}
           {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain([w.hanzi])} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
