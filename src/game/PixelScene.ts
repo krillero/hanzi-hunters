@@ -375,12 +375,15 @@ export class PixelScene extends Phaser.Scene {
     if (!this.victoryText) return
     const { width, height } = this.scale
     const label = this.victoryText.replace('ENEMY SLAIN!', 'VICTORY').replace('ELITE SLAIN!', 'ELITE VICTORY')
-    const size = Phaser.Math.Clamp(Math.round(this.floorY * 0.22), 11, 17)
-    const plaqueW = Math.min(width - 54, Math.max(150, label.length * size * 0.72 + 28))
-    const plaque = this.add.rectangle(Math.round(width / 2), Math.max(24, Math.round(this.floorY * 0.27)), plaqueW, size + 18, 0x172437, 0.94)
-      .setStrokeStyle(2, 0xd0a852, 0.95).setDepth(11)
-    const t = this.add.text(Math.round(width / 2), plaque.y, label, {
-      fontFamily: 'monospace', fontSize: `${size}px`, fontStyle: 'bold', color: '#ffd77d', stroke: '#1d1405', strokeThickness: 3
+    // Keep the victory cue in the top-centre safe area: small enough to leave the
+    // hero, enemy, combo counter and floating damage numbers unobstructed.
+    const size = Phaser.Math.Clamp(Math.round(this.floorY * 0.15), 10, 12)
+    const plaqueW = Math.min(width - 28, Math.max(104, label.length * size * 0.62 + 20))
+    const plaqueY = Math.max(13, Math.round(this.floorY * 0.095))
+    const plaque = this.add.rectangle(Math.round(width / 2), plaqueY, plaqueW, size + 12, 0x172437, 0.88)
+      .setStrokeStyle(1, 0xd0a852, 0.9).setDepth(11)
+    const t = this.add.text(Math.round(width / 2), plaqueY, label, {
+      fontFamily: 'monospace', fontSize: `${size}px`, fontStyle: 'bold', color: '#ffd77d', stroke: '#1d1405', strokeThickness: 2
     }).setOrigin(0.5).setDepth(12)
     this.victoryObjs.push(plaque, t)
     if (animate) {
