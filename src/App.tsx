@@ -443,9 +443,19 @@ export default function App() {
           {showBag && <section className="drawer character-drawer">
             <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => setShowBag(false)} aria-label="Close character inventory">×</button></div>
             <div className="character-summary">
-              <div><small>LEVEL</small><strong>{run.level}</strong><span>{run.xp} / {xpForLevel(run.level)} XP</span></div>
-              <div><small>ATTACK</small><strong>⚔ {stats.attack}</strong><span>{5 + run.level - 1} base + {bonuses.attack} upgrades + {equippedAttack} gear</span></div>
-              <div><small>MAX HP</small><strong>♥ {stats.maxHp}</strong><span>{run.hp} current · +{bonuses.maxHp + equippedHp} bonus HP</span></div>
+              <div className="character-stat-card level-stat-card">
+                <small>LEVEL</small><strong>{run.level}</strong>
+                <div className="stat-progress-track"><span style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <span className="stat-context">{run.xp} / {xpForLevel(run.level)} XP to next level</span>
+              </div>
+              <div className="character-stat-card attack-stat-card">
+                <small>ATTACK</small><strong>⚔ {stats.attack}</strong>
+                <span className="stat-context">Base {5 + run.level - 1} <i>·</i> Upgrades +{bonuses.attack} <i>·</i> Gear +{equippedAttack}</span>
+              </div>
+              <div className="character-stat-card hp-stat-card">
+                <small>MAX HP</small><strong>♥ {stats.maxHp}</strong>
+                <span className="stat-context">{run.hp} current <i>·</i> +{bonuses.maxHp + equippedHp} bonus</span>
+              </div>
             </div>
             <section className="character-section active-bonuses-section">
               <div className="character-section-title">ACTIVE BONUSES <span>WHAT AFFECTS THIS RUN</span></div>
