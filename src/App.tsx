@@ -576,7 +576,7 @@ export default function App() {
 
         <div className="right-column">
           <section className="question-panel">
-            <div className={`question-title ${run.phase}`}><div className="title-text"><h2>{fighting || revealing || feedback ? question.text.replace(/^New word!\\s*/i, '') : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
+            <div className={`question-title ${run.phase}`}><div className="title-text"><h2>{fighting || revealing || feedback ? question.text.replace(/^New word!\s*/i, '') : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
 
             {/* The word card never leaves its slot. Feedback replaces the choices below it. */}
             {showCard && <>
