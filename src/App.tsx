@@ -530,7 +530,10 @@ export default function App() {
             </section>
             <section className="character-section upgrade-passives-section">
               <div className="character-section-title">UPGRADE PASSIVES <span>{ownedUpgrades.length} UNLOCKED</span></div>
-              {ownedUpgrades.length ? <div className="upgrade-passive-list">{ownedUpgrades.map(node => <div className="upgrade-passive-row" key={node.id}><span className="upgrade-passive-icon">{node.icon}</span><div><b>{node.name}</b><small>{node.branch} · Tier {node.tier}</small></div><span className="upgrade-passive-effect">{node.desc}</span><span className="bonus-source upgrade-source">ACTIVE</span></div>)}</div> : <p className="hint-text">Unlock upgrades at camp to gain passive effects.</p>}
+              {ownedUpgrades.length ? <>
+                <div className="upgrade-passive-list">{ownedUpgrades.slice(0, 3).map(node => <div className="upgrade-passive-row" key={node.id}><span className="upgrade-passive-icon">{node.icon}</span><div><b>{node.name}</b><small>{node.branch} · Tier {node.tier}</small></div><span className="upgrade-passive-effect">{node.desc}</span><span className="bonus-source upgrade-source">ACTIVE</span></div>)}</div>
+                {ownedUpgrades.length > 3 && <details className="more-passives-details"><summary>Show all passives <span>{ownedUpgrades.length - 3} more</span></summary><div className="upgrade-passive-list">{ownedUpgrades.slice(3).map(node => <div className="upgrade-passive-row" key={node.id}><span className="upgrade-passive-icon">{node.icon}</span><div><b>{node.name}</b><small>{node.branch} · Tier {node.tier}</small></div><span className="upgrade-passive-effect">{node.desc}</span><span className="bonus-source upgrade-source">ACTIVE</span></div>)}</div></details>}
+              </> : <p className="hint-text">Unlock upgrades at camp to gain passive effects.</p>}
               <details className="character-details run-resources-details">
                 <summary>Run resources & other effects <span>VIEW</span></summary>
                 <div className="character-section">
