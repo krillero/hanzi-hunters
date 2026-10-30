@@ -426,20 +426,16 @@ export default function App() {
                 <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
                 <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
               </div></div>
-            <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle scene" />
-            <div className="scene-footer"><span>✦ Mosslight Cavern</span><span>RUN GOLD 🪙 {run.gold}</span></div>
-          </div>
-          <div className="combatant-row">
-            <div className="combatant player-card">
-              <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Level {run.level} Adventurer</small></div></div>
-              <div className="bar-label"><span>HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>{pop && <em key={pop.key} className="xp-pop">+{pop.xp} XP</em>}
-              <div className="mini-stats"><span>⚔ ATK {stats.attack}</span><span>✦ XP {run.xp}/{xpForLevel(run.level)}</span></div>
-            </div>
-            <div className="versus">VS</div>
-            <div className="combatant enemy-card">
-              <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.elite ? 'Elite ' : ''}{foe.enemy.name}</strong><small>Dungeon creature</small></div></div>
-              <div className="bar-label"><span>HP</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
-              <div className="mini-stats"><span>☠ DMG {Math.max(1, foe.damage - bonuses.armor)}</span><span>✦ XP {foe.xp}</span></div>
+            <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
+            <div className="combatant-row arena-combatants">
+              <div className="combatant player-card">
+                <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Adventurer</small></div></div>
+                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>{pop && <em key={pop.key} className="xp-pop">+{pop.xp} XP</em>}
+              </div>
+              <div className="combatant enemy-card">
+                <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.elite ? 'Elite ' : ''}{foe.enemy.name}</strong><small>OPPONENT</small></div></div>
+                <div className="bar-label"><span>ENEMY · HP</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
+              </div>
             </div>
           </div>
           {showBag && <section className="drawer character-drawer">
@@ -576,7 +572,7 @@ export default function App() {
 
         <div className="right-column">
           <section className="question-panel">
-            <div className={`question-title ${run.phase}`}><div className="title-text"><h2>{fighting || revealing || feedback ? question.text : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
+            <div className={`question-title ${run.phase}`}><div className="title-text"><h2>{fighting || revealing || feedback ? question.text.replace(/^New word!\s*/i, '') : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
 
             {/* The word card never leaves its slot. Feedback replaces the choices below it. */}
             {showCard && <>
@@ -598,12 +594,6 @@ export default function App() {
                   </div>
                   <p className="result-note" ref={noteRef}>{feedback.word.note}</p>
                   {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
-                  {run.phase === 'victory' && <div className="result-rewards">
-                    <span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>
-                    {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
-                    {run.reward.loot && <span className="hot">{run.reward.loot}</span>}
-                    {run.reward.dupGold > 0 && <span>Dupe +{run.reward.dupGold}🪙</span>}
-                  </div>}
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
@@ -614,9 +604,25 @@ export default function App() {
             {/* Only terminal states without answer feedback use the fallback stage. */}
             {(!fighting && !feedback) && !revealing && <div className={`stage stage-wide stage-fb ${run.phase === 'victory' ? 'good' : 'bad'}`}>
               <div className="stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div></div>
-              {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.loot && <span className="hot wide">{run.reward.loot}</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}🪙</span>}</div>}
               {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
+
+            {run.phase === 'victory' && (
+              <div className="reward-strip" aria-label="Battle rewards">
+                <div className="reward-item"><small>EXPERIENCE</small><strong>+{run.reward.xp} XP</strong></div>
+                <div className="reward-item"><small>GOLD</small><strong>🪙 +{run.reward.gold}</strong></div>
+                {run.reward.levelUps > 0 && <div className="reward-item reward-highlight"><small>LEVEL UP</small><strong>Level {run.level}</strong></div>}
+                {run.reward.dupGold > 0 && <div className="reward-item"><small>DUPLICATE</small><strong>+{run.reward.dupGold} 🪙</strong></div>}
+              </div>
+            )}
+
+            {run.phase === 'victory' && run.reward.loot && (
+              <div className="loot-drop" role="status" aria-label={`Loot acquired: ${run.reward.loot}`}>
+                <span className="loot-drop-icon" aria-hidden="true">🎁</span>
+                <span className="loot-drop-copy"><small>ITEM FOUND</small><strong>{run.reward.loot}</strong></span>
+                <span className="loot-drop-tag">NEW LOOT</span>
+              </div>
+            )}
 
             <div className="action-bar">
               {revealing

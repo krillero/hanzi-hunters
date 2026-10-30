@@ -1002,3 +1002,261 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
  .character-drawer .drawer-title>button{width:42px;height:42px;min-width:42px;font-size:24px}
  .gear-picker-heading .text-btn{min-height:46px;padding:0 14px}
 }
+
+/* Combat arena direction — portrait-first refinement based on the approved Option 1 mockup. */
+@media(max-width:850px){
+  .app-shell.in-battle{background:radial-gradient(ellipse at 50% 0%,#1c2b40 0%,#0d1521 68%);padding-left:10px;padding-right:10px}
+  .game-layout{gap:7px}
+  .left-column{display:flex;flex-direction:column;gap:7px}
+  .scene-frame{border-color:#394b63;box-shadow:inset 0 0 0 2px #0a111c,0 8px 24px #0005}
+  .scene-label{height:43px;background:linear-gradient(180deg,#19283b,#111c2b);border-bottom:1px solid #3a4c63}
+  .scene-label .scene-where{font-size:11px;letter-spacing:.7px}
+  .scene-label .scene-actions{gap:6px}
+  .scene-label .chip-btn{width:44px;height:40px;min-width:44px;border-radius:9px;background:linear-gradient(145deg,#1b2a3e,#101a29);border:1px solid #354961;box-shadow:inset 0 1px #ffffff0c}
+  .scene-label .chip-btn b{font-size:10px}
+  .phaser-mount{background:#111c2b;min-height:150px}
+  .combatant-row{gap:7px;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr)}
+  .combatant{border-color:#33465e;background:linear-gradient(150deg,#17263a,#101a29);box-shadow:inset 0 1px #ffffff08}
+  .combatant-head strong{font-size:12px}
+  .combatant .bar-label{font-size:10px;margin-top:9px}
+  .combatant .health-track{height:7px;margin-top:5px}
+  .combatant .xp-mini{margin-top:4px}
+  .versus{font-size:9px;color:#8d9db2}
+  .question-panel{border-color:#3b5069;background:linear-gradient(160deg,#17263a,#101a28);box-shadow:0 8px 24px #0004}
+  .question-title{margin:8px 0 10px}
+  .question-title h2{font-size:clamp(15px,2.3dvh,19px);letter-spacing:-.25px;color:#f2d184}
+  .stage-card{border-color:#4b755f;background:radial-gradient(ellipse at 50% 0%,#263b50,#172638 78%);box-shadow:inset 0 0 0 1px #78b78c22}
+  .stage-card .stage-badge{color:#e5c477}
+  .answer-btn{min-height:44px;border-color:#34475e;background:#152337}
+  .answer-btn .answer-key{background:#263b54}
+  .answer-feedback{border-color:#3c7659;background:linear-gradient(145deg,#15352b,#11271f)}
+  .result-rewards{gap:5px}
+  .result-rewards span{border-radius:5px}
+  .action-bar .bar-btn.main{min-height:54px;border-radius:9px;box-shadow:0 3px 0 #8b642a;font-size:clamp(15px,2.2dvh,19px)}
+}
+@media(max-width:480px){
+  .app-shell.in-battle{padding-left:8px;padding-right:8px}
+  .scene-label{height:44px;padding-left:9px}
+  .scene-label .chip-btn{width:39px;height:38px;min-width:39px}
+  .scene-label .scene-actions{gap:4px}
+  .combatant-row{grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr);gap:5px}
+  .combatant{padding:7px 8px}
+  .combatant-head strong{font-size:11px}
+  .combatant .bar-label{font-size:9px}
+  .question-panel{padding-left:11px;padding-right:11px}
+  .question-title h2{font-size:15px}
+}
+@media(max-width:850px) and (max-height:760px){
+  .phaser-mount{min-height:125px}
+  .scene-label{height:41px}
+  .combatant{padding-top:5px;padding-bottom:5px}
+  .question-title{margin-top:5px;margin-bottom:7px}
+}
+
+
+/* === Arena-first mobile layout pass (Option 1 follow-through) ======================== */
+@media(max-width:850px){
+  .app-shell.in-battle{gap:0}
+  .game-layout{gap:8px;flex:0 0 auto}
+  .left-column{flex:0 0 auto;min-height:0;gap:0}
+  /* Keep the arena at a deliberate, readable size. The question/reward
+     content may scroll below it; it must never steal the arena's height. */
+  .scene-frame{
+    flex:0 0 auto;
+    min-height:clamp(330px,42dvh,480px);
+    display:flex;
+    flex-direction:column;
+    background:linear-gradient(180deg,#172438 0%,#0d1725 100%);
+    box-shadow:inset 0 0 0 1px #40516a,0 8px 22px #0005;
+  }
+  .scene-label{
+    height:44px;
+    min-height:44px;
+    background:linear-gradient(180deg,#17263a,#101b2b);
+    border-bottom:1px solid #394b63;
+    padding:0 7px 0 10px;
+  }
+  .scene-where{gap:7px;font-size:11px}
+  .scene-actions{gap:5px}
+  .chip-btn{
+    min-width:42px;
+    width:42px;
+    height:36px;
+    border-radius:6px;
+    background:#1a2a40;
+    border-color:#344962;
+    font-size:16px;
+  }
+  .chip-btn b{font-size:10px}
+  .scene-frame .phaser-mount{flex:1 1 auto;min-height:clamp(220px,30dvh,360px);height:auto!important}
+  .arena-combatants{
+    flex:0 0 auto;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:0;
+    margin:0;
+    padding:7px 8px 8px;
+    background:linear-gradient(180deg,#111e2e,#0d1724);
+    border-top:2px solid #40536b;
+    position:relative;
+  }
+  .arena-combatants:before{
+    content:'';
+    position:absolute;
+    top:0;left:50%;width:1px;height:100%;
+    background:#35475d;
+  }
+  .arena-combatants .combatant{
+    min-width:0;
+    padding:3px 9px 5px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    image-rendering:auto;
+  }
+  .arena-combatants .player-card{padding-right:13px}
+  .arena-combatants .enemy-card{padding-left:13px}
+  .arena-combatants .combatant-head{min-height:20px;gap:6px}
+  .arena-combatants .combatant-head strong{font-size:clamp(10px,1.55dvh,13px);overflow:hidden;text-overflow:ellipsis}
+  .arena-combatants .combatant-head small,.arena-combatants .avatar,.arena-combatants .mini-stats{display:none}
+  .arena-combatants .bar-label{margin-top:5px;font-size:9px;letter-spacing:.35px}
+  .arena-combatants .health-track{height:6px;margin-top:4px}
+  .arena-combatants .xp-mini{margin-top:3px}
+  .scene-footer{display:none}
+  .question-panel{
+    --stage-h:clamp(142px,25dvh,218px);
+    --row-h:clamp(42px,6.2dvh,54px);
+    --bar-h:clamp(44px,6.3dvh,54px);
+    --gap:6px;
+    gap:var(--gap);
+    padding:8px 10px 9px;
+  }
+  .question-title{height:auto;min-height:32px;margin:1px 0 2px}
+  .question-title h2{font-size:clamp(15px,2.15dvh,18px);line-height:1.2}
+  .stage-card{padding-top:25px;padding-bottom:8px}
+  .stage-card .hanzi{font-size:clamp(52px,9dvh,74px)}
+  .stage-card .pinyin{font-size:clamp(23px,3.5dvh,29px)}
+  .stage-card .word-meaning{margin-top:3px}
+  .stage-card .corner-btns{top:5px;right:6px}
+  .stage-card .corner-btns .speak-btn{width:34px;height:34px}
+  .stage-badge{top:8px;left:9px}
+  .answer-feedback{
+    margin-top:0;
+    padding:7px 9px;
+    gap:5px;
+    border-radius:6px;
+  }
+  .result-line{gap:7px}
+  .result-line strong{font-size:14px}
+  .result-note{font-size:clamp(11px,1.65dvh,13px);line-height:1.3;-webkit-line-clamp:2}
+  .result-mastery{font-size:clamp(10px,1.45dvh,12px);line-height:1.2}
+  .bar-btn{border-radius:6px;font-size:clamp(14px,2dvh,16px)}
+}
+@media(max-width:480px){
+  .app-shell.in-battle{padding-left:max(7px,env(safe-area-inset-left));padding-right:max(7px,env(safe-area-inset-right))}
+  .game-layout{gap:6px}
+  .left-column{gap:0}
+  .scene-frame{min-height:0}
+  .scene-label{height:42px;min-height:42px;padding-left:8px}
+  .scene-where{font-size:10px;gap:5px}
+  .scene-gold{margin-left:5px}
+  .scene-actions{gap:4px}
+  .chip-btn{width:38px;min-width:38px;height:34px;padding:0 3px;font-size:15px}
+  .chip-btn b{font-size:9px}
+  .scene-frame .phaser-mount{min-height:95px}
+  .arena-combatants{padding:6px 5px 7px}
+  .arena-combatants .player-card{padding-right:9px}
+  .arena-combatants .enemy-card{padding-left:9px}
+  .arena-combatants .combatant-head strong{font-size:10px}
+  .arena-combatants .bar-label{font-size:8px}
+  .question-panel{padding:7px 8px 8px}
+  .question-title{min-height:30px;margin:0}
+  .question-title h2{font-size:15px}
+  .stage-card{padding-top:23px;padding-bottom:6px}
+  .stage-card .hanzi{font-size:clamp(50px,8.7dvh,70px)}
+  .stage-card .pinyin{font-size:clamp(22px,3.3dvh,27px)}
+  .stage-card .word-meaning{font-size:13px}
+  .stage-card .corner-btns .speak-btn{width:32px;height:32px}
+  .stage-badge{font-size:8px}
+  .answer-feedback{padding:6px 8px}
+  .result-note{-webkit-line-clamp:2;font-size:11px}
+  .result-mastery{font-size:10px}
+  .result-rewards span{font-size:9px}
+  .bar-btn{min-height:44px}
+}
+@media(max-width:850px) and (max-height:720px){
+  .scene-label{height:38px;min-height:38px}
+  .scene-frame .phaser-mount{min-height:82px}
+  .question-panel{--stage-h:clamp(120px,22dvh,170px)}
+  .stage-card .hanzi{font-size:clamp(46px,7.8dvh,62px)}
+}
+
+
+/* Loot is a distinct drop, never part of the answer-success explanation. */
+.loot-drop{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  min-height:54px;
+  padding:8px 11px;
+  border:1px solid #8b6a37;
+  background:linear-gradient(105deg,#302719 0%,#202438 72%,#192638 100%);
+  box-shadow:inset 3px 0 0 #d7ad5d;
+}
+.loot-drop-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  border:1px solid #6c5835;
+  background:#3a3021;
+  border-radius:6px;
+  font-size:19px;
+}
+.loot-drop-copy{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.loot-drop-copy small{
+  color:#d9b96f;
+  font:9px 'DM Mono',monospace;
+  letter-spacing:1.2px;
+}
+.loot-drop-copy strong{
+  color:#f5e5bd;
+  font-size:13px;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+}
+.loot-drop-tag{
+  flex:0 0 auto;
+  padding:4px 6px;
+  border:1px solid #826637;
+  border-radius:3px;
+  color:#f0cd82;
+  font:9px 'DM Mono',monospace;
+  letter-spacing:.4px;
+}
+@media(max-width:850px){
+  .loot-drop{min-height:48px;padding:6px 8px;gap:8px}
+  .loot-drop-icon{flex-basis:30px;width:30px;height:30px;font-size:17px}
+  .loot-drop-copy small{font-size:8px}
+  .loot-drop-copy strong{font-size:12px}
+  .loot-drop-tag{font-size:8px;padding:4px}
+}
+@media(max-width:480px){
+  .loot-drop{min-height:44px;padding:5px 7px;gap:7px}
+  .loot-drop-icon{flex-basis:28px;width:28px;height:28px;font-size:16px}
+  .loot-drop-copy strong{font-size:11px}
+}
+
+
+/* Rewards are their own neutral-gold strip, separate from learning feedback. */
+.reward-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;min-width:0}
+.reward-item{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;min-height:48px;padding:6px 8px;border:1px solid #34465d;background:linear-gradient(145deg,#19283b,#121e2e);text-align:center}
+.reward-item small{color:#9eafc3;font:8px 'DM Mono',monospace;letter-spacing:.9px}
+.reward-item strong{color:#f1d18a;font:11px 'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reward-item.reward-highlight{border-color:#896a38;background:linear-gradient(145deg,#30291d,#1d2532)}
+.reward-item.reward-highlight small{color:#d9b86e}
+@media(max-width:850px){.reward-strip{gap:4px}.reward-item{min-height:42px;padding:5px 4px;gap:3px}.reward-item small{font-size:7px;letter-spacing:.5px}.reward-item strong{font-size:clamp(9px,1.35dvh,11px)}}
+@media(max-width:480px){.reward-item{min-height:40px;padding:4px 3px}.reward-item strong{font-size:9px}}
