@@ -97,6 +97,7 @@ export default function App() {
   const [campMsg, setCampMsg] = useState('')
   const [showBag, setShowBag] = useState(false)
   const [selectedGearName, setSelectedGearName] = useState<string | null>(null)
+  const [selectedGearSlot, setSelectedGearSlot] = useState<import('./data').GearSlot | null>(null)
   const [showWords, setShowWords] = useState(false)
   const [explain, setExplain] = useState<string[]>([])
   const [latestBuild, setLatestBuild] = useState<BuildInfo | null>(null)
@@ -442,6 +443,41 @@ export default function App() {
           </div>
           {showBag && <section className="drawer character-drawer">
             <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => setShowBag(false)} aria-label="Close character inventory">×</button></div>
+            {selectedGearSlot ? <section className="gear-picker-screen">
+              <div className="gear-picker-heading">
+                <button className="text-btn" onClick={() => { setSelectedGearSlot(null); setSelectedGearName(null) }}>← Character</button>
+                <div><small>CHANGE EQUIPMENT</small><h3>{selectedGearSlot}</h3></div>
+                <span>{run.gear.filter(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot).length} OWNED</span>
+              </div>
+              <p className="gear-picker-hint">Choose an item to equip in your {selectedGearSlot.toLowerCase()} slot.</p>
+              <div className="gear-picker-list">
+                {GEAR.filter(item => item.slot === selectedGearSlot && run.gear.includes(item.name)).map(item => {
+                  const current = run.loadout[selectedGearSlot] === item.name
+                  const selected = selectedGearName === item.name
+                  return <div className={`gear-picker-item ${current ? 'is-current' : ''} ${selected ? 'is-selected' : ''}`} key={item.name}>
+                    <span className="gear-picker-icon">{item.icon}</span>
+                    <div className="gear-picker-info"><b>{item.name}</b><small>{item.bonus}</small>{current && <em>Currently equipped</em>}</div>
+                    {current ? <span className="gear-picker-state">EQUIPPED</span> : <button onClick={() => setSelectedGearName(item.name)}>{selected ? 'SELECTED' : 'SELECT'}</button>}
+                  </div>
+                })}
+                {!run.gear.some(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot) && <p className="hint-text">You haven't found any {selectedGearSlot.toLowerCase()} items yet.</p>}
+              </div>
+              {selectedGearName && (() => {
+                const candidate = GEAR.find(item => item.name === selectedGearName && item.slot === selectedGearSlot)
+                const current = GEAR.find(item => item.name === run.loadout[selectedGearSlot])
+                if (!candidate || candidate.name === current?.name) return null
+                const delta = (key: 'attack' | 'hp' | 'armor' | 'xpPct' | 'masteryPct' | 'goldFlat') => candidate[key] - (current?.[key] ?? 0)
+                const changes = [
+                  ['Attack',delta('attack')],['Max HP',delta('hp')],['Armor',delta('armor')],['XP gain',delta('xpPct')*100],['Mastery damage',delta('masteryPct')*100],['Gold per win',delta('goldFlat')]
+                ].filter(([,value]) => value !== 0) as [string,number][]
+                return <div className="gear-picker-preview">
+                  <div className="gear-picker-preview-title">COMPARISON</div>
+                  <div><span>Current: <b>{current?.name ?? 'Empty slot'}</b></span><span>New: <b>{candidate.name}</b></span></div>
+                  {changes.map(([label,value]) => <p key={label}><span>{label}</span><b className={value > 0 ? 'delta-up' : 'delta-down'}>{value > 0 ? '+' : '−'}{label.includes('%') || label.includes('gain') || label.includes('damage') ? Math.abs(value) + '%' : Math.abs(value)}</b></p>)}
+                  <button className="secondary-btn gear-equip-btn" onClick={() => { equipItem(candidate.name); setSelectedGearSlot(null) }}>Equip {candidate.name}</button>
+                </div>
+              })()}
+            </section> : <>
             <div className="character-summary">
               <div className="character-stat-card level-stat-card">
                 <small>LEVEL</small><strong>{run.level}</strong>
@@ -507,7 +543,7 @@ export default function App() {
                     <span className="gear-equipped-icon">{item?.icon ?? '◇'}</span>
                     <div className="gear-equipped-info"><b>{item?.name ?? 'Empty slot'}</b><small>{slot.toUpperCase()}</small></div>
                     <span className="gear-equipped-effect">{item?.bonus ?? 'Find gear to equip'}</span>
-                    {item && <button className="gear-change-btn" onClick={() => alternative ? setSelectedGearName(alternative.name) : setToast(`Find another ${slot.toLowerCase()} to compare it here.`)}>{alternative ? 'CHANGE' : 'EQUIPPED'}</button>}
+                    {item && <button className="gear-change-btn" onClick={() => { setSelectedGearSlot(slot); setSelectedGearName(alternative?.name ?? null) }}>{alternative ? 'CHANGE' : 'EQUIPPED'}</button>}
                   </div>
                 })}
               </div>
@@ -543,7 +579,7 @@ export default function App() {
                   return <div className={`gear-item-card ${isEquipped ? 'is-equipped' : ''}`} key={item.name}>
                     <span className="gear-item-icon">{item.icon}</span>
                     <div className="gear-item-info"><b>{item.name}</b><span><small>{item.slot}</small><i> · </i>{item.bonus}</span></div>
-                    {isEquipped ? <span className="gear-state owned">✓ Equipped</span> : <button onClick={() => setSelectedGearName(item.name)} aria-label={`Compare ${item.name} with currently equipped ${item.slot}`}>{selectedGearName === item.name ? 'Selected' : 'Compare'}</button>}
+                    {isEquipped ? <span className="gear-state owned">✓ Equipped</span> : <button onClick={() => { setSelectedGearSlot(item.slot); setSelectedGearName(item.name) }} aria-label={`Choose ${item.name} for ${item.slot}`}>{selectedGearName === item.name ? 'Selected' : 'Compare'}</button>}
                   </div>
                 })}
                 {!run.gear.length && <p className="hint-text">Gear you discover during a run will appear here.</p>}
@@ -572,6 +608,7 @@ export default function App() {
                 </div>
               </details>
             </section>
+            </>}
           </section>}
           {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain([w.hanzi])} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
