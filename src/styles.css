@@ -1149,16 +1149,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .result-line strong{font-size:14px}
   .result-note{font-size:clamp(11px,1.65dvh,13px);line-height:1.3;-webkit-line-clamp:2}
   .result-mastery{font-size:clamp(10px,1.45dvh,12px);line-height:1.2}
-  .result-rewards{display:flex;flex-wrap:nowrap;gap:0;margin-top:2px;max-height:none;border-top:1px solid #355c49;padding-top:5px}
-  .result-rewards span{
-    flex:1 1 0;
-    min-width:0;
-    padding:2px 4px;
-    border:0;
-    background:transparent;
-    font-size:clamp(9px,1.35dvh,11px);
-  }
-  .result-rewards span+span{border-left:1px solid #355c49}
   .bar-btn{border-radius:6px;font-size:clamp(14px,2dvh,16px)}
 }
 @media(max-width:480px){
@@ -1257,3 +1247,14 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .loot-drop-icon{flex-basis:28px;width:28px;height:28px;font-size:16px}
   .loot-drop-copy strong{font-size:11px}
 }
+
+
+/* Rewards are their own neutral-gold strip, separate from learning feedback. */
+.reward-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;min-width:0}
+.reward-item{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;min-height:48px;padding:6px 8px;border:1px solid #34465d;background:linear-gradient(145deg,#19283b,#121e2e);text-align:center}
+.reward-item small{color:#9eafc3;font:8px 'DM Mono',monospace;letter-spacing:.9px}
+.reward-item strong{color:#f1d18a;font:11px 'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reward-item.reward-highlight{border-color:#896a38;background:linear-gradient(145deg,#30291d,#1d2532)}
+.reward-item.reward-highlight small{color:#d9b86e}
+@media(max-width:850px){.reward-strip{gap:4px}.reward-item{min-height:42px;padding:5px 4px;gap:3px}.reward-item small{font-size:7px;letter-spacing:.5px}.reward-item strong{font-size:clamp(9px,1.35dvh,11px)}}
+@media(max-width:480px){.reward-item{min-height:40px;padding:4px 3px}.reward-item strong{font-size:9px}}
