@@ -17,7 +17,7 @@ import {
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
 import type { Run, Saved } from './game/types'
-import { buyUpgrade, computeBonuses, nodeById } from './game/upgrades'
+import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string; title: string; foeName: string }
@@ -458,15 +458,43 @@ export default function App() {
               </div>
             </div>
             <section className="character-section active-bonuses-section">
-              <div className="character-section-title">ACTIVE BONUSES <span>WHAT AFFECTS THIS RUN</span></div>
-              <div className="active-bonus-list">
-                <div className="active-bonus-row"><span className="active-bonus-icon">🛡️</span><strong>Armor</strong><span className="active-bonus-value">{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</span><small className="bonus-source gear-source">GEAR / UPGRADES</small></div>
-                <div className="active-bonus-row"><span className="active-bonus-icon">✨</span><strong>XP gain</strong><span className="active-bonus-value">+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</span><small className="bonus-source upgrade-source">UPGRADES + GEAR</small></div>
-                <div className="active-bonus-row"><span className="active-bonus-icon">🪙</span><strong>Gold gain</strong><span className="active-bonus-value">+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</span><small className="bonus-source gear-source">GEAR / UPGRADES</small></div>
-                {bonuses.healOnKill > 0 && <div className="active-bonus-row"><span className="active-bonus-icon">💚</span><strong>Heal on kill</strong><span className="active-bonus-value">Restore {bonuses.healOnKill} HP</span><small className="bonus-source upgrade-source">UPGRADE</small></div>}
-                {bonuses.potionHeal > 0 && <div className="active-bonus-row"><span className="active-bonus-icon">🧪</span><strong>Potion strength</strong><span className="active-bonus-value">+{bonuses.potionHeal} healing</span><small className="bonus-source upgrade-source">UPGRADE</small></div>}
-                {bonuses.lootPct > 0 && <div className="active-bonus-row"><span className="active-bonus-icon">🎒</span><strong>Loot chance</strong><span className="active-bonus-value">+{Math.round(bonuses.lootPct * 100)}% base chance</span><small className="bonus-source upgrade-source">UPGRADE</small></div>}
-                {equipped.some(item => item.masteryPct > 0) && <div className="active-bonus-row"><span className="active-bonus-icon">📖</span><strong>Mastery damage</strong><span className="active-bonus-value">+{Math.round(equipped.reduce((n, item) => n + item.masteryPct, 0) * 100)}%</span><small className="bonus-source gear-source">GEAR</small></div>}
+              <div className="character-section-title">ACTIVE BONUSES <span>EXPAND FOR SOURCES</span></div>
+              <div className="bonus-accordion-list">
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">🛡️</span><b>Armor</b><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && (node.fx.armor || node.fx.maxHp)).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>{node.fx.armor ? `+${node.fx.armor} armor` : ''}{node.fx.armor && node.fx.maxHp ? ' · ' : ''}{node.fx.maxHp ? `+${node.fx.maxHp} max HP` : ''}</b></div>)}
+                    {equipped.filter(item => item.armor || item.hp).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>{item.armor ? `+${item.armor} armor` : ''}{item.armor && item.hp ? ' · ' : ''}{item.hp ? `+${item.hp} max HP` : ''}</b></div>)}
+                    {!bonuses.armor && !bonuses.maxHp && !equipped.some(item => item.armor || item.hp) && <p>No armor or health bonuses are active.</p>}
+                  </div>
+                </details>
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">✨</span><b>XP gain</b><strong>+{Math.round((bonuses.xpPct + equipped.reduce((n, item) => n + item.xpPct, 0)) * 100)}%</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && node.fx.xpPct).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>+{Math.round((node.fx.xpPct ?? 0) * 100)}%</b></div>)}
+                    {equipped.filter(item => item.xpPct).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>+{Math.round(item.xpPct * 100)}%</b></div>)}
+                  </div>
+                </details>
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">🪙</span><b>Gold gain</b><strong>+{Math.round(bonuses.goldPct * 100)}%{equipped.reduce((n, item) => n + item.goldFlat, 0) ? ` + ${equipped.reduce((n, item) => n + item.goldFlat, 0)} per win` : ''}</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && node.fx.goldPct).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>+{Math.round((node.fx.goldPct ?? 0) * 100)}%</b></div>)}
+                    {equipped.filter(item => item.goldFlat).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>+{item.goldFlat} gold per win</b></div>)}
+                  </div>
+                </details>
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">💚</span><b>Recovery</b><strong>{bonuses.healOnKill} HP / win · +{bonuses.potionHeal} potion</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && (node.fx.healOnKill || node.fx.potionHeal || node.fx.startPotions)).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>{[node.fx.healOnKill ? `Heal ${node.fx.healOnKill} HP after victory` : '',node.fx.potionHeal ? `+${node.fx.potionHeal} potion healing` : '',node.fx.startPotions ? `+${node.fx.startPotions} starting potion` : ''].filter(Boolean).join(' · ')}</b></div>)}
+                    <div><span>🧪 Current potions</span><b>{run.potions} remaining · heal {12 + bonuses.potionHeal} HP</b></div>
+                  </div>
+                </details>
+                <details className="bonus-accordion">
+                  <summary><span className="bonus-accordion-icon">🎒</span><b>Loot chance</b><strong>+{Math.round(bonuses.lootPct * 100)}% base chance</strong></summary>
+                  <div className="bonus-sources">
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && node.fx.lootPct).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>+{Math.round((node.fx.lootPct ?? 0) * 100)}%</b></div>)}
+                  </div>
+                </details>
               </div>
             </section>
             <section className="character-section gear-overview">
