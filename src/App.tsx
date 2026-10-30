@@ -455,18 +455,6 @@ export default function App() {
                 {GEAR.filter(item => item.slot === selectedGearSlot && run.gear.includes(item.name)).map(item => {
                   const current = run.loadout[selectedGearSlot] === item.name
                   const selected = selectedGearName === item.name
-                  return <div className={`gear-picker-item ${current ? 'is-current' : ''} ${selected ? 'is-selected' : ''}`} key={item.name}>
-                    <span className="gear-picker-icon">{item.icon}</span>
-                    <div className="gear-picker-info"><b>{item.name}</b><small>{item.bonus}</small>{current && <em>Currently equipped</em>}</div>
-                    {current ? <span className="gear-picker-state">EQUIPPED</span> : <button onClick={() => setSelectedGearName(item.name)}>{selected ? 'SELECTED' : 'SELECT'}</button>}
-                  </div>
-                })}
-                {!run.gear.some(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot) && <p className="hint-text">You haven't found any {selectedGearSlot.toLowerCase()} items yet.</p>}
-              </div>
-              <div className="gear-picker-list">
-                {GEAR.filter(item => item.slot === selectedGearSlot && run.gear.includes(item.name)).map(item => {
-                  const current = run.loadout[selectedGearSlot] === item.name
-                  const selected = selectedGearName === item.name
                   const equippedItem = GEAR.find(g => g.name === run.loadout[selectedGearSlot])
                   const fields = [
                     { label: 'Attack', key: 'attack' as const, icon: '⚔️', pct: false },
