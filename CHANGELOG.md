@@ -1,5 +1,17 @@
 # Changelog / test log
 
+## 2026-10-30 — Compact dungeon portrait layout
+- Implemented the selected Compact dungeon design using the existing React UI, Phaser scene, sprites, tiles, and palette; no new dependencies or assets.
+- Mobile header shows the game name, floor/enemy progress, gold, and Settings. The shorter arena retains the combatants and HP; Potion, Gear, and Words are labeled controls below the question panel.
+- Answer rows are at least 52px; help/audio buttons are 44px and bottom tools are 48px (44px on short screens). Long answers wrap instead of being truncated.
+- New-word questions say “Learn this word.” Existing intro questions, hints, recall questions, speech, save schema, combat balance, and auto-continue preferences are preserved.
+- Feedback reports the actual hit/counterattack from `resolveAnswer`, including blocked counters and killing blows with no counterattack. Mobile victory rewards appear in the result panel. Long teaching notes remain readable rather than being reduced to tiny text.
+- Phaser uses a single wall row and adjusted sprite placement in short arenas, and clamps damage labels inside the canvas. Desktop HP cards use two equal columns.
+- Validation: locked dependencies installed; TypeScript build and Vite production build passed, including PWA generation; all 56 existing tests passed. Existing Phaser bundle-size warning remains.
+- Environment: ordinary `npm run build` and the dev server initially encountered an esbuild parent-directory access error in this Windows sandbox. Validation used `node node_modules/typescript/bin/tsc -b` then `node node_modules/vite/bin/vite.js build --configLoader runner`, and served the production output locally. No repository build configuration was changed for this environment limitation.
+- Manual browser checks: 320×568, 375×667, 390×844, 430×932, and 1280×900; teaching/recall cards, correct and incorrect answers, potion healing/count, victory and next enemy, Gear/Wordbook drawers, word explanation, Settings, Relaxed auto-advance, and persisted progress after reload. The normal question screen fits the tested portrait sizes without horizontal overflow or vertical scrolling. Long feedback/reward states can scroll on short screens so content and actions stay reachable.
+- Limits: desktop browser emulation, not physical iOS/Android testing. No Mandarin voice was installed in the test browser, so actual speech output was not verified. No GitHub push or deployment was performed.
+
 ## In progress — mastery-gated auto-advance
 - New default **Learn first** setting pauses after every answer until the current word reaches mastery level 2; then correct answers auto-advance after 0.5 seconds.
 - Keeps Quick (1 s), Relaxed (2.5 s), and Off available; existing saved preferences remain valid.
