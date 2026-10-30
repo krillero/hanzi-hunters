@@ -936,3 +936,15 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
  .gear-picker-info>b{font-size:12px}
  .gear-picker-info>small{font-size:9px}
 }
+
+/* Gear picker header: use a clear vertical hierarchy on narrow screens. */
+@media(max-width:520px){
+ .gear-picker-heading{grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:7px 10px}
+ .gear-picker-heading .text-btn{grid-column:1/-1;justify-self:start;padding:2px 0 5px}
+ .gear-picker-heading>div{grid-column:1;grid-row:2}
+ .gear-picker-heading>span{grid-column:2;grid-row:2;align-self:end;padding-bottom:3px}
+ .gear-picker-heading h3{font-size:23px}
+ .gear-picker-hint{font-size:11px;line-height:1.4}
+ .gear-picker-preview .gear-equip-btn,
+ .gear-picker-preview>button{background:linear-gradient(135deg,#b98b3d,#e0bb68);border:1px solid #e0bb68;color:#172033;font-weight:700;min-height:44px}
+}
