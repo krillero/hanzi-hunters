@@ -443,10 +443,10 @@ export default function App() {
             </div>
           </div>
           {showBag && <section className="drawer character-drawer">
-            <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => { setShowBag(false); setSelectedGearSlot(null); setSelectedGearName(null) }} aria-label="Close character inventory">×</button></div>
+            <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => { setShowBag(false); setSelectedGearSlot(null); setSelectedGearName(null) }} aria-label="Close character inventory">✕</button></div>
             {selectedGearSlot ? <section className="gear-picker-screen">
               <div className="gear-picker-heading">
-                <button className="text-btn" onClick={() => { setSelectedGearSlot(null); setSelectedGearName(null) }}>← Character</button>
+                <button className="text-btn" onClick={() => { setSelectedGearSlot(null); setSelectedGearName(null) }}>Back to Character</button>
                 <div><small>CHANGE EQUIPMENT</small><h3>{selectedGearSlot}</h3></div>
                 <span>{run.gear.filter(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot).length} OWNED</span>
               </div>
