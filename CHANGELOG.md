@@ -1,5 +1,12 @@
 # Changelog / test log
 
+## 2026-10-30 — Fixed-slot battle layout (PR 16 follow-up)
+- Fixes the arena shrinking and the screen jumping when you answer: the removed `.showing-feedback` rules had resized the arena, word card and fonts whenever feedback appeared.
+- Choices and the answer feedback now share one fixed-height slot (`--choice-h`); the long note is clamped to 2 lines inside it (full text is still in the 💡 explanation). The action bar has a fixed height.
+- XP, gold, level-up and loot now show in a fixed chip strip over the arena (no layout change; removes the duplicate floating Phaser popup). The old fallback victory reward rows are hidden in battle.
+- Short phones (≤700px) hide the location line and use a smaller arena so the question state fits without page scroll; ≤600px uses slightly smaller slots.
+- New `tools/layout-check.mjs` (Playwright, needs a running dev server) asserts that arena, card, choices, action bar and tools keep the same top/height between question, wrong answer, and kill-with-rewards at 411×650, 390×844, 360×640, 320×568, with no page overflow. All 8 cases pass.
+
 ## 2026-10-30 — Compact dungeon portrait layout
 - Implemented the selected Compact dungeon design using the existing React UI, Phaser scene, sprites, tiles, and palette; no new dependencies or assets.
 - Mobile header shows the game name, floor/enemy progress, gold, and Settings. The shorter arena retains the combatants and HP; Potion, Gear, and Words are labeled controls below the question panel.

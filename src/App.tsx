@@ -233,13 +233,8 @@ export default function App() {
       title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster', exchange
     })
     if (r.outcome === 'victory') {
-      // Rewards pop up in the scene and tick the counters; they fade on their own, so the game can keep going.
+      // Rewards sit in the fixed arena strip (no layout change); the counters tick up.
       const rw = r.run.reward
-      const lines = [{ text: `+${rw.xp} XP   🪙 +${rw.gold}`, color: '#f4d58c' }]
-      if (rw.levelUps > 0) lines.push({ text: `LEVEL UP!  Lv ${r.run.level}`, color: '#8ee0a9' })
-      if (r.loot) lines.push({ text: `LOOT: ${r.loot.name}`, color: '#ffd166' })
-      else if (r.duplicateGold) lines.push({ text: `Duplicate gear → +${r.duplicateGold} gold`, color: '#c9d6e4' })
-      sceneRef.current?.popReward(lines)
       setPop({ key: Date.now(), gold: rw.gold, xp: rw.xp })
       if (r.loot) setNewLoot(true)
     }
@@ -400,7 +395,7 @@ export default function App() {
   }
 
   return (
-    <main className={`app-shell in-battle ${feedback ? 'showing-feedback' : ''}`}>
+    <main className={`app-shell in-battle`}>
       {topbar}
 
       <section className="hero-strip">
@@ -424,7 +419,15 @@ export default function App() {
                 <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
                 <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
               </div></div>
-            <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
+            <div className="arena-stage">
+              <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
+              {run.phase === 'victory' && <div className="arena-rewards" role="status" aria-label="Battle rewards">
+                <span>+{run.reward.xp} XP</span>
+                <span>🪙 +{run.reward.gold}{run.reward.dupGold > 0 ? ' (dup)' : ''}</span>
+                {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
+                {run.reward.loot && <span className="hot loot">🎁 {run.reward.loot}</span>}
+              </div>}
+            </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
                 <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Adventurer</small></div></div>
@@ -569,7 +572,7 @@ export default function App() {
         </div>
 
         <div className="right-column">
-          <section className={`question-panel ${feedback ? 'has-feedback' : ''}`}>
+          <section className={`question-panel`}>
             <div className={`question-title ${run.phase}`}><div className="title-text"><h2>{fighting || revealing || feedback ? (question.kind === 'intro' && !feedback && !revealing ? 'Learn this word' : question.text.replace(/^New word!\s*/i, '')) : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
 
             {/* The word card never leaves its slot. Feedback replaces the choices below it. */}
@@ -593,10 +596,6 @@ export default function App() {
                   <p className="combat-exchange">{combatSummary(feedback.exchange)}</p>
                   <p className="result-note">{feedback.word.note}</p>
                   {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
-                  {run.phase === 'victory' && <div className="compact-rewards" aria-label="Battle rewards">
-                    <span>+{run.reward.xp} XP · 🪙 +{run.reward.gold}{run.reward.levelUps > 0 ? ` · Level ${run.level}!` : ''}{run.reward.dupGold > 0 ? ` · includes ${run.reward.dupGold} duplicate gold` : ''}</span>
-                    {run.reward.loot && <span>🎁 {run.reward.loot}</span>}
-                  </div>}
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
