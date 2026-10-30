@@ -422,7 +422,7 @@ export default function App() {
             <div className="scene-label"><span className="live-dot"></span><span className="scene-where"><span className="scene-floor"><span className="sf-wide">F{run.floor} · {run.kill + 1}/{ENEMIES_PER_FLOOR}</span><span className="sf-narrow">F{run.floor}·{run.kill + 1}/{ENEMIES_PER_FLOOR}</span></span><span className="scene-gold">🪙 {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
-                <button className="chip-btn" onClick={() => { setShowBag(v => { const next = !v; if (next) { setSelectedGearSlot(null); setSelectedGearName(null) } return next }); setNewLoot(false) }} aria-label={newLoot ? 'Gear, new item found' : 'Gear'}>🎒<b>{equipped.length}</b>{newLoot && <i className="new-dot" aria-hidden />}</button>
+                <button className="chip-btn" onClick={() => { setShowBag(v => { const next = !v; if (next) { setSelectedGearSlot(null); setSelectedGearName(null) } return next }); setNewLoot(false) }} aria-label={newLoot ? 'Character stats, new gear found' : 'Character stats'}>👤<b>{run.level}</b>{newLoot && <i className="new-dot" aria-hidden />}</button>
                 <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
                 <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
               </div></div>
@@ -551,44 +551,7 @@ export default function App() {
                   </div>
                 })}
               </div>
-              <div className="character-section-title gear-inventory-title">YOUR INVENTORY <span>{run.gear.length} / {GEAR.length}</span></div>
-              <div className="gear-inventory-grid">
-                {GEAR.filter(item => run.gear.includes(item.name)).map(item => {
-                  const isEquipped = run.loadout[item.slot] === item.name
-                  const isSelected = selectedGearName === item.name
-                  const current = GEAR.find(g => g.name === run.loadout[item.slot])
-                  const fields = [
-                    { label: 'Attack', key: 'attack' as const, icon: '⚔️', pct: false },
-                    { label: 'Max HP', key: 'hp' as const, icon: '❤️', pct: false },
-                    { label: 'Armor', key: 'armor' as const, icon: '🛡️', pct: false },
-                    { label: 'XP gain', key: 'xpPct' as const, icon: '✨', pct: true },
-                    { label: 'Mastery damage', key: 'masteryPct' as const, icon: '📖', pct: true },
-                    { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙', pct: false }
-                  ]
-                  const changes = fields.map(field => ({ ...field, delta: item[field.key] - (current?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
-                  return <div className={`gear-item-wrap ${isSelected ? 'is-selected' : ''}`} key={item.name}>
-                    <div className={`gear-item-card ${isEquipped ? 'is-equipped' : ''} ${isSelected ? 'is-selected' : ''}`}>
-                      <span className="gear-item-icon">{item.icon}</span>
-                      <div className="gear-item-info"><b>{item.name}</b><span><small>{item.slot}</small><i> · </i>{item.bonus}</span></div>
-                      {isEquipped ? <span className="gear-state owned">✓ Equipped</span> : <button onClick={() => { setSelectedGearName(isSelected ? null : item.name); setSelectedGearSlot(null) }} aria-label={`Compare ${item.name} with equipped ${item.slot}`}>{isSelected ? 'Close' : 'Compare'}</button>}
-                    </div>
-                    {isSelected && !isEquipped && <div className="gear-inline-compare">
-                      <div className="gear-inline-current"><small>CURRENT</small><b>{current?.name ?? 'Empty slot'}</b></div>
-                      <div className="gear-inline-candidate"><small>NEW ITEM</small><b>{item.name}</b></div>
-                      <div className="gear-inline-deltas">{changes.length ? changes.map(field => <div key={field.key}><span>{field.icon} {field.label}</span><strong className={field.delta > 0 ? 'delta-up' : 'delta-down'}>{field.delta > 0 ? '+' : '−'}{field.pct ? Math.abs(Math.round(field.delta * 100)) + '%' : Math.abs(field.delta)}</strong></div>) : <p>No numeric stat changes.</p>}</div>
-                      <button className="secondary-btn gear-equip-btn" onClick={() => { equipItem(item.name); setSelectedGearName(null); setSelectedGearSlot(null) }}>Equip {item.name}</button>
-                    </div>}
-                  </div>
-                })}
-                {!run.gear.length && <p className="hint-text">Gear you discover during a run will appear here.</p>}
-              </div>
-              <details className="gear-undiscovered">
-                <summary>Undiscovered gear <span>{GEAR.length - run.gear.length} items</span></summary>
-                <div className="gear-locked-grid">
-                  {GEAR.filter(item => !run.gear.includes(item.name)).map(item => <div className="gear-locked-item" key={item.name}><span>{item.icon}</span><div><b>{item.name}</b><small>{item.slot} · {item.bonus}</small></div><span className="gear-state locked">🔒</span></div>)}
-                </div>
-              </details>
-              <p className="hint-text">Gear is lost when a run ends. Compare found items before swapping them into a slot.</p>
+
             </section>
             <section className="character-section upgrade-passives-section">
               <div className="character-section-title">UPGRADE PASSIVES <span>{ownedUpgrades.length} UNLOCKED</span></div>
