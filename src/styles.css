@@ -1199,3 +1199,61 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .question-panel{--stage-h:clamp(120px,22dvh,170px)}
   .stage-card .hanzi{font-size:clamp(46px,7.8dvh,62px)}
 }
+
+
+/* Loot is a distinct drop, never part of the answer-success explanation. */
+.loot-drop{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  min-height:54px;
+  padding:8px 11px;
+  border:1px solid #8b6a37;
+  background:linear-gradient(105deg,#302719 0%,#202438 72%,#192638 100%);
+  box-shadow:inset 3px 0 0 #d7ad5d;
+}
+.loot-drop-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  border:1px solid #6c5835;
+  background:#3a3021;
+  border-radius:6px;
+  font-size:19px;
+}
+.loot-drop-copy{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.loot-drop-copy small{
+  color:#d9b96f;
+  font:9px 'DM Mono',monospace;
+  letter-spacing:1.2px;
+}
+.loot-drop-copy strong{
+  color:#f5e5bd;
+  font-size:13px;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+}
+.loot-drop-tag{
+  flex:0 0 auto;
+  padding:4px 6px;
+  border:1px solid #826637;
+  border-radius:3px;
+  color:#f0cd82;
+  font:9px 'DM Mono',monospace;
+  letter-spacing:.4px;
+}
+@media(max-width:850px){
+  .loot-drop{min-height:48px;padding:6px 8px;gap:8px}
+  .loot-drop-icon{flex-basis:30px;width:30px;height:30px;font-size:17px}
+  .loot-drop-copy small{font-size:8px}
+  .loot-drop-copy strong{font-size:12px}
+  .loot-drop-tag{font-size:8px;padding:4px}
+}
+@media(max-width:480px){
+  .loot-drop{min-height:44px;padding:5px 7px;gap:7px}
+  .loot-drop-icon{flex-basis:28px;width:28px;height:28px;font-size:16px}
+  .loot-drop-copy strong{font-size:11px}
+}
