@@ -977,3 +977,11 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
  .gear-inline-compare .gear-equip-btn{font-size:11px}
  .gear-picker-heading .text-btn{min-height:46px;padding:0 12px;font-size:13px}
 }
+
+/* Keep the slot-change flow visually identical to inline inventory comparisons. */
+.gear-picker-choice{display:flex;flex-direction:column;gap:0}
+.gear-picker-item.is-selected{border-radius:9px 9px 0 0}
+.gear-picker-inline-compare{margin-top:-1px;padding:10px 11px 11px;border:1px solid #b48c42;border-top:1px dashed #6f5a32;border-radius:0 0 9px 9px;background:#101b29;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gear-picker-inline-compare .gear-equip-btn{grid-column:1/-1;min-height:44px;background:linear-gradient(135deg,#b98b3d,#e0bb68);border:1px solid #e0bb68;color:#172033;font-weight:700}
+.gear-picker-inline-compare .gear-inline-deltas{grid-column:1/-1}
+@media(max-width:520px){.gear-picker-inline-compare{padding:8px;gap:6px}}
