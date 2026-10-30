@@ -497,7 +497,7 @@ export default function App() {
               <div className="character-section-title">ACTIVE BONUSES <span>EXPAND FOR SOURCES</span></div>
               <div className="bonus-accordion-list">
                 <details className="bonus-accordion">
-                  <summary><span className="bonus-accordion-icon">🛡️</span><b>Armor</b><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)}</strong></summary>
+                  <summary><span className="bonus-accordion-icon">🛡️</span><b>Defense</b><strong>{bonuses.armor + equipped.reduce((n, item) => n + item.armor, 0)} armor · +{bonuses.maxHp + equipped.reduce((n, item) => n + item.hp, 0)} HP</strong></summary>
                   <div className="bonus-sources">
                     {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && (node.fx.armor || node.fx.maxHp)).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>{node.fx.armor ? `+${node.fx.armor} armor` : ''}{node.fx.armor && node.fx.maxHp ? ' · ' : ''}{node.fx.maxHp ? `+${node.fx.maxHp} max HP` : ''}</b></div>)}
                     {equipped.filter(item => item.armor || item.hp).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>{item.armor ? `+${item.armor} armor` : ''}{item.armor && item.hp ? ' · ' : ''}{item.hp ? `+${item.hp} max HP` : ''}</b></div>)}
