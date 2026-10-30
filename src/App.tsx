@@ -594,11 +594,6 @@ export default function App() {
                   </div>
                   <p className="result-note" ref={noteRef}>{feedback.word.note}</p>
                   {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
-                  {run.phase === 'victory' && <div className="result-rewards">
-                    <span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>
-                    {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
-                    {run.reward.dupGold > 0 && <span>Dupe +{run.reward.dupGold}🪙</span>}
-                  </div>}
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
@@ -612,6 +607,15 @@ export default function App() {
               {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}🪙</span>}</div>}
               {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
+
+            {run.phase === 'victory' && (
+              <div className="reward-strip" aria-label="Battle rewards">
+                <div className="reward-item"><small>EXPERIENCE</small><strong>+{run.reward.xp} XP</strong></div>
+                <div className="reward-item"><small>GOLD</small><strong>🪙 +{run.reward.gold}</strong></div>
+                {run.reward.levelUps > 0 && <div className="reward-item reward-highlight"><small>LEVEL UP</small><strong>Level {run.level}</strong></div>}
+                {run.reward.dupGold > 0 && <div className="reward-item"><small>DUPLICATE</small><strong>+{run.reward.dupGold} 🪙</strong></div>}
+              </div>
+            )}
 
             {run.phase === 'victory' && run.reward.loot && (
               <div className="loot-drop" role="status" aria-label={`Loot acquired: ${run.reward.loot}`}>
