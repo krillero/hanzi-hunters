@@ -504,7 +504,7 @@ export default function App() {
                   const isEquipped = run.loadout[item.slot] === item.name
                   return <div className={`gear-item-card ${isEquipped ? 'is-equipped' : ''}`} key={item.name}>
                     <span className="gear-item-icon">{item.icon}</span>
-                    <div className="gear-item-info"><b>{item.name}</b><small>{item.slot}</small><span>{item.bonus}</span></div>
+                    <div className="gear-item-info"><b>{item.name}</b><span><small>{item.slot}</small><i> · </i>{item.bonus}</span></div>
                     {isEquipped ? <span className="gear-state owned">✓ Equipped</span> : <button onClick={() => setSelectedGearName(item.name)} aria-label={`Compare ${item.name} with currently equipped ${item.slot}`}>{selectedGearName === item.name ? 'Selected' : 'Compare'}</button>}
                   </div>
                 })}
@@ -520,7 +520,7 @@ export default function App() {
             </section>
             <section className="character-section upgrade-passives-section">
               <div className="character-section-title">UPGRADE PASSIVES <span>{ownedUpgrades.length} UNLOCKED</span></div>
-              {ownedUpgrades.length ? <div className="upgrade-passive-list">{ownedUpgrades.map(node => <div className="upgrade-passive-row" key={node.id}><span className="upgrade-passive-icon">{node.icon}</span><div><b>{node.name}</b><small>{node.branch} · Tier {node.tier}</small></div><span className="upgrade-passive-effect">{node.desc}</span><span className="bonus-source upgrade-source">UPGRADE</span></div>)}</div> : <p className="hint-text">Unlock upgrades at camp to gain passive effects.</p>}
+              {ownedUpgrades.length ? <div className="upgrade-passive-list">{ownedUpgrades.map(node => <div className="upgrade-passive-row" key={node.id}><span className="upgrade-passive-icon">{node.icon}</span><div><b>{node.name}</b><small>{node.branch} · Tier {node.tier}</small></div><span className="upgrade-passive-effect">{node.desc}</span><span className="bonus-source upgrade-source">ACTIVE</span></div>)}</div> : <p className="hint-text">Unlock upgrades at camp to gain passive effects.</p>}
               <details className="character-details run-resources-details">
                 <summary>Run resources & other effects <span>VIEW</span></summary>
                 <div className="character-section">
