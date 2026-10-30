@@ -90,6 +90,7 @@ export class PixelScene extends Phaser.Scene {
 
     if (this.assetsOk) this.buildTextured(width, height, tileScale, step, wallRows, floorY)
     else this.buildFallback(width, height, floorY)
+    this.buildArenaFrame(width, height, floorY, step)
     this.spawnActors()
     if (this.rewardPop) {
       const left = this.rewardPop.endAt - this.time.now
@@ -125,6 +126,25 @@ export class PixelScene extends Phaser.Scene {
     const g = this.add.graphics()
     g.fillStyle(0x182333).fillRect(0, 0, width, height)
     g.fillStyle(0x101827).fillRect(0, 0, width, floorY)
+    this.layer!.add(g)
+  }
+
+  /** Adds a subtle stone arena frame around the existing dungeon tiles. */
+  private buildArenaFrame(width: number, height: number, floorY: number, step: number) {
+    const g = this.add.graphics().setDepth(2)
+    const sideW = Math.max(10, Math.round(step * 0.42))
+    // Heavy side pillars and a lintel make the room read as a deliberate arena.
+    g.fillStyle(0x0b111b, 0.55).fillRect(0, 0, sideW, height).fillRect(width - sideW, 0, sideW, height)
+    g.fillStyle(0x34445a, 0.95).fillRect(2, 0, 4, height).fillRect(width - 6, 0, 4, height)
+    g.fillStyle(0x172437, 0.95).fillRect(6, 0, Math.max(2, sideW - 8), height).fillRect(width - sideW + 6, 0, Math.max(2, sideW - 8), height)
+    g.fillStyle(0x43536a, 0.95).fillRect(0, Math.max(0, floorY - 5), width, 5)
+    g.fillStyle(0x0a111b, 0.8).fillRect(0, floorY, width, 3)
+    // Small gold pennants in the upper corners; keep the centre clear for combat feedback.
+    for (const x of [sideW + 9, width - sideW - 9]) {
+      g.fillStyle(0x9b7435, 1).fillRect(x, 7, 2, Math.max(18, floorY * 0.24))
+      g.fillStyle(0xd5ad5c, 1)
+      g.fillTriangle(x + 1, 9, x + 17, 15, x + 1, 23)
+    }
     this.layer!.add(g)
   }
 
@@ -354,14 +374,19 @@ export class PixelScene extends Phaser.Scene {
     this.victoryObjs.forEach(o => o.destroy()); this.victoryObjs = []
     if (!this.victoryText) return
     const { width, height } = this.scale
-    const size = Phaser.Math.Clamp(Math.round(this.floorY * 0.5), 16, 34)
-    const t = this.add.text(Math.round(width / 2), Math.round(this.floorY * 0.5), this.victoryText, {
-      fontFamily: 'monospace', fontSize: `${size}px`, fontStyle: 'bold', color: '#ffd166', stroke: '#1d1405', strokeThickness: 7
+    const label = this.victoryText.replace('ENEMY SLAIN!', 'VICTORY').replace('ELITE SLAIN!', 'ELITE VICTORY')
+    const size = Phaser.Math.Clamp(Math.round(this.floorY * 0.22), 11, 17)
+    const plaqueW = Math.min(width - 54, Math.max(150, label.length * size * 0.72 + 28))
+    const plaque = this.add.rectangle(Math.round(width / 2), Math.max(24, Math.round(this.floorY * 0.27)), plaqueW, size + 18, 0x172437, 0.94)
+      .setStrokeStyle(2, 0xd0a852, 0.95).setDepth(11)
+    const t = this.add.text(Math.round(width / 2), plaque.y, label, {
+      fontFamily: 'monospace', fontSize: `${size}px`, fontStyle: 'bold', color: '#ffd77d', stroke: '#1d1405', strokeThickness: 3
     }).setOrigin(0.5).setDepth(12)
-    this.victoryObjs.push(t)
+    this.victoryObjs.push(plaque, t)
     if (animate) {
-      t.setScale(0.3).setAlpha(0)
-      this.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 380, delay: 420, ease: 'Back.out' })
+      plaque.setScale(0.7).setAlpha(0)
+      t.setScale(0.7).setAlpha(0)
+      this.tweens.add({ targets: [plaque, t], scale: 1, alpha: 1, duration: 260, delay: 250, ease: 'Back.out' })
     }
   }
 
