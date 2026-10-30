@@ -597,7 +597,6 @@ export default function App() {
                   {run.phase === 'victory' && <div className="result-rewards">
                     <span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>
                     {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
-                    {run.reward.loot && <span className="hot">{run.reward.loot}</span>}
                     {run.reward.dupGold > 0 && <span>Dupe +{run.reward.dupGold}🪙</span>}
                   </div>}
                 </div>
@@ -610,9 +609,17 @@ export default function App() {
             {/* Only terminal states without answer feedback use the fallback stage. */}
             {(!fighting && !feedback) && !revealing && <div className={`stage stage-wide stage-fb ${run.phase === 'victory' ? 'good' : 'bad'}`}>
               <div className="stage-end"><div className="end-banner">{run.phase === 'victory' ? (lastOfFloor ? '🏆' : '⚔️') : '💀'}</div></div>
-              {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.loot && <span className="hot wide">{run.reward.loot}</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}🪙</span>}</div>}
+              {run.phase === 'victory' && <div className="fb-chips"><span>+{run.reward.xp} XP</span><span>🪙 +{run.reward.gold}</span>{run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}{run.reward.dupGold > 0 && <span>dupe +{run.reward.dupGold}🪙</span>}</div>}
               {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
+
+            {run.phase === 'victory' && run.reward.loot && (
+              <div className="loot-drop" role="status" aria-label={`Loot acquired: ${run.reward.loot}`}>
+                <span className="loot-drop-icon" aria-hidden="true">🎁</span>
+                <span className="loot-drop-copy"><small>ITEM FOUND</small><strong>{run.reward.loot}</strong></span>
+                <span className="loot-drop-tag">NEW LOOT</span>
+              </div>
+            )}
 
             <div className="action-bar">
               {revealing
