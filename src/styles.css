@@ -1057,11 +1057,13 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 /* === Arena-first mobile layout pass (Option 1 follow-through) ======================== */
 @media(max-width:850px){
   .app-shell.in-battle{gap:0}
-  .game-layout{gap:8px}
-  .left-column{gap:0}
+  .game-layout{gap:8px;flex:0 0 auto}
+  .left-column{flex:0 0 auto;min-height:0;gap:0}
+  /* Keep the arena at a deliberate, readable size. The question/reward
+     content may scroll below it; it must never steal the arena's height. */
   .scene-frame{
-    flex:1 1 auto;
-    min-height:0;
+    flex:0 0 auto;
+    min-height:clamp(330px,42dvh,480px);
     display:flex;
     flex-direction:column;
     background:linear-gradient(180deg,#172438 0%,#0d1725 100%);
@@ -1086,7 +1088,7 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
     font-size:16px;
   }
   .chip-btn b{font-size:10px}
-  .scene-frame .phaser-mount{flex:1 1 auto;min-height:105px;height:auto!important}
+  .scene-frame .phaser-mount{flex:1 1 auto;min-height:clamp(220px,30dvh,360px);height:auto!important}
   .arena-combatants{
     flex:0 0 auto;
     display:grid;
