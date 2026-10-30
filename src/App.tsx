@@ -297,6 +297,7 @@ export default function App() {
     if (!next) return
     patch(s => ({ ...s, run: next }))
     setSelectedGearName(null)
+    setSelectedGearSlot(null)
     setToast(`Equipped ${name}.`)
   }
 
@@ -421,7 +422,7 @@ export default function App() {
             <div className="scene-label"><span className="live-dot"></span><span className="scene-where"><span className="scene-floor"><span className="sf-wide">F{run.floor} · {run.kill + 1}/{ENEMIES_PER_FLOOR}</span><span className="sf-narrow">F{run.floor}·{run.kill + 1}/{ENEMIES_PER_FLOOR}</span></span><span className="scene-gold">🪙 {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
-                <button className="chip-btn" onClick={() => { setShowBag(v => !v); setNewLoot(false) }} aria-label={newLoot ? 'Gear, new item found' : 'Gear'}>🎒<b>{equipped.length}</b>{newLoot && <i className="new-dot" aria-hidden />}</button>
+                <button className="chip-btn" onClick={() => { setShowBag(v => { const next = !v; if (next) { setSelectedGearSlot(null); setSelectedGearName(null) } return next }); setNewLoot(false) }} aria-label={newLoot ? 'Gear, new item found' : 'Gear'}>🎒<b>{equipped.length}</b>{newLoot && <i className="new-dot" aria-hidden />}</button>
                 <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
                 <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
               </div></div>
