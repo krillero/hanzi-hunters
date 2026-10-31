@@ -1,5 +1,5 @@
 // Pure run / combat rules: no React, Phaser or DOM. Covered by tests/.
-import type { Enemy, GearItem, GearSlot } from '../data.ts'
+import { BOSSES, type BossId, type Enemy, type GearItem, type GearSlot } from '../data.ts'
 import type { Meta, Run, RunSummary } from './types.ts'
 import type { Bonuses } from './upgrades.ts'
 import { MASTERY_DAMAGE } from './mastery.ts'
@@ -12,7 +12,20 @@ export const ATTACK_PER_LEVEL = 1
 export const POTION_HEAL = 12
 export const xpForLevel = (level: number) => level * 30
 
-export const isElite = (kill: number) => kill === ENEMIES_PER_FLOOR - 1
+export const BOSS_EVERY = 5
+export const SHIELD_SEGMENTS = 3
+/** Boss multipliers over the base enemy stats (before the per-floor scaling). */
+export const BOSS_HP = 2.4, BOSS_DAMAGE = 1.3, BOSS_REWARD = 3
+
+/** The last fight of a floor. Bosses (every 5th floor) replace the elite. */
+export const isFinalFight = (kill: number) => kill === ENEMIES_PER_FLOOR - 1
+export const isBossFloor = (floor: number) => floor % BOSS_EVERY === 0
+export const isBoss = (floor: number, kill: number) => isBossFloor(floor) && isFinalFight(kill)
+export const isElite = (floor: number, kill: number) => isFinalFight(kill) && !isBossFloor(floor)
+/** Floors 5, 15, 25 ... are the Shield Golem; 10, 20, 30 ... the Echo Wraith. */
+export const bossIdFor = (floor: number): BossId => (Math.floor(floor / BOSS_EVERY) % 2 === 1 ? 'golem' : 'wraith')
+/** Echo Wraith: below this share of its HP it starts echoing the question kind you missed. */
+export const WRAITH_ECHO_AT = 0.6
 export const equippedGear = (all: GearItem[], loadout: Partial<Record<GearSlot, string>>) =>
   all.filter(g => loadout[g.slot] === g.name)
 const gearSum = (gear: GearItem[], key: 'attack' | 'hp' | 'armor') => gear.reduce((n, g) => n + g[key], 0)
@@ -26,17 +39,18 @@ export function equipGear(run: Run, name: string, allGear: GearItem[], b: Bonuse
   return { ...next, hp: Math.max(0, Math.min(afterMax, run.hp + (afterMax - beforeMax))) }
 }
 
-export type EnemyStats = { enemy: Enemy; hp: number; damage: number; xp: number; gold: number; elite: boolean }
+export type EnemyStats = { enemy: Enemy; hp: number; damage: number; xp: number; gold: number; elite: boolean; boss: BossId | null }
 /** Per floor (compounding): enemy HP +16 %, damage +11 %, rewards +8 %; the last enemy of a floor is an elite. */
 export function enemyStats(enemies: Enemy[], floor: number, kill: number): EnemyStats {
-  const enemy = enemies[(((floor - 1) * ENEMIES_PER_FLOOR) + kill) % enemies.length]
-  const elite = isElite(kill), f = floor - 1
+  const boss = isBoss(floor, kill) ? bossIdFor(floor) : null
+  const enemy = boss ? BOSSES[boss] : enemies[(((floor - 1) * ENEMIES_PER_FLOOR) + kill) % enemies.length]
+  const elite = isElite(floor, kill), f = floor - 1
   return {
-    enemy, elite,
-    hp: Math.round(enemy.hp * 1.16 ** f * (elite ? 1.6 : 1)),
-    damage: Math.round(enemy.damage * 1.11 ** f * (elite ? 1.25 : 1)),
-    xp: Math.round(enemy.xp * 1.08 ** f * (elite ? 2 : 1)),
-    gold: Math.round(enemy.gold * 1.08 ** f * (elite ? 2 : 1))
+    enemy, elite, boss,
+    hp: Math.round(enemy.hp * 1.16 ** f * (boss ? BOSS_HP : elite ? 1.6 : 1)),
+    damage: Math.round(enemy.damage * 1.11 ** f * (boss ? BOSS_DAMAGE : elite ? 1.25 : 1)),
+    xp: Math.round(enemy.xp * 1.08 ** f * (boss ? BOSS_REWARD : elite ? 2 : 1)),
+    gold: Math.round(enemy.gold * 1.08 ** f * (boss ? BOSS_REWARD : elite ? 2 : 1))
   }
 }
 
@@ -51,14 +65,15 @@ export function playerStats(run: Pick<Run, 'level' | 'gear' | 'loadout'>, b: Bon
 const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0 }
 
 export function startFight(run: Run, b: Bonuses, enemies: Enemy[]): Run {
-  return { ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: b.hints, secondLeft: b.secondChance, reward: noReward, pendingXp: 0 }
+  return { ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: b.hints, secondLeft: b.secondChance, reward: noReward, pendingXp: 0,
+    shield: isBoss(run.floor, run.kill) && bossIdFor(run.floor) === 'golem' ? SHIELD_SEGMENTS : 0 }
 }
 
 export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[]): Run {
   const base: Run = {
     floor: 1, kill: 0, kills: 0, level: 1, xp: 0, hp: 0, enemyHp: 0, gold: 0, potions: 1 + b.startPotions,
     gear: allGear.filter(g => b.startGear.includes(g.name)).map(g => g.name), loadout: Object.fromEntries(allGear.filter(g => b.startGear.includes(g.name)).map(g => [g.slot, g.name])) as Partial<Record<GearSlot, string>>, streak: 0, hintsLeft: 0, secondLeft: 0,
-    phase: 'fighting', reward: noReward, pendingXp: 0
+    phase: 'fighting', reward: noReward, pendingXp: 0, shield: 0
   }
   return startFight({ ...base, hp: playerStats(base, b, allGear).maxHp }, b, enemies)
 }
@@ -74,6 +89,8 @@ export type AnswerInput = {
   /** Mastery level of the word when asked (0 for a first-time intro). */
   lv: number
   isCorrect: boolean
+  /** True when the question asked for the pinyin (tone). Only these break the Shield Golem's shield. */
+  toneQuestion?: boolean
   roll: { drop: number; item: number }
 }
 export type AnswerResult = {
@@ -81,6 +98,8 @@ export type AnswerResult = {
   outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; comboHit: boolean
   /** HP actually restored by the Second Wind upgrade (healOnKill) on this kill; 0 without the upgrade or at full HP. */
   healedOnKill: number
+  /** Shield Golem: a segment was broken by this answer / the shield was up and blocked the hit. */
+  shieldBroken: boolean; shieldBlocked: boolean
 }
 
 export function resolveAnswer(i: AnswerInput): AnswerResult {
@@ -96,6 +115,10 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
     if (run.enemyHp <= foe.hp * 0.35) pct += b.executeDmgPct
     damage = Math.round((8 + stats.attack) * (1 + pct))
   }
+  // Shield Golem: while the shield is up it blocks all damage; a correct tone answer breaks one segment.
+  const shieldUp = run.shield > 0
+  const shieldBroken = shieldUp && isCorrect && !!i.toneQuestion
+  if (shieldUp) damage = 0
   const enemyHp = Math.max(0, run.enemyHp - damage)
   const killed = enemyHp === 0
 
@@ -115,16 +138,20 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
     goldGained = Math.round(foe.gold * (1 + b.goldPct)) + gear.reduce((n, g) => n + g.goldFlat, 0)
     const dropChance = Math.min(0.95, 0.5 + b.lootPct + (foe.elite ? 0.3 : 0))
     // Only gear you do not have yet can drop; once you own everything, kills simply drop nothing.
-    const pool = i.allGear.filter(g => !owned.includes(g.name))
-    if (pool.length > 0 && i.roll.drop < dropChance) {
-      const item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
-      loot = item; owned = [...owned, item.name]; if (!loadout[item.slot]) loadout = { ...loadout, [item.slot]: item.name }
-    }
+    // Boss-only gear never drops from normal fights; a boss kill guarantees its own item first, then any unowned gear.
+    const unowned = i.allGear.filter(g => !owned.includes(g.name))
+    const pool = unowned.filter(g => !g.boss)
+    const bossItem = foe.boss ? unowned.find(g => g.boss === foe.boss) : undefined
+    let item: GearItem | undefined
+    if (bossItem) item = bossItem
+    else if (foe.boss && pool.length > 0) item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
+    else if (!foe.boss && pool.length > 0 && i.roll.drop < dropChance) item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
+    if (item) { loot = item; owned = [...owned, item.name]; if (!loadout[item.slot]) loadout = { ...loadout, [item.slot]: item.name } }
   }
 
   let xp = run.xp + xpGained, level = run.level, levelUps = 0
   while (xp >= xpForLevel(level)) { xp -= xpForLevel(level); level += 1; levelUps += 1 }
-  const next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hp, secondLeft, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp }
+  const next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hp, secondLeft, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp, shield: shieldBroken ? run.shield - 1 : run.shield }
   const grown = playerStats(next, b, i.allGear)
   const oldMax = playerStats(run, b, i.allGear).maxHp
   if (loadout !== run.loadout && grown.maxHp > oldMax && hp > 0) hp = Math.min(grown.maxHp, hp + grown.maxHp - oldMax)
@@ -135,7 +162,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
 
   const outcome = killed ? 'victory' : hp <= 0 ? 'defeat' : 'continue'
   return {
-    damage, counter, savedBySecondChance, outcome, loot, comboHit, healedOnKill,
+    damage, counter, savedBySecondChance, outcome, loot, comboHit, healedOnKill, shieldBroken, shieldBlocked: shieldUp,
     run: {
       ...next, hp,
       gold: run.gold + goldGained, kills: run.kills + (killed ? 1 : 0),
@@ -157,4 +184,11 @@ export function bankRun(meta: Meta, run: Run): { meta: Meta; summary: RunSummary
     meta: { ...meta, gold: meta.gold + run.gold, bestFloor: Math.max(meta.bestFloor, run.floor), runs: meta.runs + 1 },
     summary: { floor: run.floor, kills: run.kills, level: run.level, goldBanked: run.gold }
   }
+}
+
+/** 1 or 2: which phase of the boss fight this is (for the header and for choosing questions). */
+export function bossPhase(run: Pick<Run, 'floor' | 'kill' | 'shield' | 'enemyHp'>, foeHp: number): 1 | 2 {
+  if (!isBoss(run.floor, run.kill)) return 1
+  if (bossIdFor(run.floor) === 'golem') return run.shield > 0 ? 1 : 2
+  return run.enemyHp <= foeHp * WRAITH_ECHO_AT ? 2 : 1
 }

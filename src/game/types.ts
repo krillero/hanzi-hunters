@@ -14,6 +14,8 @@ export type Run = {
   level: number; xp: number; hp: number; enemyHp: number
   /** XP earned by answers in the current fight; paid out (with the monster's XP) only when it is killed. */
   pendingXp: number
+  /** Shield Golem only: segments left on the boss's shield (0 = down, or not a golem fight). */
+  shield: number
   gold: number; potions: number; gear: string[]; loadout: Partial<Record<GearSlot, string>>; streak: number
   hintsLeft: number; secondLeft: number
   phase: RunPhase

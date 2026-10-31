@@ -22,9 +22,11 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1) {
       const entry = mastery[word.hanzi]
       const q = buildQuestion(word, entry, WORDS, { canListen: true, rng })
       // accuracy: intro is open-book; harder levels are a little easier as the word is learned
-      const p = !entry ? 1 : Math.min(0.98, accuracy + 0.04 * entry.lv)
+      // while the Golem's shield is up every question is a tone (pinyin) question, a little harder than average
+      const tone = run.shield > 0
+      const p = !entry ? 1 : Math.min(0.98, accuracy + 0.04 * entry.lv - (tone ? 0.06 : 0))
       const ok = rng() < p
-      const r = resolveAnswer({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect: ok, roll: { drop: rng(), item: rng() } })
+      const r = resolveAnswer({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect: ok, toneQuestion: tone, roll: { drop: rng(), item: rng() } })
       run = r.run; mastery = updateMastery(mastery, word.hanzi, ok); word = pickWord(WORDS, mastery, word.hanzi, rng)
       void q
     }

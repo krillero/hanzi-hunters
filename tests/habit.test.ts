@@ -14,7 +14,9 @@ test('habit: sanitising never throws and drops junk', () => {
     assert.ok(h.lastPlayed === '' || /^\d{4}-\d{2}-\d{2}$/.test(h.lastPlayed))
   }
   const h = sanitizeHabit({ daysPlayed: 3.9, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, badges: ['known-10', 'known-10', 'bogus'] })
-  assert.deepEqual(h, { daysPlayed: 3, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, badges: ['known-10'] })
+  assert.deepEqual(h, { daysPlayed: 3, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, bosses: 0, tipsSeen: [], badges: ['known-10'] })
+  assert.deepEqual(sanitizeHabit({ bosses: 2.7, tipsSeen: ['石', '石', 5, '', 'toolongword', '好'] }).tipsSeen, ['石', '好'], 'tip list: unique short strings only')
+  assert.equal(sanitizeHabit({ bosses: 2.7 }).bosses, 2)
 })
 
 test('days played counts each new day once and never goes down', () => {
@@ -53,9 +55,9 @@ test('badges unlock at their thresholds and are not awarded twice', () => {
   const none = contextFor({}, emptyHabit(), 1, 0)
   assert.deepEqual(newBadges(emptyHabit(), none), [])
   const many = Object.fromEntries(WORDS.slice(0, 26).map((w, i) => [w.hanzi, lv(i === 0 ? 4 : 1)]))
-  const ctx = contextFor(many, { ...emptyHabit(), correct: 100, daysPlayed: 7 }, 5, 3)
+  const ctx = contextFor(many, { ...emptyHabit(), correct: 100, daysPlayed: 7, bosses: 1 }, 5, 3)
   const ids = newBadges(emptyHabit(), ctx).map(b => b.id)
-  for (const id of ['first-mastered', 'known-10', 'known-25', 'correct-100', 'floor-5', 'days-7']) assert.ok(ids.includes(id), id)
+  for (const id of ['first-mastered', 'known-10', 'known-25', 'correct-100', 'floor-5', 'days-7', 'first-boss']) assert.ok(ids.includes(id), id)
   for (const id of ['known-50', 'correct-500', 'floor-10']) assert.ok(!ids.includes(id), id)
   assert.deepEqual(newBadges({ ...emptyHabit(), badges: ids }, ctx), [], 'idempotent')
   assert.equal(new Set(BADGES.map(b => b.id)).size, BADGES.length)

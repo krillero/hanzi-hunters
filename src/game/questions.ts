@@ -248,3 +248,8 @@ export function buildQuestion(word: Word, entry: MasteryEntry | undefined, words
     }
   }
 }
+
+/** Tone questions are the ones that ask for the pinyin (the choices differ in tone). Only these break the Shield Golem's shield. */
+export const isToneQuestion = (q: Pick<Question, 'ask'>) => q.ask === 'pinyin'
+/** The question kinds that ask for pinyin, in the order they are tried for the shield phase. */
+export const TONE_KINDS: QKind[] = ['pinyin', 'meaning2pinyin', 'listen2pinyin']

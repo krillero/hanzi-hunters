@@ -3,7 +3,7 @@ import { sanitizeHabit } from './habit.ts'
 import { ENEMIES, GEAR, WORDS, type GearSlot } from '../data.ts'
 import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
-import { ENEMIES_PER_FLOOR, enemyStats, playerStats } from './rules.ts'
+import { ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, bossIdFor, enemyStats, isBoss, playerStats } from './rules.ts'
 import { MAX_LV } from './mastery.ts'
 
 export const SAVE_KEY = 'hanzi-hunters-save-v2'
@@ -59,7 +59,8 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   const rw = isObj(raw.reward) ? raw.reward : {}
   const run: Run = {
     floor, kill, level, gear, loadout, phase, hp,
-    kills: int(raw.kills, 0, 1e9, 0), xp: int(raw.xp, 0, 1e9, 0), pendingXp: int(raw.pendingXp, 0, 1e9, 0), gold: int(raw.gold, 0, 1e9, 0),
+    kills: int(raw.kills, 0, 1e9, 0), xp: int(raw.xp, 0, 1e9, 0), pendingXp: int(raw.pendingXp, 0, 1e9, 0),
+    shield: isBoss(floor, kill) && bossIdFor(floor) === 'golem' && phase === 'fighting' ? int(raw.shield, 0, SHIELD_SEGMENTS, SHIELD_SEGMENTS) : 0, gold: int(raw.gold, 0, 1e9, 0),
     potions: int(raw.potions, 0, 999, 0), streak: int(raw.streak, 0, 999, 0),
     enemyHp: phase === 'victory' ? 0 : int(raw.enemyHp, 1, foeHp, foeHp),
     hintsLeft: int(raw.hintsLeft, 0, b.hints, b.hints), secondLeft: int(raw.secondLeft, 0, b.secondChance, b.secondChance),

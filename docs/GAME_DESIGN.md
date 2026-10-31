@@ -56,3 +56,12 @@ Bot play at 60/75/90 % accuracy: first death on floor 1–3 with enough gold for
 * Warm-up: once per local day, up to 5 known words (lowest level first, then fewest right in a row, day-stable tie-break), at least 3 known words needed. Right answers update mastery as usual and earn 3 gold each; nothing is risked.
 * Days played: +1 the first time you answer on a new local day; never decreases.
 * Badges: 9 milestones in `BADGES`; checked after every battle and warm-up answer, stored in `habit.badges`.
+
+## Bosses (`src/game/rules.ts`, `src/data.ts`)
+* A boss replaces the elite as the last fight of every 5th floor: **Shield Golem** on floors 5, 15, 25 …, **Echo Wraith** on 10, 20, 30 …. Stats are the base enemy × `BOSS_HP` 2.4 / `BOSS_DAMAGE` 1.3 / `BOSS_REWARD` 3, then the usual per-floor scaling.
+* **Shield Golem:** 3 shield segments that block all damage (it still hits back). Only a correct *pinyin* (tone) question breaks a segment; while the shield is up the game asks only pinyin questions about words you know. Wrong answers never repair it. Once down it is a normal fight. `Run.shield` is saved.
+* **Echo Wraith:** normal fight; below 60 % HP it asks the kind of question you got wrong most recently (falls back to a normal question when that kind cannot be built).
+* A boss kill always drops its own item first (**Golem Plate** / **Wraith Lantern**, boss-only gear that never drops elsewhere), then any other unowned gear. It also counts for the *Boss slayer* badge.
+* Boss intro card on arrival, `BOSS · PHASE n/2` in the header, shield segments in the arena. The simulator models the shield (tone questions are slightly harder); at 70–80 % accuracy the first Golem is typically beaten around run 10.
+* Loot reveal: rare/epic gear, boss gear, or a clear upgrade over what you wear opens a chest card that compares the stats with the equipped item (and offers *Equip now*); other drops stay a chip. Auto-continue waits while the card is open.
+

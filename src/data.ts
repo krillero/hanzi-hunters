@@ -18,9 +18,12 @@ export type Word = {
 import wordsJson from './content/words.json' with { type: 'json' }
 export const WORDS: Word[] = wordsJson as Word[]
 
-export type Enemy = { name: string; sprite: 'slime' | 'imp' | 'bat'; emoji: string; hp: number; damage: number; xp: number; gold: number }
+export type BossId = 'golem' | 'wraith'
+export type Enemy = { name: string; sprite: 'slime' | 'imp' | 'bat' | 'golem' | 'wraith'; emoji: string; hp: number; damage: number; xp: number; gold: number }
 export type GearSlot = 'Weapon' | 'Armor' | 'Accessory'
-export type GearItem = { name: string; slot: GearSlot; icon: string; bonus: string; attack: number; hp: number; armor: number; xpPct: number; masteryPct: number; goldFlat: number }
+export type GearItem = { name: string; slot: GearSlot; icon: string; bonus: string; attack: number; hp: number; armor: number; xpPct: number; masteryPct: number; goldFlat: number
+  /** Boss-only gear: never drops from normal fights, a boss kill guarantees it. */
+  boss?: BossId }
 
 export const ENEMIES: Enemy[] = [
   { name: 'Moss Slime', sprite: 'slime', emoji: '🟢', hp: 24, damage: 5, xp: 12, gold: 7 },
@@ -36,5 +39,29 @@ export const GEAR: GearItem[] = [
   { name: 'Guardian Helm', slot: 'Armor', icon: '⛑️', bonus: '+4 max HP · +1 armor', attack: 0, hp: 4, armor: 1, xpPct: 0, masteryPct: 0, goldFlat: 0 },
   { name: 'Scholar Charm', slot: 'Accessory', icon: '🔮', bonus: '+10% learning XP', attack: 0, hp: 0, armor: 0, xpPct: 0.1, masteryPct: 0, goldFlat: 0 },
   { name: 'Lucky Coin', slot: 'Accessory', icon: '🪙', bonus: '+3 gold per win', attack: 0, hp: 0, armor: 0, xpPct: 0, masteryPct: 0, goldFlat: 3 },
-  { name: 'Jade Pendant', slot: 'Accessory', icon: '🟢', bonus: '+10% mastery damage', attack: 0, hp: 0, armor: 0, xpPct: 0, masteryPct: 0.1, goldFlat: 0 }
+  { name: 'Jade Pendant', slot: 'Accessory', icon: '🟢', bonus: '+10% mastery damage', attack: 0, hp: 0, armor: 0, xpPct: 0, masteryPct: 0.1, goldFlat: 0 },
+  // Boss-only gear (a boss kill drops its own item first)
+  { name: 'Golem Plate', slot: 'Armor', icon: '🗿', bonus: '+12 max HP · +1 armor', attack: 0, hp: 12, armor: 1, xpPct: 0, masteryPct: 0, goldFlat: 0, boss: 'golem' },
+  { name: 'Wraith Lantern', slot: 'Accessory', icon: '🏮', bonus: '+15% XP · +10% mastery damage', attack: 0, hp: 0, armor: 0, xpPct: 0.15, masteryPct: 0.1, goldFlat: 0, boss: 'wraith' }
 ]
+
+/** Bosses replace the elite at the end of every 5th floor. Base stats are scaled in rules.ts (BOSS_*). */
+export const BOSSES: Record<BossId, Enemy> = {
+  golem: { name: 'Shield Golem', sprite: 'golem', emoji: '🗿', hp: 30, damage: 6, xp: 16, gold: 10 },
+  wraith: { name: 'Echo Wraith', sprite: 'wraith', emoji: '👻', hp: 26, damage: 6, xp: 16, gold: 10 }
+}
+
+export const BOSS_INFO: Record<BossId, { title: string; rule: string; phases: string[]; reward: string }> = {
+  golem: {
+    title: 'Shield Golem',
+    rule: 'A shield of 3 segments protects the Golem and blocks all damage. Only a correct answer to a pinyin (tone) question breaks a segment. Wrong answers do not repair it.',
+    phases: ['Break the shield with tone questions', 'Shield down: fight normally'],
+    reward: 'Golem Plate (+12 max HP, +1 armor)'
+  },
+  wraith: {
+    title: 'Echo Wraith',
+    rule: 'The Wraith fights normally at first. Once it drops below 60% HP it echoes: it keeps asking the kind of question you got wrong most recently.',
+    phases: ['Normal fight', 'Below 60% HP: your weak spot comes back'],
+    reward: 'Wraith Lantern (+15% XP, +10% mastery damage)'
+  }
+}
