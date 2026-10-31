@@ -83,7 +83,6 @@ export default function App() {
   const [reveal, setReveal] = useState<{ chosen: string; plan: Exclude<AutoPlan, null>; exchange: CombatExchange } | null>(null)   // a right answer that continues by itself
   const [menuOpen, setMenuOpen] = useState(false)
   const [newLoot, setNewLoot] = useState(false)
-  const [pop, setPop] = useState<{ key: number; gold: number; xp: number } | null>(null)
   const [card, setCard] = useState<Card | null>(null)
   const [eliminated, setEliminated] = useState<string[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
@@ -239,7 +238,6 @@ export default function App() {
     if (r.outcome === 'victory') {
       // Rewards sit in the fixed arena strip (no layout change); the counters tick up.
       const rw = r.run.reward
-      setPop({ key: Date.now(), gold: rw.gold, xp: rw.xp })
       if (r.loot) setNewLoot(true)
     }
   }
@@ -276,7 +274,6 @@ export default function App() {
     return () => window.clearTimeout(t)
     /* eslint-disable-next-line */
   }, [reveal, blockingOpen])
-  useEffect(() => { if (!pop) return; const t = window.setTimeout(() => setPop(null), 1800); return () => window.clearTimeout(t) }, [pop])
 
   const equipItem = (name: string) => {
     if (!run) return
@@ -446,7 +443,7 @@ export default function App() {
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
                 <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Adventurer</small></div></div>
-                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>{pop && <em key={pop.key} className="xp-pop">+{pop.xp} XP</em>}
+                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
                 <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.elite ? 'Elite ' : ''}{foe.enemy.name}</strong><small>OPPONENT</small></div></div>
