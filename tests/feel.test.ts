@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { HAPTICS, sfxScore, totalDuration, type SfxName } from '../src/audio.ts'
-import { RARITY_BY_NAME, compareGear, gearScore, isUpgrade, rarityOf } from '../src/game/rarity.ts'
+import { RARITY_BY_NAME, compareGear, gearScore, gearVerdict, isUpgrade, rarityOf } from '../src/game/rarity.ts'
 import { accuracyPct, emptyStats, recordAnswer } from '../src/game/runStats.ts'
 import { GEAR } from '../src/data.ts'
 
@@ -68,4 +68,20 @@ test('gear comparison: rows only for stats that matter, deltas, upgrade flag', (
   assert.equal(isUpgrade(g('Golem Plate'), g('Mossy Vest')), true)
   assert.equal(isUpgrade(g('Mossy Vest'), g('Golem Plate')), false)
   assert.ok(gearScore(g('Golem Plate')) > gearScore(g('Mossy Vest')))
+})
+
+test('one item per slot: new / better are worn, worse is left behind, a trade-off asks', () => {
+  const g = (n: string) => GEAR.find(x => x.name === n)!
+  assert.equal(gearVerdict(g('Copper Blade'), null), 'new')
+  assert.equal(gearVerdict(g('Guardian Helm'), g('Mossy Vest')), 'tradeoff', 'less HP but more armor')
+  assert.equal(gearVerdict(g('Mossy Vest'), g('Mossy Vest')), 'worse', 'identical gives nothing')
+  const slots = new Set(GEAR.map(x => x.slot))
+  let sawBetter = false, sawWorse = false
+  for (const a of GEAR) for (const b of GEAR) if (a !== b && a.slot === b.slot) {
+    const v = gearVerdict(a, b), back = gearVerdict(b, a)
+    if (v === 'better') { sawBetter = true; assert.equal(back, 'worse', `${a.name}/${b.name}: a strict upgrade reverses to a strict downgrade`) }
+    if (v === 'tradeoff') assert.equal(back, 'tradeoff')
+    if (v === 'worse') sawWorse = true
+  }
+  assert.ok(slots.size >= 2 && sawBetter && sawWorse, 'the data contains pure upgrades and pure downgrades')
 })

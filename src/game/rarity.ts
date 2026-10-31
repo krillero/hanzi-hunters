@@ -28,3 +28,18 @@ export function compareGear(next: GearItem, now: GearItem | null | undefined): S
     .filter(r => r.now !== 0 || r.next !== 0)
 }
 export const isUpgrade = (next: GearItem, now: GearItem | null | undefined) => !now || gearScore(next) > gearScore(now)
+
+/**
+ * What to do with a found item when you can wear one per slot (no inventory):
+ *  new       the slot is empty: wear it
+ *  better    nothing gets worse and something improves: wear it, no question asked
+ *  worse     nothing improves: it is left behind, no question asked
+ *  tradeoff  some stats up, some down: the player decides
+ */
+export type GearVerdict = 'new' | 'better' | 'worse' | 'tradeoff'
+export function gearVerdict(next: GearItem, now: GearItem | null | undefined): GearVerdict {
+  if (!now) return 'new'
+  const d = compareGear(next, now).map(r => r.delta)
+  const up = d.some(x => x > 0), down = d.some(x => x < 0)
+  return up && down ? 'tradeoff' : up ? 'better' : 'worse'
+}

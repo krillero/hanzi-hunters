@@ -23,7 +23,7 @@ import { MAX_LV, masteredCount, orderedWords, pickWord, seenCount, updateMastery
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, buildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
-import { isUpgrade, rarityOf as rarityOfItem } from './game/rarity'
+import { gearVerdict, rarityOf as rarityOfItem } from './game/rarity'
 import {
   ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, hasShield, shieldFor, bankRun, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
@@ -109,7 +109,7 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
   const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
-  const [lootReveal, setLootReveal] = useState<{ name: string; current: string | null; autoEquipped: boolean } | null>(null)
+  const [lootReveal, setLootReveal] = useState<{ name: string; current: string | null; choice: boolean } | null>(null)
   const [tipPulse, setTipPulse] = useState<string | null>(null)   // 💡 pulses once per word, right after the first right answer
   const [bossIntro, setBossIntro] = useState<BossId | null>(() => { const j = previewStart(); return j && isBoss(j.floor, j.kill) ? bossIdFor(j.floor) : null })
   const [warmup, setWarmup] = useState<string[] | null>(null)
@@ -122,7 +122,6 @@ export default function App() {
   const [floorBanner, setFloorBanner] = useState('')
   const [reveal, setReveal] = useState<{ chosen: string; plan: Exclude<AutoPlan, null>; exchange: CombatExchange } | null>(null)   // a right answer that continues by itself
   const [menuOpen, setMenuOpen] = useState(false)
-  const [newLoot, setNewLoot] = useState(false)
   const [card, setCard] = useState<Card | null>(null)
   const [eliminated, setEliminated] = useState<string[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
@@ -341,10 +340,15 @@ export default function App() {
       setLevelUp({ from: run.level, to: r.run.level, hp: after2.maxHp - before2.maxHp, attack: after2.attack - before2.attack })
     }
     if (r.loot) {
-      feel('loot', { rarity: rarityOf(r.loot) }, t); t += 0.4
-      const slotNow = run.loadout[r.loot.slot] ? GEAR.find(g => g.name === run.loadout[r.loot!.slot]) ?? null : null
-      // Chest reveal with comparison for anything worth a decision: rare+, boss gear, or a clear upgrade over what you wear
-      if (rarityOfItem(r.loot) !== 'common' || r.loot.boss || (slotNow && isUpgrade(r.loot, slotNow))) setLootReveal({ name: r.loot.name, current: slotNow?.name ?? null, autoEquipped: !slotNow })
+      const worn = run.loadout[r.loot.slot] ? GEAR.find(g => g.name === run.loadout[r.loot!.slot]) ?? null : null
+      const verdict = gearVerdict(r.loot, worn)
+      // One item per slot. A pure downgrade is left behind silently; a trade-off asks; anything else is already worn.
+      if (verdict !== 'worse') feel('loot', { rarity: rarityOf(r.loot) }, t); t += 0.4
+      if (verdict === 'tradeoff') setLootReveal({ name: r.loot.name, current: worn?.name ?? null, choice: true })
+      else if (verdict !== 'worse') {
+        if (rarityOfItem(r.loot) !== 'common' || r.loot.boss) setLootReveal({ name: r.loot.name, current: worn?.name ?? null, choice: false })
+        else setToast(`${r.loot.icon} ${r.loot.name} equipped`)
+      }
     }
     if (r.outcome === 'victory') {
       // Only the Second Wind upgrade's own healing is announced (level-up and new-gear HP are not).
@@ -371,7 +375,6 @@ export default function App() {
     if (r.outcome === 'victory') {
       // Rewards sit in the fixed arena strip (no layout change); the counters tick up.
       const rw = r.run.reward
-      if (r.loot) setNewLoot(true)
     }
   }
 
@@ -509,7 +512,7 @@ export default function App() {
   }
 
   // ---- camp -----------------------------------------------------------------------------
-  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), newGear: newLoot, onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) } } : undefined} /> : null
+  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) } } : undefined} /> : null
   const topbar = (
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
@@ -552,7 +555,7 @@ export default function App() {
   const ownedUpgrades = save.meta.upgrades.map(id => nodeById(id)).filter((node): node is NonNullable<typeof node> => !!node)
   const toggleGear = () => {
     setShowBag(v => !v); setShowWords(false)
-    setSelectedGearSlot(null); setSelectedGearName(null); setNewLoot(false)
+    setSelectedGearSlot(null); setSelectedGearName(null)
   }
 
   return (
@@ -567,7 +570,7 @@ export default function App() {
       <header className="compact-header" aria-label="Dungeon progress">
         <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small>{foe.boss && <b className="boss-tag">BOSS {bossPhase(run, foe.hp)}/2</b>}</div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
-        <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label={newLoot ? 'Menu, new gear found' : 'Menu'}>☰{newLoot && <i className="new-dot" aria-hidden="true" />}</button>
+        <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">☰</button>
       </header>
       <section className="game-layout">
         <div className="left-column">
@@ -575,7 +578,7 @@ export default function App() {
             <div className="scene-label"><span className="live-dot"></span><span className="scene-where"><span className="scene-floor"><span className="sf-wide">F{run.floor} · {run.kill + 1}/{ENEMIES_PER_FLOOR}</span><span className="sf-narrow">F{run.floor}·{run.kill + 1}/{ENEMIES_PER_FLOOR}</span></span><span className="scene-gold">🪙 {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
-                <button className="chip-btn" onClick={() => { setShowBag(v => { const next = !v; if (next) { setSelectedGearSlot(null); setSelectedGearName(null) } return next }); setNewLoot(false) }} aria-label={newLoot ? 'Character stats, new gear found' : 'Character stats'}>⚔️{newLoot && <i className="new-dot" aria-hidden />}</button>
+                <button className="chip-btn" onClick={() => { setShowBag(v => { const next = !v; if (next) { setSelectedGearSlot(null); setSelectedGearName(null) } return next }) }} aria-label="Character stats">⚔️</button>
                 <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
                 <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
               </div></div>
@@ -604,44 +607,7 @@ export default function App() {
           </div>
           {showBag && <section className="drawer character-drawer">
             <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => { setShowBag(false); setSelectedGearSlot(null); setSelectedGearName(null) }} aria-label="Close character inventory">✕</button></div>
-            {selectedGearSlot ? <section className="gear-picker-screen">
-              <div className="gear-picker-heading">
-                <button className="text-btn" onClick={() => { setSelectedGearSlot(null); setSelectedGearName(null) }}>Back to Character</button>
-                <div><small>CHANGE EQUIPMENT</small><h3>{selectedGearSlot}</h3></div>
-                <span>{run.gear.filter(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot).length} OWNED</span>
-              </div>
-              <p className="gear-picker-hint">Choose an item to equip in your {selectedGearSlot.toLowerCase()} slot.</p>
-              <div className="gear-picker-list">
-                {GEAR.filter(item => item.slot === selectedGearSlot && run.gear.includes(item.name)).map(item => {
-                  const current = run.loadout[selectedGearSlot] === item.name
-                  const selected = selectedGearName === item.name
-                  const equippedItem = GEAR.find(g => g.name === run.loadout[selectedGearSlot])
-                  const fields = [
-                    { label: 'Attack', key: 'attack' as const, icon: '⚔️', pct: false },
-                    { label: 'Max HP', key: 'hp' as const, icon: '❤️', pct: false },
-                    { label: 'Armor', key: 'armor' as const, icon: '🛡️', pct: false },
-                    { label: 'XP gain', key: 'xpPct' as const, icon: '✨', pct: true },
-                    { label: 'Mastery damage', key: 'masteryPct' as const, icon: '📖', pct: true },
-                    { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙', pct: false }
-                  ]
-                  const changes = fields.map(field => ({ ...field, delta: item[field.key] - (equippedItem?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
-                  return <div className={`gear-picker-choice ${selected ? 'is-selected' : ''}`} key={item.name}>
-                    <div className={`gear-picker-item ${current ? 'is-current' : ''} ${selected ? 'is-selected' : ''}`}>
-                      <span className="gear-picker-icon">{item.icon}</span>
-                      <div className="gear-picker-info"><b>{item.name}</b><small>{item.bonus}</small>{current && <em>Currently equipped</em>}</div>
-                      {current ? <span className="gear-picker-state">EQUIPPED</span> : <button onClick={() => setSelectedGearName(selected ? null : item.name)}>{selected ? 'CLOSE' : 'COMPARE'}</button>}
-                    </div>
-                    {selected && !current && <div className="gear-picker-inline-compare">
-                      <div className="gear-inline-current"><small>CURRENT</small><b>{equippedItem?.name ?? 'Empty slot'}</b></div>
-                      <div className="gear-inline-candidate"><small>NEW ITEM</small><b>{item.name}</b></div>
-                      <div className="gear-inline-deltas">{changes.length ? changes.map(field => <div key={field.key}><span>{field.icon} {field.label}</span><strong className={field.delta > 0 ? 'delta-up' : 'delta-down'}>{field.delta > 0 ? '+' : '−'}{field.pct ? Math.abs(Math.round(field.delta * 100)) + '%' : Math.abs(field.delta)}</strong></div>) : <p>No numeric stat changes.</p>}</div>
-                      <button className="secondary-btn gear-equip-btn" onClick={() => { equipItem(item.name); setSelectedGearSlot(null); setSelectedGearName(null) }}>Equip {item.name}</button>
-                    </div>}
-                  </div>
-                })}
-                {!run.gear.some(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot) && <p className="hint-text">You haven't found any {selectedGearSlot.toLowerCase()} items yet.</p>}
-              </div>
-            </section> : <>
+            <>
             <div className="character-summary">
               <div className="character-stat-card level-stat-card">
                 <small>LEVEL</small><strong>{run.level}</strong>
@@ -702,12 +668,10 @@ export default function App() {
               <div className="gear-equipped-list">
                 {(['Weapon', 'Armor', 'Accessory'] as const).map(slot => {
                   const item = GEAR.find(g => g.name === run.loadout[slot])
-                  const alternative = GEAR.find(g => g.slot === slot && run.gear.includes(g.name) && run.loadout[slot] !== g.name)
                   return <div className={`gear-equipped-row ${item ? 'is-filled' : 'is-empty'}`} key={slot}>
                     <span className="gear-equipped-icon">{item?.icon ?? '◇'}</span>
                     <div className="gear-equipped-info"><b>{item?.name ?? 'Empty slot'}</b><small>{slot.toUpperCase()}</small></div>
                     <span className="gear-equipped-effect">{item?.bonus ?? 'Find gear to equip'}</span>
-                    {item && <button className="gear-change-btn" onClick={() => { setSelectedGearSlot(slot); setSelectedGearName(alternative?.name ?? null) }}>{alternative ? 'CHANGE' : 'EQUIPPED'}</button>}
                   </div>
                 })}
               </div>
@@ -729,7 +693,7 @@ export default function App() {
                 </div>
               </details>
             </section>
-            </>}
+            </>
           </section>}
           {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.id] && !(fighting && !feedback && card?.word.id === w.id)).sort((a, b) => save.mastery[b.id].lv - save.mastery[a.id].lv).map(w => { const lv = save.mastery[w.id].lv; const rich = hasDetails(w); const body = <><strong className={`wb-len${lenClass(w.hanzi)}`}>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small>{w.kind === 'particle' && <u className="kind-tag">particle</u>}<i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{rich && <em className="tip-badge" aria-hidden>💡</em>}</>; return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => setExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. Open details`}>{body}</button> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
@@ -800,7 +764,7 @@ export default function App() {
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} onClose={() => setSummary(null)} onContinue={() => { if (summary === 'floor') { setSummary(null); nextEnemy() } else endRun() }} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
-      {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} autoEquipped={lootReveal.autoEquipped} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
+      {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
       {menu}
       {explain !== null && <ExplainModal id={explain} hidden={fighting && !feedback && !revealing ? card?.word.id : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
     </main>

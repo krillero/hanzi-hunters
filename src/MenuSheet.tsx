@@ -9,7 +9,7 @@ import type { Settings } from './settings'
 type Props = {
   settings: Settings; onChange: (s: Settings) => void; hasVoice: boolean
   fullscreen: { supported: boolean; on: boolean; toggle: () => void }
-  tools?: { potions: number; words: number; newGear: boolean; onGear: () => void; onWords: () => void }
+  tools?: { potions: number; words: number; onGear: () => void; onWords: () => void }
   outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void; onClose: () => void
 }
 
@@ -35,7 +35,7 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
         <div className="modal-head"><div className="ex-titles"><h2 id="menu-title">Settings</h2></div><button className="icon-btn" ref={closeRef} onClick={onClose} aria-label="Close settings">×</button></div>
         <div className="modal-body">
           {tools && <section className="menu-tools">
-            <button className="bar-btn ghost" onClick={tools.onGear}>⚔ Gear{tools.newGear && <i className="new-dot" aria-hidden="true" />}</button>
+            <button className="bar-btn ghost" onClick={tools.onGear}>⚔ Gear</button>
             <button className="bar-btn ghost" onClick={tools.onWords}>📚 Wordbook · {tools.words}</button>
           </section>}
           <section>

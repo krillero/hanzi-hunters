@@ -9,6 +9,7 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Feedback text is larger. Level and mastery are shown by the card's own pips.
 - The bottom Potion / Gear / Words bar is gone. Potion sits beside Hint in the action bar; Gear and Wordbook are in the ☰ menu (a dot marks new gear).
 - Floor clear: the bar button now says "Floor summary" (it used to say "Descend" and open a popup that had its own "Descend" button). The boss tag in the header is shorter ("BOSS 2/2") so "FLOOR 02" no longer wraps.
+- Gear: one item per slot, no bag. An empty slot or a pure upgrade is worn at once; an item that is worse in every stat is left behind without asking; only a real trade-off (some stats up, some down) asks "Replace X?". The loot card shows each fact once (the stat rows) with one button, or Replace / Keep for a trade-off. The slot-picker screen and the new-gear dot are gone.
 - Text items on screen at 360×800: about 43 → 27 on a normal question, 72 → 47 at a kill (the loot card is open then).
 
 ## 2026-11-01 — Multi-character vocabulary, readings, examples, sources (branch dev/learning-content)

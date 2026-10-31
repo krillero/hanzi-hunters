@@ -3,6 +3,7 @@ import { BOSSES, type BossId, type Enemy, type GearItem, type GearSlot } from '.
 import type { Meta, Run, RunSummary } from './types.ts'
 import type { Bonuses } from './upgrades.ts'
 import { MASTERY_DAMAGE } from './mastery.ts'
+import { gearVerdict } from './rarity.ts'
 
 export const ENEMIES_PER_FLOOR = 4
 export const BASE_HP = 30
@@ -163,7 +164,14 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
     let item: GearItem | undefined
     if (bossItem) item = bossItem
     else if (pool.length > 0 && i.roll.drop < dropChance) item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
-    if (item) { loot = item; owned = [...owned, item.name]; if (!loadout[item.slot]) loadout = { ...loadout, [item.slot]: item.name } }
+    if (item) {
+      // One item per slot, no bag: an empty slot or a pure upgrade is worn at once; a pure downgrade is left behind;
+      // a trade-off stays unworn until the player chooses (equipGear). `gear` remembers what was found so it cannot drop twice.
+      loot = item; owned = [...owned, item.name]
+      const worn = loadout[item.slot] ? i.allGear.find(g => g.name === loadout[item.slot]) : null
+      const verdict = gearVerdict(item, worn)
+      if (verdict === 'new' || verdict === 'better') loadout = { ...loadout, [item.slot]: item.name }
+    }
   }
 
   let xp = run.xp + xpGained, level = run.level, levelUps = 0
