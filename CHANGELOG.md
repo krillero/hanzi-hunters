@@ -1,5 +1,29 @@
 # Changelog / test log
 
+## 2026-10-31 — Bigger pinyin answers, slimmer header
+- Pinyin answer options are 27px semi-bold (was ~16px) so tone marks are readable; the word card's pinyin is 24px.
+- The in-battle header is a single 38px line ("FLOOR 02 · ENEMY 3 / 4", gold, settings); the brand name and the redundant elite tag were dropped there.
+- The choice/feedback slot grows with phone height (`clamp(120px,17dvh,156px)`) so spare space on tall phones goes to the answers, not an empty gap; it is still identical in every state. `tools/layout-check.mjs` passes at all four sizes, and unit tests pass.
+
+## 2026-10-30 — Fixed-slot battle layout (PR 16 follow-up)
+- Fixes the arena shrinking and the screen jumping when you answer: the removed `.showing-feedback` rules had resized the arena, word card and fonts whenever feedback appeared.
+- Choices and the answer feedback now share one fixed-height slot (`--choice-h`); the long note is clamped to 2 lines inside it (full text is still in the 💡 explanation). The action bar has a fixed height.
+- XP, gold, level-up and loot now show in a fixed chip strip over the arena (no layout change; removes the duplicate floating Phaser popup). The old fallback victory reward rows are hidden in battle.
+- Short phones (≤700px) hide the location line and use a smaller arena so the question state fits without page scroll; ≤600px uses slightly smaller slots.
+- New `tools/layout-check.mjs` (Playwright, needs a running dev server) asserts that arena, card, choices, action bar and tools keep the same top/height between question, wrong answer, and kill-with-rewards at 411×650, 390×844, 360×640, 320×568, with no page overflow. All 8 cases pass.
+
+## 2026-10-30 — Compact dungeon portrait layout
+- Implemented the selected Compact dungeon design using the existing React UI, Phaser scene, sprites, tiles, and palette; no new dependencies or assets.
+- Mobile header shows the game name, floor/enemy progress, gold, and Settings. The shorter arena retains the combatants and HP; Potion, Gear, and Words are labeled controls below the question panel.
+- Answer rows are at least 52px; help/audio buttons are 44px and bottom tools are 48px (44px on short screens). Long answers wrap instead of being truncated.
+- New-word questions say “Learn this word.” Existing intro questions, hints, recall questions, speech, save schema, combat balance, and auto-continue preferences are preserved.
+- Feedback reports the actual hit/counterattack from `resolveAnswer`, including blocked counters and killing blows with no counterattack. Mobile victory rewards appear in the result panel. Long teaching notes remain readable rather than being reduced to tiny text.
+- Phaser uses a single wall row and adjusted sprite placement in short arenas, and clamps damage labels inside the canvas. Desktop HP cards use two equal columns.
+- Validation: locked dependencies installed; TypeScript build and Vite production build passed, including PWA generation; all 56 existing tests passed. Existing Phaser bundle-size warning remains.
+- Environment: ordinary `npm run build` and the dev server initially encountered an esbuild parent-directory access error in this Windows sandbox. Validation used `node node_modules/typescript/bin/tsc -b` then `node node_modules/vite/bin/vite.js build --configLoader runner`, and served the production output locally. No repository build configuration was changed for this environment limitation.
+- Manual browser checks: 320×568, 375×667, 390×844, 430×932, and 1280×900; teaching/recall cards, correct and incorrect answers, potion healing/count, victory and next enemy, Gear/Wordbook drawers, word explanation, Settings, Relaxed auto-advance, and persisted progress after reload. The normal question screen fits the tested portrait sizes without horizontal overflow or vertical scrolling. Long feedback/reward states can scroll on short screens so content and actions stay reachable.
+- Limits: desktop browser emulation, not physical iOS/Android testing. No Mandarin voice was installed in the test browser, so actual speech output was not verified. No GitHub push or deployment was performed.
+
 ## In progress — mastery-gated auto-advance
 - New default **Learn first** setting pauses after every answer until the current word reaches mastery level 2; then correct answers auto-advance after 0.5 seconds.
 - Keeps Quick (1 s), Relaxed (2.5 s), and Off available; existing saved preferences remain valid.
