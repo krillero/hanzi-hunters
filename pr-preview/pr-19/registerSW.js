@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/hanzi-hunters/pr-preview/pr-19/sw.js', { scope: '/hanzi-hunters/pr-preview/pr-19/' })})}
