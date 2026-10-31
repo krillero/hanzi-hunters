@@ -202,7 +202,9 @@ export default function App() {
     // Echo Wraith, phase 2: the kind of question you got wrong most recently keeps coming back.
     const echo = !forced && forRun && bossFoe?.boss === 'wraith' && bossPhase(forRun, bossFoe.hp) === 2 ? [...kindHistory.current].reverse().find(h => !h.ok)?.kind : undefined
     const word = forced ?? pickWord(ordered, mastery, current, Math.random, recentWords.current)
-    return { word, question: buildQuestion(word, mastery[word.id], WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
+    // Preview aid: with ?word=…&kind=…, an entry you have not met yet is asked as if you already knew it, so the requested question kind is shown
+    const asked = forced && forcedKind.current && !mastery[word.id] ? { lv: 1, ok: 0 } : mastery[word.id]
+    return { word, question: buildQuestion(word, asked, WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
   }
   const patch = (fn: (s: Saved) => Saved) => setSave(fn)
 

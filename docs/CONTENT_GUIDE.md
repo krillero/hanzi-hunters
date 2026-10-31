@@ -22,7 +22,7 @@ npm run dev                # preview (see "Previewing" below)
 
 ### Previewing
 
-* `/?word=<id or hanzi>` forces that entry as the first question (it is introduced as a new word). Add `&kind=<kind>` to force a question type
+* `/?word=<id or hanzi>` forces that entry as the first question (it is introduced as a new word). Add `&kind=<kind>` to force a question type (and to skip the intro, asking it as if you already knew the entry)
   (`meaning`, `pinyin`, `character`, `listen`, `meaning2pinyin`, `pinyin2char`, `listen2meaning`, `listen2pinyin`, `homophone`, `lookalike`, `particle`);
   the game falls back to a fair question if that kind is not possible for the entry.
 * `/?first=朋友,看-look` introduces these entries (ids or hanzi) before everything else, so new content can be played without working up to it.
