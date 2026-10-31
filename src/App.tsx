@@ -565,7 +565,7 @@ export default function App() {
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">
-        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small>{foe.boss && <b className="boss-tag">BOSS · PHASE {bossPhase(run, foe.hp)}/2</b>}</div>
+        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small>{foe.boss && <b className="boss-tag">BOSS {bossPhase(run, foe.hp)}/2</b>}</div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
         <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label={newLoot ? 'Menu, new gear found' : 'Menu'}>☰{newLoot && <i className="new-dot" aria-hidden="true" />}</button>
       </header>
@@ -788,7 +788,7 @@ export default function App() {
                     {run.potions > 0 && <button className="bar-btn ghost potion-btn" onClick={usePotion} disabled={run.hp >= stats.maxHp} aria-label={`Use potion, ${run.potions} left`}>🧪 Potion <b>{run.potions}</b></button>}
                   </>
                 : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? (lastOfFloor ? () => setSummary('floor') : nextEnemy) : () => setSummary('defeat')}>
-                    {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? `Descend to floor ${run.floor + 1}` : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>
+                    {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? 'Floor summary' : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>
                   </button>}
             </div>
           </section>

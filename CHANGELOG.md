@@ -8,6 +8,7 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Combatant cards are now two slim HP bars (hero: level, enemy: name).
 - Feedback text is larger. Level and mastery are shown by the card's own pips.
 - The bottom Potion / Gear / Words bar is gone. Potion sits beside Hint in the action bar; Gear and Wordbook are in the ☰ menu (a dot marks new gear).
+- Floor clear: the bar button now says "Floor summary" (it used to say "Descend" and open a popup that had its own "Descend" button). The boss tag in the header is shorter ("BOSS 2/2") so "FLOOR 02" no longer wraps.
 - Text items on screen at 360×800: about 43 → 27 on a normal question, 72 → 47 at a kill (the loot card is open then).
 
 ## 2026-11-01 — Multi-character vocabulary, readings, examples, sources (branch dev/learning-content)
