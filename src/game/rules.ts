@@ -79,6 +79,8 @@ export type AnswerInput = {
 export type AnswerResult = {
   run: Run; damage: number; counter: number; savedBySecondChance: boolean
   outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; comboHit: boolean
+  /** HP actually restored by the Second Wind upgrade (healOnKill) on this kill; 0 without the upgrade or at full HP. */
+  healedOnKill: number
 }
 
 export function resolveAnswer(i: AnswerInput): AnswerResult {
@@ -125,11 +127,13 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   const oldMax = playerStats(run, b, i.allGear).maxHp
   if (loadout !== run.loadout && grown.maxHp > oldMax && hp > 0) hp = Math.min(grown.maxHp, hp + grown.maxHp - oldMax)
   if (levelUps && hp > 0) hp = Math.min(grown.maxHp, hp + 8 * levelUps)
+  const hpBeforeKillHeal = hp
   if (killed && hp > 0) hp = Math.min(grown.maxHp, hp + b.healOnKill)
+  const healedOnKill = hp - hpBeforeKillHeal
 
   const outcome = killed ? 'victory' : hp <= 0 ? 'defeat' : 'continue'
   return {
-    damage, counter, savedBySecondChance, outcome, loot, comboHit,
+    damage, counter, savedBySecondChance, outcome, loot, comboHit, healedOnKill,
     run: {
       ...next, hp,
       gold: run.gold + goldGained, kills: run.kills + (killed ? 1 : 0),

@@ -260,9 +260,8 @@ export default function App() {
     }
     if (r.loot) { feel('loot', { rarity: rarityOf(r.loot) }, t); t += 0.4 }
     if (r.outcome === 'victory') {
-      const levelHp = r.run.level > run.level ? playerStats(r.run, bonuses, GEAR).maxHp - playerStats(run, bonuses, GEAR).maxHp : 0
-      const healed = Math.max(0, r.run.hp - run.hp - levelHp)
-      if (healed > 0) setCaption({ side: 'hero', kind: 'heal', text: `💚 +${healed} Second Wind` })
+      // Only the Second Wind upgrade's own healing is announced (level-up and new-gear HP are not).
+      if (r.healedOnKill > 0) setCaption({ side: 'hero', kind: 'heal', text: `💚 +${r.healedOnKill} Second Wind` })
       window.setTimeout(() => {
         const stage = document.querySelector('.arena-stage')?.getBoundingClientRect()
         if (!stage) return

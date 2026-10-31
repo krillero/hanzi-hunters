@@ -1,5 +1,9 @@
 # Changelog / test log
 
+## 2026-10-31 — Fix: "Second Wind" shown without the upgrade
+- Bug: after a kill that also levelled you up, the arena showed "💚 +3 Second Wind" even without the Second Wind upgrade. The caption was computed from the HP difference minus the max-HP gain, but a level-up heals a flat +8 HP per level, so the leftover was mistaken for Second Wind.
+- Fix: `resolveAnswer` now returns `healedOnKill` (the HP actually restored by the upgrade, after the cap at max HP) and the caption uses it. Level-up and new-gear healing are not announced as Second Wind. New test in `tests/rules.test.ts`; checked in a browser with and without the upgrade.
+
 ## 2026-10-31 — Game feel, phase 1 (see docs/GAME_FEEL_AND_PROGRESSION.md)
 - **Sound effects (new `src/audio.ts`):** short synthesised sounds (no audio files) for correct, combo (pitch rises with the streak, capped), wrong, kill, level-up, loot (more notes for rarer items), word mastered and defeat. **Vibration** patterns for the same events on phones that support it (Android browsers; ignored elsewhere). New settings `sfx` and `haptics`, both on by default and separate from the spoken-words switch; old saved settings load fine. The first tap unlocks audio (browser autoplay rules).
 - **Kill moment:** coins and XP dots fly from the monster to the gold counter and XP bar (skipped with reduced motion); post-kill healing is shown ("💚 +5 Second Wind").
