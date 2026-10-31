@@ -39,10 +39,11 @@ test('Off never auto-continues', () => {
 })
 
 test('settings: Learn first is the default; sanitising and loading never throw', () => {
-  assert.deepEqual(DEFAULT_SETTINGS, { muted: false, autoContinue: 'learning' })
-  assert.deepEqual(sanitizeSettings({ muted: true, autoContinue: 'off' }), { muted: true, autoContinue: 'off' })
-  assert.deepEqual(sanitizeSettings({ muted: false, autoContinue: 'quick' }), { muted: false, autoContinue: 'quick' }, 'existing preferences remain supported')
+  assert.deepEqual(DEFAULT_SETTINGS, { muted: false, sfx: true, haptics: true, autoContinue: 'learning' })
+  assert.deepEqual(sanitizeSettings({ muted: true, autoContinue: 'off' }), { muted: true, sfx: true, haptics: true, autoContinue: 'off' }, 'old saved settings gain the new switches, on')
+  assert.deepEqual(sanitizeSettings({ sfx: false, haptics: false }), { ...DEFAULT_SETTINGS, sfx: false, haptics: false })
+  assert.deepEqual(sanitizeSettings({ muted: false, autoContinue: 'quick' }), { ...DEFAULT_SETTINGS, autoContinue: 'quick' }, 'existing preferences remain supported')
   for (const bad of [null, undefined, 5, 'x', [], { muted: 'yes', autoContinue: 'fast' }]) assert.deepEqual(sanitizeSettings(bad), DEFAULT_SETTINGS)
   assert.deepEqual(loadSettings({ getItem: () => '{bad json' }), DEFAULT_SETTINGS)
-  assert.deepEqual(loadSettings({ getItem: () => JSON.stringify({ muted: true }) }), { muted: true, autoContinue: 'learning' })
+  assert.deepEqual(loadSettings({ getItem: () => JSON.stringify({ muted: true }) }), { ...DEFAULT_SETTINGS, muted: true })
 })

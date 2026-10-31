@@ -1,5 +1,15 @@
 # Changelog / test log
 
+## 2026-10-31 — Game feel, phase 1 (see docs/GAME_FEEL_AND_PROGRESSION.md)
+- **Sound effects (new `src/audio.ts`):** short synthesised sounds (no audio files) for correct, combo (pitch rises with the streak, capped), wrong, kill, level-up, loot (more notes for rarer items), word mastered and defeat. **Vibration** patterns for the same events on phones that support it (Android browsers; ignored elsewhere). New settings `sfx` and `haptics`, both on by default and separate from the spoken-words switch; old saved settings load fine. The first tap unlocks audio (browser autoplay rules).
+- **Kill moment:** coins and XP dots fly from the monster to the gold counter and XP bar (skipped with reduced motion); post-kill healing is shown ("💚 +5 Second Wind").
+- **Level-up moment:** a short arena overlay with the stat gains (e.g. +8 max HP · +1 attack) and a glowing HP bar; it never blocks input or auto-continue.
+- **Loot rarity:** common / rare / epic (cosmetic only; `src/game/rarity.ts`, a test requires every gear item to have one). The loot chip gets a blue/purple glow and the sound grows with rarity. Drop odds and stats are unchanged.
+- **Floor path:** the header shows the floor as dots with the elite as a diamond; the arena shows words known / mastered (hidden on phones ≤700px tall, where the camp still shows it).
+- **Floor-clear and defeat cards (`src/SummaryModal.tsx`):** new words, levelled-up words, mastered words, best streak, accuracy, gold found and "review soon" words. Clearing a floor or dying opens the card; its button descends / goes to camp. The numbers are kept in memory (`src/game/runStats.ts`) and reset on reload.
+- Not in this phase (from the design doc): hit-stop on kills, an opening-chest loot modal with item comparison, mastery ceremony, daily warm-up. Sounds and vibration were tested only for errors in a headless browser, not by ear or on a phone.
+- Tests: new `tests/feel.test.ts` (sound scores, haptics, rarity coverage, run stats); settings tests updated.
+
 ## 2026-10-31 — Feedback box is for learning, combat result lives in the arena
 - Removed the "Your hit / Enemy hit" line from the answer feedback. The combat result is now a small chip strip in the arena (⚔ −17 · 💔 −4, or 🛡 Blocked / No counterattack); on a kill the same strip shows XP, gold and loot instead. The strip is absolutely positioned, so nothing in the layout moves.
 - Feedback box: a correct answer reads "✓ Correct — 田 tián · field" (character, sound and meaning together); a wrong answer shows the answer in large text with what you chose struck through. The word note gets up to 3 lines (2 on phones ≤700px tall), and mastery is shown as pips plus a short sentence ("Level up! Now level 2", "One more correct in a row to level up").
