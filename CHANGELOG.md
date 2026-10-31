@@ -1,5 +1,11 @@
 # Changelog / test log
 
+## 2026-11-01 — New words get their own card (branch dev/learning-content)
+
+- A word that unlocks (same rule as before: one for every word that reaches level 1, never more than 4 words at level 0) is introduced on a card at the start of the next fight: word, pinyin, meaning, note, up to two examples, a speaker button and "Got it". No free question. After "Got it" the word is asked like any other, starting with the easiest question.
+- The first 6 words are introduced the same way. A brand-new player sees the first 3 cards together; after that it is one per fight. Words already in a save are never shown as a card, and reloading in the middle of a fight does not show one.
+- A word that has not been introduced is never asked. The floor summary's "new words" counts introductions.
+
 ## 2026-11-01 — Quiet Arena: a cleaner battle screen (branch dev/learning-content)
 
 Every fact now appears once. Learning comes first; the fight is the garnish.

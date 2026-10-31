@@ -9,7 +9,7 @@
 
 ## Word mastery (per entry, saved)
 Each word has a level 0-4 (4 = mastered). **Every question kind counts the same**: 2 correct in a row promote, a miss demotes one level.
-A new word is first shown once with everything visible ("New word!", pick the meaning; no mastery credit).
+A new word is first shown on its own introduction card (word, pinyin, meaning, note, up to two examples, a speaker button) with a "Got it" button. There is no question and no pressure; the word only starts appearing in questions after "Got it". Cards appear at the start of a fight, never in the middle of one.
 
 The level decides which kinds can be asked (weights in `KIND_WEIGHTS`, `src/game/questions.ts`):
 
@@ -80,7 +80,7 @@ Bot play at 60/75/90 % accuracy: first death on floor 1–3 with enough gold for
 * Loot reveal: rare/epic gear, boss gear, or a clear upgrade over what you wear opens a chest card that compares the stats with the equipped item (and offers *Equip now*); other drops stay a chip. Auto-continue waits while the card is open.
 
 ## Which words come first (`src/game/mastery.ts`)
-* The pool starts with the first 6 words of the content file and grows by one for every word that has reached level 1; inside the pool, new words and weak words are weighted higher than mastered ones.
+* The pool starts with the first 6 words of the content file and grows by one for every word that has reached level 1; inside the pool, weak words are weighted higher than mastered ones. A word in the pool that has not been introduced yet is never asked: it is introduced (one per fight start, in the profile's order, unless 4 words are still at level 0) by its card. A brand-new player gets the first 3 cards at once so there is something to ask about. A reload in the middle of a fight does not show a card.
 * Before, a fresh profile therefore always started with the same 6–8 words (人 大 小 一 二 三 …). Now each new profile (first start or *Delete all progress*) gets a random `habit.seed` that shuffles the order **inside blocks of 16 words** (`orderedWords`), so the easy-first order of the file is kept but the opening differs. Old saves have seed 0 = file order, so nothing changes for them.
 * Words asked in the last few questions are less likely to repeat (`RECENT_PENALTY`; this session only, across runs).
 * Simulated: 200 fresh profiles saw 16 different words in their first 12 questions instead of 8. The limit that remains is the content order and the starting pool of 6.

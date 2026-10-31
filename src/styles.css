@@ -1638,3 +1638,23 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .in-battle .answer-feedback .result-line strong{white-space:normal;overflow:visible;text-overflow:clip}
 .result-also{font-size:13px;color:#c9d6e4;font-weight:400}
 .in-battle .arena-combatants .bar-label span:last-child{white-space:nowrap}
+
+/* ---- New-word introduction card ---- */
+.newword-card{display:flex;flex-direction:column}
+.newword-card .modal-body{flex:1 1 auto;min-height:0;overflow:auto;display:grid;gap:12px;align-content:start}
+.nw-hero{text-align:center;display:grid;gap:4px;padding:6px 0 2px}
+.nw-hanzi{font-size:88px;line-height:1.1;font-weight:600;color:#f7f4eb;overflow-wrap:anywhere}
+.nw-hanzi.len3{font-size:64px}.nw-hanzi.len5{font-size:46px}.nw-hanzi.len8{font-size:32px}
+.nw-pinyin{font-size:28px;color:#f0cb78;font-weight:700;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap}
+.nw-meaning{font-size:20px;color:#dbe6f0;overflow-wrap:anywhere}
+.nw-also{font-size:13px;color:#9eafc1}
+.nw-note{margin:0;font-size:16px;line-height:1.45;color:#dbe6f0}
+.nw-parts{display:flex;flex-wrap:wrap;gap:8px}
+.nw-part{border:1px solid #3b4b61;border-radius:8px;padding:6px 10px;font-size:14px;color:#c9d6e4}
+.nw-part b{font-size:20px;color:#f7f4eb;margin-right:4px}
+.nw-examples{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.nw-examples li{display:grid;gap:2px;border-left:3px solid #3b4b61;padding-left:10px}
+.nw-more{justify-self:start;font-size:14px}
+.nw-foot{flex:none;padding:10px 14px 14px;border-top:1px solid #28374a}
+.nw-foot .bar-btn{width:100%;min-height:52px}
+.nw-speak{width:44px;height:44px;border-radius:50%;border:1px solid #3b526b;background:#1a2c40;color:#c4d8eb;font-size:20px;line-height:1;flex:none}

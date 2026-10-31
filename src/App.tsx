@@ -4,13 +4,14 @@ import { PixelScene, type EnemySprite } from './game/PixelScene'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
+import NewWordCard from './NewWordCard'
 import SummaryModal from './SummaryModal'
 import WarmupScreen from './WarmupScreen'
 import { WARMUP_GOLD_PER_CORRECT, badgeById, contextFor, localDay, newBadges, newSeed, pickWarmup, recordCorrect, recordPlay, warmupAvailable } from './game/habit'
 import { playSfx, unlockAudio, vibrate, type SfxName, type SfxOptions } from './audio'
 import { flyMotes } from './motes'
 import { rarityOf } from './game/rarity'
-import { accuracyPct, emptyStats, recordAnswer, type RunStats } from './game/runStats'
+import { accuracyPct, emptyStats, recordAnswer, recordIntro, type RunStats } from './game/runStats'
 import { DEFAULT_SETTINGS, SETTINGS_KEY, loadSettings, type Settings } from './settings'
 import { autoContinuePlan, type AutoPlan } from './game/flow'
 import { CLOZE, hasExplanation } from './content'
@@ -19,7 +20,7 @@ import { parseBackup, serializeBackup } from './game/backup'
 import { ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
 import { audioReliable, homographsOf } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
-import { MAX_LV, masteredCount, orderedWords, pickWord, seenCount, updateMastery } from './game/mastery'
+import { MAX_LV, masteredCount, orderedWords, pickWord, seenCount, updateMastery, wordsToIntroduce } from './game/mastery'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, buildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
@@ -200,6 +201,32 @@ export default function App() {
     return { word, question: buildQuestion(word, asked, WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
   }
   const patch = (fn: (s: Saved) => Saved) => setSave(fn)
+
+  // ---- introducing new words: a card at the start of a fight, never mid-fight ----------------
+  const [introQueue, setIntroQueue] = useState<string[]>([])
+  const [introTotal, setIntroTotal] = useState(0)
+  const introKey = useRef<string | null>(null)   // the fight we last checked; null = this run was resumed from a save
+  useEffect(() => {
+    if (!run) { introKey.current = ''; return }
+    if (run.phase !== 'fighting' || feedback || reveal || bossIntro || summary || lootReveal || introQueue.length) return
+    const key = `${run.floor}:${run.kill}`
+    if (key === introKey.current) return
+    const resumed = introKey.current === null
+    introKey.current = key
+    if (forcedWord.current || (resumed && seenCount(save.mastery) > 0)) return   // preview URLs and reloads mid-fight are left alone
+    const ids = wordsToIntroduce(ordered, save.mastery)
+    if (ids.length) { setIntroQueue(ids); setIntroTotal(ids.length) }
+  })
+  const introGotIt = () => {
+    const id = introQueue[0]
+    if (!id) return
+    const mastery = updateMastery(save.mastery, id, true)   // creates the entry at level 0: from now on it is asked about
+    patch(s => ({ ...s, mastery: updateMastery(s.mastery, id, true) }))
+    setFloorStats(s => recordIntro(s, id)); setRunStats(s => recordIntro(s, id))
+    const rest = introQueue.slice(1)
+    setIntroQueue(rest)
+    if (!rest.length) { setCard(makeCard(mastery, null)); setEliminated([]); answerLock.current = false }
+  }
 
   // ---- one-time setup -----------------------------------------------------------------
   useEffect(() => {
@@ -409,7 +436,7 @@ export default function App() {
     else { setCaption(null); setCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
-  const blockingOpen = explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null
+  const blockingOpen = explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null || introQueue.length > 0
   useEffect(() => {
     if (!reveal || blockingOpen) return
     const t = window.setTimeout(advanceAuto, reveal.plan.delay)
@@ -763,6 +790,7 @@ export default function App() {
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} onClose={() => setSummary(null)} onContinue={() => { if (summary === 'floor') { setSummary(null); nextEnemy() } else endRun() }} />}
+      {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
       {menu}

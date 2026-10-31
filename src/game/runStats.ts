@@ -23,4 +23,7 @@ export function recordAnswer(s: RunStats, a: AnswerRecord): RunStats {
   }
 }
 
+/** A word met for the first time through its introduction card. */
+export const recordIntro = (s: RunStats, id: string): RunStats => ({ ...s, newWords: add(s.newWords, id) })
+
 export const accuracyPct = (s: RunStats) => (s.total === 0 ? 0 : Math.round((s.correct / s.total) * 100))
