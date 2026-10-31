@@ -177,7 +177,7 @@ export class PixelScene extends Phaser.Scene {
     if (this.ready) this.build()
   }
 
-  playHit(target: 'hero' | 'monster', damage: number, caption?: string) {
+  playHit(target: 'hero' | 'monster', caption?: string) {
     const obj = target === 'hero' ? this.hero : this.monster
     if (!this.ready || !obj) return
     const home = target === 'hero' ? this.heroHome : this.monsterHome
@@ -194,7 +194,8 @@ export class PixelScene extends Phaser.Scene {
       obj.setTint(target === 'monster' ? 0xffffff : 0xff6666)
       this.time.delayedCall(180, () => obj.active && obj.clearTint())
     }
-    this.float(target, `-${damage}`, target === 'monster' ? '#ffd166' : '#ff7777', caption)
+    // The damage numbers live in the arena chip strip (React); only the caption (COMBO!, WEAK HIT) floats here.
+    if (caption) this.float(target, caption, target === 'monster' ? '#ffd166' : '#ff7777')
   }
 
   // ---- persistent floating text ----------------------------------------------------------

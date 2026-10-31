@@ -207,9 +207,9 @@ export default function App() {
     const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
     const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
-    sceneRef.current?.playHit('monster', r.damage, r.comboHit ? 'COMBO!' : !isCorrect ? 'WEAK HIT' : undefined)
+    sceneRef.current?.playHit('monster', r.comboHit ? 'COMBO!' : !isCorrect ? 'WEAK HIT' : undefined)
     if (r.outcome === 'victory') { sceneRef.current?.hideMonster(); sceneRef.current?.showVictory(isElite(run.kill) ? 'ELITE SLAIN!' : 'ENEMY SLAIN!') }
-    else if (r.counter > 0) sceneRef.current?.playHit('hero', r.counter)
+    else if (r.counter > 0) sceneRef.current?.playHit('hero')
     else if (r.savedBySecondChance) sceneRef.current?.float('hero', 'BLOCKED', '#8ed1ff')
 
     sceneRef.current?.setCombo(r.run.streak)
