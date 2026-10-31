@@ -333,7 +333,7 @@ export function buildQuestion(word: Word, entry: MasteryEntry | undefined, words
       const why: Record<string, string> = {}
       for (const w of optWords) if (item.why[w.id]) why[w.hanzi] = item.why[w.id]
       return q({
-        kind, text: 'Which word completes the sentence?', options: shuffle(optWords.map(w => w.hanzi), rng), answer: word.hanzi,
+        kind, text: 'Complete the sentence', options: shuffle(optWords.map(w => w.hanzi), rng), answer: word.hanzi,
         optionsAreHanzi: true, ask: 'particle', show: { hanzi: false, pinyin: false, meaning: false },
         cloze: { itemId: item.id, zh: item.zh, pinyin: item.pinyin, en: item.en, why, note: item.note }
       })

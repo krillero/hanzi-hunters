@@ -766,13 +766,15 @@ export default function App() {
             {/* The word card never leaves its slot. Feedback replaces the choices below it. */}
             {showCard && <>
               <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
+                <div className="card-strip">
                 <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
                   {hasDetails(word) && (question.cloze ? revealed || revealing : show.hanzi && show.pinyin && show.meaning) && <button className={`speak-btn tip-btn ${tipPulse === word.id ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); setExplain(word.id) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
-                  <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''} ${canSpeak ? '' : 'no-audio'}`} disabled={!canSpeak} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={!canSpeak ? 'No reliable audio for this word' : settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'} title={!canSpeak ? 'Text-to-speech cannot be trusted to read this word with the intended pronunciation' : undefined}>{!canSpeak ? '🔈' : settings.muted ? '🔇' : '🔊'}</button>
+                  {canSpeak && <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>}
+                </div>
                 </div>
                 {ceremony === word.id && (feedback || revealing) && <div className="confetti" aria-hidden="true">{Array.from({ length: 22 }, (_, k) => <i key={k} style={{ left: `${4 + ((k * 37) % 92)}%`, animationDelay: `${(k % 7) * 60}ms`, background: ['#ffd166', '#8ee0a9', '#6fb5e8', '#ff8a3d'][k % 4] }} />)}</div>}
-                {question.cloze ? <div className="cloze-block" lang="zh">
+                {question.cloze ? <div className={`cloze-block cloze-${question.cloze.zh.length <= 9 ? 's' : question.cloze.zh.length <= 13 ? 'm' : 'l'}`} lang="zh">
                   <div className="cloze-zh">{fillBlank(question.cloze.zh, revealed || revealing ? word.hanzi : null)}</div>
                   <div className="cloze-py">{fillBlank(question.cloze.pinyin, revealed || revealing ? word.pinyin : null)}</div>
                   <div className="cloze-en">{question.cloze.en}</div>

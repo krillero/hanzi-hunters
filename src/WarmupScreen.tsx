@@ -80,8 +80,8 @@ export default function WarmupScreen({ words, mastery, canListen, speakWord, sfx
       <div className="wu-dots" aria-hidden="true">{list.map((_, k) => <i key={k} className={k < i ? 'done' : k === i ? 'cur' : ''} />)}</div>
       <h2 className="wu-question">{question.text.replace(/^New word!\s*/i, '')}</h2>
       <div className={`stage stage-card wu-stage ${answered ? (isRight ? 'ok' : 'wrong') : ''}`}>
-        <button className="speak-btn wu-speak" disabled={!canSpeak} onClick={() => speakWord(word.hanzi)} aria-label={canSpeak ? 'Hear the word' : 'No reliable audio for this word'}>{canSpeak ? '🔊' : '🔈'}</button>
-        {question.cloze ? <div className="cloze-block" lang="zh">
+        <div className="card-strip"><span />{canSpeak && <button className="speak-btn wu-speak" onClick={() => speakWord(word.hanzi)} aria-label="Hear the word">🔊</button>}</div>
+        {question.cloze ? <div className={`cloze-block cloze-${question.cloze.zh.length <= 9 ? 's' : question.cloze.zh.length <= 13 ? 'm' : 'l'}`} lang="zh">
           <div className="cloze-zh">{fillBlank(question.cloze.zh, answered ? word.hanzi : null)}</div>
           <div className="cloze-py">{fillBlank(question.cloze.pinyin, answered ? word.pinyin : null)}</div>
           <div className="cloze-en">{question.cloze.en}</div>
