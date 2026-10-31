@@ -84,7 +84,7 @@ Read `src/App.tsx` for exact logic before changing numbers. The following is a h
 - Check HP clamping at 0 and max HP, including after gear or level changes.
 - Verify enemy HP scaling by floor and the displayed HP denominator agree.
 - Verify rewards are awarded exactly once per enemy.
-- Verify random gear drops and duplicate conversion are understandable.
+- Verify random gear drops are understandable (only gear you do not own yet can drop; no duplicate conversion).
 - Verify that a restart does not unintentionally reset permanent progress or keep stale battle state.
 
 ## 4. Save data and data structures

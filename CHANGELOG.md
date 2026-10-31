@@ -6,6 +6,7 @@
 - The auto-continue bar now says "✓ Correct" instead of the damage summary. `combatSummary` was removed.
 - Checks: `tools/layout-check.mjs` passes in all 8 cases, 56 unit tests pass, and right/wrong answers were checked visually at 411×740.
 - Removed the old floating damage numbers (−59 / −9) over the characters; the chip strip is now the only damage display. Hit animations and the COMBO! / WEAK HIT captions stay.
+- Gear you already own can no longer drop: loot is picked only from gear you do not have, and once you own everything kills drop nothing. The duplicate-gear-to-gold conversion, its "(dup)" chip and the DUPLICATE reward row were removed (`duplicateGold` / `reward.dupGold`); old saves that still contain `dupGold` load fine, the field is ignored. Tests updated: skips owned gear, owning everything drops nothing.
 - Bug fix: a correct answer on an already mastered word no longer says "One more correct in a row to level up"; it says "Mastered — keep it sharp".
 
 ## 2026-10-31 — Word popups replace instead of stack

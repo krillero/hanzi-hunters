@@ -417,7 +417,7 @@ export default function App() {
               <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
               {run.phase === 'victory' && <div className="arena-rewards" role="status" aria-label="Battle rewards">
                 <span>+{run.reward.xp} XP</span>
-                <span>🪙 +{run.reward.gold}{run.reward.dupGold > 0 ? ' (dup)' : ''}</span>
+                <span>🪙 +{run.reward.gold}</span>
                 {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
                 {run.reward.loot && <span className="hot loot">🎁 {run.reward.loot}</span>}
               </div>}
@@ -611,7 +611,6 @@ export default function App() {
                 <div className="reward-item"><small>EXPERIENCE</small><strong>+{run.reward.xp} XP</strong></div>
                 <div className="reward-item"><small>GOLD</small><strong>🪙 +{run.reward.gold}</strong></div>
                 {run.reward.levelUps > 0 && <div className="reward-item reward-highlight"><small>LEVEL UP</small><strong>Level {run.level}</strong></div>}
-                {run.reward.dupGold > 0 && <div className="reward-item"><small>DUPLICATE</small><strong>+{run.reward.dupGold} 🪙</strong></div>}
               </div>
             )}
 

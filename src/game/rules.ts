@@ -48,7 +48,7 @@ export function playerStats(run: Pick<Run, 'level' | 'gear' | 'loadout'>, b: Bon
   }
 }
 
-const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0, dupGold: 0 }
+const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0 }
 
 export function startFight(run: Run, b: Bonuses, enemies: Enemy[]): Run {
   return { ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: b.hints, secondLeft: b.secondChance, reward: noReward }
@@ -78,7 +78,7 @@ export type AnswerInput = {
 }
 export type AnswerResult = {
   run: Run; damage: number; counter: number; savedBySecondChance: boolean
-  outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; duplicateGold: number; comboHit: boolean
+  outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; comboHit: boolean
 }
 
 export function resolveAnswer(i: AnswerInput): AnswerResult {
@@ -105,14 +105,16 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   let hp = Math.max(0, run.hp - counter)
 
   let xpGained = Math.round((isCorrect ? 5 : 2) * (1 + b.xpPct + gearPct(gear, 'xpPct')))
-  let goldGained = 0, loot: GearItem | null = null, duplicateGold = 0, owned = run.gear, loadout = run.loadout
+  let goldGained = 0, loot: GearItem | null = null, owned = run.gear, loadout = run.loadout
   if (killed) {
     xpGained += foe.xp
     goldGained = Math.round(foe.gold * (1 + b.goldPct)) + gear.reduce((n, g) => n + g.goldFlat, 0)
     const dropChance = Math.min(0.95, 0.5 + b.lootPct + (foe.elite ? 0.3 : 0))
-    if (i.roll.drop < dropChance) {
-      const item = i.allGear[Math.min(i.allGear.length - 1, Math.floor(i.roll.item * i.allGear.length))]
-      if (owned.includes(item.name)) { duplicateGold = 4; goldGained += 4 } else { loot = item; owned = [...owned, item.name]; if (!loadout[item.slot]) loadout = { ...loadout, [item.slot]: item.name } }
+    // Only gear you do not have yet can drop; once you own everything, kills simply drop nothing.
+    const pool = i.allGear.filter(g => !owned.includes(g.name))
+    if (pool.length > 0 && i.roll.drop < dropChance) {
+      const item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
+      loot = item; owned = [...owned, item.name]; if (!loadout[item.slot]) loadout = { ...loadout, [item.slot]: item.name }
     }
   }
 
@@ -127,12 +129,12 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
 
   const outcome = killed ? 'victory' : hp <= 0 ? 'defeat' : 'continue'
   return {
-    damage, counter, savedBySecondChance, outcome, loot, duplicateGold, comboHit,
+    damage, counter, savedBySecondChance, outcome, loot, comboHit,
     run: {
       ...next, hp,
       gold: run.gold + goldGained, kills: run.kills + (killed ? 1 : 0),
       phase: outcome === 'continue' ? 'fighting' : outcome,
-      reward: killed ? { xp: xpGained, gold: goldGained, loot: loot?.name ?? '', levelUps, dupGold: duplicateGold } : noReward
+      reward: killed ? { xp: xpGained, gold: goldGained, loot: loot?.name ?? '', levelUps } : noReward
     }
   }
 }
