@@ -1,5 +1,10 @@
 # Changelog / test log
 
+## 2026-10-31 — Bigger pinyin answers, slimmer header
+- Pinyin answer options are 27px semi-bold (was ~16px) so tone marks are readable; the word card's pinyin is 24px.
+- The in-battle header is a single 38px line ("FLOOR 02 · ENEMY 3 / 4", gold, settings); the brand name and the redundant elite tag were dropped there.
+- The choice/feedback slot grows with phone height (`clamp(120px,17dvh,156px)`) so spare space on tall phones goes to the answers, not an empty gap; it is still identical in every state. `tools/layout-check.mjs` passes at all four sizes, and unit tests pass.
+
 ## 2026-10-30 — Fixed-slot battle layout (PR 16 follow-up)
 - Fixes the arena shrinking and the screen jumping when you answer: the removed `.showing-feedback` rules had resized the arena, word card and fonts whenever feedback appeared.
 - Choices and the answer feedback now share one fixed-height slot (`--choice-h`); the long note is clamped to 2 lines inside it (full text is still in the 💡 explanation). The action bar has a fixed height.

@@ -404,7 +404,7 @@ export default function App() {
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">
-        <div><strong>HANZI HUNTERS</strong><small>FLOOR {pad(run.floor)} · ENEMY {run.kill + 1} / {ENEMIES_PER_FLOOR}{foe.elite ? ' · ELITE' : ''}</small></div>
+        <div><strong>FLOOR {pad(run.floor)}</strong><small>ENEMY {run.kill + 1} / {ENEMIES_PER_FLOOR}</small></div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
         <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
       </header>
@@ -599,7 +599,7 @@ export default function App() {
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
-                return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${gone ? 'answer-gone' : ''} ${revealing && option === question.answer ? 'answer-correct' : ''}`} disabled={gone || revealing} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
+                return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${question.ask === 'pinyin' ? 'opt-pinyin' : ''} ${gone ? 'answer-gone' : ''} ${revealing && option === question.answer ? 'answer-correct' : ''}`} disabled={gone || revealing} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
               })}</div>}
             </>}
 
