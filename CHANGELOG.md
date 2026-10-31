@@ -1,5 +1,9 @@
 # Changelog / test log
 
+## 2026-10-31 — Word popups replace instead of stack
+- Tapping a related word in an explanation popup now replaces the current popup (one popup at a time, no history), so a single × closes it. The Back button and the popup stack were removed (`ExplainModal` takes a single `hanzi`).
+- Checked in a browser: open 女 → tap 她 → tap 他: one popup throughout, no Back button, one close ends it. 56 unit tests pass.
+
 ## 2026-10-31 — Bigger pinyin answers, slimmer header
 - Pinyin answer options are 27px semi-bold (was ~16px) so tone marks are readable; the word card's pinyin is 24px.
 - The in-battle header is a single 38px line ("FLOOR 02 · ENEMY 3 / 4", gold, settings); the brand name and the redundant elite tag were dropped there.

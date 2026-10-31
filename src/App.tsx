@@ -87,10 +87,10 @@ export default function App() {
   const [selectedGearName, setSelectedGearName] = useState<string | null>(null)
   const [selectedGearSlot, setSelectedGearSlot] = useState<import('./data').GearSlot | null>(null)
   const [showWords, setShowWords] = useState(false)
-  const [explain, setExplain] = useState<string[]>([])
+  const [explain, setExplain] = useState<string | null>(null)
   const [latestBuild, setLatestBuild] = useState<BuildInfo | null>(null)
   const [updateDismissed, setUpdateDismissed] = useState(false)
-  const closeExplain = useMemo(() => () => setExplain([]), [])
+  const closeExplain = useMemo(() => () => setExplain(null), [])
   useEffect(() => {
     if (!toast) return
     const t = window.setTimeout(() => setToast(''), toast.length > 70 ? 7000 : 3500)
@@ -265,7 +265,7 @@ export default function App() {
     else { sceneRef.current?.clearFloats(); setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
-  const blockingOpen = explain.length > 0 || showBag || showWords || menuOpen
+  const blockingOpen = explain !== null || showBag || showWords || menuOpen
   useEffect(() => {
     if (!reveal || blockingOpen) return
     const t = window.setTimeout(advanceAuto, reveal.plan.delay)
@@ -568,7 +568,7 @@ export default function App() {
             </section>
             </>}
           </section>}
-          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain([w.hanzi])} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
+          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain(w.hanzi)} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
 
         <div className="right-column">
@@ -580,7 +580,7 @@ export default function App() {
               <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
                 <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
-                  {hasExplanation(word.hanzi) && <button className="speak-btn tip-btn" onClick={e => { e.stopPropagation(); setExplain([word.hanzi]) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
+                  {hasExplanation(word.hanzi) && <button className="speak-btn tip-btn" onClick={e => { e.stopPropagation(); setExplain(word.hanzi) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
                   <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
                 </div>
                 <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')}`}>{show.hanzi ? word.hanzi : '?'}</div>
@@ -652,7 +652,7 @@ export default function App() {
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
       {menu}
-      {explain.length > 0 && <ExplainModal stack={explain} onClose={closeExplain} onBack={() => setExplain(st => st.slice(0, -1))} onOpen={h => setExplain(st => [...st, h])} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal hanzi={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
     </main>
   )
 }

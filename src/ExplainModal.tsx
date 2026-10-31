@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { WORDS } from './data'
 import { getExplanation, hasExplanation, type Part, type Section } from './content'
 
-type Props = { stack: string[]; onClose: () => void; onBack: () => void; onOpen: (hanzi: string) => void; onSpeak: (hanzi: string) => void }
+type Props = { hanzi: string; onClose: () => void; onOpen: (hanzi: string) => void; onSpeak: (hanzi: string) => void }
 
 const PartCard = ({ p }: { p: Part }) => (
   <div className="ex-part">
@@ -34,8 +34,7 @@ function renderSection(s: Section, i: number) {
 }
 
 /** Popup with the extra explanation for a word (content: src/content/explanations.json). */
-export default function ExplainModal({ stack, onClose, onBack, onOpen, onSpeak }: Props) {
-  const hanzi = stack[stack.length - 1]
+export default function ExplainModal({ hanzi, onClose, onOpen, onSpeak }: Props) {
   const ex = getExplanation(hanzi)
   const word = WORDS.find(w => w.hanzi === hanzi)
   const closeRef = useRef<HTMLButtonElement | null>(null)
@@ -54,7 +53,6 @@ export default function ExplainModal({ stack, onClose, onBack, onOpen, onSpeak }
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="ex-title" onClick={e => e.stopPropagation()}>
         <div className="modal-head">
-          {stack.length > 1 && <button className="icon-btn" onClick={onBack} aria-label="Back">←</button>}
           <span className="ex-hanzi">{word.hanzi}</span>
           <div className="ex-titles"><h2 id="ex-title">{ex.title ?? `About ${word.hanzi}`}</h2><small>{word.pinyin} · {word.meaning}</small></div>
           <button className="icon-btn" onClick={() => onSpeak(word.hanzi)} aria-label="Hear pronunciation">🔊</button>
@@ -68,7 +66,7 @@ export default function ExplainModal({ stack, onClose, onBack, onOpen, onSpeak }
               <div className="ex-related">{ex.related.map(h => {
                 const w = WORDS.find(x => x.hanzi === h)
                 if (!w) return null
-                const linked = hasExplanation(h) && !stack.includes(h)
+                const linked = hasExplanation(h) && h !== hanzi
                 return <button key={h} className="ex-chip" disabled={!linked} onClick={() => onOpen(h)} aria-label={`${h} ${w.pinyin} ${w.meaning}${hasExplanation(h) ? ', open explanation' : ''}`}><span>{h}</span><small>{w.pinyin}</small></button>
               })}</div>
             </section>)}
