@@ -17,7 +17,7 @@ export default function BossIntro({ boss, onClose }: { boss: BossId; onClose: ()
       <div className="modal boss-intro" role="dialog" aria-modal="true" aria-labelledby="boss-title" onClick={e => e.stopPropagation()}>
         <div className="modal-head">
           <span className="sum-icon" aria-hidden="true">{BOSSES[boss].emoji}</span>
-          <div className="ex-titles"><h2 id="boss-title">Boss: {info.title}</h2><small>Floor boss · replaces the elite</small></div>
+          <div className="ex-titles"><h2 id="boss-title">Boss: {info.title}</h2><small>Floor boss</small></div>
           <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="modal-body">

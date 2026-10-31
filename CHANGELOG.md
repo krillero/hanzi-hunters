@@ -1,5 +1,14 @@
 # Changelog / test log
 
+## 2026-10-31 — A boss at the end of every floor
+- **Every floor now ends with a boss** (replaces the elite entirely). The Shield Golem and Echo Wraith take turns: Golem on floors 1, 3, 5 …, Wraith on 2, 4, 6 …. More bosses can be added to `BOSS_ORDER` later.
+- **Gentler early bosses** that ramp up (HP ×1.3 → 1.7, damage ×0.8 → 1.15; the Golem has a 2-segment shield on floors 1–2 and 3 from floor 3). In the simulator the early pacing stays close to the pre-boss game (first run past floor 3 at 70 % accuracy: run 9 vs 6 before) and late runs end about one floor earlier (around floor 9–10 instead of 11).
+- **Intro card only the first time** you meet each boss (`habit.bossesMet`, additive). Boss loot: its own item on the first kill of that boss, then a normal drop roll with +30 % chance.
+- Removed the elite code path (names, banner, loot chance, sprite size flag); `eliteKill` in the auto-continue plan is now `floorCleared`.
+- **Preview:** `/?floor=1` (Golem) and `/?floor=2` (Wraith) jump straight to a boss.
+- **Longer floors:** `ENEMIES_PER_FLOOR` is a single constant. Tried 10 per floor: it typechecks and the pacing stays similar, but two tests' thresholds need updating and the header path overflows by ~22 px on a 320 px phone with 10 nodes. Not changed now (still 4 per floor).
+- Tests: boss tests rewritten for every-floor bosses, ramp, shield size per floor, boss loot; 80 tests pass; layout check 8/8; browser-checked intro once per boss type.
+
 ## 2026-10-31 — Phase 3: bosses, plus polish (branch dev/phase3-bosses)
 - **Bosses** replace the elite on every 5th floor. *Shield Golem* (floors 5, 15 …): a 3-segment shield blocks all damage; only correct pinyin (tone) answers break it, and the game asks only those while it is up. *Echo Wraith* (floors 10, 20 …): below 60 % HP it keeps asking the kind of question you got wrong most recently. Intro card, `BOSS · PHASE n/2` header tag, shield segments / ECHO tag in the arena, "💥 SHIELD DOWN" caption, damage chip "🛡 Shield −1 · 2 left", "BOSS DEFEATED" banner, a boss node in the floor path.
 - **Boss rewards:** a guaranteed boss-only item (Golem Plate: +12 max HP, +1 armor; Wraith Lantern: +15 % XP, +10 % mastery damage), 3× XP and gold, and the new *Boss slayer* badge (`habit.bosses`).

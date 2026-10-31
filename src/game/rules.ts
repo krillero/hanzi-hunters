@@ -12,18 +12,21 @@ export const ATTACK_PER_LEVEL = 1
 export const POTION_HEAL = 12
 export const xpForLevel = (level: number) => level * 30
 
-export const BOSS_EVERY = 5
-export const SHIELD_SEGMENTS = 3
-/** Boss multipliers over the base enemy stats (before the per-floor scaling). */
-export const BOSS_HP = 2.4, BOSS_DAMAGE = 1.3, BOSS_REWARD = 3
+export const SHIELD_SEGMENTS = 3   // the most a shield ever has
+/** Boss multipliers over the base enemy stats (before the per-floor scaling). Early floors get a gentler boss: they ramp up to the full values. */
+export const BOSS_HP = 1.7, BOSS_DAMAGE = 1.15, BOSS_REWARD = 2
+export const bossHpMult = (floor: number) => Math.min(BOSS_HP, 1.3 + 0.15 * (floor - 1))
+export const bossDamageMult = (floor: number) => Math.min(BOSS_DAMAGE, 0.8 + 0.1 * (floor - 1))
+/** Shield Golem: 2 segments on the first floors, 3 from floor 3. */
+export const shieldFor = (floor: number) => (floor <= 2 ? 2 : SHIELD_SEGMENTS)
 
-/** The last fight of a floor. Bosses (every 5th floor) replace the elite. */
+/** The last fight of a floor. Every floor ends with a boss. */
 export const isFinalFight = (kill: number) => kill === ENEMIES_PER_FLOOR - 1
-export const isBossFloor = (floor: number) => floor % BOSS_EVERY === 0
-export const isBoss = (floor: number, kill: number) => isBossFloor(floor) && isFinalFight(kill)
-export const isElite = (floor: number, kill: number) => isFinalFight(kill) && !isBossFloor(floor)
-/** Floors 5, 15, 25 ... are the Shield Golem; 10, 20, 30 ... the Echo Wraith. */
-export const bossIdFor = (floor: number): BossId => (Math.floor(floor / BOSS_EVERY) % 2 === 1 ? 'golem' : 'wraith')
+/** `floor` is kept in the signature so a later design can skip bosses on some floors. */
+export const isBoss = (_floor: number, kill: number) => isFinalFight(kill)
+/** The bosses take turns: Golem on floors 1, 3, 5 ..., Wraith on 2, 4, 6 .... Add a boss here (and in data.ts) to lengthen the cycle. */
+export const BOSS_ORDER: BossId[] = ['golem', 'wraith']
+export const bossIdFor = (floor: number): BossId => BOSS_ORDER[(Math.max(1, floor) - 1) % BOSS_ORDER.length]
 /** Echo Wraith: below this share of its HP it starts echoing the question kind you missed. */
 export const WRAITH_ECHO_AT = 0.6
 export const equippedGear = (all: GearItem[], loadout: Partial<Record<GearSlot, string>>) =>
@@ -39,18 +42,18 @@ export function equipGear(run: Run, name: string, allGear: GearItem[], b: Bonuse
   return { ...next, hp: Math.max(0, Math.min(afterMax, run.hp + (afterMax - beforeMax))) }
 }
 
-export type EnemyStats = { enemy: Enemy; hp: number; damage: number; xp: number; gold: number; elite: boolean; boss: BossId | null }
-/** Per floor (compounding): enemy HP +16 %, damage +11 %, rewards +8 %; the last enemy of a floor is an elite. */
+export type EnemyStats = { enemy: Enemy; hp: number; damage: number; xp: number; gold: number; boss: BossId | null }
+/** Per floor (compounding): enemy HP +16 %, damage +11 %, rewards +8 %; the last enemy of a floor is a boss. */
 export function enemyStats(enemies: Enemy[], floor: number, kill: number): EnemyStats {
   const boss = isBoss(floor, kill) ? bossIdFor(floor) : null
   const enemy = boss ? BOSSES[boss] : enemies[(((floor - 1) * ENEMIES_PER_FLOOR) + kill) % enemies.length]
-  const elite = isElite(floor, kill), f = floor - 1
+  const f = floor - 1
   return {
-    enemy, elite, boss,
-    hp: Math.round(enemy.hp * 1.16 ** f * (boss ? BOSS_HP : elite ? 1.6 : 1)),
-    damage: Math.round(enemy.damage * 1.11 ** f * (boss ? BOSS_DAMAGE : elite ? 1.25 : 1)),
-    xp: Math.round(enemy.xp * 1.08 ** f * (boss ? BOSS_REWARD : elite ? 2 : 1)),
-    gold: Math.round(enemy.gold * 1.08 ** f * (boss ? BOSS_REWARD : elite ? 2 : 1))
+    enemy, boss,
+    hp: Math.round(enemy.hp * 1.16 ** f * (boss ? bossHpMult(floor) : 1)),
+    damage: Math.round(enemy.damage * 1.11 ** f * (boss ? bossDamageMult(floor) : 1)),
+    xp: Math.round(enemy.xp * 1.08 ** f * (boss ? BOSS_REWARD : 1)),
+    gold: Math.round(enemy.gold * 1.08 ** f * (boss ? BOSS_REWARD : 1))
   }
 }
 
@@ -66,7 +69,7 @@ const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0 }
 
 export function startFight(run: Run, b: Bonuses, enemies: Enemy[]): Run {
   return { ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: b.hints, secondLeft: b.secondChance, reward: noReward, pendingXp: 0,
-    shield: isBoss(run.floor, run.kill) && bossIdFor(run.floor) === 'golem' ? SHIELD_SEGMENTS : 0 }
+    shield: isBoss(run.floor, run.kill) && bossIdFor(run.floor) === 'golem' ? shieldFor(run.floor) : 0 }
 }
 
 export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[]): Run {
@@ -78,7 +81,7 @@ export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[]): Run {
   return startFight({ ...base, hp: playerStats(base, b, allGear).maxHp }, b, enemies)
 }
 
-/** After a victory: move to the next enemy, or the next floor after the elite. */
+/** After a victory: move to the next enemy, or the next floor after the boss. */
 export function advance(run: Run, b: Bonuses, enemies: Enemy[]): Run {
   const done = run.kill + 1 >= ENEMIES_PER_FLOOR
   return startFight({ ...run, floor: done ? run.floor + 1 : run.floor, kill: done ? 0 : run.kill + 1, streak: run.streak }, b, enemies)
@@ -136,16 +139,15 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   if (killed) {
     xpGained = answerXp + run.pendingXp + foe.xp
     goldGained = Math.round(foe.gold * (1 + b.goldPct)) + gear.reduce((n, g) => n + g.goldFlat, 0)
-    const dropChance = Math.min(0.95, 0.5 + b.lootPct + (foe.elite ? 0.3 : 0))
+    const dropChance = Math.min(0.95, 0.5 + b.lootPct + (foe.boss ? 0.3 : 0))
     // Only gear you do not have yet can drop; once you own everything, kills simply drop nothing.
-    // Boss-only gear never drops from normal fights; a boss kill guarantees its own item first, then any unowned gear.
+    // Boss-only gear never drops from normal fights; a boss kill guarantees its own item (once); after that bosses roll with a better chance, like the old elite.
     const unowned = i.allGear.filter(g => !owned.includes(g.name))
     const pool = unowned.filter(g => !g.boss)
     const bossItem = foe.boss ? unowned.find(g => g.boss === foe.boss) : undefined
     let item: GearItem | undefined
     if (bossItem) item = bossItem
-    else if (foe.boss && pool.length > 0) item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
-    else if (!foe.boss && pool.length > 0 && i.roll.drop < dropChance) item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
+    else if (pool.length > 0 && i.roll.drop < dropChance) item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
     if (item) { loot = item; owned = [...owned, item.name]; if (!loadout[item.slot]) loadout = { ...loadout, [item.slot]: item.name } }
   }
 

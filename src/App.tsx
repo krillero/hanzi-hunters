@@ -23,7 +23,7 @@ import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
 import { isUpgrade, rarityOf as rarityOfItem } from './game/rarity'
 import {
-  ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, bankRun, bossIdFor, bossPhase, isBoss, isElite, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
+  ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, bankRun, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
 import type { Run, Saved } from './game/types'
@@ -150,7 +150,7 @@ export default function App() {
   const stats = run ? playerStats(run, bonuses, GEAR) : null
   const foe = run ? enemyStats(ENEMIES, run.floor, run.kill) : null
   const equipped = run ? equippedGear(GEAR, run.loadout) : []
-  const enemyKey = foe ? `${foe.enemy.sprite}:${foe.elite}:${foe.boss ?? ''}` : ''
+  const enemyKey = foe ? `${foe.enemy.sprite}:${foe.boss ?? ''}` : ''
   const enemyKeyRef = useRef(enemyKey)
   enemyKeyRef.current = enemyKey
   const phaseRef = useRef<Run['phase']>('fighting')
@@ -235,8 +235,8 @@ export default function App() {
       const scene = game.scene.getScene('PixelScene') as PixelScene
       sceneRef.current = scene
       if (import.meta.env.DEV) (window as unknown as { __hhScene?: PixelScene }).__hhScene = scene   // dev-only handle for browser tests
-      const [sprite, elite, boss] = enemyKeyRef.current.split(':')
-      if (sprite) scene.setEnemy(sprite as EnemySprite, elite === 'true', (boss || null) as BossId | null)
+      const [sprite, boss] = enemyKeyRef.current.split(':')
+      if (sprite) scene.setEnemy(sprite as EnemySprite, (boss || null) as BossId | null)
       if (phaseRef.current === 'victory') scene.hideMonster()
       if (phaseRef.current === 'defeat') scene.showDefeat(false)
     })
@@ -246,8 +246,8 @@ export default function App() {
   }, [inCamp, hasCard])
 
   useEffect(() => {
-    const [sprite, elite, boss] = enemyKey.split(':')
-    if (sprite) sceneRef.current?.setEnemy(sprite as EnemySprite, elite === 'true', (boss || null) as BossId | null)
+    const [sprite, boss] = enemyKey.split(':')
+    if (sprite) sceneRef.current?.setEnemy(sprite as EnemySprite, (boss || null) as BossId | null)
   }, [enemyKey])
 
   // ---- audio ----------------------------------------------------------------------------
@@ -337,7 +337,7 @@ export default function App() {
         flyMotes(from, document.querySelector('.player-card .xp-mini'), '#8ec5ff', 5)
       }, 380)
     }
-    const plan = autoContinuePlan({ isCorrect, outcome: r.outcome, eliteKill: r.outcome === 'victory' && isFinalFight(run.kill), setting: settings.autoContinue, masteryLevel: after })
+    const plan = autoContinuePlan({ isCorrect, outcome: r.outcome, floorCleared: r.outcome === 'victory' && isFinalFight(run.kill), setting: settings.autoContinue, masteryLevel: after })
     const masteryNote = !entry ? 'New word — added to your wordbook'
       : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
         : after < before ? `Back to level ${after} — it will return for review`
@@ -368,7 +368,11 @@ export default function App() {
     patch(s => ({ ...s, run: next }))
     setCard(makeCard(save.mastery, card?.word.hanzi ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
     setCaption(null)
-    if (isBoss(next.floor, next.kill)) setBossIntro(bossIdFor(next.floor))
+    if (isBoss(next.floor, next.kill)) {
+      // The full intro card only the first time you meet each boss; later floors just show the BOSS tag
+      const id = bossIdFor(next.floor)
+      if (!save.habit.bossesMet.includes(id)) { setBossIntro(id); patch(s => ({ ...s, habit: { ...s.habit, bossesMet: [...s.habit.bossesMet, id] } })) }
+    }
     sceneRef.current?.resetMonster()
     if (next.floor > run.floor) { setFloorBanner(`FLOOR ${next.floor}`); window.setTimeout(() => setFloorBanner(''), 1800); setFloorStats(emptyStats()) }
   }
@@ -524,7 +528,7 @@ export default function App() {
   const pips = entry ? entry.lv : -1
   const equippedAttack = equipped.reduce((n, item) => n + item.attack, 0)
   const equippedHp = equipped.reduce((n, item) => n + item.hp, 0)
-  const lootChance = Math.min(0.95, 0.5 + bonuses.lootPct + (foe.boss ? 0.5 : foe.elite ? 0.3 : 0))
+  const lootChance = Math.min(0.95, 0.5 + bonuses.lootPct + (foe.boss ? 0.3 : 0))
   const ownedUpgrades = save.meta.upgrades.map(id => nodeById(id)).filter((node): node is NonNullable<typeof node> => !!node)
   const toggleGear = () => {
     setShowBag(v => !v); setShowWords(false)
@@ -536,12 +540,12 @@ export default function App() {
       {topbar}
 
       <section className="hero-strip">
-        <div><p className="eyebrow">FLOOR {pad(run.floor)} · ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.boss ? ' · BOSS' : foe.elite ? ' · ELITE' : ''}</p><h1>The Mosslight Cavern</h1><p className="subtitle">Every word is a weapon. Every run makes you stronger.</p></div>
+        <div><p className="eyebrow">FLOOR {pad(run.floor)} · ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.boss ? ' · BOSS' : ''}</p><h1>The Mosslight Cavern</h1><p className="subtitle">Every word is a weapon. Every run makes you stronger.</p></div>
         <div className="progress-chip"><span>📖</span><strong>{masteredCount(save.mastery)}<small> / {WORDS.length} mastered</small></strong></div>
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">
-        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : foe.elite ? ', elite' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : 'elite') : ''}`} />)}</small>{foe.boss && <b className="boss-tag">BOSS · PHASE {bossPhase(run, foe.hp)}/2</b>}</div>
+        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small>{foe.boss && <b className="boss-tag">BOSS · PHASE {bossPhase(run, foe.hp)}/2</b>}</div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
         <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
       </header>
@@ -562,7 +566,7 @@ export default function App() {
                 {run.phase === 'fighting' || run.phase === 'victory' ? <ComboBadge streak={run.streak} bonusPct={Math.round(bonuses.streakDmgPct * 100)} /> : null}
                 {run.shield > 0 && run.phase === 'fighting' && <div className="boss-shield" role="img" aria-label={`Shield: ${run.shield} of ${SHIELD_SEGMENTS} segments left`}>SHIELD {Array.from({ length: SHIELD_SEGMENTS }, (_, i) => <i key={i} className={i < run.shield ? '' : 'off'} />)}</div>}
                 {foe.boss === 'wraith' && run.phase === 'fighting' && bossPhase(run, foe.hp) === 2 && <div className="boss-shield echo" role="img" aria-label="Echo phase: your weak spot comes back">ECHO</div>}
-                {run.phase === 'victory' && <span className="arena-banner win">{foe.boss ? 'BOSS DEFEATED' : isElite(run.floor, run.kill) ? 'ELITE VICTORY' : 'VICTORY'}</span>}
+                {run.phase === 'victory' && <span className="arena-banner win">{foe.boss ? 'BOSS DEFEATED' : 'VICTORY'}</span>}
                 {run.phase === 'defeat' && <span className="arena-banner lose">YOU DIED</span>}
                 {floorBanner && run.phase === 'fighting' && <span className="arena-banner floor">{floorBanner}</span>}
                 {levelUp && <div className="arena-levelup" role="status"><span className="lu-badge">LEVEL UP</span><strong>LV {levelUp.from} → {levelUp.to}</strong><small>{[levelUp.hp > 0 && `+${levelUp.hp} max HP`, levelUp.attack > 0 && `+${levelUp.attack} attack`].filter(Boolean).join(' · ') || 'Stronger'}</small></div>}
@@ -587,7 +591,7 @@ export default function App() {
                 <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className={`health-fill player-fill ${levelUp ? "hp-glow" : ""}`} style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
-                <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.elite ? 'Elite ' : ''}{foe.enemy.name}</strong><small>{foe.boss ? 'BOSS' : 'OPPONENT'}</small></div></div>
+                <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.enemy.name}</strong><small>{foe.boss ? 'BOSS' : 'OPPONENT'}</small></div></div>
                 <div className="bar-label"><span>ENEMY · HP</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
               </div>
             </div>

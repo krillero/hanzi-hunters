@@ -25,11 +25,11 @@ test('upgrades shape the start of a run but gear/level never carry over', () => 
   assert.equal(playerStats(r, b, GEAR).attack, 7)
 })
 
-test('enemies scale with floor; the 4th enemy is an elite', () => {
+test('enemies scale with floor; the last enemy of every floor is a boss', () => {
   const f1 = enemyStats(ENEMIES, 1, 0), f5 = enemyStats(ENEMIES, 5, 0)
   assert.ok(f5.hp > f1.hp && f5.damage > f1.damage && f5.xp > f1.xp && f5.gold > f1.gold)
-  const elite = enemyStats(ENEMIES, 1, ENEMIES_PER_FLOOR - 1), normal = enemyStats(ENEMIES, 1, ENEMIES_PER_FLOOR - 2)
-  assert.ok(elite.elite && !normal.elite && elite.xp >= normal.xp * 1.5 && elite.gold >= normal.gold * 1.5)
+  const boss = enemyStats(ENEMIES, 1, ENEMIES_PER_FLOOR - 1), normal = enemyStats(ENEMIES, 1, ENEMIES_PER_FLOOR - 2)
+  assert.ok(boss.boss && !normal.boss && boss.xp >= normal.xp * 1.5 && boss.gold >= normal.gold * 1.5 && boss.hp > normal.hp)
   assert.equal(enemyStats(ENEMIES, 1, 0).hp, 24)
 })
 
@@ -69,14 +69,14 @@ test('combo and execute bonuses', () => {
   assert.equal(ask({ ...run0(), enemyHp: 8 }, { bonuses: b }).damage, Math.round(13 * 1.35))
 })
 
-test('loot: only gear you do not own can drop; elites drop more often', () => {
+test('loot: only gear you do not own can drop; bosses drop more often', () => {
   const r = { ...run0(), enemyHp: 1 }
   const drop = ask(r, { roll: { drop: 0.1, item: 0 } }); assert.equal(drop.loot?.name, GEAR[0].name); assert.deepEqual(drop.run.gear, [GEAR[0].name]); assert.equal(drop.run.loadout.Weapon, GEAR[0].name)
   const second = ask({ ...r, gear: [GEAR[0].name] }, { roll: { drop: 0.1, item: 0 } }); assert.equal(second.loot?.name, GEAR[1].name, 'skips owned gear')
   const all = ask({ ...r, gear: GEAR.map(g => g.name) }, { roll: { drop: 0.1, item: 0 } }); assert.equal(all.loot, null, 'owning everything drops nothing')
   for (let k = 0; k < 20; k++) { const x = ask({ ...r, gear: [GEAR[0].name] }, { roll: { drop: 0.1, item: k / 20 } }); assert.notEqual(x.loot?.name, GEAR[0].name) }
-  const elite = { ...r, kill: ENEMIES_PER_FLOOR - 1 }
-  assert.ok(ask(elite, { roll: { drop: 0.7, item: 0.5 } }).loot, 'elite drops at 0.7')
+  const boss = { ...r, kill: ENEMIES_PER_FLOOR - 1, gear: [GEAR.find(g => g.boss === 'golem')!.name] }   // own boss item already: it rolls like a lucky kill
+  assert.ok(ask({ ...boss, shield: 0 }, { roll: { drop: 0.7, item: 0.5 } }).loot, 'a boss drops at 0.7')
   assert.equal(ask(r, { roll: { drop: 0.7, item: 0.5 } }).loot, null, 'normal does not')
 })
 

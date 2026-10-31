@@ -6,10 +6,10 @@ import { DEFAULT_SETTINGS, loadSettings, sanitizeSettings } from '../src/setting
 const plan = (
   isCorrect: boolean,
   outcome: 'continue' | 'victory' | 'defeat',
-  eliteKill = false,
+  floorCleared = false,
   setting: AutoContinue = 'quick',
   masteryLevel = 2
-) => autoContinuePlan({ isCorrect, outcome, eliteKill, setting, masteryLevel })
+) => autoContinuePlan({ isCorrect, outcome, floorCleared, setting, masteryLevel })
 
 test('right answers continue using the selected speed', () => {
   assert.deepEqual(plan(true, 'continue'), { mode: 'question', delay: AUTO_DELAYS.quick.question })
@@ -30,7 +30,7 @@ test('Learn first pauses below mastery level 2, then auto-advances after 0.5 sec
 test('the game pauses for wrong answers, defeat and clearing a floor', () => {
   for (const outcome of ['continue', 'victory', 'defeat'] as const) assert.equal(plan(false, outcome), null, `wrong answer / ${outcome}`)
   assert.equal(plan(true, 'defeat'), null, 'a right answer can still end in defeat (counterattack)')
-  assert.equal(plan(true, 'victory', true), null, 'elite kill = floor cleared')
+  assert.equal(plan(true, 'victory', true), null, 'boss kill = floor cleared')
   assert.equal(plan(true, 'victory', true, 'learning', 2), null, 'Learn first also pauses when clearing a floor')
 })
 

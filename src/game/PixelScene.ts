@@ -30,7 +30,6 @@ export class PixelScene extends Phaser.Scene {
   private heroHome = { x: 0, y: 0 }
   private monsterHome = { x: 0, y: 0 }
   private actorScale = 3
-  private elite = false
 
   constructor() { super('PixelScene') }
 
@@ -156,11 +155,10 @@ export class PixelScene extends Phaser.Scene {
 
   // ---- public API used by React ------------------------------------------------------
 
-  private monsterScale() { return this.actorScale + 1 + (this.elite ? 1 : 0) }
+  private monsterScale() { return this.actorScale + 1 + (this.boss ? 1 : 0) }
 
-  setEnemy(key: EnemySprite, elite = false, boss: 'golem' | 'wraith' | null = null) {
+  setEnemy(key: EnemySprite, boss: 'golem' | 'wraith' | null = null) {
     this.enemyKey = key
-    this.elite = elite || boss !== null
     this.boss = boss
     if (this.ready) this.build()
   }

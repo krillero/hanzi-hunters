@@ -45,7 +45,7 @@ export const GEAR: GearItem[] = [
   { name: 'Wraith Lantern', slot: 'Accessory', icon: '🏮', bonus: '+15% XP · +10% mastery damage', attack: 0, hp: 0, armor: 0, xpPct: 0.15, masteryPct: 0.1, goldFlat: 0, boss: 'wraith' }
 ]
 
-/** Bosses replace the elite at the end of every 5th floor. Base stats are scaled in rules.ts (BOSS_*). */
+/** Every floor ends with a boss (they take turns, see BOSS_ORDER in rules.ts). Base stats are scaled in rules.ts (BOSS_*). */
 export const BOSSES: Record<BossId, Enemy> = {
   golem: { name: 'Shield Golem', sprite: 'golem', emoji: '🗿', hp: 30, damage: 6, xp: 16, gold: 10 },
   wraith: { name: 'Echo Wraith', sprite: 'wraith', emoji: '👻', hp: 26, damage: 6, xp: 16, gold: 10 }
