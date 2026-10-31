@@ -12,6 +12,8 @@ export type RunPhase = 'fighting' | 'victory' | 'defeat'
 export type Run = {
   floor: number; kill: number; kills: number
   level: number; xp: number; hp: number; enemyHp: number
+  /** XP earned by answers in the current fight; paid out (with the monster's XP) only when it is killed. */
+  pendingXp: number
   gold: number; potions: number; gear: string[]; loadout: Partial<Record<GearSlot, string>>; streak: number
   hintsLeft: number; secondLeft: number
   phase: RunPhase

@@ -51,14 +51,14 @@ export function playerStats(run: Pick<Run, 'level' | 'gear' | 'loadout'>, b: Bon
 const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0 }
 
 export function startFight(run: Run, b: Bonuses, enemies: Enemy[]): Run {
-  return { ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: b.hints, secondLeft: b.secondChance, reward: noReward }
+  return { ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: b.hints, secondLeft: b.secondChance, reward: noReward, pendingXp: 0 }
 }
 
 export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[]): Run {
   const base: Run = {
     floor: 1, kill: 0, kills: 0, level: 1, xp: 0, hp: 0, enemyHp: 0, gold: 0, potions: 1 + b.startPotions,
     gear: allGear.filter(g => b.startGear.includes(g.name)).map(g => g.name), loadout: Object.fromEntries(allGear.filter(g => b.startGear.includes(g.name)).map(g => [g.slot, g.name])) as Partial<Record<GearSlot, string>>, streak: 0, hintsLeft: 0, secondLeft: 0,
-    phase: 'fighting', reward: noReward
+    phase: 'fighting', reward: noReward, pendingXp: 0
   }
   return startFight({ ...base, hp: playerStats(base, b, allGear).maxHp }, b, enemies)
 }
@@ -79,6 +79,8 @@ export type AnswerInput = {
 export type AnswerResult = {
   run: Run; damage: number; counter: number; savedBySecondChance: boolean
   outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; comboHit: boolean
+  /** HP actually restored by the Second Wind upgrade (healOnKill) on this kill; 0 without the upgrade or at full HP. */
+  healedOnKill: number
 }
 
 export function resolveAnswer(i: AnswerInput): AnswerResult {
@@ -104,10 +106,12 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   }
   let hp = Math.max(0, run.hp - counter)
 
-  let xpGained = Math.round((isCorrect ? 5 : 2) * (1 + b.xpPct + gearPct(gear, 'xpPct')))
+  // Experience is paid only when the monster dies: what each answer earned is banked in `pendingXp` and paid out with the kill.
+  const answerXp = Math.round((isCorrect ? 5 : 2) * (1 + b.xpPct + gearPct(gear, 'xpPct')))
+  let xpGained = 0
   let goldGained = 0, loot: GearItem | null = null, owned = run.gear, loadout = run.loadout
   if (killed) {
-    xpGained += foe.xp
+    xpGained = answerXp + run.pendingXp + foe.xp
     goldGained = Math.round(foe.gold * (1 + b.goldPct)) + gear.reduce((n, g) => n + g.goldFlat, 0)
     const dropChance = Math.min(0.95, 0.5 + b.lootPct + (foe.elite ? 0.3 : 0))
     // Only gear you do not have yet can drop; once you own everything, kills simply drop nothing.
@@ -120,16 +124,18 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
 
   let xp = run.xp + xpGained, level = run.level, levelUps = 0
   while (xp >= xpForLevel(level)) { xp -= xpForLevel(level); level += 1; levelUps += 1 }
-  const next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hp, secondLeft, streak: isCorrect ? run.streak + 1 : 0 }
+  const next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hp, secondLeft, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp }
   const grown = playerStats(next, b, i.allGear)
   const oldMax = playerStats(run, b, i.allGear).maxHp
   if (loadout !== run.loadout && grown.maxHp > oldMax && hp > 0) hp = Math.min(grown.maxHp, hp + grown.maxHp - oldMax)
   if (levelUps && hp > 0) hp = Math.min(grown.maxHp, hp + 8 * levelUps)
+  const hpBeforeKillHeal = hp
   if (killed && hp > 0) hp = Math.min(grown.maxHp, hp + b.healOnKill)
+  const healedOnKill = hp - hpBeforeKillHeal
 
   const outcome = killed ? 'victory' : hp <= 0 ? 'defeat' : 'continue'
   return {
-    damage, counter, savedBySecondChance, outcome, loot, comboHit,
+    damage, counter, savedBySecondChance, outcome, loot, comboHit, healedOnKill,
     run: {
       ...next, hp,
       gold: run.gold + goldGained, kills: run.kills + (killed ? 1 : 0),

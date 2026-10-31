@@ -34,7 +34,7 @@ test('enemies scale with floor; the 4th enemy is an elite', () => {
 })
 
 test('correct answer: damage, learning xp; wrong answer: weak hit and counterattack', () => {
-  const ok = ask(); assert.equal(ok.damage, 13); assert.equal(ok.run.enemyHp, 11); assert.equal(ok.run.hp, 25); assert.equal(ok.run.xp, 5)
+  const ok = ask(); assert.equal(ok.damage, 13); assert.equal(ok.run.enemyHp, 11); assert.equal(ok.run.hp, 25); assert.equal(ok.run.xp, 0, 'no XP in the middle of a fight'); assert.equal(ok.run.pendingXp, 5, 'it is banked for the kill')
   const bad = ask(run0(), { isCorrect: false }); assert.equal(bad.damage, 2); assert.equal(bad.run.hp, 25); assert.equal(bad.run.streak, 0)
 })
 
@@ -125,4 +125,36 @@ test('dying banks all gold, records best floor, and loses nothing else permanent
   assert.deepEqual(m, { gold: 65, upgrades: ['W1'], bestFloor: 5, runs: 3 })
   assert.deepEqual(summary, { floor: 5, kills: 17, level: 4, goldBanked: 55 })
   assert.equal(bankRun(meta, { ...run0(), floor: 2 }).meta.bestFloor, 3)
+})
+
+test('XP is paid only when the monster is killed (answers bank it, the kill pays it out)', () => {
+  const foe = enemyStats(ENEMIES, 1, 0)
+  let r = run0()
+  const a1 = ask(r); r = a1.run; assert.equal(r.xp, 0); assert.equal(r.pendingXp, 5)
+  const a2 = ask({ ...r, enemyHp: 500 }, { isCorrect: false }); assert.equal(a2.run.xp, 0); assert.equal(a2.run.pendingXp, 7, 'a wrong answer banks 2')
+  const kill = ask({ ...a2.run, enemyHp: 1 })
+  assert.equal(kill.outcome, 'victory')
+  assert.equal(kill.run.reward.xp, 7 + 5 + foe.xp, 'banked + this answer + monster XP')
+  assert.equal(kill.run.pendingXp, 0, 'bank is emptied')
+  const q = computeBonuses(['W1', 'W2', 'W3', 'W4', 'W5', 'S1', 'S2'])
+  assert.ok(q.xpPct > 0)
+  assert.ok(ask(run0(), { bonuses: q }).run.pendingXp >= 5, 'XP bonuses still apply to the banked XP')
+  assert.equal(startFight({ ...kill.run, pendingXp: 9 }, none, ENEMIES).pendingXp, 0, 'a new fight starts empty')
+  assert.equal(advance({ ...kill.run, pendingXp: 9 }, none, ENEMIES).pendingXp, 0)
+  const dead = ask({ ...run0(), hp: 1, pendingXp: 20 }, { isCorrect: false })
+  assert.equal(dead.outcome, 'defeat'); assert.equal(dead.run.xp, 0, 'dying pays nothing')
+})
+
+test('healedOnKill reports only the Second Wind upgrade, not the level-up heal or new gear', () => {
+  const dying = { ...run0(), enemyHp: 1, hp: 10, xp: 9999 }                    // kill + level-up(s)
+  const noUpgrade = ask(dying)
+  assert.equal(noUpgrade.outcome, 'victory'); assert.ok(noUpgrade.run.level > 1)
+  assert.equal(noUpgrade.healedOnKill, 0, 'level-up healing is not Second Wind')
+  assert.ok(noUpgrade.run.hp > 10, 'but the level-up still healed')
+  const b = computeBonuses(['G1', 'G2', 'G3', 'G4'])
+  const low = { ...newRun(b, GEAR, ENEMIES), enemyHp: 1, hp: 10 }
+  assert.equal(ask(low, { bonuses: b }).healedOnKill, 5)
+  const nearFull = { ...low, hp: playerStats(low, b, GEAR).maxHp - 2 }
+  assert.equal(ask(nearFull, { bonuses: b }).healedOnKill, 2, 'capped by max HP')
+  assert.equal(ask({ ...low, enemyHp: 500 }, { bonuses: b }).healedOnKill, 0, 'no kill, no heal')
 })
