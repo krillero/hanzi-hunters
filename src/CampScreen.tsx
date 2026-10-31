@@ -4,11 +4,12 @@ import { BRANCHES, branchNodes, nodeState, upgradeCost } from './game/upgrades'
 import { MAX_LV, masteredCount } from './game/mastery'
 import type { Saved } from './game/types'
 import AppData from './AppData'
+import { BADGES } from './game/habit'
 
-type Props = { save: Saved; onBuy: (id: string) => void; onStart: () => void; onReset: () => void; message: string; outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void }
+type Props = { save: Saved; warmup: { available: boolean; done: boolean; words: string[] }; onWarmup: () => void; onBuy: (id: string) => void; onStart: () => void; onReset: () => void; message: string; outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void }
 
-export default function CampScreen({ save, onBuy, onStart, onReset, message, outdated, onUpdate, onExport, onImport }: Props) {
-  const { meta, lastRun, mastery } = save
+export default function CampScreen({ save, warmup, onWarmup, onBuy, onStart, onReset, message, outdated, onUpdate, onExport, onImport }: Props) {
+  const { meta, lastRun, mastery, habit } = save
   const [tab, setTab] = useState(BRANCHES[0].id)
   const owned = (branch: string) => branchNodes(branch).filter(n => meta.upgrades.includes(n.id)).length
 
@@ -33,7 +34,23 @@ export default function CampScreen({ save, onBuy, onStart, onReset, message, out
         <span>Runs {meta.runs}</span>
         <span>Mastered {masteredCount(mastery)}/{WORDS.length}</span>
       </div>
+      <div className="camp-counters" role="status" aria-label="Your learning progress">
+        <div><b>{Object.keys(mastery).length}</b><small>WORDS KNOWN</small></div>
+        <div className="good"><b>{masteredCount(mastery)}</b><small>MASTERED</small></div>
+        <div><b>{habit.daysPlayed}</b><small>DAYS PLAYED</small></div>
+      </div>
+      {warmup.available && (
+        <div className="warmup-offer">
+          <div><span className="eyebrow">DAILY WARM-UP · OPTIONAL</span><strong>Review {warmup.words.length} words · no HP risk</strong><small>{warmup.words.join(' · ')}</small></div>
+          <button className="bar-btn main" onClick={onWarmup}>Start</button>
+        </div>
+      )}
+      {!warmup.available && warmup.done && <p className="hint-text warmup-done">✓ Today's warm-up is done. A new one is ready tomorrow.</p>}
       {message && <div className="toast camp-toast"><span>{message}</span></div>}
+
+      <div className="badges" aria-label="Milestones">
+        {BADGES.map(b => { const got = habit.badges.includes(b.id); return <span key={b.id} className={`badge ${got ? 'got' : ''}`} title={`${b.name}: ${b.desc}`} aria-label={`${b.name}, ${got ? 'earned' : 'not yet: ' + b.desc}`}><i aria-hidden="true">{b.icon}</i>{b.name}</span> })}
+      </div>
 
       <div className="tree-tabs" role="tablist">
         {BRANCHES.map(b => (
