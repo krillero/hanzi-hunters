@@ -20,8 +20,18 @@ import type { Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
-type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean }
+type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean; combo: number; weak: boolean }
+type Caption = { side: 'hero' | 'monster'; kind: 'combo' | 'weak' | 'block' | 'heal'; text: string }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
+
+/** Streak badge in the arena: pips until the combo bonus starts (needs the Combo Strikes upgrade), a flame while it is active. */
+function ComboBadge({ streak, bonusPct, compact }: { streak: number; bonusPct: number; compact: boolean }) {
+  if (streak < 1 || (streak < 2 && bonusPct === 0)) return null
+  const active = streak >= 2 && bonusPct > 0
+  return <span className={`combo-badge ${active ? 'hot' : ''}`} aria-label={`Streak ${streak}${active ? `, combo bonus +${bonusPct}% on the next hit` : ''}`}>
+    {active ? <>🔥 ×{streak}{!compact && <small>+{bonusPct}% next hit</small>}</> : bonusPct > 0 ? <><i className="pips" aria-hidden="true"><u className="on" /><u /></i><small>1 more for 🔥 +{bonusPct}%</small></> : <>×{streak}</>}
+  </span>
+}
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -68,6 +78,8 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
   const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
+  const [caption, setCaption] = useState<Caption | null>(null)   // text over a fighter in the arena (HTML, so it stays crisp)
+  const [floorBanner, setFloorBanner] = useState('')
   const [reveal, setReveal] = useState<{ chosen: string; plan: Exclude<AutoPlan, null>; exchange: CombatExchange } | null>(null)   // a right answer that continues by itself
   const [menuOpen, setMenuOpen] = useState(false)
   const [newLoot, setNewLoot] = useState(false)
@@ -105,8 +117,6 @@ export default function App() {
   phaseRef.current = run?.phase ?? 'fighting'
   const killRef = useRef(0)
   killRef.current = run?.kill ?? 0
-  const streakRef = useRef(0)
-  streakRef.current = run?.streak ?? 0
 
   const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen): Card => {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
@@ -159,8 +169,7 @@ export default function App() {
       if (import.meta.env.DEV) (window as unknown as { __hhScene?: PixelScene }).__hhScene = scene   // dev-only handle for browser tests
       const [sprite, elite] = enemyKeyRef.current.split(':')
       if (sprite) scene.setEnemy(sprite as 'slime' | 'imp' | 'bat', elite === 'true')
-      if (phaseRef.current === 'victory') { scene.hideMonster(); scene.showVictory(killRef.current >= ENEMIES_PER_FLOOR - 1 ? 'ELITE SLAIN!' : 'ENEMY SLAIN!', false) }
-      scene.setCombo(streakRef.current)
+      if (phaseRef.current === 'victory') scene.hideMonster()
       if (phaseRef.current === 'defeat') scene.showDefeat(false)
     })
     const ro = new ResizeObserver(() => game.scale.refresh())
@@ -196,7 +205,7 @@ export default function App() {
   const answerQuestion = (option: string) => {
     if (!run || !card || answerLock.current || feedback || reveal || run.phase !== 'fighting' || eliminated.includes(option)) return
     answerLock.current = true
-    sceneRef.current?.clearFloats()
+    setCaption(null)
     const { word, question } = card
     const entry = save.mastery[word.hanzi]
     const isCorrect = option === question.answer
@@ -207,12 +216,13 @@ export default function App() {
     const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
     const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
-    sceneRef.current?.playHit('monster', r.comboHit ? 'COMBO!' : !isCorrect ? 'WEAK HIT' : undefined)
-    if (r.outcome === 'victory') { sceneRef.current?.hideMonster(); sceneRef.current?.showVictory(isElite(run.kill) ? 'ELITE SLAIN!' : 'ENEMY SLAIN!') }
+    sceneRef.current?.playHit('monster')
+    if (r.comboHit) setCaption({ side: 'monster', kind: 'combo', text: `🔥 COMBO +${Math.round(bonuses.streakDmgPct * 100)}%` })
+    else if (!isCorrect) setCaption({ side: 'monster', kind: 'weak', text: 'WEAK HIT' })
+    if (r.outcome === 'victory') sceneRef.current?.hideMonster()
     else if (r.counter > 0) sceneRef.current?.playHit('hero')
-    else if (r.savedBySecondChance) sceneRef.current?.float('hero', 'BLOCKED', '#8ed1ff')
+    else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: '🛡 BLOCKED' })
 
-    sceneRef.current?.setCombo(r.run.streak)
     if (r.outcome === 'defeat') sceneRef.current?.showDefeat(true)
     patch(s => ({ ...s, run: r.run, mastery }))
     const plan = autoContinuePlan({ isCorrect, outcome: r.outcome, eliteKill: r.outcome === 'victory' && isElite(run.kill), setting: settings.autoContinue, masteryLevel: after })
@@ -220,7 +230,7 @@ export default function App() {
       : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
         : after < before ? `Back to level ${after} — it will return for review`
           : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : 'One more correct in a row to level up') : 'Review this one — it will come back'
-    const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory' }
+    const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
       correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, lv: after, chosen: option, answer: question.answer,
@@ -236,7 +246,7 @@ export default function App() {
 
   const dismissFeedback = () => {
     setFeedback(null)
-    sceneRef.current?.clearFloats()
+    setCaption(null)
     if (run?.phase === 'fighting') { setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
   }
 
@@ -245,9 +255,9 @@ export default function App() {
     const next = advance(run, bonuses, ENEMIES)
     patch(s => ({ ...s, run: next }))
     setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); setFeedback(null); answerLock.current = false
-    sceneRef.current?.clearFloats()
+    setCaption(null)
     sceneRef.current?.resetMonster()
-    if (next.floor > run.floor) { sceneRef.current?.float('banner', `FLOOR ${next.floor}`, '#f0cb78'); window.setTimeout(() => sceneRef.current?.clearBanner(), 1800) }
+    if (next.floor > run.floor) { setFloorBanner(`FLOOR ${next.floor}`); window.setTimeout(() => setFloorBanner(''), 1800) }
   }
 
   /** Leave the in-place reveal of a right answer: next question, or next monster after a kill. */
@@ -256,7 +266,7 @@ export default function App() {
     const mode = reveal.plan.mode
     setReveal(null)
     if (mode === 'enemy') nextEnemy()
-    else { sceneRef.current?.clearFloats(); setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
+    else { setCaption(null); setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
   const blockingOpen = explain !== null || showBag || showWords || menuOpen
@@ -283,7 +293,7 @@ export default function App() {
     const next = drinkPotion(run, bonuses, GEAR)
     if (!next) return
     patch(s => ({ ...s, run: next }))
-    sceneRef.current?.float('hero', `+${next.hp - run.hp}`, '#8ee0a9')
+    setCaption({ side: 'hero', kind: 'heal', text: `+${next.hp - run.hp} HP` })
   }
 
   const useHint = () => {
@@ -415,6 +425,13 @@ export default function App() {
               </div></div>
             <div className="arena-stage">
               <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
+              <div className="arena-hud" aria-hidden={!caption && !floorBanner}>
+                {run.phase === 'fighting' || run.phase === 'victory' ? <ComboBadge streak={run.streak} bonusPct={Math.round(bonuses.streakDmgPct * 100)} compact={run.phase === 'victory'} /> : null}
+                {run.phase === 'victory' && <span className="arena-banner win">{isElite(run.kill) ? 'ELITE VICTORY' : 'VICTORY'}</span>}
+                {run.phase === 'defeat' && <span className="arena-banner lose">YOU DIED</span>}
+                {floorBanner && run.phase === 'fighting' && <span className="arena-banner floor">{floorBanner}</span>}
+                {caption && run.phase !== 'defeat' && <span className={`arena-caption ${caption.side} ${caption.kind}`} role="status">{caption.text}</span>}
+              </div>
               {run.phase === 'victory' && <div className="arena-rewards" role="status" aria-label="Battle rewards">
                 <span>+{run.reward.xp} XP</span>
                 <span>🪙 +{run.reward.gold}</span>
@@ -422,7 +439,7 @@ export default function App() {
                 {run.reward.loot && <span className="hot loot">🎁 {run.reward.loot}</span>}
               </div>}
               {run.phase !== 'victory' && (feedback || reveal) && <div className="arena-rewards arena-exchange" role="status" aria-label="Combat result">
-                <span>⚔ −{(feedback ?? reveal)!.exchange.damage}</span>
+                <span className={(feedback ?? reveal)!.exchange.combo > 0 ? 'combo2' : (feedback ?? reveal)!.exchange.weak ? 'weak' : ''}>⚔ −{(feedback ?? reveal)!.exchange.damage}{(feedback ?? reveal)!.exchange.combo > 0 ? ` · 🔥 +${(feedback ?? reveal)!.exchange.combo}%` : ''}</span>
                 {(feedback ?? reveal)!.exchange.blocked ? <span>🛡 Blocked</span> : (feedback ?? reveal)!.exchange.counter > 0 ? <span className="hurt">💔 −{(feedback ?? reveal)!.exchange.counter}</span> : <span>No counterattack</span>}
               </div>}
             </div>
