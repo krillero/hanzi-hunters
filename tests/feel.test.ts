@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { HAPTICS, sfxScore, totalDuration, type SfxName } from '../src/audio.ts'
-import { RARITY_BY_NAME, rarityOf } from '../src/game/rarity.ts'
+import { RARITY_BY_NAME, compareGear, gearScore, isUpgrade, rarityOf } from '../src/game/rarity.ts'
 import { accuracyPct, emptyStats, recordAnswer } from '../src/game/runStats.ts'
 import { GEAR } from '../src/data.ts'
 
@@ -56,4 +56,16 @@ test('run stats: new words, promotions, mastery, misses, streak and accuracy', (
   assert.equal(accuracyPct(emptyStats()), 0)
   const again = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 4, levelBefore: -1, levelAfter: 0, gold: 0 })
   assert.deepEqual(again.newWords, ['石'], 'no duplicates')
+})
+
+test('gear comparison: rows only for stats that matter, deltas, upgrade flag', () => {
+  const g = (n: string) => GEAR.find(x => x.name === n)!
+  const rows = compareGear(g('Guardian Helm'), g('Mossy Vest'))
+  assert.deepEqual(rows.map(r => [r.label, r.now, r.next, r.delta]), [['Max HP', 8, 4, -4], ['Armor', 0, 1, 1]])
+  assert.deepEqual(compareGear(g('Copper Blade'), null).map(r => r.label), ['Attack'], 'empty slot: everything is a gain')
+  assert.ok(compareGear(g('Copper Blade'), null).every(r => r.delta > 0))
+  assert.equal(isUpgrade(g('Copper Blade'), null), true)
+  assert.equal(isUpgrade(g('Golem Plate'), g('Mossy Vest')), true)
+  assert.equal(isUpgrade(g('Mossy Vest'), g('Golem Plate')), false)
+  assert.ok(gearScore(g('Golem Plate')) > gearScore(g('Mossy Vest')))
 })

@@ -4,6 +4,7 @@
 |---|---|---|---|
 | `characters/hero.png` | 24×24 | 0 idle, 1 idle (bob), 2 attack | 2–5× (`height/62`) |
 | `enemies/slime.png`, `imp.png`, `bat.png` | 16×16 | 0, 1 idle | actor scale + 1 |
+| `enemies/golem.png`, `wraith.png` (bosses) | 16×16 | 0, 1 idle | actor scale + 2, with a pulsing aura. Recoloured copies of the imp and bat made by `tools/make_boss_sprites.py` (original art; re-run the script after changing the base sprites) |
 | `tiles/dungeon.png` | 16×16 | 0 floor, 1 floor (cracked), 2 floor (moss), 3 wall brick, 4 wall base | 2× (3× if scene ≥ 250 px tall) |
 | `props/torch.png` | 16×16 | 0, 1 flame | tile scale |
 | `props/chest.png` | 16×16 | 0 closed, 1 open | actor scale + 1 |

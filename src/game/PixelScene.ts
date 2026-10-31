@@ -1,6 +1,9 @@
+import type { BossId } from '../data'
 import Phaser from 'phaser'
 
-export type EnemySprite = 'slime' | 'imp' | 'bat'
+export type EnemySprite = 'slime' | 'imp' | 'bat' | 'golem' | 'wraith' | 'scribe' | 'trickster'
+const ENEMY_SPRITES: EnemySprite[] = ['slime', 'imp', 'bat', 'golem', 'wraith', 'scribe', 'trickster']
+const BOSS_GLOW: Record<string, number> = { golem: 0x6fb5e8, wraith: 0xcfe9f2, scribe: 0x6f86e0, trickster: 0xd77be8 }
 
 const BASE = import.meta.env.BASE_URL
 const TILE = 16
@@ -15,6 +18,7 @@ export class PixelScene extends Phaser.Scene {
   private assetsOk = true
   private ready = false
   private enemyKey: EnemySprite = 'slime'
+  private boss: BossId | null = null
   private monsterAlive = true
   private showingChest = false
   private layer?: Phaser.GameObjects.Container
@@ -27,7 +31,6 @@ export class PixelScene extends Phaser.Scene {
   private heroHome = { x: 0, y: 0 }
   private monsterHome = { x: 0, y: 0 }
   private actorScale = 3
-  private elite = false
 
   constructor() { super('PixelScene') }
 
@@ -35,7 +38,7 @@ export class PixelScene extends Phaser.Scene {
     this.load.setPath(BASE)
     this.load.on('loaderror', () => { this.assetsOk = false })
     this.load.spritesheet('hero', 'assets/characters/hero.png', { frameWidth: 24, frameHeight: 24 })
-    for (const k of ['slime', 'imp', 'bat']) this.load.spritesheet(k, `assets/enemies/${k}.png`, { frameWidth: TILE, frameHeight: TILE })
+    for (const k of ENEMY_SPRITES) this.load.spritesheet(k, `assets/enemies/${k}.png`, { frameWidth: TILE, frameHeight: TILE })
     this.load.spritesheet('tiles', 'assets/tiles/dungeon.png', { frameWidth: TILE, frameHeight: TILE })
     this.load.spritesheet('torch', 'assets/props/torch.png', { frameWidth: TILE, frameHeight: TILE })
     this.load.spritesheet('chest', 'assets/props/chest.png', { frameWidth: TILE, frameHeight: TILE })
@@ -46,7 +49,7 @@ export class PixelScene extends Phaser.Scene {
       const loop = (key: string, frames: number[], rate: number) =>
         this.anims.create({ key, frames: frames.map(frame => ({ key: key.split(':')[0], frame })), frameRate: rate, repeat: -1 })
       loop('hero:idle', [0, 1], 3)
-      for (const k of ['slime', 'imp', 'bat']) loop(`${k}:idle`, [0, 1], k === 'bat' ? 6 : 2.5)
+      for (const k of ENEMY_SPRITES) loop(`${k}:idle`, [0, 1], k === 'bat' || k === 'wraith' ? 6 : 2.5)
       loop('torch:burn', [0, 1], 6)
     }
     this.ready = true
@@ -133,6 +136,11 @@ export class PixelScene extends Phaser.Scene {
     this.hero?.destroy(); this.monster?.destroy(); this.chest?.destroy()
     const shadow = (x: number, w: number) => this.layer!.add(this.add.ellipse(x, this.heroHome.y, w, w * 0.22, 0x070b12, 0.45))
     shadow(this.heroHome.x, 24 * s * 0.9); shadow(this.monsterHome.x, 16 * this.monsterScale() * 0.9)
+    if (this.boss && this.monsterAlive) {   // a slow-pulsing aura marks the boss
+      const aura = this.add.circle(this.monsterHome.x, this.monsterHome.y - 7 * this.monsterScale(), 10 * this.monsterScale(), BOSS_GLOW[this.boss], 0.16)
+      this.layer!.add(aura)
+      this.tweens.add({ targets: aura, alpha: { from: 0.1, to: 0.26 }, scale: { from: 0.92, to: 1.08 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.inOut' })
+    }
 
     if (this.assetsOk) {
       this.hero = this.add.sprite(this.heroHome.x, this.heroHome.y, 'hero').setOrigin(0.5, 1).setScale(s).play('hero:idle')
@@ -148,11 +156,11 @@ export class PixelScene extends Phaser.Scene {
 
   // ---- public API used by React ------------------------------------------------------
 
-  private monsterScale() { return this.actorScale + 1 + (this.elite ? 1 : 0) }
+  private monsterScale() { return this.actorScale + 1 + (this.boss ? 1 : 0) }
 
-  setEnemy(key: EnemySprite, elite = false) {
+  setEnemy(key: EnemySprite, boss: BossId | null = null) {
     this.enemyKey = key
-    this.elite = elite
+    this.boss = boss
     if (this.ready) this.build()
   }
 
@@ -206,12 +214,21 @@ export class PixelScene extends Phaser.Scene {
   }
 
   /** The kill: white flash, pixel burst, little shake, then the monster fades into a chest. */
-  hideMonster() {
+  /** A brief freeze at the moment of impact (skipped with reduced motion). Real-time timer: the scene clock is what gets paused. */
+  private hitStop(ms: number) {
+    try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return } catch { /* default: animate */ }
+    this.tweens.timeScale = 0.03; this.time.timeScale = 0.03
+    window.setTimeout(() => { if (this.sys?.isActive()) { this.tweens.timeScale = 1; this.time.timeScale = 1 } }, ms)
+  }
+
+  hideMonster(big = false) {
     this.monsterAlive = false
     if (!this.ready || !this.monster) return
+    this.hitStop(big ? 170 : 90)
+    if (big) this.cameras.main.flash(160, 255, 255, 255)
     const m = this.monster
     if (m instanceof Phaser.GameObjects.Sprite) { m.setTintFill(0xffffff); this.time.delayedCall(130, () => m.active && m.clearTint()) }
-    this.cameras.main.shake(180, 0.006)
+    this.cameras.main.shake(big ? 320 : 220, big ? 0.012 : 0.008)
     this.burst(this.monsterHome.x, this.monsterHome.y - 8 * this.monsterScale())
     this.tweens.add({
       targets: m, alpha: 0, scale: this.actorScale * 0.5, y: this.monsterHome.y + 4, duration: 260, delay: 200,

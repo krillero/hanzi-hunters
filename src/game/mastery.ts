@@ -26,12 +26,38 @@ export function activeCount(m: Mastery, total: number) {
   return Math.min(total, STARTING_POOL + Object.values(m).filter(e => e.lv >= 1).length)
 }
 
-export function pickWord(words: Word[], m: Mastery, currentHanzi: string | null, rng: () => number = Math.random): Word {
+// ---- which words come first -------------------------------------------------------------------
+/** New words are introduced in the content file's order (easiest first). To keep every new profile from starting with the same
+ *  handful of words, the order is shuffled inside blocks of this many words, by a per-profile seed (seed 0 = file order, used by old saves). */
+export const ORDER_BLOCK = 16
+
+function mulberry32(a: number) {
+  return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 }
+}
+
+/** The word list in this profile's introduction order: a seeded shuffle inside each block of ORDER_BLOCK words. */
+export function orderedWords(words: Word[], seed: number): Word[] {
+  if (!seed) return words
+  const rnd = mulberry32(seed), out: Word[] = []
+  for (let i = 0; i < words.length; i += ORDER_BLOCK) {
+    const block = words.slice(i, i + ORDER_BLOCK)
+    for (let k = block.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [block[k], block[j]] = [block[j], block[k]] }
+    out.push(...block)
+  }
+  return out
+}
+
+/** Words asked a moment ago are less likely to come straight back (never impossible, so tiny pools still work). Index 0 = most recent. */
+export const RECENT_PENALTY = [0.1, 0.2, 0.3, 0.4, 0.6, 0.6]
+
+export function pickWord(words: Word[], m: Mastery, currentHanzi: string | null, rng: () => number = Math.random, recent: string[] = []): Word {
   const pool = words.slice(0, activeCount(m, words.length)).filter(w => w.hanzi !== currentHanzi)
   const learning = Object.values(m).filter(e => e.lv === 0).length
   const weighted = pool.map(w => {
     const e = m[w.hanzi]
-    return { w, weight: e ? WEIGHT[e.lv] : learning >= MAX_LEARNING ? 0 : NEW_WEIGHT }
+    const base = e ? WEIGHT[e.lv] : learning >= MAX_LEARNING ? 0 : NEW_WEIGHT
+    const ri = recent.indexOf(w.hanzi)
+    return { w, weight: ri >= 0 && ri < RECENT_PENALTY.length ? base * RECENT_PENALTY[ri] : base }
   }).filter(x => x.weight > 0)
   const candidates = weighted.length ? weighted : pool.map(w => ({ w, weight: 1 }))
   let r = rng() * candidates.reduce((n, x) => n + x.weight, 0)

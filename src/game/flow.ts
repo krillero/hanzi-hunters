@@ -13,19 +13,19 @@ export const LEARNING_AUTO_DELAY = 500
 /**
  * The default learning mode pauses after every answer until the current word reaches level 2.
  * Once it does, correct answers auto-advance quickly. Quick and Relaxed keep their existing timings.
- * The game always pauses for wrong answers, defeat, and clearing a floor (the elite).
+ * The game always pauses for wrong answers, defeat, and clearing a floor (the boss).
  */
 export function autoContinuePlan(a: {
   isCorrect: boolean
   outcome: 'continue' | 'victory' | 'defeat'
-  eliteKill: boolean
+  floorCleared: boolean
   setting: AutoContinue
   masteryLevel: number
 }): AutoPlan {
   if (a.setting === 'off' || !a.isCorrect || a.outcome === 'defeat') return null
   if (a.setting === 'learning' && a.masteryLevel < AUTO_MASTERY_LEVEL) return null
   if (a.outcome === 'victory') {
-    if (a.eliteKill) return null
+    if (a.floorCleared) return null
     return { mode: 'enemy', delay: a.setting === 'learning' ? LEARNING_AUTO_DELAY : AUTO_DELAYS[a.setting].enemy }
   }
   return { mode: 'question', delay: a.setting === 'learning' ? LEARNING_AUTO_DELAY : AUTO_DELAYS[a.setting].question }

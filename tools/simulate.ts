@@ -1,6 +1,6 @@
 // Balance simulator: node tools/simulate.ts [accuracy]   (needs Node 22.18+)
 import { ENEMIES, GEAR, WORDS } from '../src/data.ts'
-import { advance, bankRun, drinkPotion, newRun, playerStats, resolveAnswer } from '../src/game/rules.ts'
+import { advance, bankRun, bossIdFor, drinkPotion, isBoss, newRun, playerStats, resolveAnswer } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { buildQuestion } from '../src/game/questions.ts'
 import { pickWord, updateMastery } from '../src/game/mastery.ts'
@@ -22,9 +22,12 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1) {
       const entry = mastery[word.hanzi]
       const q = buildQuestion(word, entry, WORDS, { canListen: true, rng })
       // accuracy: intro is open-book; harder levels are a little easier as the word is learned
-      const p = !entry ? 1 : Math.min(0.98, accuracy + 0.04 * entry.lv)
+      // Boss questions are a little harder than average: tone questions (Golem shield), character questions (Scribe seals), look-alikes (Trickster)
+      const boss = isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null
+      const sealed = run.shield > 0
+      const p = !entry ? 1 : Math.min(0.98, accuracy + 0.04 * entry.lv - (sealed ? (boss === 'golem' ? 0.06 : 0.04) : boss === 'trickster' ? 0.08 : 0))
       const ok = rng() < p
-      const r = resolveAnswer({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect: ok, roll: { drop: rng(), item: rng() } })
+      const r = resolveAnswer({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect: ok, sealQuestion: sealed, roll: { drop: rng(), item: rng() } })
       run = r.run; mastery = updateMastery(mastery, word.hanzi, ok); word = pickWord(WORDS, mastery, word.hanzi, rng)
       void q
     }

@@ -248,3 +248,13 @@ export function buildQuestion(word: Word, entry: MasteryEntry | undefined, words
     }
   }
 }
+
+/** Tone questions are the ones that ask for the pinyin (the choices differ in tone). Only these break the Shield Golem's shield. */
+export const isToneQuestion = (q: Pick<Question, 'ask'>) => q.ask === 'pinyin'
+/** Character questions (pick the hanzi) break the Ink Scribe's seals. */
+export const isCharacterQuestion = (q: Pick<Question, 'ask'>) => q.ask === 'hanzi'
+/** The question kinds that ask for pinyin, in the order they are tried for the shield phase. */
+export const TONE_KINDS: QKind[] = ['pinyin', 'meaning2pinyin', 'listen2pinyin']
+/** Kinds the Ink Scribe asks while its seals are up / the Mirror Trickster always asks (the easy-to-confuse ones). */
+export const CHARACTER_KINDS: QKind[] = ['character', 'pinyin2char', 'listen']
+export const TRICK_KINDS: QKind[] = ['homophone', 'lookalike']
