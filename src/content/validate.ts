@@ -12,7 +12,7 @@ const hanChars = (s: string) => [...s].filter(c => HAN.test(c))
 const hasToneNumber = (s: string) => /[a-zA-ZüÜ][1-5]\b/.test(s)
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
-export const LIMITS = { summary: 300, heading: 50, body: 700, tip: 260, note: 200, items: 6, parts: 6, examples: 4, title: 60, hanzi: 8, meaning: 40, particleMeaning: 80, context: 120, why: 140 }
+export const LIMITS = { summary: 300, heading: 50, body: 700, tip: 260, note: 200, items: 6, parts: 6, examples: 4, title: 60, hanzi: 8, meaning: 40, particleMeaning: 44, context: 120, why: 140 }
 export const WORD_FIELDS = ['id', 'hanzi', 'pinyin', 'meaning', 'group', 'note', 'kind', 'neutral', 'variants', 'speech', 'wrongPinyin', 'audio', 'questions', 'aliases', 'confusable', 'lookalike', 'source', 'review']
 export const REVIEW_STATUSES = ['ai-draft', 'imported', 'human-reviewed']
 
@@ -105,7 +105,7 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
       }
       if (isStr(w.meaning)) {
         const max = kind === 'particle' ? LIMITS.particleMeaning : LIMITS.meaning
-        if (w.meaning.length > max) warn(`${at}: meaning is long (${w.meaning.length} chars, aim for at most ${max}); it must fit an answer button`)
+        if (w.meaning.length > max) (w.meaning.length > max + 26 ? err : warn)(`${at}: meaning is long (${w.meaning.length} chars, aim for at most ${max}${kind === 'particle' ? '; put examples like 我的书 in the note' : ''}); it must fit the card and an answer button`)
         if (kind !== 'particle' && /particle|measure word|grammar/i.test(w.meaning)) warn(`${at}: the meaning mentions grammar; consider kind "particle" with a short functional description`)
       }
 

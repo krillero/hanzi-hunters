@@ -779,7 +779,7 @@ export default function App() {
                 </div> : <>
                   <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')} len${lenClass(word.hanzi)}`}>{show.hanzi ? word.hanzi : '?'}</div>
                   <div className={`slot slot-pinyin ${slot(show.pinyin, question.ask === 'pinyin')} len${lenClass(word.pinyin)}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
-                  <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
+                  <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')} ${word.meaning.length > 24 ? 'meaning-long' : ''}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
                 </>}
               </div>
               {feedback && !revealing ? (
@@ -794,7 +794,7 @@ export default function App() {
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
-                return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${question.ask === 'pinyin' ? 'opt-pinyin' : ''} ${gone ? 'answer-gone' : ''} ${revealing && option === question.answer ? 'answer-correct' : ''}`} disabled={gone || revealing} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
+                return <button key={`${option}-${i}`} className={`answer-btn ${option.length > 36 ? 'xlong' : option.length > 22 ? 'long' : ''} ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${question.ask === 'pinyin' ? 'opt-pinyin' : ''} ${gone ? 'answer-gone' : ''} ${revealing && option === question.answer ? 'answer-correct' : ''}`} disabled={gone || revealing} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
               })}</div>}
             </>}
 

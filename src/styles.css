@@ -1582,3 +1582,8 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .modal-head .ex-hanzi.ex-len4{font-size:20px;line-height:1.05}
 .modal-head .ex-titles h2{font-size:16px;line-height:1.25}
 .modal-head .ex-titles small{overflow-wrap:anywhere}
+
+/* long answers (particle descriptions, long glosses) shrink and wrap instead of being cut off */
+.in-battle .answer-btn.long .answer-text,.wu-choices .answer-btn.long .answer-text{font-size:14px;line-height:1.15;overflow-wrap:anywhere}
+.in-battle .answer-btn.xlong .answer-text,.wu-choices .answer-btn.xlong .answer-text{font-size:12.5px;line-height:1.15;overflow-wrap:anywhere}
+.in-battle .slot-meaning.meaning-long,.wu-stage .slot-meaning.meaning-long{font-size:13px;line-height:1.15;white-space:normal;max-height:32px;overflow:hidden;padding:0 6px}

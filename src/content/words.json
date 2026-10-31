@@ -649,7 +649,7 @@
   {
     "hanzi": "吗",
     "pinyin": "ma",
-    "meaning": "question particle: ends a yes/no question",
+    "meaning": "ends a yes/no question",
     "group": "grammar",
     "kind": "particle",
     "neutral": [
@@ -670,7 +670,7 @@
   {
     "hanzi": "的",
     "pinyin": "de",
-    "meaning": "links a describing word to a noun (我的书 = my book)",
+    "meaning": "links a describing word to a noun",
     "group": "grammar",
     "kind": "particle",
     "neutral": [
@@ -691,7 +691,7 @@
   {
     "hanzi": "了",
     "pinyin": "le",
-    "meaning": "marks a finished action or a new situation",
+    "meaning": "marks a finished action or change",
     "group": "grammar",
     "kind": "particle",
     "neutral": [

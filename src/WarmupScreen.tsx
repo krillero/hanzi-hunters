@@ -88,7 +88,7 @@ export default function WarmupScreen({ words, mastery, canListen, speakWord, sfx
         </div> : <>
         <div className={`slot slot-hanzi ${slotClass(show.hanzi, question.ask === 'hanzi')} len${lenClass(word.hanzi)}`}>{show.hanzi ? word.hanzi : '?'}</div>
         <div className={`slot slot-pinyin ${slotClass(show.pinyin, question.ask === 'pinyin')} len${lenClass(word.pinyin)}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
-        <div className={`slot slot-meaning ${slotClass(show.meaning, question.ask === 'meaning')}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
+        <div className={`slot slot-meaning ${slotClass(show.meaning, question.ask === 'meaning')} ${word.meaning.length > 24 ? 'meaning-long' : ''}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
         </>}
       </div>
       {answered
@@ -100,7 +100,7 @@ export default function WarmupScreen({ words, mastery, canListen, speakWord, sfx
           </div>
         : <div className="answer-list wu-choices">
             {question.options.map((option, k) => (
-              <button key={`${option}-${k}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${question.ask === 'pinyin' ? 'opt-pinyin' : ''}`} onClick={() => choose(option)}>
+              <button key={`${option}-${k}`} className={`answer-btn ${option.length > 36 ? 'xlong' : option.length > 22 ? 'long' : ''} ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${question.ask === 'pinyin' ? 'opt-pinyin' : ''}`} onClick={() => choose(option)}>
                 <span className="answer-key">{String.fromCharCode(65 + k)}</span><span className="answer-text">{option}</span>
               </button>
             ))}

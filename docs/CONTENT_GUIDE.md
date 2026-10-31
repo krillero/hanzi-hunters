@@ -41,7 +41,7 @@ An entry is **one word, character or particle with one meaning and one reading**
 |---|---|
 | `hanzi` | Simplified Chinese characters only, 1 to 8 (aim for 1 to 4, answer buttons are small). The same hanzi may appear in more than one entry only when the readings differ (see 1.5). |
 | `pinyin` | **Dictionary pinyin** with tone marks, lowercase, standard word spacing: `"nǐ hǎo"` (two words), `"péngyou"`, `"māma"`, `"xuéxiào"`. Never tone numbers. Use an apostrophe where syllables run together ambiguously (`xī'ān`). Must have exactly as many syllables as `hanzi` has characters (erhua 儿 is not supported yet). |
-| `meaning` | Natural English that fits an answer button, aim ≤ 40 chars. `" / "` separates senses: `"mom / mother"`. For particles, a short *functional description* (≤ 80). |
+| `meaning` | Natural English that fits an answer button, aim ≤ 40 chars. `" / "` separates senses: `"mom / mother"`. For particles, a short *functional description* (aim ≤ 44, it must fit the card and an answer button; put examples like 我的书 in the `note`). |
 | `group` | Family used to pick plausible wrong answers (`people`, `nature`, `number`, `size`, `body`, `place`, `grammar`, `greetings`, `time`, `verbs` …; make a new lowercase one if none fits). |
 | `note` | 1–2 teaching sentences shown after answering. Teach, never shame. |
 
@@ -101,7 +101,7 @@ Teach words as **whole words**; do not assume a word's meaning is the sum of its
 
 ```json
 { "hanzi": "吗", "pinyin": "ma", "neutral": [1], "kind": "particle", "audio": "none",
-  "meaning": "question particle: ends a yes/no question", "group": "grammar", "note": "Add 吗 to the end of a statement to ask yes or no." }
+  "meaning": "ends a yes/no question", "group": "grammar", "note": "Add 吗 to the end of a statement to ask yes or no." }
 ```
 
 Particles are by default asked only `meaning` ("what does it do?") and, if sentence questions exist for them, `particle` (see section 3). They are never asked pinyin or listening questions.
@@ -270,7 +270,7 @@ Every piece of content (entry, example, explanation, sentence question) may carr
 
 // grammar particle, taught by function
 { "hanzi": "的", "pinyin": "de", "neutral": [1], "kind": "particle", "audio": "none",
-  "meaning": "links a describing word to a noun (我的书 = my book)", "group": "grammar", "note": "…" }
+  "meaning": "links a describing word to a noun", "group": "grammar", "note": "…" }
 
 // with provenance
 { "hanzi": "朋友", "pinyin": "péngyou", "neutral": [2], "meaning": "friend", "group": "people", "note": "…",
