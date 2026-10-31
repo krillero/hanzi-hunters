@@ -21,13 +21,7 @@ import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
 type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean }
-type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
-
-function combatSummary(exchange: CombatExchange) {
-  const response = exchange.victory ? 'Enemy defeated · no counterattack'
-    : exchange.blocked ? 'Enemy hit blocked' : `Enemy hit: −${exchange.counter} HP`
-  return `Your hit: −${exchange.damage} HP · ${response}`
-}
+type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -222,14 +216,14 @@ export default function App() {
     if (r.outcome === 'defeat') sceneRef.current?.showDefeat(true)
     patch(s => ({ ...s, run: r.run, mastery }))
     const plan = autoContinuePlan({ isCorrect, outcome: r.outcome, eliteKill: r.outcome === 'victory' && isElite(run.kill), setting: settings.autoContinue, masteryLevel: after })
-    const masteryNote = !entry ? 'New word added to your wordbook.'
-      : after > before ? (after >= MAX_LV ? `Mastered! ${word.hanzi} is now level ${MAX_LV}.` : `Word level up! ${word.hanzi} is now level ${after}.`)
-        : after < before ? `${word.hanzi} slipped back to level ${after}. It will return for review.`
-          : isCorrect ? 'One more correct answer to level this word up.' : 'Review this one — it will come back.'
+    const masteryNote = !entry ? 'New word — added to your wordbook'
+      : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
+        : after < before ? `Back to level ${after} — it will return for review`
+          : isCorrect ? 'One more correct in a row to level up' : 'Review this one — it will come back'
     const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory' }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
-      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, chosen: option, answer: question.answer,
+      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, lv: after, chosen: option, answer: question.answer,
       title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster', exchange
     })
     if (r.outcome === 'victory') {
@@ -427,6 +421,10 @@ export default function App() {
                 {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
                 {run.reward.loot && <span className="hot loot">🎁 {run.reward.loot}</span>}
               </div>}
+              {run.phase !== 'victory' && (feedback || reveal) && <div className="arena-rewards arena-exchange" role="status" aria-label="Combat result">
+                <span>⚔ −{(feedback ?? reveal)!.exchange.damage}</span>
+                {(feedback ?? reveal)!.exchange.blocked ? <span>🛡 Blocked</span> : (feedback ?? reveal)!.exchange.counter > 0 ? <span className="hurt">💔 −{(feedback ?? reveal)!.exchange.counter}</span> : <span>No counterattack</span>}
+              </div>}
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
@@ -590,12 +588,11 @@ export default function App() {
               {feedback && !revealing ? (
                 <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'}`} role="status" aria-live="polite">
                   <div className="result-line">
-                    <strong>{feedback.correct ? (feedback.exchange.victory ? '✓ Correct — enemy defeated!' : '✓ Correct!') : 'Not quite'}</strong>
-                    {!feedback.correct && <span>You chose <s>{feedback.chosen}</s> · answer <b>{feedback.answer}</b></span>}
+                    <strong>{feedback.correct ? `✓ Correct — ${feedback.word.hanzi} ${feedback.word.pinyin} · ${feedback.word.meaning}` : 'Not quite'}</strong>
                   </div>
-                  <p className="combat-exchange">{combatSummary(feedback.exchange)}</p>
+                  {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
                   <p className="result-note">{feedback.word.note}</p>
-                  {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
+                  {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}><i className="pips" aria-hidden="true">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < feedback.lv ? 'on' : ''} />)}</i> {feedback.mastery}</p>}
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
@@ -628,7 +625,7 @@ export default function App() {
 
             <div className="action-bar">
               {revealing
-                ? <button className="bar-btn ghost auto-continue" data-kind="continue" onClick={advanceAuto}><span>{combatSummary(reveal!.exchange)}</span><span>Tap to continue →</span></button>
+                ? <button className="bar-btn ghost auto-continue" data-kind="continue" onClick={advanceAuto}><span>✓ Correct</span><span>Tap to continue →</span></button>
                 : fighting && !feedback
                 ? <>
                     {bonuses.hints > 0
