@@ -595,7 +595,7 @@ export default function App() {
               <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
                 <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
-                  {hasExplanation(word.hanzi) && <button className="speak-btn tip-btn" onClick={e => { e.stopPropagation(); setExplain(word.hanzi) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
+                  {hasExplanation(word.hanzi) && show.hanzi && show.pinyin && show.meaning && <button className="speak-btn tip-btn" onClick={e => { e.stopPropagation(); setExplain(word.hanzi) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
                   <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
                 </div>
                 <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')}`}>{show.hanzi ? word.hanzi : '?'}</div>
@@ -665,7 +665,7 @@ export default function App() {
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
       {menu}
-      {explain !== null && <ExplainModal hanzi={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal hanzi={explain} hidden={fighting && !feedback && !revealing ? card?.word.hanzi : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
     </main>
   )
 }
