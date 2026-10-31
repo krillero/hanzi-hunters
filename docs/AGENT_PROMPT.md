@@ -11,13 +11,13 @@ content JSON. You do not change code, tests, styles or configuration.
 
 READ FIRST, in this order:
 1. docs/CONTENT_GUIDE.md      - the exact formats, limits, writing rules and checklist. Follow it literally.
-2. docs/content-inventory.json - what exists right now (30 words, 3 explanations) and the validator limits.
-3. src/content/words.json and src/content/explanations.json - the files you will edit; copy the style of
-   the existing entries (他, 她 and 好 are complete examples of explanations).
+2. docs/content-inventory.json - what exists right now and the validator limits.
+3. src/content/words.json, explanations.json, cloze.json, sources.json - the files you may edit; copy the style of
+   the existing entries (他, 她 and 好 are explanation examples; 朋友, 谁, 看-look / 看-guard and 吗 / 的 / 了 show the newer features).
 
 TASK (default): Add 20 new beginner words and write explanations for at least 12 words (new or existing).
-  Words: single simplified characters that a complete beginner can learn, preferably simple pictographs or
-  very common characters, each with ONE tone mark (no neutral tone, no multi-character words). Good
+  Words: simplified characters or words that a complete beginner can learn. Multi-character words, neutral
+  tones (declared with "neutral"), several readings and grammar particles are all supported (see the guide). Good
   candidates to consider (verify every one, skip anything you are not certain about): 七 九 男 上 下 手 目 田
   石 门 车 马 鸟 鱼 米 父 母 家 学 生 年 去 来 有 在 看 吃 喝 书 狗 猫.
   Explanations: prioritise (a) look-alike or confusable pairs, (b) homophones, (c) characters built from
@@ -34,15 +34,18 @@ RULES THAT MATTER MOST
   belongs earlier; do not reorder or rewrite existing entries unless fixing a verified error (say so in your report).
 - Use words.json "group" values that already exist where they fit (people, nature, number, size, body,
   place, grammar); create a new lowercase group only when none fits (e.g. "animals").
-- Use "alt" for valid tone-change readings (not an issue for most words) and "confusable" for words whose
-  meanings are too close to be fair wrong answers (list both directions).
+- Use "variants" for other accepted pronunciations of the SAME word and meaning, "speech" for connected-speech
+  changes, separate entries with explicit ids for different readings/meanings of one hanzi, and "confusable" for
+  entries whose meanings are too close to be fair wrong answers (list both directions).
+- Label everything "review": {"status": "ai-draft"} (or "imported" for dataset copies) with a registered "source".
+  NEVER write "human-reviewed" unless a person reviewed it. Record what a Mandarin teacher must check.
 - Explanations: short, beginner-friendly, phone-sized. 2-4 sections each. Prefer vocabulary characters in
   examples; a radical or part outside the vocabulary only warns, which is fine. Plain text only.
-- Every explanation key must be a word in words.json, and "related" must only list words in words.json.
+- Every explanation key must be an entry id in words.json, and "related" must only list entry ids.
 
 WORKFLOW
 1. git checkout -b content/<short-topic>   (never commit to main)
-2. Edit only src/content/words.json and src/content/explanations.json.
+2. Edit only files in src/content/ (words, explanations, cloze, sources).
 3. npm install            (first time only)
 4. npm run validate:content   -> must show 0 errors; read every warning and fix or justify it.
 5. npm test                   -> must stay green.
@@ -62,9 +65,8 @@ FINAL REPORT (required, in this format)
 
 ## Notes for you (the owner)
 
-* The agent must not touch code. If it needs something the format cannot express (neutral tones, multi-syllable
-  words, images/audio, new question types), the guide lists these as unsupported: it should say so in its report
-  rather than hack around it.
+* The agent must not touch code. If it needs something the format cannot express (erhua, images/recorded audio,
+  new question formats), the guide lists these as unsupported: it should say so in its report rather than hack around it.
 * All new content should be **reviewed by a Mandarin speaker before release**; the agent's "UNSURE" list is the
   starting point for that review.
 * Re-run `npm run inventory` any time; the JSON is generated from the source files, so it is always current.

@@ -7,9 +7,9 @@
 4. Dying ends the run. **All run gold is banked.** Level, gear and potions are lost. **Upgrades and word mastery stay.**
 5. At **camp** you spend banked gold on the upgrade tree, then start a new run.
 
-## Word mastery (per word, saved)
+## Word mastery (per entry, saved)
 Each word has a level 0-4 (4 = mastered). **Every question kind counts the same**: 2 correct in a row promote, a miss demotes one level.
-A new word is first shown once with everything visible ("New word!", pick the meaning; no mastery credit).
+A new word is first shown on its own introduction card (word, pinyin, meaning, note, up to two examples, a speaker button) with a "Got it" button. There is no question and no pressure; the word only starts appearing in questions after "Got it". Cards appear at the start of a fight, never in the middle of one.
 
 The level decides which kinds can be asked (weights in `KIND_WEIGHTS`, `src/game/questions.ts`):
 
@@ -50,7 +50,16 @@ No upgrade answers questions; a test enforces that every effect is power or conv
 Bot play at 60/75/90 % accuracy: first death on floor 1–3 with enough gold for the first node within 2 runs; a full tree takes ≥ 8 runs; with a full tree the average run still ends around floors 9–12. Tune in `src/game/rules.ts` (scaling) and `src/game/upgrades.ts` (COST_BASE, effects). The bot is a model, not real players — expect to retune after human playtests.
 
 ## Save format v2 (`hanzi-hunters-save-v2`)
-`{ version, meta{gold,upgrades,bestFloor,runs}, mastery{hanzi:{lv,ok}}, run|null, lastRun|null, habit{daysPlayed,lastPlayed,warmupDay,correct,badges} }`. `habit` was added without a version bump (old saves get an empty one). Every field is validated on load (`src/game/save.ts`); a mid-run reload resumes the run. The v1 prototype save is migrated once: learned words → level 1, gold → banked, floor → best floor. The v1 key is left untouched.
+`{ version, meta{gold,upgrades,bestFloor,runs}, mastery{entryId:{lv,ok}}, legacyMastery{id:{lv,ok}}, run|null, lastRun|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges} }`. Every field is validated on load (`src/game/save.ts`); a mid-run reload resumes the run. The v1 prototype save is migrated once: learned words → level 1, gold → banked, floor → best floor. The v1 key is left untouched.
+
+**Progress is keyed by entry id** (the hanzi unless the content file gives the entry an `id`), so saves written before ids existed load unchanged. `migrateMastery` carries progress over when content changes: an entry's own id or one of its `aliases` (an earlier id of the same entry; the higher level wins), or a hanzi that is now used by exactly one entry. Progress nobody claims (a removed entry, or an ambiguous shared hanzi) is parked in `legacyMastery` instead of being deleted, and is retried on every load. Different meanings are never merged. `habit`, `legacyMastery` and the id keys were added without a version bump (older apps ignore them).
+
+## Entries, readings and questions (`src/content`, `src/game/questions.ts`)
+* An **entry** is one word / character / particle with one meaning and reading (`kind`). Multi-character words, neutral-tone syllables (`neutral`), accepted pronunciation variants (`variants`), connected-speech guidance (`speech`), several entries for one hanzi (explicit `id`s) and per-entry question eligibility (`questions`) are all data: see `docs/CONTENT_GUIDE.md`.
+* Questions never offer a valid answer as a wrong option: variants, speech forms, overlapping meanings, homographs (except as a wrong pinyin when the meaning is on screen) and, for sound-only questions, same-sounding known words are all excluded; with too few safe options another kind is asked. Pinyin options are never made by editing the tone marks of multi-syllable words (authored `wrongPinyin` or real readings of other entries).
+* Audio is used only when it can be trusted to match the entry (`audioReliable`: `audio: "ok"` and no other entry with the same hanzi); otherwise the speaker button is disabled and no listening question is asked.
+* **Particle (sentence) questions** (`particle` kind) come from authored, reviewed `cloze.json` items; the answer entry's progress is updated; every wrong option has an authored reason shown after a miss.
+* Provenance: `source` (names from `sources.json`) and `review` (`ai-draft` / `imported` / `human-reviewed`) on entries, examples, explanations and sentence questions; credits appear under Settings and in the details popup.
 
 ## Daily warm-up, days played and badges (`src/game/habit.ts`)
 * Warm-up: once per local day, up to 5 known words (lowest level first, then fewest right in a row, day-stable tie-break), at least 3 known words needed. Right answers update mastery as usual and earn 3 gold each; nothing is risked.
@@ -71,7 +80,7 @@ Bot play at 60/75/90 % accuracy: first death on floor 1–3 with enough gold for
 * Loot reveal: rare/epic gear, boss gear, or a clear upgrade over what you wear opens a chest card that compares the stats with the equipped item (and offers *Equip now*); other drops stay a chip. Auto-continue waits while the card is open.
 
 ## Which words come first (`src/game/mastery.ts`)
-* The pool starts with the first 6 words of the content file and grows by one for every word that has reached level 1; inside the pool, new words and weak words are weighted higher than mastered ones.
+* The pool starts with the first 6 words of the content file and grows by one for every word that has reached level 1; inside the pool, weak words are weighted higher than mastered ones. A word in the pool that has not been introduced yet is never asked: it is introduced (one per fight start, in the profile's order, unless 4 words are still at level 0) by its card. A brand-new player gets the first 3 cards at once so there is something to ask about. A reload in the middle of a fight does not show a card.
 * Before, a fresh profile therefore always started with the same 6–8 words (人 大 小 一 二 三 …). Now each new profile (first start or *Delete all progress*) gets a random `habit.seed` that shuffles the order **inside blocks of 16 words** (`orderedWords`), so the easy-first order of the file is kept but the opening differs. Old saves have seed 0 = file order, so nothing changes for them.
 * Words asked in the last few questions are less likely to repeat (`RECENT_PENALTY`; this session only, across runs).
 * Simulated: 200 fresh profiles saw 16 different words in their first 12 questions instead of 8. The limit that remains is the content order and the starting pool of 6.

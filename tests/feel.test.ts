@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { HAPTICS, sfxScore, totalDuration, type SfxName } from '../src/audio.ts'
-import { RARITY_BY_NAME, compareGear, gearScore, isUpgrade, rarityOf } from '../src/game/rarity.ts'
+import { RARITY_BY_NAME, compareGear, gearScore, gearVerdict, isUpgrade, rarityOf } from '../src/game/rarity.ts'
 import { accuracyPct, emptyStats, recordAnswer } from '../src/game/runStats.ts'
 import { GEAR } from '../src/data.ts'
 
@@ -42,11 +42,11 @@ test('every gear item has a rarity decision', () => {
 
 test('run stats: new words, promotions, mastery, misses, streak and accuracy', () => {
   let s = emptyStats()
-  s = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 1, levelBefore: -1, levelAfter: 0, gold: 0 })
-  s = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 2, levelBefore: 0, levelAfter: 0, gold: 0 })
-  s = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 3, levelBefore: 0, levelAfter: 1, gold: 7 })
-  s = recordAnswer(s, { hanzi: '目', isCorrect: false, streakAfter: 0, levelBefore: 2, levelAfter: 1, gold: 0 })
-  s = recordAnswer(s, { hanzi: '好', isCorrect: true, streakAfter: 1, levelBefore: 3, levelAfter: 4, gold: 0 })
+  s = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 1, levelBefore: -1, levelAfter: 0, gold: 0 })
+  s = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 2, levelBefore: 0, levelAfter: 0, gold: 0 })
+  s = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 3, levelBefore: 0, levelAfter: 1, gold: 7 })
+  s = recordAnswer(s, { id: '目', isCorrect: false, streakAfter: 0, levelBefore: 2, levelAfter: 1, gold: 0 })
+  s = recordAnswer(s, { id: '好', isCorrect: true, streakAfter: 1, levelBefore: 3, levelAfter: 4, gold: 0 })
   assert.deepEqual(s.newWords, ['石'])
   assert.deepEqual(s.leveled, ['石', '好'])
   assert.deepEqual(s.mastered, ['好'])
@@ -54,7 +54,7 @@ test('run stats: new words, promotions, mastery, misses, streak and accuracy', (
   assert.equal(s.bestStreak, 3); assert.equal(s.gold, 7); assert.equal(s.total, 5)
   assert.equal(accuracyPct(s), 80)
   assert.equal(accuracyPct(emptyStats()), 0)
-  const again = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 4, levelBefore: -1, levelAfter: 0, gold: 0 })
+  const again = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 4, levelBefore: -1, levelAfter: 0, gold: 0 })
   assert.deepEqual(again.newWords, ['石'], 'no duplicates')
 })
 
@@ -68,4 +68,20 @@ test('gear comparison: rows only for stats that matter, deltas, upgrade flag', (
   assert.equal(isUpgrade(g('Golem Plate'), g('Mossy Vest')), true)
   assert.equal(isUpgrade(g('Mossy Vest'), g('Golem Plate')), false)
   assert.ok(gearScore(g('Golem Plate')) > gearScore(g('Mossy Vest')))
+})
+
+test('one item per slot: new / better are worn, worse is left behind, a trade-off asks', () => {
+  const g = (n: string) => GEAR.find(x => x.name === n)!
+  assert.equal(gearVerdict(g('Copper Blade'), null), 'new')
+  assert.equal(gearVerdict(g('Guardian Helm'), g('Mossy Vest')), 'tradeoff', 'less HP but more armor')
+  assert.equal(gearVerdict(g('Mossy Vest'), g('Mossy Vest')), 'worse', 'identical gives nothing')
+  const slots = new Set(GEAR.map(x => x.slot))
+  let sawBetter = false, sawWorse = false
+  for (const a of GEAR) for (const b of GEAR) if (a !== b && a.slot === b.slot) {
+    const v = gearVerdict(a, b), back = gearVerdict(b, a)
+    if (v === 'better') { sawBetter = true; assert.equal(back, 'worse', `${a.name}/${b.name}: a strict upgrade reverses to a strict downgrade`) }
+    if (v === 'tradeoff') assert.equal(back, 'tradeoff')
+    if (v === 'worse') sawWorse = true
+  }
+  assert.ok(slots.size >= 2 && sawBetter && sawWorse, 'the data contains pure upgrades and pure downgrades')
 })

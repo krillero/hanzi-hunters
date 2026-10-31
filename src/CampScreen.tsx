@@ -41,7 +41,7 @@ export default function CampScreen({ save, warmup, onWarmup, onBuy, onStart, onR
       </div>
       {warmup.available && (
         <div className="warmup-offer">
-          <div><span className="eyebrow">DAILY WARM-UP · OPTIONAL</span><strong>Review {warmup.words.length} words · no HP risk</strong><small>{warmup.words.join(' · ')}</small></div>
+          <div><span className="eyebrow">DAILY WARM-UP · OPTIONAL</span><strong>Review {warmup.words.length} words · no HP risk</strong><small lang="zh">{warmup.words.map(id => WORDS.find(w => w.id === id)?.hanzi ?? id).join(' · ')}</small></div>
           <button className="bar-btn main" onClick={onWarmup}>Start</button>
         </div>
       )}

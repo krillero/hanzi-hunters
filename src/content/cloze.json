@@ -1,0 +1,80 @@
+[
+  {
+    "id": "ma-student",
+    "answer": "吗",
+    "zh": "你是学生___？",
+    "pinyin": "Nǐ shì xuésheng ___?",
+    "en": "Are you a student?",
+    "options": [
+      "吗",
+      "的",
+      "了"
+    ],
+    "why": {
+      "的": "的 links a describing word to a noun; it does not ask a yes/no question.",
+      "了": "了 marks a finished action or a new situation; it does not turn a statement into a question."
+    },
+    "note": "Add 吗 to the end of a statement to ask yes or no.",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Written by the project's AI assistant. A Mandarin teacher must check that only the answer fits the sentence AND the English meaning, and that every wrong option really does not."
+    }
+  },
+  {
+    "id": "de-book",
+    "answer": "的",
+    "zh": "这是我___书。",
+    "pinyin": "Zhè shì wǒ ___ shū.",
+    "en": "This is my book.",
+    "options": [
+      "吗",
+      "的",
+      "了"
+    ],
+    "why": {
+      "吗": "吗 comes at the end of a yes/no question, not between 我 and 书.",
+      "了": "了 marks a finished action or a new situation; it cannot link 我 and 书."
+    },
+    "note": "的 joins 我 (the owner) to 书 (the thing).",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Written by the project's AI assistant. A Mandarin teacher must check that only the answer fits the sentence AND the English meaning, and that every wrong option really does not."
+    }
+  },
+  {
+    "id": "le-tv",
+    "answer": "了",
+    "zh": "我看___电视。",
+    "pinyin": "Wǒ kàn ___ diànshì.",
+    "en": "I watched TV.",
+    "options": [
+      "吗",
+      "的",
+      "了"
+    ],
+    "why": {
+      "吗": "吗 goes at the end of a question, not after a verb in the middle of a sentence.",
+      "的": "的 would turn 我看 into a description of the TV (the TV I watch), not say that you watched it."
+    },
+    "note": "了 after the verb shows the action is done.",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Written by the project's AI assistant. A Mandarin teacher must check that only the answer fits the sentence AND the English meaning, and that every wrong option really does not."
+    }
+  }
+]

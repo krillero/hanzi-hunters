@@ -4,24 +4,27 @@ import { PixelScene, type EnemySprite } from './game/PixelScene'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
+import NewWordCard from './NewWordCard'
 import SummaryModal from './SummaryModal'
 import WarmupScreen from './WarmupScreen'
 import { WARMUP_GOLD_PER_CORRECT, badgeById, contextFor, localDay, newBadges, newSeed, pickWarmup, recordCorrect, recordPlay, warmupAvailable } from './game/habit'
 import { playSfx, unlockAudio, vibrate, type SfxName, type SfxOptions } from './audio'
 import { flyMotes } from './motes'
 import { rarityOf } from './game/rarity'
-import { accuracyPct, emptyStats, recordAnswer, type RunStats } from './game/runStats'
+import { accuracyPct, emptyStats, recordAnswer, recordIntro, type RunStats } from './game/runStats'
 import { DEFAULT_SETTINGS, SETTINGS_KEY, loadSettings, type Settings } from './settings'
 import { autoContinuePlan, type AutoPlan } from './game/flow'
-import { hasExplanation } from './content'
+import { CLOZE, hasExplanation } from './content'
 import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appInfo'
 import { parseBackup, serializeBackup } from './game/backup'
 import { ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
-import { MAX_LV, masteredCount, orderedWords, pickWord, seenCount, updateMastery } from './game/mastery'
+import { audioReliable, homographsOf } from './content/entries'
+import { fillBlank, lenClass } from './entryUi'
+import { MAX_LV, masteredCount, orderedWords, pickWord, seenCount, updateMastery, wordsToIntroduce } from './game/mastery'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, buildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
-import { isUpgrade, rarityOf as rarityOfItem } from './game/rarity'
+import { gearVerdict, rarityOf as rarityOfItem } from './game/rarity'
 import {
   ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, hasShield, shieldFor, bankRun, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
@@ -44,11 +47,9 @@ function ComboBadge({ streak, bonusPct }: { streak: number; bonusPct: number }) 
 }
 
 /** Counts up every time `value` grows (not on first render), so a counter can play a short "bump" animation. */
-function useBump(value: number) {
-  const prev = useRef(value); const [n, setN] = useState(0)
-  useEffect(() => { if (value > prev.current) setN(k => k + 1); prev.current = value }, [value])
-  return n
-}
+
+/** Does 💡 / the Wordbook have more to show for this entry (an explanation, other readings, or pronunciation notes)? */
+const hasDetails = (w: Word) => hasExplanation(w.id) || w.variants.length > 0 || w.speech.length > 0 || homographsOf(w, WORDS).length > 0
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -109,12 +110,11 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
   const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
-  const [lootReveal, setLootReveal] = useState<{ name: string; current: string | null; autoEquipped: boolean } | null>(null)
+  const [lootReveal, setLootReveal] = useState<{ name: string; current: string | null; choice: boolean } | null>(null)
   const [tipPulse, setTipPulse] = useState<string | null>(null)   // 💡 pulses once per word, right after the first right answer
   const [bossIntro, setBossIntro] = useState<BossId | null>(() => { const j = previewStart(); return j && isBoss(j.floor, j.kill) ? bossIdFor(j.floor) : null })
   const [warmup, setWarmup] = useState<string[] | null>(null)
   const [ceremony, setCeremony] = useState<string | null>(null)   // word that was just mastered (confetti for a moment)
-  const knownBump = useBump(seenCount(save.mastery))
   const [floorStats, setFloorStats] = useState<RunStats>(emptyStats)
   const [runStats, setRunStats] = useState<RunStats>(emptyStats)
   const [summary, setSummary] = useState<'floor' | 'defeat' | null>(null)
@@ -123,7 +123,6 @@ export default function App() {
   const [floorBanner, setFloorBanner] = useState('')
   const [reveal, setReveal] = useState<{ chosen: string; plan: Exclude<AutoPlan, null>; exchange: CombatExchange } | null>(null)   // a right answer that continues by itself
   const [menuOpen, setMenuOpen] = useState(false)
-  const [newLoot, setNewLoot] = useState(false)
   const [card, setCard] = useState<Card | null>(null)
   const [eliminated, setEliminated] = useState<string[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
@@ -159,12 +158,19 @@ export default function App() {
   killRef.current = run?.kill ?? 0
 
   // New words are introduced in this profile's own order (shuffled inside blocks), and recently asked words are less likely to repeat.
-  const ordered = useMemo(() => orderedWords(WORDS, save.habit.seed), [save.habit.seed])
+  const ordered = useMemo(() => {
+    const list = orderedWords(WORDS, save.habit.seed)
+    // Preview aid: /?first=朋友,看-look introduces these entries (ids or hanzi) before everything else, to try new content without playing to it.
+    const first = (new URLSearchParams(window.location.search).get('first') ?? '').split(',').map(s => s.trim()).filter(Boolean)
+    if (!first.length) return list
+    const lead = first.map(f => list.find(w => w.id === f) ?? list.find(w => w.hanzi === f)).filter((w): w is Word => !!w)
+    return [...lead, ...list.filter(w => !lead.includes(w))]
+  }, [save.habit.seed])
   const recentWords = useRef<string[]>([])
   const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen, forRun: Run | null = run): Card => {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
-    const forced = current === null && forcedWord.current ? WORDS.find(w => w.hanzi === forcedWord.current) : undefined
-    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind })
+    const forced = current === null && forcedWord.current ? (WORDS.find(w => w.id === forcedWord.current) ?? WORDS.find(w => w.hanzi === forcedWord.current)) : undefined
+    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind, cloze: CLOZE })
     const bossFoe = forRun && isBoss(forRun.floor, forRun.kill) ? enemyStats(ENEMIES, forRun.floor, forRun.kill) : null
     // Some bosses need a particular kind of question: tone questions break the Golem's shield, character questions the Scribe's seals,
     // and the Trickster only asks the easy-to-confuse kinds. They ask about words you already know.
@@ -175,13 +181,13 @@ export default function App() {
       : null
     if (needed) {
       const kinds = needed.kinds.filter(k => listen || !k.startsWith('listen'))
-      const knownWords = WORDS.filter(w => mastery[w.hanzi])
+      const knownWords = WORDS.filter(w => mastery[w.id] && w.kind !== 'particle')
       let last: Card | null = null
       for (let k = 0; k < 12; k++) {
         // the scheduler's pick when it is a word you already know, else any known word (never a brand-new word without teaching it)
-        let word = pickWord(ordered, mastery, last?.word.hanzi ?? current, Math.random, recentWords.current)
-        if (!mastery[word.hanzi] && knownWords.length > 0) word = knownWords[Math.floor(Math.random() * knownWords.length)]
-        const entry = mastery[word.hanzi] ?? { lv: 1, ok: 0 }   // only when nothing at all is known yet (preview URLs)
+        let word = pickWord(ordered, mastery, last?.word.id ?? current, Math.random, recentWords.current)
+        if ((!mastery[word.id] || word.kind === 'particle') && knownWords.length > 0) word = knownWords[Math.floor(Math.random() * knownWords.length)]
+        const entry = mastery[word.id] ?? { lv: 1, ok: 0 }   // only when nothing at all is known yet (preview URLs)
         last = { word, question: buildQuestion(word, entry, WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)])) }
         if (needed.ok(last.question)) return last
       }
@@ -190,9 +196,37 @@ export default function App() {
     // Echo Wraith, phase 2: the kind of question you got wrong most recently keeps coming back.
     const echo = !forced && forRun && bossFoe?.boss === 'wraith' && bossPhase(forRun, bossFoe.hp) === 2 ? [...kindHistory.current].reverse().find(h => !h.ok)?.kind : undefined
     const word = forced ?? pickWord(ordered, mastery, current, Math.random, recentWords.current)
-    return { word, question: buildQuestion(word, mastery[word.hanzi], WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
+    // Preview aid: with ?word=…&kind=…, an entry you have not met yet is asked as if you already knew it, so the requested question kind is shown
+    const asked = forced && forcedKind.current && !mastery[word.id] ? { lv: 1, ok: 0 } : mastery[word.id]
+    return { word, question: buildQuestion(word, asked, WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
   }
   const patch = (fn: (s: Saved) => Saved) => setSave(fn)
+
+  // ---- introducing new words: a card at the start of a fight, never mid-fight ----------------
+  const [introQueue, setIntroQueue] = useState<string[]>([])
+  const [introTotal, setIntroTotal] = useState(0)
+  const introKey = useRef<string | null>(null)   // the fight we last checked; null = this run was resumed from a save
+  useEffect(() => {
+    if (!run) { introKey.current = ''; return }
+    if (run.phase !== 'fighting' || feedback || reveal || bossIntro || summary || lootReveal || introQueue.length) return
+    const key = `${run.floor}:${run.kill}`
+    if (key === introKey.current) return
+    const resumed = introKey.current === null
+    introKey.current = key
+    if (forcedWord.current || (resumed && seenCount(save.mastery) > 0)) return   // preview URLs and reloads mid-fight are left alone
+    const ids = wordsToIntroduce(ordered, save.mastery)
+    if (ids.length) { setIntroQueue(ids); setIntroTotal(ids.length) }
+  })
+  const introGotIt = () => {
+    const id = introQueue[0]
+    if (!id) return
+    const mastery = updateMastery(save.mastery, id, true)   // creates the entry at level 0: from now on it is asked about
+    patch(s => ({ ...s, mastery: updateMastery(s.mastery, id, true) }))
+    setFloorStats(s => recordIntro(s, id)); setRunStats(s => recordIntro(s, id))
+    const rest = introQueue.slice(1)
+    setIntroQueue(rest)
+    if (!rest.length) { setCard(makeCard(mastery, null)); setEliminated([]); answerLock.current = false }
+  }
 
   // ---- one-time setup -----------------------------------------------------------------
   useEffect(() => {
@@ -215,7 +249,7 @@ export default function App() {
   useEffect(() => {
     if (!settings.muted || !card?.question.audio || feedback || reveal) return
     window.speechSynthesis?.cancel?.()
-    setCard({ word: card.word, question: buildQuestion(card.word, save.mastery[card.word.hanzi], WORDS, { canListen: false, known: new Set(Object.keys(save.mastery)), history: kindHistory.current }) })
+    setCard({ word: card.word, question: buildQuestion(card.word, save.mastery[card.word.id], WORDS, { canListen: false, known: new Set(Object.keys(save.mastery)), history: kindHistory.current, cloze: CLOZE }) })
     /* eslint-disable-next-line */
   }, [settings.muted])
   // Is a newer build deployed? Checked at start and whenever the app comes back to the foreground.
@@ -274,9 +308,10 @@ export default function App() {
       window.speechSynthesis.speak(u)
     } catch { /* speech is optional: never let it break the game */ }
   }
-  // The speaker button: when muted, tapping it turns sound back on (and plays the word).
-  const pressSpeaker = (hanzi: string) => { if (settings.muted) setSettings(st => ({ ...st, muted: false })); speak(hanzi, true) }
-  useEffect(() => { if (card?.question.audio && !feedback && !reveal) speak(card.word.hanzi) /* eslint-disable-next-line */ }, [card])
+  // The speaker button: when muted, tapping it turns sound back on (and plays the text).
+  const pressSpeaker = (text: string) => { if (settings.muted) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
+  // Words are only read aloud when the audio can be trusted to match the displayed word and reading (see audioReliable in content/entries.ts).
+  useEffect(() => { if (card?.question.audio && !feedback && !reveal && audioReliable(card.word, WORDS)) speak(card.word.hanzi) /* eslint-disable-next-line */ }, [card])
 
   // ---- actions --------------------------------------------------------------------------
   const answerQuestion = (option: string) => {
@@ -284,20 +319,19 @@ export default function App() {
     answerLock.current = true
     setCaption(null)
     const { word, question } = card
-    const entry = save.mastery[word.hanzi]
+    const entry = save.mastery[word.id]
     const isCorrect = option === question.answer
     const r = resolveAnswer({
       run, bonuses, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect, sealQuestion: foe?.boss === 'scribe' ? isCharacterQuestion(question) : isToneQuestion(question),
       roll: { drop: Math.random(), item: Math.random() }
     })
-    const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
-    recentWords.current = [word.hanzi, ...recentWords.current.filter(h => h !== word.hanzi)].slice(0, 8)
+    const mastery = updateMastery(save.mastery, word.id, isCorrect)
+    recentWords.current = [word.id, ...recentWords.current.filter(h => h !== word.id)].slice(0, 8)
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
-    const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
+    const before = entry?.lv ?? -1, after = mastery[word.id].lv
     sceneRef.current?.playHit('monster')
     if (!isCorrect && r.shieldRegrown) setCaption({ side: 'monster', kind: 'shield', text: '🖋 A SEAL GROWS BACK' })
     else if (!isCorrect && r.bossHealed > 0) setCaption({ side: 'monster', kind: 'weak', text: `🎭 DODGED · +${r.bossHealed} HP` })
-    else if (!isCorrect) setCaption({ side: 'monster', kind: 'weak', text: 'WEAK HIT' })
     else if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: foe?.boss === 'scribe' ? '💥 SEALS BROKEN' : '💥 SHIELD DOWN' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster(!!foe?.boss)
     else if (r.counter > 0) sceneRef.current?.playHit('hero')
@@ -310,12 +344,12 @@ export default function App() {
     if (r.outcome === 'victory' && foe?.boss) habit = { ...habit, bosses: habit.bosses + 1 }
     const earned = newBadges(habit, contextFor(mastery, habit, Math.max(save.meta.bestFloor, r.run.floor), save.meta.runs))
     if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New badge: ${earned.map(b => b.name).join(', ')}`) }
-    if (masteredNow) setCeremony(word.hanzi)
-    if (isCorrect && hasExplanation(word.hanzi) && !habit.tipsSeen.includes(word.hanzi)) { habit = { ...habit, tipsSeen: [...habit.tipsSeen, word.hanzi] }; setTipPulse(word.hanzi) }
+    if (masteredNow) setCeremony(word.id)
+    if (isCorrect && hasDetails(word) && !habit.tipsSeen.includes(word.id)) { habit = { ...habit, tipsSeen: [...habit.tipsSeen, word.id] }; setTipPulse(word.id) }
     patch(s => ({ ...s, run: r.run, mastery, habit }))
 
     // Learning summary for the floor-clear / defeat cards
-    const rec = { hanzi: word.hanzi, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
+    const rec = { id: word.id, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
     setFloorStats(s => recordAnswer(s, rec)); setRunStats(s => recordAnswer(s, rec))
 
     // Sound + vibration: the base sound first, then the bigger moments queued after it
@@ -333,10 +367,15 @@ export default function App() {
       setLevelUp({ from: run.level, to: r.run.level, hp: after2.maxHp - before2.maxHp, attack: after2.attack - before2.attack })
     }
     if (r.loot) {
-      feel('loot', { rarity: rarityOf(r.loot) }, t); t += 0.4
-      const slotNow = run.loadout[r.loot.slot] ? GEAR.find(g => g.name === run.loadout[r.loot!.slot]) ?? null : null
-      // Chest reveal with comparison for anything worth a decision: rare+, boss gear, or a clear upgrade over what you wear
-      if (rarityOfItem(r.loot) !== 'common' || r.loot.boss || (slotNow && isUpgrade(r.loot, slotNow))) setLootReveal({ name: r.loot.name, current: slotNow?.name ?? null, autoEquipped: !slotNow })
+      const worn = run.loadout[r.loot.slot] ? GEAR.find(g => g.name === run.loadout[r.loot!.slot]) ?? null : null
+      const verdict = gearVerdict(r.loot, worn)
+      // One item per slot. A pure downgrade is left behind silently; a trade-off asks; anything else is already worn.
+      if (verdict !== 'worse') feel('loot', { rarity: rarityOf(r.loot) }, t); t += 0.4
+      if (verdict === 'tradeoff') setLootReveal({ name: r.loot.name, current: worn?.name ?? null, choice: true })
+      else if (verdict !== 'worse') {
+        if (rarityOfItem(r.loot) !== 'common' || r.loot.boss) setLootReveal({ name: r.loot.name, current: worn?.name ?? null, choice: false })
+        else setToast(`${r.loot.icon} ${r.loot.name} equipped`)
+      }
     }
     if (r.outcome === 'victory') {
       // Only the Second Wind upgrade's own healing is announced (level-up and new-gear HP are not).
@@ -363,7 +402,6 @@ export default function App() {
     if (r.outcome === 'victory') {
       // Rewards sit in the fixed arena strip (no layout change); the counters tick up.
       const rw = r.run.reward
-      if (r.loot) setNewLoot(true)
     }
   }
 
@@ -371,14 +409,14 @@ export default function App() {
     setFeedback(null)
     setCaption(null)
     setTipPulse(null)
-    if (run?.phase === 'fighting') { setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
+    if (run?.phase === 'fighting') { setCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
 
   const nextEnemy = () => {
     if (!run) return
     const next = advance(run, bonuses, ENEMIES)
     patch(s => ({ ...s, run: next }))
-    setCard(makeCard(save.mastery, card?.word.hanzi ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
+    setCard(makeCard(save.mastery, card?.word.id ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
     setCaption(null)
     if (isBoss(next.floor, next.kill)) {
       // The full intro card only the first time you meet each boss; later floors just show the BOSS tag
@@ -395,10 +433,10 @@ export default function App() {
     const mode = reveal.plan.mode
     setReveal(null)
     if (mode === 'enemy') nextEnemy()
-    else { setCaption(null); setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
+    else { setCaption(null); setCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
-  const blockingOpen = explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null
+  const blockingOpen = explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null || introQueue.length > 0
   useEffect(() => {
     if (!reveal || blockingOpen) return
     const t = window.setTimeout(advanceAuto, reveal.plan.delay)
@@ -413,7 +451,6 @@ export default function App() {
     patch(s => ({ ...s, run: next }))
     setSelectedGearName(null)
     setSelectedGearSlot(null)
-    setToast(`Equipped ${name}.`)
   }
 
   const usePotion = () => {
@@ -454,8 +491,8 @@ export default function App() {
   const today = localDay()
   const warm = { available: warmupAvailable(save.habit, save.mastery, today), done: save.habit.warmupDay === today, words: pickWarmup(save.mastery, today) }
   const startWarmup = () => { setCampMsg(''); setWarmup(pickWarmup(save.mastery, today)) }
-  const warmupAnswer = (hanzi: string, isCorrect: boolean) => {
-    const mastery = updateMastery(save.mastery, hanzi, isCorrect)
+  const warmupAnswer = (id: string, isCorrect: boolean) => {
+    const mastery = updateMastery(save.mastery, id, isCorrect)
     let habit = recordPlay(save.habit, localDay()); if (isCorrect) habit = recordCorrect(habit)
     const earned = newBadges(habit, contextFor(mastery, habit, save.meta.bestFloor, save.meta.runs))
     if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New badge: ${earned.map(b => b.name).join(', ')}`) }
@@ -502,7 +539,7 @@ export default function App() {
   }
 
   // ---- camp -----------------------------------------------------------------------------
-  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onClose={() => setMenuOpen(false)} /> : null
+  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) } } : undefined} /> : null
   const topbar = (
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
@@ -528,7 +565,8 @@ export default function App() {
   // ---- battle ---------------------------------------------------------------------------
   if (!card) return <main className="app-shell">{topbar}</main>
   const { word, question } = card
-  const entry = save.mastery[word.hanzi]
+  const entry = save.mastery[word.id]
+  const canSpeak = audioReliable(word, WORDS)
   const revealed = !!feedback
   const fighting = run.phase === 'fighting'
   const revealing = !!reveal   // a right answer is being shown in place before the game moves on
@@ -544,7 +582,7 @@ export default function App() {
   const ownedUpgrades = save.meta.upgrades.map(id => nodeById(id)).filter((node): node is NonNullable<typeof node> => !!node)
   const toggleGear = () => {
     setShowBag(v => !v); setShowWords(false)
-    setSelectedGearSlot(null); setSelectedGearName(null); setNewLoot(false)
+    setSelectedGearSlot(null); setSelectedGearName(null)
   }
 
   return (
@@ -557,18 +595,17 @@ export default function App() {
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">
-        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small>{foe.boss && <b className="boss-tag">BOSS · PHASE {bossPhase(run, foe.hp)}/2</b>}</div>
+        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small></div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
-        <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
+        <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">☰</button>
       </header>
       <section className="game-layout">
         <div className="left-column">
           <div className="scene-frame">
-            <div className="compact-location"><span>The Mosslight Cavern</span><span key={knownBump} className={`words-known ${knownBump > 0 ? 'bump' : ''}`} aria-label={`${seenCount(save.mastery)} words known, ${masteredCount(save.mastery)} mastered`}>📖 {seenCount(save.mastery)} · ★ {masteredCount(save.mastery)}</span></div>
             <div className="scene-label"><span className="live-dot"></span><span className="scene-where"><span className="scene-floor"><span className="sf-wide">F{run.floor} · {run.kill + 1}/{ENEMIES_PER_FLOOR}</span><span className="sf-narrow">F{run.floor}·{run.kill + 1}/{ENEMIES_PER_FLOOR}</span></span><span className="scene-gold">🪙 {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
-                <button className="chip-btn" onClick={() => { setShowBag(v => { const next = !v; if (next) { setSelectedGearSlot(null); setSelectedGearName(null) } return next }); setNewLoot(false) }} aria-label={newLoot ? 'Character stats, new gear found' : 'Character stats'}>⚔️{newLoot && <i className="new-dot" aria-hidden />}</button>
+                <button className="chip-btn" onClick={() => { setShowBag(v => { const next = !v; if (next) { setSelectedGearSlot(null); setSelectedGearName(null) } return next }) }} aria-label="Character stats">⚔️</button>
                 <button className="chip-btn" onClick={() => setShowWords(v => !v)} aria-label="Wordbook">📚<b>{seenCount(save.mastery)}</b></button>
                 <button className="chip-btn menu-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
               </div></div>
@@ -585,74 +622,19 @@ export default function App() {
                 {levelUp && <div className="arena-levelup" role="status"><span className="lu-badge">LEVEL UP</span><strong>LV {levelUp.from} → {levelUp.to}</strong><small>{[levelUp.hp > 0 && `+${levelUp.hp} max HP`, levelUp.attack > 0 && `+${levelUp.attack} attack`].filter(Boolean).join(' · ') || 'Stronger'}</small></div>}
                 {caption && run.phase !== 'defeat' && <span className={`arena-caption ${caption.side} ${caption.kind}`} role="status">{caption.text}</span>}
               </div>
-              {run.phase === 'victory' && <div className="arena-rewards" role="status" aria-label="Battle rewards">
-                <span>+{run.reward.xp} XP</span>
-                <span>🪙 +{run.reward.gold}</span>
-                {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
-                {run.reward.loot && <span className={`hot loot r-${rarityOf(run.reward.loot)}`}>🎁 {run.reward.loot}</span>}
-              </div>}
-              {run.phase !== 'victory' && (feedback || reveal) && <div className="arena-rewards arena-exchange" role="status" aria-label="Combat result">
-                {(feedback ?? reveal)!.exchange.regrown
-                  ? <span className="shield">🖋 A seal grows back</span>
-                  : (feedback ?? reveal)!.exchange.bossHeal > 0
-                  ? <span className="weak">🎭 Dodged · boss +{(feedback ?? reveal)!.exchange.bossHeal} HP</span>
-                  : (feedback ?? reveal)!.exchange.shield
-                  ? <span className="shield">{(feedback ?? reveal)!.exchange.shield === 'broken' ? `🛡 ${foe.boss === 'scribe' ? 'Seal' : 'Shield'} −1 · ${(feedback ?? reveal)!.exchange.shieldLeft} left` : `🛡 Blocked by ${foe.boss === 'scribe' ? 'seals' : 'shield'}`}</span>
-                  : <span className={(feedback ?? reveal)!.exchange.combo > 0 ? 'combo2' : (feedback ?? reveal)!.exchange.weak ? 'weak' : ''}>⚔ −{(feedback ?? reveal)!.exchange.damage}{(feedback ?? reveal)!.exchange.combo > 0 ? ` · 🔥 +${(feedback ?? reveal)!.exchange.combo}%` : ''}</span>}
-                {(feedback ?? reveal)!.exchange.blocked ? <span>🛡 Blocked</span> : (feedback ?? reveal)!.exchange.counter > 0 ? <span className="hurt">💔 −{(feedback ?? reveal)!.exchange.counter}</span> : <span>No counterattack</span>}
-              </div>}
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
-                <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Adventurer</small></div></div>
-                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className={`health-fill player-fill ${levelUp ? "hp-glow" : ""}`} style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <div className="bar-label"><span>Lv {run.level}</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className={`health-fill player-fill ${levelUp ? "hp-glow" : ""}`} style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
-                <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.enemy.name}</strong><small>{foe.boss ? 'BOSS' : 'OPPONENT'}</small></div></div>
-                <div className="bar-label"><span>ENEMY · HP</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
+                <div className="bar-label"><span>{foe.enemy.name}</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
               </div>
             </div>
           </div>
           {showBag && <section className="drawer character-drawer">
             <div className="drawer-title"><span>CHARACTER · GEAR & STATS</span><button onClick={() => { setShowBag(false); setSelectedGearSlot(null); setSelectedGearName(null) }} aria-label="Close character inventory">✕</button></div>
-            {selectedGearSlot ? <section className="gear-picker-screen">
-              <div className="gear-picker-heading">
-                <button className="text-btn" onClick={() => { setSelectedGearSlot(null); setSelectedGearName(null) }}>Back to Character</button>
-                <div><small>CHANGE EQUIPMENT</small><h3>{selectedGearSlot}</h3></div>
-                <span>{run.gear.filter(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot).length} OWNED</span>
-              </div>
-              <p className="gear-picker-hint">Choose an item to equip in your {selectedGearSlot.toLowerCase()} slot.</p>
-              <div className="gear-picker-list">
-                {GEAR.filter(item => item.slot === selectedGearSlot && run.gear.includes(item.name)).map(item => {
-                  const current = run.loadout[selectedGearSlot] === item.name
-                  const selected = selectedGearName === item.name
-                  const equippedItem = GEAR.find(g => g.name === run.loadout[selectedGearSlot])
-                  const fields = [
-                    { label: 'Attack', key: 'attack' as const, icon: '⚔️', pct: false },
-                    { label: 'Max HP', key: 'hp' as const, icon: '❤️', pct: false },
-                    { label: 'Armor', key: 'armor' as const, icon: '🛡️', pct: false },
-                    { label: 'XP gain', key: 'xpPct' as const, icon: '✨', pct: true },
-                    { label: 'Mastery damage', key: 'masteryPct' as const, icon: '📖', pct: true },
-                    { label: 'Gold per win', key: 'goldFlat' as const, icon: '🪙', pct: false }
-                  ]
-                  const changes = fields.map(field => ({ ...field, delta: item[field.key] - (equippedItem?.[field.key] ?? 0) })).filter(field => field.delta !== 0)
-                  return <div className={`gear-picker-choice ${selected ? 'is-selected' : ''}`} key={item.name}>
-                    <div className={`gear-picker-item ${current ? 'is-current' : ''} ${selected ? 'is-selected' : ''}`}>
-                      <span className="gear-picker-icon">{item.icon}</span>
-                      <div className="gear-picker-info"><b>{item.name}</b><small>{item.bonus}</small>{current && <em>Currently equipped</em>}</div>
-                      {current ? <span className="gear-picker-state">EQUIPPED</span> : <button onClick={() => setSelectedGearName(selected ? null : item.name)}>{selected ? 'CLOSE' : 'COMPARE'}</button>}
-                    </div>
-                    {selected && !current && <div className="gear-picker-inline-compare">
-                      <div className="gear-inline-current"><small>CURRENT</small><b>{equippedItem?.name ?? 'Empty slot'}</b></div>
-                      <div className="gear-inline-candidate"><small>NEW ITEM</small><b>{item.name}</b></div>
-                      <div className="gear-inline-deltas">{changes.length ? changes.map(field => <div key={field.key}><span>{field.icon} {field.label}</span><strong className={field.delta > 0 ? 'delta-up' : 'delta-down'}>{field.delta > 0 ? '+' : '−'}{field.pct ? Math.abs(Math.round(field.delta * 100)) + '%' : Math.abs(field.delta)}</strong></div>) : <p>No numeric stat changes.</p>}</div>
-                      <button className="secondary-btn gear-equip-btn" onClick={() => { equipItem(item.name); setSelectedGearSlot(null); setSelectedGearName(null) }}>Equip {item.name}</button>
-                    </div>}
-                  </div>
-                })}
-                {!run.gear.some(name => GEAR.find(item => item.name === name)?.slot === selectedGearSlot) && <p className="hint-text">You haven't found any {selectedGearSlot.toLowerCase()} items yet.</p>}
-              </div>
-            </section> : <>
+            <>
             <div className="character-summary">
               <div className="character-stat-card level-stat-card">
                 <small>LEVEL</small><strong>{run.level}</strong>
@@ -713,12 +695,10 @@ export default function App() {
               <div className="gear-equipped-list">
                 {(['Weapon', 'Armor', 'Accessory'] as const).map(slot => {
                   const item = GEAR.find(g => g.name === run.loadout[slot])
-                  const alternative = GEAR.find(g => g.slot === slot && run.gear.includes(g.name) && run.loadout[slot] !== g.name)
                   return <div className={`gear-equipped-row ${item ? 'is-filled' : 'is-empty'}`} key={slot}>
                     <span className="gear-equipped-icon">{item?.icon ?? '◇'}</span>
                     <div className="gear-equipped-info"><b>{item?.name ?? 'Empty slot'}</b><small>{slot.toUpperCase()}</small></div>
                     <span className="gear-equipped-effect">{item?.bonus ?? 'Find gear to equip'}</span>
-                    {item && <button className="gear-change-btn" onClick={() => { setSelectedGearSlot(slot); setSelectedGearName(alternative?.name ?? null) }}>{alternative ? 'CHANGE' : 'EQUIPPED'}</button>}
                   </div>
                 })}
               </div>
@@ -740,9 +720,9 @@ export default function App() {
                 </div>
               </details>
             </section>
-            </>}
+            </>
           </section>}
-          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain(w.hanzi)} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
+          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.id] && !(fighting && !feedback && card?.word.id === w.id)).sort((a, b) => save.mastery[b.id].lv - save.mastery[a.id].lv).map(w => { const lv = save.mastery[w.id].lv; const rich = hasDetails(w); const body = <><strong className={`wb-len${lenClass(w.hanzi)}`}>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small>{w.kind === 'particle' && <u className="kind-tag">particle</u>}<i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{rich && <em className="tip-badge" aria-hidden>💡</em>}</>; return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => setExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. Open details`}>{body}</button> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
 
         <div className="right-column">
@@ -752,29 +732,35 @@ export default function App() {
             {/* The word card never leaves its slot. Feedback replaces the choices below it. */}
             {showCard && <>
               <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
+                <div className="card-strip">
                 <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
-                  {hasExplanation(word.hanzi) && show.hanzi && show.pinyin && show.meaning && <button className={`speak-btn tip-btn ${tipPulse === word.hanzi ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); setExplain(word.hanzi) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
-                  <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
+                  {hasDetails(word) && (question.cloze ? revealed || revealing : show.hanzi && show.pinyin && show.meaning) && <button className={`speak-btn tip-btn ${tipPulse === word.id ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); setExplain(word.id) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
+                  {canSpeak && <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>}
                 </div>
-                {ceremony === word.hanzi && (feedback || revealing) && <div className="confetti" aria-hidden="true">{Array.from({ length: 22 }, (_, k) => <i key={k} style={{ left: `${4 + ((k * 37) % 92)}%`, animationDelay: `${(k % 7) * 60}ms`, background: ['#ffd166', '#8ee0a9', '#6fb5e8', '#ff8a3d'][k % 4] }} />)}</div>}
-                <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')}`}>{show.hanzi ? word.hanzi : '?'}</div>
-                <div className={`slot slot-pinyin ${slot(show.pinyin, question.ask === 'pinyin')}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
-                <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
+                </div>
+                {ceremony === word.id && (feedback || revealing) && <div className="confetti" aria-hidden="true">{Array.from({ length: 22 }, (_, k) => <i key={k} style={{ left: `${4 + ((k * 37) % 92)}%`, animationDelay: `${(k % 7) * 60}ms`, background: ['#ffd166', '#8ee0a9', '#6fb5e8', '#ff8a3d'][k % 4] }} />)}</div>}
+                {question.cloze ? <div className={`cloze-block cloze-${question.cloze.zh.length <= 9 ? 's' : question.cloze.zh.length <= 13 ? 'm' : 'l'}`} lang="zh">
+                  <div className="cloze-zh">{fillBlank(question.cloze.zh, revealed || revealing ? word.hanzi : null)}</div>
+                  <div className="cloze-py">{fillBlank(question.cloze.pinyin, revealed || revealing ? word.pinyin : null)}</div>
+                  <div className="cloze-en">{question.cloze.en}</div>
+                </div> : <>
+                  <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')} len${lenClass(word.hanzi)}`}>{show.hanzi ? word.hanzi : '?'}</div>
+                  <div className={`slot slot-pinyin ${slot(show.pinyin, question.ask === 'pinyin')} len${lenClass(word.pinyin)}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
+                  <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')} ${word.meaning.length > 24 ? 'meaning-long' : ''}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
+                </>}
               </div>
               {feedback && !revealing ? (
                 <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'} ${feedback.masteredNow ? 'is-mastered' : ''}`} role="status" aria-live="polite">
-                  {feedback.masteredNow && <span className="mastered-badge">★ MASTERED</span>}
                   <div className="result-line">
-                    <strong>{feedback.correct ? `✓ Correct — ${feedback.word.hanzi} ${feedback.word.pinyin} · ${feedback.word.meaning}` : 'Not quite'}</strong>
+                    <strong>{feedback.correct ? '✓ Correct' : 'Not quite'}{feedback.correct && feedback.word.variants.length > 0 && <small className="result-also"> also {feedback.word.variants.join(', ')}</small>}</strong>
                   </div>
                   {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
-                  <p className="result-note">{feedback.word.note}</p>
-                  {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}><i className="pips" aria-hidden="true">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < feedback.lv ? 'on' : ''} />)}</i> {feedback.mastery}</p>}
+                  <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
-                return <button key={`${option}-${i}`} className={`answer-btn ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${question.ask === 'pinyin' ? 'opt-pinyin' : ''} ${gone ? 'answer-gone' : ''} ${revealing && option === question.answer ? 'answer-correct' : ''}`} disabled={gone || revealing} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
+                return <button key={`${option}-${i}`} className={`answer-btn ${option.length > 36 ? 'xlong' : option.length > 22 ? 'long' : ''} ${question.optionsAreHanzi ? 'opt-hanzi' : ''} ${question.ask === 'pinyin' ? 'opt-pinyin' : ''} ${gone ? 'answer-gone' : ''} ${revealing && option === question.answer ? 'answer-correct' : ''}`} disabled={gone || revealing} onClick={() => answerQuestion(option)}><span className="answer-key">{String.fromCharCode(65 + i)}</span><span className="answer-text">{gone ? '—' : option}</span></button>
               })}</div>}
             </>}
 
@@ -784,33 +770,16 @@ export default function App() {
               {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
 
-            {run.phase === 'victory' && (
-              <div className="reward-strip" aria-label="Battle rewards">
-                <div className="reward-item"><small>EXPERIENCE</small><strong>+{run.reward.xp} XP</strong></div>
-                <div className="reward-item"><small>GOLD</small><strong>🪙 +{run.reward.gold}</strong></div>
-                {run.reward.levelUps > 0 && <div className="reward-item reward-highlight"><small>LEVEL UP</small><strong>Level {run.level}</strong></div>}
-              </div>
-            )}
-
-            {run.phase === 'victory' && run.reward.loot && (
-              <div className="loot-drop" role="status" aria-label={`Loot acquired: ${run.reward.loot}`}>
-                <span className="loot-drop-icon" aria-hidden="true">🎁</span>
-                <span className="loot-drop-copy"><small>ITEM FOUND</small><strong>{run.reward.loot}</strong></span>
-                <span className="loot-drop-tag">NEW LOOT</span>
-              </div>
-            )}
-
             <div className="action-bar">
               {revealing
                 ? <button className="bar-btn ghost auto-continue" data-kind="continue" onClick={advanceAuto}><span>✓ Correct</span><span>Tap to continue →</span></button>
                 : fighting && !feedback
                 ? <>
-                    {bonuses.hints > 0
-                      ? <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>
-                      : <p className="bar-hint">{question.kind === 'intro' ? 'Choose its meaning to attack' : 'Choose an answer to attack'}</p>}
+                    {bonuses.hints > 0 && <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>}
+                    {run.potions > 0 && <button className="bar-btn ghost potion-btn" onClick={usePotion} disabled={run.hp >= stats.maxHp} aria-label={`Use potion, ${run.potions} left`}>🧪 Potion <b>{run.potions}</b></button>}
                   </>
                 : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? (lastOfFloor ? () => setSummary('floor') : nextEnemy) : () => setSummary('defeat')}>
-                    {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? `Descend to floor ${run.floor + 1}` : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>
+                    {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? 'Floor summary' : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>
                   </button>}
             </div>
           </section>
@@ -818,18 +787,14 @@ export default function App() {
           <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear found</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div><button className="reset-btn" onClick={resetAll}>Reset ALL progress</button></section>
         </div>
       </section>
-      <nav className="compact-tools" aria-label="Battle tools">
-        <button onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}><span aria-hidden="true">🧪</span> Potion · {run.potions}</button>
-        <button onClick={toggleGear} aria-expanded={showBag} aria-label={newLoot ? 'Character stats, new gear found' : 'Character stats'}><span aria-hidden="true">⚔</span> Gear{newLoot && <i className="new-dot" aria-hidden="true" />}</button>
-        <button onClick={() => { setShowWords(v => !v); setShowBag(false) }} aria-expanded={showWords} aria-label="Wordbook"><span aria-hidden="true">📚</span> Words · {seenCount(save.mastery)}</button>
-      </nav>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} onClose={() => setSummary(null)} onContinue={() => { if (summary === 'floor') { setSummary(null); nextEnemy() } else endRun() }} />}
+      {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
-      {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} autoEquipped={lootReveal.autoEquipped} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
+      {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
       {menu}
-      {explain !== null && <ExplainModal hanzi={explain} hidden={fighting && !feedback && !revealing ? card?.word.hanzi : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal id={explain} hidden={fighting && !feedback && !revealing ? card?.word.id : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
     </main>
   )
 }

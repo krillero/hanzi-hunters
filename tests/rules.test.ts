@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { ENEMIES, GEAR } from '../src/data.ts'
 import { NO_BONUSES, computeBonuses, type Bonuses } from '../src/game/upgrades.ts'
+import { gearVerdict } from '../src/game/rarity.ts'
 import {
   ENEMIES_PER_FLOOR, advance, bankRun, drinkPotion, enemyStats, equipGear, newRun, playerStats, resolveAnswer, startFight
 } from '../src/game/rules.ts'
@@ -157,4 +158,24 @@ test('healedOnKill reports only the Second Wind upgrade, not the level-up heal o
   const nearFull = { ...low, hp: playerStats(low, b, GEAR).maxHp - 2 }
   assert.equal(ask(nearFull, { bonuses: b }).healedOnKill, 2, 'capped by max HP')
   assert.equal(ask({ ...low, enemyHp: 500 }, { bonuses: b }).healedOnKill, 0, 'no kill, no heal')
+})
+
+test('loot with one item per slot: empty slot and pure upgrades are worn, pure downgrades are left behind, trade-offs wait for the player', () => {
+  const g = (n: string) => GEAR.find(x => x.name === n)!
+  const r = { ...run0(), enemyHp: 1 }
+  const drop = (worn: string | null, item: string) => {
+    const idx = GEAR.filter(x => !x.boss && x.name !== worn).findIndex(x => x.name === item)
+    const pool = GEAR.filter(x => !x.boss && x.name !== worn)
+    const base = { ...r, gear: worn ? [worn] : [], loadout: worn ? { [g(worn).slot]: worn } : {} }
+    return ask(base, { roll: { drop: 0.1, item: idx / pool.length + 0.0001 } })
+  }
+  assert.equal(drop(null, 'Copper Blade').run.loadout.Weapon, 'Copper Blade')
+  // find some pair of each kind in the real data
+  const same = GEAR.filter(x => !x.boss)
+  for (const a of same) for (const b of same) if (a !== b && a.slot === b.slot) {
+    const v = gearVerdict(b, a); const out = drop(a.name, b.name)
+    assert.equal(out.loot?.name, b.name)
+    assert.ok(out.run.gear.includes(b.name), 'found items are remembered even when left behind, so they cannot drop again this run')
+    assert.equal(out.run.loadout[a.slot], v === 'better' ? b.name : a.name, `${a.name} -> ${b.name} (${v})`)
+  }
 })

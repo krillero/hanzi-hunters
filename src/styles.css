@@ -1534,3 +1534,127 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 @media (prefers-reduced-motion:reduce){.words-known.bump,.tip-btn.pulse,.loot-icon{animation:none}}
 .boss-sprite.scribe{filter:drop-shadow(0 0 10px #6f86e0aa)}
 .boss-sprite.trickster{filter:drop-shadow(0 0 10px #d77be8aa)}
+
+/* ---- Multi-character words, readings, sentence (cloze) questions ---- */
+/* long hanzi / pinyin on the word card shrink so they stay on one line */
+.in-battle .slot-hanzi.len3,.wu-stage .slot-hanzi.len3{font-size:40px}
+.in-battle .slot-hanzi.len5,.wu-stage .slot-hanzi.len5{font-size:30px}
+.in-battle .slot-hanzi.len8,.wu-stage .slot-hanzi.len8{font-size:22px}
+.in-battle .slot-pinyin.len3,.wu-stage .slot-pinyin.len3{font-size:22px}
+.in-battle .slot-pinyin.len5,.wu-stage .slot-pinyin.len5{font-size:19px}
+.in-battle .slot-pinyin.len8,.wu-stage .slot-pinyin.len8{font-size:15px}
+.in-battle .slot-hanzi,.in-battle .slot-pinyin{white-space:nowrap}
+/* answer buttons: whole words and longer pinyin get smaller text and may wrap */
+.in-battle .opt-pinyin .answer-text{font-size:clamp(17px,6vw,27px);overflow-wrap:anywhere;line-height:1.1}
+.in-battle .opt-hanzi .answer-text{font-size:clamp(20px,7vw,30px);overflow-wrap:anywhere;line-height:1.1}
+.speak-btn.no-audio{opacity:.45;cursor:not-allowed}
+.kind-tag{display:block;margin-top:2px;text-decoration:none;font:9px 'DM Mono',monospace;color:#afbdd0;letter-spacing:.5px;text-transform:uppercase}
+.wordbook-word strong.wb-len3{font-size:20px}.wordbook-word strong.wb-len5{font-size:16px}.wordbook-word strong.wb-len8{font-size:13px}
+.wordbook-word{overflow:hidden}
+.wordbook-word span,.wordbook-word small{overflow-wrap:anywhere}
+/* sentence (cloze) card */
+.cloze-block{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;padding:22px 6px 0;width:100%}
+.cloze-zh{font-size:clamp(22px,7.2vw,30px);line-height:1.2;font-weight:600;color:#f1f5fb}
+.cloze-py{font:600 clamp(12px,3.8vw,15px) 'DM Mono',monospace;color:#f1ce80;line-height:1.3}
+.cloze-en{font-size:clamp(12px,3.8vw,15px);color:#c9d6e4;line-height:1.3}
+.blank{display:inline-block;min-width:1.4em;padding:0 .15em;border-bottom:2px dashed #f1ce80;color:#f1ce80;text-align:center}
+.blank.filled{border-bottom-style:solid;color:#8ee0a9}
+.in-battle .stage-card .cloze-block{padding-top:20px}
+/* details popup */
+.ex-hanzi.ex-len3{font-size:30px}.ex-hanzi.ex-len4{font-size:26px}
+.ex-note{display:block;font-size:13px;color:#c9d6e4;margin-top:2px}
+.ex-meta{display:block;font:10px 'DM Mono',monospace;color:#8798ad;margin-top:2px}
+.ex-speak{position:absolute;right:0;top:0;width:36px;height:36px;border:1px solid #394c64;background:#142033;border-radius:6px;color:#f1f5fb}
+.ex-examples li{position:relative;padding-right:44px}
+.link-btn{background:none;border:0;color:#7fb8ff;text-decoration:underline;padding:0 4px;font-size:inherit}
+.ex-provenance .ex-tips li{font-size:12px}
+.credits{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:8px;color:#c9d6e4}
+.credits small{color:#9aa9bd;line-height:1.4}
+
+/* narrow-screen fixes: sentence card must fit the fixed card height; details header must not wrap into a tall column */
+.in-battle .cloze-block{padding-top:18px;gap:1px}
+.in-battle .cloze-zh{font-size:clamp(17px,5.6vw,24px);line-height:1.15}
+.in-battle .cloze-py{font-size:clamp(10px,3.2vw,13px);line-height:1.2}
+.in-battle .cloze-en{font-size:clamp(10px,3.2vw,13px);line-height:1.2}
+.blank{padding:0 .1em;line-height:1}
+.modal-head .ex-hanzi.ex-len2{font-size:30px;line-height:1.05}
+.modal-head .ex-hanzi.ex-len3{font-size:24px;line-height:1.05}
+.modal-head .ex-hanzi.ex-len4{font-size:20px;line-height:1.05}
+.modal-head .ex-titles h2{font-size:16px;line-height:1.25}
+.modal-head .ex-titles small{overflow-wrap:anywhere}
+
+/* long answers (particle descriptions, long glosses) shrink and wrap instead of being cut off */
+.in-battle .answer-btn.long .answer-text,.wu-choices .answer-btn.long .answer-text{font-size:14px;line-height:1.15;overflow-wrap:anywhere}
+.in-battle .answer-btn.xlong .answer-text,.wu-choices .answer-btn.xlong .answer-text{font-size:12.5px;line-height:1.15;overflow-wrap:anywhere}
+.in-battle .slot-meaning.meaning-long,.wu-stage .slot-meaning.meaning-long{font-size:13px;line-height:1.15;white-space:normal;max-height:32px;overflow:hidden;padding:0 6px}
+
+/* ---- Word card: a thin strip on top (level chip left, 🔊 / 💡 right) instead of overlays, so the content gets the whole card ---- */
+.stage-card .card-strip{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:34px;flex:none;z-index:2}
+.stage-card .card-strip .stage-badge{position:static;top:auto;left:auto;max-width:none;font-size:10px;letter-spacing:.4px;white-space:nowrap}
+.stage-card .card-strip .corner-btns{position:static;top:auto;right:auto;display:flex;gap:6px;margin-left:auto}
+.stage-card .card-strip .speak-btn,.stage-card .card-strip .corner-btns .speak-btn{position:static;width:34px;height:34px;min-width:34px;font-size:15px}
+.wu-stage .card-strip{height:36px}
+.in-battle .question-panel{--stage-h:clamp(124px,18.75dvh,150px)}
+.in-battle .stage-card{padding:2px 8px 4px;overflow:hidden}
+.in-battle .stage-card .slot-hanzi{font-size:44px;height:46px}
+.in-battle .stage-card .slot-pinyin{font-size:20px;height:24px}
+.in-battle .stage-card .slot-meaning{font-size:15px;min-height:20px}
+.in-battle .stage-card .slot-hanzi.len3{font-size:38px}.in-battle .stage-card .slot-hanzi.len5{font-size:28px}.in-battle .stage-card .slot-hanzi.len8{font-size:20px}
+.in-battle .stage-card .slot-pinyin.len3{font-size:19px}.in-battle .stage-card .slot-pinyin.len5{font-size:17px}.in-battle .stage-card .slot-pinyin.len8{font-size:14px}
+/* the sentence gets the room: size follows its length */
+.stage-card .cloze-block{padding:0 6px;flex:1;gap:3px;justify-content:center}
+.stage-card .cloze-block.cloze-s .cloze-zh{font-size:clamp(26px,8.6vw,34px)}
+.stage-card .cloze-block.cloze-m .cloze-zh{font-size:clamp(22px,7vw,28px)}
+.stage-card .cloze-block.cloze-l .cloze-zh{font-size:clamp(18px,5.6vw,23px)}
+.stage-card .cloze-block .cloze-py,.stage-card .cloze-block .cloze-en{font-size:clamp(12px,3.9vw,15px);line-height:1.25}
+@media (max-height:700px){
+  .in-battle .question-panel{--stage-h:124px}
+  .stage-card .card-strip{height:30px}
+  .stage-card .card-strip .speak-btn,.stage-card .card-strip .corner-btns .speak-btn{width:30px;height:30px;min-width:30px;font-size:13px}
+  .in-battle .stage-card .slot-hanzi{font-size:38px;height:40px}.in-battle .stage-card .slot-pinyin{font-size:18px;height:21px}.in-battle .stage-card .slot-meaning{font-size:14px;min-height:17px}
+  .in-battle .stage-card .slot-hanzi.len3{font-size:32px}.in-battle .stage-card .slot-hanzi.len5{font-size:24px}
+  .stage-card .cloze-block.cloze-s .cloze-zh{font-size:clamp(22px,7vw,28px)}.stage-card .cloze-block.cloze-m .cloze-zh{font-size:clamp(19px,6vw,24px)}
+}
+@media (max-height:600px){
+  .in-battle .question-panel{--stage-h:96px}
+  .stage-card .card-strip{height:24px}
+  .stage-card .card-strip .speak-btn,.stage-card .card-strip .corner-btns .speak-btn{width:24px;height:24px;min-width:24px;font-size:11px}
+  .in-battle .stage-card .slot-hanzi{font-size:30px;height:32px}.in-battle .stage-card .slot-pinyin{font-size:14px;height:17px}.in-battle .stage-card .slot-meaning{font-size:12px;min-height:14px}
+  .stage-card .cloze-block .cloze-zh{font-size:20px!important}.stage-card .cloze-block .cloze-py,.stage-card .cloze-block .cloze-en{font-size:11px!important}
+}
+
+/* ---- Quiet Arena: one source for each fact, feedback lives on the card ---- */
+.in-battle .arena-combatants .bar-label{margin-top:0;font-size:11px;letter-spacing:.2px;color:#c3cfde}
+.in-battle .arena-combatants .bar-label span:first-child{display:block!important;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;padding-right:6px}
+.in-battle .arena-combatants .health-track{height:8px;margin-top:4px}
+.in-battle .answer-feedback .result-line strong{font-size:clamp(15px,2.3dvh,18px);line-height:1.3}
+.in-battle .answer-feedback .result-note{font-size:clamp(14px,2dvh,16px);line-height:1.4;color:#dbe6f0}
+.in-battle .action-bar .bar-btn.ghost b{margin-left:4px;color:#f0c66b}
+.in-battle .action-bar{gap:8px}
+.menu-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu-tools .bar-btn{position:relative;min-height:48px}
+.in-battle .compact-header .chip-btn{position:relative}
+.in-battle .compact-header strong,.in-battle .compact-header .boss-tag{white-space:nowrap}
+.in-battle .answer-feedback .result-line strong{white-space:normal;overflow:visible;text-overflow:clip}
+.result-also{font-size:13px;color:#c9d6e4;font-weight:400}
+.in-battle .arena-combatants .bar-label span:last-child{white-space:nowrap}
+
+/* ---- New-word introduction card ---- */
+.newword-card{display:flex;flex-direction:column}
+.newword-card .modal-body{flex:1 1 auto;min-height:0;overflow:auto;display:grid;gap:12px;align-content:start}
+.nw-hero{text-align:center;display:grid;gap:4px;padding:6px 0 2px}
+.nw-hanzi{font-size:88px;line-height:1.1;font-weight:600;color:#f7f4eb;overflow-wrap:anywhere}
+.nw-hanzi.len3{font-size:64px}.nw-hanzi.len5{font-size:46px}.nw-hanzi.len8{font-size:32px}
+.nw-pinyin{font-size:28px;color:#f0cb78;font-weight:700;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap}
+.nw-meaning{font-size:20px;color:#dbe6f0;overflow-wrap:anywhere}
+.nw-also{font-size:13px;color:#9eafc1}
+.nw-note{margin:0;font-size:16px;line-height:1.45;color:#dbe6f0}
+.nw-parts{display:flex;flex-wrap:wrap;gap:8px}
+.nw-part{border:1px solid #3b4b61;border-radius:8px;padding:6px 10px;font-size:14px;color:#c9d6e4}
+.nw-part b{font-size:20px;color:#f7f4eb;margin-right:4px}
+.nw-examples{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.nw-examples li{display:grid;gap:2px;border-left:3px solid #3b4b61;padding-left:10px}
+.nw-more{justify-self:start;font-size:14px}
+.nw-foot{flex:none;padding:10px 14px 14px;border-top:1px solid #28374a}
+.nw-foot .bar-btn{width:100%;min-height:52px}
+.nw-speak{width:44px;height:44px;border-radius:50%;border:1px solid #3b526b;background:#1a2c40;color:#c4d8eb;font-size:20px;line-height:1;flex:none}
