@@ -23,7 +23,7 @@ import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
 import { isUpgrade, rarityOf as rarityOfItem } from './game/rarity'
 import {
-  ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, bankRun, bossIdFor, bossPhase, isBoss, isElite, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, xpForLevel
+  ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, bankRun, bossIdFor, bossPhase, isBoss, isElite, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
 import type { Run, Saved } from './game/types'
@@ -52,8 +52,22 @@ function useBump(value: number) {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+/** Preview aid: /?floor=5 starts a fresh run at the last fight of that floor (the boss on floors 5, 10 ...); add &kill=0..3 for an earlier fight. */
+function previewStart(): { floor: number; kill: number } | null {
+  const q = new URLSearchParams(window.location.search); const f = Number(q.get('floor'))
+  if (!q.has('floor') || !Number.isInteger(f) || f < 1 || f > 99) return null
+  const k = q.has('kill') ? Number(q.get('kill')) : ENEMIES_PER_FLOOR - 1
+  return { floor: f, kill: Number.isInteger(k) && k >= 0 && k < ENEMIES_PER_FLOOR ? k : ENEMIES_PER_FLOOR - 1 }
+}
+
 function initialSave(): Saved {
   const s = loadSave(window.localStorage)
+  const jump = previewStart()
+  if (jump) {
+    // A strong enough hero for that depth so the fight itself can be looked at; replaces the current run (explicit test URL only).
+    const b = computeBonuses(s.meta.upgrades), base = { ...newRun(b, GEAR, ENEMIES), floor: jump.floor, kill: jump.kill, level: Math.min(40, 2 + jump.floor * 2) }
+    return { ...s, run: startFight({ ...base, hp: playerStats(base, b, GEAR).maxHp }, b, ENEMIES) }
+  }
   // Brand-new players go straight into a first run; returning players land wherever they left off.
   const brandNew = s.meta.runs === 0 && s.meta.gold === 0 && s.meta.upgrades.length === 0 && Object.keys(s.mastery).length === 0
   if (!s.run && !s.lastRun && brandNew) return { ...s, run: newRun(computeBonuses(s.meta.upgrades), GEAR, ENEMIES) }
@@ -97,7 +111,7 @@ export default function App() {
   const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
   const [lootReveal, setLootReveal] = useState<{ name: string; current: string | null; autoEquipped: boolean } | null>(null)
   const [tipPulse, setTipPulse] = useState<string | null>(null)   // 💡 pulses once per word, right after the first right answer
-  const [bossIntro, setBossIntro] = useState<BossId | null>(null)
+  const [bossIntro, setBossIntro] = useState<BossId | null>(() => { const j = previewStart(); return j && isBoss(j.floor, j.kill) ? bossIdFor(j.floor) : null })
   const [warmup, setWarmup] = useState<string[] | null>(null)
   const [ceremony, setCeremony] = useState<string | null>(null)   // word that was just mastered (confetti for a moment)
   const knownBump = useBump(seenCount(save.mastery))
@@ -152,10 +166,14 @@ export default function App() {
     if (!forced && forRun && bossFoe?.boss === 'golem' && forRun.shield > 0) {
       // Shield up: only pinyin (tone) questions can break it, so ask only those (about words you already know).
       const kinds = TONE_KINDS.filter(k => listen || k !== 'listen2pinyin')
+      const knownWords = WORDS.filter(w => mastery[w.hanzi])
       let last: Card | null = null
       for (let k = 0; k < 12; k++) {
-        const word = pickWord(WORDS, mastery, last?.word.hanzi ?? current)
-        last = { word, question: buildQuestion(word, mastery[word.hanzi], WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)])) }
+        // the scheduler's pick when it is a word you already know, else any known word (never a brand-new word without teaching it)
+        let word = pickWord(WORDS, mastery, last?.word.hanzi ?? current)
+        if (!mastery[word.hanzi] && knownWords.length > 0) word = knownWords[Math.floor(Math.random() * knownWords.length)]
+        const entry = mastery[word.hanzi] ?? { lv: 1, ok: 0 }   // only when nothing at all is known yet (preview URLs)
+        last = { word, question: buildQuestion(word, entry, WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)])) }
         if (isToneQuestion(last.question)) return last
       }
       return last!

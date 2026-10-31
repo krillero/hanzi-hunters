@@ -64,4 +64,5 @@ Bot play at 60/75/90 % accuracy: first death on floor 1–3 with enough gold for
 * A boss kill always drops its own item first (**Golem Plate** / **Wraith Lantern**, boss-only gear that never drops elsewhere), then any other unowned gear. It also counts for the *Boss slayer* badge.
 * Boss intro card on arrival, `BOSS · PHASE n/2` in the header, shield segments in the arena. The simulator models the shield (tone questions are slightly harder); at 70–80 % accuracy the first Golem is typically beaten around run 10.
 * Loot reveal: rare/epic gear, boss gear, or a clear upgrade over what you wear opens a chest card that compares the stats with the equipped item (and offers *Equip now*); other drops stay a chip. Auto-continue waits while the card is open.
+* Preview a boss without playing four floors: open `/?floor=5` (Golem) or `/?floor=10` (Wraith); `&kill=0..3` picks an earlier fight of that floor. It replaces the current run with a fresh, levelled-up hero (test URLs only).
 

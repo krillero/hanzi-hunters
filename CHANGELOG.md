@@ -9,6 +9,8 @@
 - **Counter bump:** the arena's words-known counter bumps when a new word is added. **💡 pulse:** the bulb pulses three times once per word after the first right answer (remembered in the save). **Hit-stop:** a short freeze, stronger shake and (for bosses) a white flash on a kill; all skipped with reduced motion.
 - Balance: the simulator models the shield; the existing pacing test still passes. Boss numbers (HP ×2.4, damage ×1.3) are a first guess: expect to retune after playing.
 - Tests: new `tests/boss.test.ts` (boss floors, stats, shield rules, wraith phase, guaranteed boss loot, boss gear never from normal fights, shield saving), loot comparison and habit additions in `tests/feel.test.ts` / `tests/habit.test.ts`. Browser-checked: golem fight to shield down, wraith intro, boss kill with Golem Plate and badge, epic loot compare + equip, bulb pulse once, counter bump; `tools/layout-check.mjs` 8/8.
+- **Preview shortcut:** `/?floor=5` jumps straight to the Shield Golem fight (`/?floor=10` the Echo Wraith, `/?floor=3` a normal elite); `&kill=0..3` picks an earlier fight on that floor. It replaces the current run with a levelled-up hero, so use it for testing only. Bosses only appear from floor 5 on; floors 1–4 still end with the elite.
+- The Golem's shield phase now only asks about words you already know (it no longer asks a brand-new word without teaching it).
 - Not checked on a real phone: the new screens, the boss feel and the hit-stop timing.
 
 ## 2026-10-31 — Sound tuning
