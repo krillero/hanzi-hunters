@@ -1,5 +1,14 @@
 # Changelog / test log
 
+## 2026-10-31 — Game feel, phase 2: learning visibility (see docs/GAME_FEEL_AND_PROGRESSION.md)
+- **Daily warm-up (optional, once a day):** the camp offers a quick review of up to 5 words you already know (the weakest first; stable within a day, `pickWarmup` in `src/game/habit.ts`). No HP, no enemies; right answers raise word mastery and earn 3 gold each. Leaving early keeps the answers already given. New screen `src/WarmupScreen.tsx`.
+- **Camp counters:** words known · mastered · days played. **Days played** is a tally that only goes up (no streak to lose, a long gap costs nothing).
+- **Badges (9 milestones):** first mastered word, 10/25/50 words known, 100/500 correct answers, floor 5/10, 7 days played. Earned badges show in the camp; a short toast announces a new one (battle and warm-up).
+- **Mastery ceremony:** when a word reaches level 4 the feedback box gets a gold frame and a ★ MASTERED badge, with confetti on the word card for about 2 seconds (hidden with reduced motion) and the existing "mastered" sound.
+- **Save:** new additive `habit` field `{daysPlayed, lastPlayed, warmupDay, correct, badges}`, validated on load (`sanitizeHabit`). Old saves load with an empty habit and exports/imports carry it. The save version stays 2 on purpose: an older cached app simply ignores the field, so no one loses progress during an update.
+- Tests: new `tests/habit.test.ts` (sanitising, days-played rules, warm-up selection and once-a-day rule, badge thresholds, old-save loading, backup round trip).
+- Not done: the gentle "bump" animation when the words-known counter grows, and the "💡 pulses once per word" idea. Dev note: `npx tsc --noEmit` checks nothing in this repo (root tsconfig has no files); use `npm run typecheck` or `npx tsc -p tsconfig.app.json --noEmit`.
+
 ## 2026-10-31 — Game feel, phase 1 (see docs/GAME_FEEL_AND_PROGRESSION.md)
 - **Sound effects (new `src/audio.ts`):** short synthesised sounds (no audio files) for correct, combo (pitch rises with the streak, capped), wrong, kill, level-up, loot (more notes for rarer items), word mastered and defeat. **Vibration** patterns for the same events on phones that support it (Android browsers; ignored elsewhere). New settings `sfx` and `haptics`, both on by default and separate from the spoken-words switch; old saved settings load fine. The first tap unlocks audio (browser autoplay rules).
 - **Kill moment:** coins and XP dots fly from the monster to the gold counter and XP bar (skipped with reduced motion); post-kill healing is shown ("💚 +5 Second Wind").
