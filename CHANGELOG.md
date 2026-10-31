@@ -1,5 +1,10 @@
 # Changelog / test log
 
+## 2026-10-31 — XP is paid only when a monster dies
+- Before, every answer added XP to your bar immediately (5 right / 2 wrong), so XP could rise in the middle of a fight. Now answers bank their XP in a new `pendingXp` field and it is paid out together with the monster's XP when you kill it (one "+N XP" on the victory chip, level-ups only on a kill). Same total XP as before, just delivered at the kill; XP bonuses (Quick Study, Scholar Charm) still apply. Dying pays nothing (the run ends anyway).
+- `pendingXp` is saved with the run; old saves without it load with 0. `startFight` / `advance` reset it. Tests: kill pays banked + answer + monster XP, wrong answers bank 2, bonuses apply, new fight resets, defeat pays nothing, old-save loading.
+- The Second Wind caption stays as in PR 21 (level-up healing is deliberately not shown: it only follows the higher max HP).
+
 ## 2026-10-31 — Game feel, phase 1 (see docs/GAME_FEEL_AND_PROGRESSION.md)
 - **Sound effects (new `src/audio.ts`):** short synthesised sounds (no audio files) for correct, combo (pitch rises with the streak, capped), wrong, kill, level-up, loot (more notes for rarer items), word mastered and defeat. **Vibration** patterns for the same events on phones that support it (Android browsers; ignored elsewhere). New settings `sfx` and `haptics`, both on by default and separate from the spoken-words switch; old saved settings load fine. The first tap unlocks audio (browser autoplay rules).
 - **Kill moment:** coins and XP dots fly from the monster to the gold counter and XP bar (skipped with reduced motion); post-kill healing is shown ("💚 +5 Second Wind").

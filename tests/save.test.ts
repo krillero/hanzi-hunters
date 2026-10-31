@@ -54,3 +54,11 @@ test('v1 prototype saves migrate: learned -> level 1, gold banked, floor -> best
   assert.equal(loadSave(store({ [LEGACY_KEY]: JSON.stringify(v1), [SAVE_KEY]: JSON.stringify({ meta: { gold: 7 } }) })).meta.gold, 7)
   assert.ok(WORDS.length)
 })
+
+test('old saves with a run but no pendingXp load with an empty XP bank', () => {
+  const live = sanitizeSave({ version: 2, meta: { gold: 0, upgrades: [], bestFloor: 1, runs: 0 }, mastery: {}, lastRun: null,
+    run: { floor: 1, kill: 0, kills: 0, level: 1, xp: 3, hp: 20, enemyHp: 10, gold: 0, potions: 1, gear: [], streak: 0, hintsLeft: 0, secondLeft: 0, phase: 'fighting', reward: { xp: 0, gold: 0, loot: '', levelUps: 0 } } })
+  assert.equal(live.run?.pendingXp, 0)
+  assert.equal(sanitizeSave({ ...live, run: { ...live.run, pendingXp: 12 } }).run?.pendingXp, 12)
+  assert.equal(sanitizeSave({ ...live, run: { ...live.run, pendingXp: -4 } }).run?.pendingXp, 0)
+})

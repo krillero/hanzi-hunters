@@ -3,7 +3,7 @@
 ## Loop
 1. A **run** starts at floor 1, level 1, no gear, 1 potion (plus any upgrades).
 2. Each floor has **4 enemies; the 4th is an elite** (×1.6 HP, ×1.25 damage, ×2 rewards, better drops). Then you descend.
-3. Per floor (compounding): enemy HP +16 %, damage +11 %, XP/gold +8 %.
+3. Per floor (compounding): enemy HP +16 %, damage +11 %, XP/gold +8 %. XP from answers is banked during a fight and paid out with the monster's XP on the kill (`Run.pendingXp`).
 4. Dying ends the run. **All run gold is banked.** Level, gear and potions are lost. **Upgrades and word mastery stay.**
 5. At **camp** you spend banked gold on the upgrade tree, then start a new run.
 
