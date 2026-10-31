@@ -12,12 +12,15 @@ const SEMI = (n: number) => 2 ** (n / 12)
 export function sfxScore(name: SfxName, opts: SfxOptions = {}): Note[] {
   switch (name) {
     case 'tap': return [note(0, 880, 0.03, 'sine', 0.04)]
-    case 'correct': return [note(0, 523, 0.09), note(0.08, 784, 0.14)]
+    // A soft two-note chime (sine, no harsh square edge) with a faint sparkle on top.
+    case 'correct': return [note(0, 659, 0.08, 'sine', 0.13), note(0.07, 988, 0.2, 'sine', 0.13), note(0.07, 1976, 0.12, 'sine', 0.03)]
     case 'combo': {
       const lift = SEMI(Math.min(12, Math.max(0, (opts.streak ?? 2) - 2)))
       return [note(0, 523 * lift, 0.07), note(0.06, 659 * lift, 0.07), note(0.12, 784 * lift, 0.07), note(0.18, 1047 * lift, 0.2, 'triangle', 0.14)]
     }
-    case 'wrong': return [note(0, 196, 0.16, 'triangle', 0.14), note(0.1, 147, 0.22, 'triangle', 0.12)]
+    // Phone speakers cannot play deep, pure tones (the old triangle waves at ~150-200 Hz were inaudible), so the low sounds use
+    // sawtooth waves: their overtones carry. Pure (sine/triangle) notes stay at 180 Hz or more.
+    case 'wrong': return [note(0, 311, 0.14, 'sawtooth', 0.11), note(0.12, 233, 0.28, 'sawtooth', 0.11), note(0.12, 466, 0.2, 'triangle', 0.06)]
     case 'kill': return [note(0, 110, 0.12, 'sawtooth', 0.14), note(0.1, 523, 0.12), note(0.22, 659, 0.12), note(0.34, 784, 0.26, 'triangle', 0.15)]
     case 'levelup': return [523, 659, 784, 1047, 1319].map((f, i) => note(i * 0.12, f, i === 4 ? 0.3 : 0.12, 'triangle', 0.13))
     case 'loot': {
@@ -27,7 +30,7 @@ export function sfxScore(name: SfxName, opts: SfxOptions = {}): Note[] {
       return [...base, ...more].map((f, i, a) => note(i * 0.09, f, i === a.length - 1 ? 0.28 : 0.1, 'triangle', 0.12))
     }
     case 'mastered': return [note(0, 1319, 0.5, 'sine', 0.12), note(0.02, 1976, 0.5, 'sine', 0.06), note(0.16, 1568, 0.6, 'sine', 0.1)]
-    case 'defeat': return [note(0, 262, 0.2, 'triangle', 0.14), note(0.18, 196, 0.2, 'triangle', 0.13), note(0.36, 131, 0.5, 'triangle', 0.13)]
+    case 'defeat': return [[0, 392, 0.2], [0.2, 330, 0.2], [0.4, 262, 0.22], [0.62, 196, 0.5]].flatMap(([at, f, d]) => [note(at, f, d, 'sawtooth', 0.11), note(at, f * 2, d, 'triangle', 0.06)])
   }
 }
 

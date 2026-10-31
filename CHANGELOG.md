@@ -1,5 +1,11 @@
 # Changelog / test log
 
+## 2026-10-31 — Sound tuning
+- **Correct** is now a soft two-note sine chime (E5 → B5) with a faint sparkle, instead of two harsh square-wave beeps.
+- **Wrong** and **defeat** were effectively silent on phones: they used pure triangle waves around 130–260 Hz, which small phone speakers cannot reproduce. They now use sawtooth waves (the overtones carry through small speakers) at 233–392 Hz plus a triangle octave, and are louder (about 3x in a small-speaker model). Defeat is a four-step descending line, about 1.1 s.
+- Level-up, kill, combo, loot and mastered are unchanged.
+- New test: pure (sine/triangle) notes stay at 180 Hz or more, and wrong/defeat must use a harmonic-rich wave.
+- Not verified on a real phone. Tuning is by ear, so expect another round.
 ## 2026-10-31 — XP is paid only when a monster dies
 - Before, every answer added XP to your bar immediately (5 right / 2 wrong), so XP could rise in the middle of a fight. Now answers bank their XP in a new `pendingXp` field and it is paid out together with the monster's XP when you kill it (one "+N XP" on the victory chip, level-ups only on a kill). Same total XP as before, just delivered at the kill; XP bonuses (Quick Study, Scholar Charm) still apply. Dying pays nothing (the run ends anyway).
 - `pendingXp` is saved with the run; old saves without it load with 0. `startFight` / `advance` reset it. Tests: kill pays banked + answer + monster XP, wrong answers bank 2, bonuses apply, new fight resets, defeat pays nothing, old-save loading.

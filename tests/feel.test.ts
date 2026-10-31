@@ -17,6 +17,11 @@ test('every sound is short, audible and has a haptic entry', () => {
   }
 })
 
+test('no fundamental is too low for a phone speaker, and the low sounds have overtones', () => {
+  for (const n of NAMES) for (const x of sfxScore(n, { streak: 5, rarity: 'epic' })) if (x.type === 'sine' || x.type === 'triangle') assert.ok(x.freq >= 180, `${n}: a pure ${x.freq} Hz tone is too low to hear on a phone`)
+  for (const n of ['wrong', 'defeat'] as SfxName[]) assert.ok(sfxScore(n).some(x => x.type === 'sawtooth' || x.type === 'square'), `${n} needs a harmonic-rich wave to be audible on small speakers`)
+})
+
 test('combo pitch rises with the streak but is capped; loot grows with rarity', () => {
   const top = (s: number) => Math.max(...sfxScore('combo', { streak: s }).map(n => n.freq))
   assert.ok(top(3) > top(2) && top(6) > top(3))
