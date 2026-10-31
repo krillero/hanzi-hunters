@@ -10,9 +10,9 @@ const store = (data: Record<string, string>) => ({ getItem: (k: string) => data[
 test('garbage never crashes and yields a valid fresh save', () => {
   for (const bad of [null, undefined, 5, 'x', [], {}, { meta: 'x', mastery: 5, run: 'x' }, { meta: { gold: 'a', upgrades: 'W1' }, run: { floor: 'x', hp: NaN } }]) {
     const s = sanitizeSave(bad)
-    assert.equal(s.version, 2); assert.equal(s.meta.gold, 0); assert.deepEqual(s.meta.upgrades, []); assert.ok(s.run === null || s.run.hp > 0)
+    assert.equal(s.version, 3); assert.equal(s.meta.gold, 0); assert.deepEqual(s.meta.upgrades, []); assert.ok(s.run === null || s.run.hp > 0)
   }
-  for (const raw of ['{not json', 'null', '[]']) assert.equal(loadSave(store({ [SAVE_KEY]: raw })).version, 2)
+  for (const raw of ['{not json', 'null', '[]']) assert.equal(loadSave(store({ [SAVE_KEY]: raw })).version, 3)
   assert.equal(loadSave(store({})).run, null)
 })
 

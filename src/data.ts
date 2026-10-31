@@ -1,11 +1,19 @@
 export type { Word } from './content/types.ts'
 
-// Vocabulary lives in src/content/words.json (see docs/CONTENT_GUIDE.md).
-// Order matters: the first words are introduced first (see mastery.ts).
+// Vocabulary lives in src/content/words.json (see docs/CONTENT_GUIDE.md). Its order does NOT matter:
+// the teaching order is the curriculum in src/content/curricula.json (see docs/CURRICULUM.md and game/course.ts).
 import wordsJson from './content/words.json' with { type: 'json' }
+import curriculaJson from './content/curricula.json' with { type: 'json' }
 import { normalizeWords } from './content/entries.ts'
-import type { RawWord, Word } from './content/types.ts'
+import type { CurriculaFile, Curriculum, RawWord, Word } from './content/types.ts'
 export const WORDS: Word[] = normalizeWords(wordsJson as unknown as RawWord[])
+
+export const CURRICULA_FILE = curriculaJson as unknown as CurriculaFile
+export const CURRICULA: Curriculum[] = Array.isArray(CURRICULA_FILE.curricula) ? CURRICULA_FILE.curricula : []
+/** Used only when curricula.json is broken, so the game can show a configuration error instead of crashing. */
+export const NO_CURRICULUM: Curriculum = { id: 'none', version: 1, title: 'No course configured', units: [] }
+/** The curriculum the game teaches. Only one is selectable for now: the file's `default`. */
+export const ACTIVE_CURRICULUM: Curriculum = CURRICULA.find(c => c.id === CURRICULA_FILE.default) ?? CURRICULA[0] ?? NO_CURRICULUM
 
 export type BossId = 'golem' | 'wraith' | 'scribe' | 'trickster'
 export type Enemy = { name: string; sprite: 'slime' | 'imp' | 'bat' | 'golem' | 'wraith' | 'scribe' | 'trickster'; emoji: string; hp: number; damage: number; xp: number; gold: number }

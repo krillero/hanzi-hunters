@@ -93,7 +93,7 @@ Read `src/App.tsx` for exact logic before changing numbers. The following is a h
 
 ### Save safety
 - `localStorage` may contain malformed or older data. Keep parsing defensive and validate fields before trusting them.
-- If the schema changes, introduce a migration or a new key with migration from the old key.
+- If the schema changes, introduce a migration or a new key with migration from the old key. (Current: `version: 3` adds per-curriculum lesson completion `courses`; v2 saves are migrated on load. See `docs/CURRICULUM.md` §4.)
 - Do not store credentials or sensitive personal data.
 - Add an in-game reset/save-delete option only with clear confirmation.
 - Consider a small save validation function and tests before adding more state.

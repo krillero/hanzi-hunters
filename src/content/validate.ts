@@ -2,8 +2,10 @@
 // other tools can all use it. Rules are documented in docs/CONTENT_GUIDE.md.
 import { checkPinyin, soundKey, syllableCount, splitSyllables } from './pinyin.ts'
 import { QUESTION_KINDS } from '../game/questions.ts'
+import { validateCurricula } from './validateCurriculum.ts'
 
-export type Issues = { errors: string[]; warnings: string[] }
+/** errors fail validation; warnings should be read and fixed or justified; info is a report (e.g. entries outside the active curriculum). */
+export type Issues = { errors: string[]; warnings: string[]; info: string[] }
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const isStr = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
@@ -16,8 +18,9 @@ export const LIMITS = { summary: 300, heading: 50, body: 700, tip: 260, note: 20
 export const WORD_FIELDS = ['id', 'hanzi', 'pinyin', 'meaning', 'group', 'note', 'kind', 'neutral', 'variants', 'speech', 'wrongPinyin', 'audio', 'questions', 'aliases', 'confusable', 'lookalike', 'source', 'review']
 export const REVIEW_STATUSES = ['ai-draft', 'imported', 'human-reviewed']
 
-export function validateContent(words: unknown, explanations: unknown, cloze: unknown = [], sources: unknown = {}): Issues {
-  const errors: string[] = [], warnings: string[] = []
+/** `curricula` is optional so the word/explanation rules can be tested alone; the CLI and the shipped-content test always pass it. */
+export function validateContent(words: unknown, explanations: unknown, cloze: unknown = [], sources: unknown = {}, curricula?: unknown): Issues {
+  const errors: string[] = [], warnings: string[] = [], info: string[] = []
   const err = (m: string) => errors.push(m), warn = (m: string) => warnings.push(m)
 
   // ---- sources.json -----------------------------------------------------------------------
@@ -187,7 +190,7 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
     })
   }
   // ---- explanations.json ------------------------------------------------------------------
-  if (!isObj(explanations)) { err('explanations.json: must be an object keyed by hanzi'); return { errors, warnings } }
+  if (!isObj(explanations)) { err('explanations.json: must be an object keyed by hanzi'); return { errors, warnings, info } }
   const known = new Set<string>([...vocabChars])
   let current = ''   // hanzi of the entry whose explanation is being checked
   for (const [key, ex] of Object.entries(explanations)) {
@@ -280,7 +283,7 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
   else cloze.forEach((c, i) => {
     const at = `cloze.json[${i}]${isObj(c) && isStr(c.id) ? ` (${c.id})` : ''}`
     if (!isObj(c)) return err(`${at}: must be an object`)
-    for (const k of Object.keys(c)) if (!['id', 'answer', 'zh', 'pinyin', 'en', 'options', 'why', 'note', 'source', 'review'].includes(k)) err(`${at}: unknown field "${k}"`)
+    for (const k of Object.keys(c)) if (!['id', 'answer', 'zh', 'pinyin', 'en', 'options', 'why', 'note', 'prerequisiteEntries', 'prerequisiteLessons', 'source', 'review'].includes(k)) err(`${at}: unknown field "${k}"`)
     for (const k of ['id', 'answer', 'zh', 'pinyin', 'en']) if (!isStr(c[k])) err(`${at}: "${k}" must be a non-empty string`)
     if (isStr(c.id)) { if (clozeIds.has(c.id)) err(`${at}: duplicate id`); clozeIds.add(c.id) }
     if (isStr(c.zh) && c.zh.split('___').length !== 2) err(`${at}: "zh" must contain exactly one blank written as ___`)
@@ -317,15 +320,18 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
     if (w.kind !== 'particle') continue
     if (!cloze.some(c => isObj(c) && c.answer === id)) warn(`words.json (${String(w.hanzi)}): particle without any sentence question in cloze.json; it can only be asked what it does`)
   }
-  return { errors, warnings }
+  // ---- curricula.json ------------------------------------------------------------------------
+  if (curricula !== undefined) validateCurricula(curricula, { entryIds: ids, sourceNames, checkProvenance: (at, o) => checkProvenance(at, o), err, warn, info: m => info.push(m), cloze })
+  return { errors, warnings, info }
 }
 
 /** Everything that has not been checked by a person yet, for the "needs review" report. */
-export function needsReview(words: unknown, explanations: unknown, cloze: unknown = []) {
-  const out = { words: [] as string[], examples: [] as string[], cloze: [] as string[] }
+export function needsReview(words: unknown, explanations: unknown, cloze: unknown = [], curricula: unknown = undefined) {
+  const out = { words: [] as string[], examples: [] as string[], cloze: [] as string[], curricula: [] as string[] }
   const ok = (r: unknown) => isObj(r) && r.status === 'human-reviewed'
   if (Array.isArray(words)) for (const w of words) if (isObj(w) && !ok(w.review)) out.words.push(`${String(w.id ?? w.hanzi)} ${String(w.pinyin)} (${String(w.meaning)})`)
   if (isObj(explanations)) for (const [k, ex] of Object.entries(explanations)) if (isObj(ex) && Array.isArray(ex.sections)) for (const sec of ex.sections) if (isObj(sec) && sec.type === 'examples' && Array.isArray(sec.items)) for (const e of sec.items) if (isObj(e) && !ok(e.review)) out.examples.push(`${k}: ${String(e.zh)}`)
   if (Array.isArray(cloze)) for (const c of cloze) if (isObj(c) && !ok(c.review)) out.cloze.push(`${String(c.id)}: ${String(c.zh)}`)
+  if (isObj(curricula) && Array.isArray(curricula.curricula)) for (const c of curricula.curricula) if (isObj(c) && !ok(c.review)) out.curricula.push(`${String(c.id)}: ${String(c.title)}${c.provisional ? ' (provisional)' : ''}`)
   return out
 }

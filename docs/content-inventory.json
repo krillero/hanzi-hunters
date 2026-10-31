@@ -4,8 +4,10 @@
     "src/content/words.json",
     "src/content/explanations.json",
     "src/content/cloze.json",
-    "src/content/sources.json"
+    "src/content/sources.json",
+    "src/content/curricula.json"
   ],
+  "curriculumGuide": "docs/CURRICULUM.md",
   "guide": "docs/CONTENT_GUIDE.md",
   "stats": {
     "entries": 63,
@@ -15,12 +17,1403 @@
     "notReviewedByAPerson": {
       "entries": 63,
       "exampleSentences": 36,
-      "sentenceQuestions": 3
+      "sentenceQuestions": 3,
+      "curricula": 1
     },
     "validatorErrors": 0,
     "validatorWarnings": 20
   },
-  "teachingOrder": "人 大 小 一 二 三 日 月 水 火 山 木 口 天 好 我 你 他 她 女 子 中 国 是 不 四 五 六 八 十 七 九 上 下 手 目 田 石 门 车 马 鸟 鱼 米 父 母 家 学 生 年 你好 谢谢 朋友 今天 学校 喜欢 妈妈 谁 看 看 吗 的 了",
+  "_teachingOrder": "words.json order does not matter. The teaching order is in curricula below (curricula[].order).",
+  "curricula": {
+    "default": "starter-compat",
+    "curricula": [
+      {
+        "id": "starter-compat",
+        "title": "Starter words",
+        "version": 1,
+        "provisional": true,
+        "readiness": {
+          "minLevel": 1
+        },
+        "review": "ai-draft",
+        "units": [
+          {
+            "id": "first-characters",
+            "title": "First characters",
+            "lessons": [
+              {
+                "id": "first-characters-1",
+                "title": "Lesson 1",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "人",
+                  "大",
+                  "小"
+                ]
+              },
+              {
+                "id": "first-characters-2",
+                "title": "Lesson 2",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "一",
+                  "二",
+                  "三"
+                ]
+              },
+              {
+                "id": "first-characters-3",
+                "title": "Lesson 3",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "日",
+                  "月",
+                  "水",
+                  "火"
+                ]
+              },
+              {
+                "id": "first-characters-4",
+                "title": "Lesson 4",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "山",
+                  "木",
+                  "口",
+                  "天"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "people",
+            "title": "People",
+            "lessons": [
+              {
+                "id": "people-1",
+                "title": "Lesson 1",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "好",
+                  "我",
+                  "你",
+                  "他",
+                  "她"
+                ]
+              },
+              {
+                "id": "people-2",
+                "title": "Lesson 2",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "女",
+                  "子",
+                  "中",
+                  "国",
+                  "是",
+                  "不"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "numbers-and-places",
+            "title": "Numbers and places",
+            "lessons": [
+              {
+                "id": "numbers-and-places-1",
+                "title": "Lesson 1",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "四",
+                  "五",
+                  "六",
+                  "八",
+                  "十",
+                  "七",
+                  "九"
+                ]
+              },
+              {
+                "id": "numbers-and-places-2",
+                "title": "Lesson 2",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "上",
+                  "下",
+                  "手",
+                  "目"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "things-around-you",
+            "title": "Things around you",
+            "lessons": [
+              {
+                "id": "things-around-you-1",
+                "title": "Lesson 1",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "田",
+                  "石",
+                  "门",
+                  "车"
+                ]
+              },
+              {
+                "id": "things-around-you-2",
+                "title": "Lesson 2",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "马",
+                  "鸟",
+                  "鱼",
+                  "米"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "family-and-school",
+            "title": "Family and school",
+            "lessons": [
+              {
+                "id": "family-and-school-1",
+                "title": "Lesson 1",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "父",
+                  "母",
+                  "家",
+                  "学",
+                  "生",
+                  "年"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "first-words",
+            "title": "First words",
+            "lessons": [
+              {
+                "id": "first-words-1",
+                "title": "Lesson 1",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "你好",
+                  "谢谢",
+                  "朋友",
+                  "今天"
+                ]
+              },
+              {
+                "id": "first-words-2",
+                "title": "Lesson 2",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "学校",
+                  "喜欢",
+                  "妈妈",
+                  "谁"
+                ]
+              },
+              {
+                "id": "first-words-3",
+                "title": "Lesson 3",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "看-look",
+                  "看-guard"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "grammar-words",
+            "title": "Grammar words",
+            "lessons": [
+              {
+                "id": "grammar-words-1",
+                "title": "Lesson 1",
+                "prerequisiteLessons": [],
+                "aliases": [],
+                "entries": [
+                  "吗",
+                  "的",
+                  "了"
+                ]
+              }
+            ]
+          }
+        ],
+        "order": [
+          {
+            "order": 1,
+            "entryId": "人",
+            "hanzi": "人",
+            "pinyin": "rén",
+            "meaning": "person",
+            "unit": "first-characters",
+            "lesson": "first-characters-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 2,
+            "entryId": "大",
+            "hanzi": "大",
+            "pinyin": "dà",
+            "meaning": "big",
+            "unit": "first-characters",
+            "lesson": "first-characters-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 3,
+            "entryId": "小",
+            "hanzi": "小",
+            "pinyin": "xiǎo",
+            "meaning": "small",
+            "unit": "first-characters",
+            "lesson": "first-characters-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 4,
+            "entryId": "一",
+            "hanzi": "一",
+            "pinyin": "yī",
+            "meaning": "one",
+            "unit": "first-characters",
+            "lesson": "first-characters-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 5,
+            "entryId": "二",
+            "hanzi": "二",
+            "pinyin": "èr",
+            "meaning": "two",
+            "unit": "first-characters",
+            "lesson": "first-characters-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 6,
+            "entryId": "三",
+            "hanzi": "三",
+            "pinyin": "sān",
+            "meaning": "three",
+            "unit": "first-characters",
+            "lesson": "first-characters-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 7,
+            "entryId": "日",
+            "hanzi": "日",
+            "pinyin": "rì",
+            "meaning": "sun / day",
+            "unit": "first-characters",
+            "lesson": "first-characters-3",
+            "lessonTitle": "Lesson 3",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 8,
+            "entryId": "月",
+            "hanzi": "月",
+            "pinyin": "yuè",
+            "meaning": "moon / month",
+            "unit": "first-characters",
+            "lesson": "first-characters-3",
+            "lessonTitle": "Lesson 3",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 9,
+            "entryId": "水",
+            "hanzi": "水",
+            "pinyin": "shuǐ",
+            "meaning": "water",
+            "unit": "first-characters",
+            "lesson": "first-characters-3",
+            "lessonTitle": "Lesson 3",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 10,
+            "entryId": "火",
+            "hanzi": "火",
+            "pinyin": "huǒ",
+            "meaning": "fire",
+            "unit": "first-characters",
+            "lesson": "first-characters-3",
+            "lessonTitle": "Lesson 3",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 11,
+            "entryId": "山",
+            "hanzi": "山",
+            "pinyin": "shān",
+            "meaning": "mountain",
+            "unit": "first-characters",
+            "lesson": "first-characters-4",
+            "lessonTitle": "Lesson 4",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 12,
+            "entryId": "木",
+            "hanzi": "木",
+            "pinyin": "mù",
+            "meaning": "wood / tree",
+            "unit": "first-characters",
+            "lesson": "first-characters-4",
+            "lessonTitle": "Lesson 4",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 13,
+            "entryId": "口",
+            "hanzi": "口",
+            "pinyin": "kǒu",
+            "meaning": "mouth",
+            "unit": "first-characters",
+            "lesson": "first-characters-4",
+            "lessonTitle": "Lesson 4",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 14,
+            "entryId": "天",
+            "hanzi": "天",
+            "pinyin": "tiān",
+            "meaning": "sky / day",
+            "unit": "first-characters",
+            "lesson": "first-characters-4",
+            "lessonTitle": "Lesson 4",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 15,
+            "entryId": "好",
+            "hanzi": "好",
+            "pinyin": "hǎo",
+            "meaning": "good",
+            "unit": "people",
+            "lesson": "people-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 16,
+            "entryId": "我",
+            "hanzi": "我",
+            "pinyin": "wǒ",
+            "meaning": "I / me",
+            "unit": "people",
+            "lesson": "people-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 17,
+            "entryId": "你",
+            "hanzi": "你",
+            "pinyin": "nǐ",
+            "meaning": "you",
+            "unit": "people",
+            "lesson": "people-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 18,
+            "entryId": "他",
+            "hanzi": "他",
+            "pinyin": "tā",
+            "meaning": "he / him",
+            "unit": "people",
+            "lesson": "people-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 19,
+            "entryId": "她",
+            "hanzi": "她",
+            "pinyin": "tā",
+            "meaning": "she / her",
+            "unit": "people",
+            "lesson": "people-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 20,
+            "entryId": "女",
+            "hanzi": "女",
+            "pinyin": "nǚ",
+            "meaning": "woman / female",
+            "unit": "people",
+            "lesson": "people-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 21,
+            "entryId": "子",
+            "hanzi": "子",
+            "pinyin": "zǐ",
+            "meaning": "child",
+            "unit": "people",
+            "lesson": "people-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 22,
+            "entryId": "中",
+            "hanzi": "中",
+            "pinyin": "zhōng",
+            "meaning": "middle / China",
+            "unit": "people",
+            "lesson": "people-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 23,
+            "entryId": "国",
+            "hanzi": "国",
+            "pinyin": "guó",
+            "meaning": "country",
+            "unit": "people",
+            "lesson": "people-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 24,
+            "entryId": "是",
+            "hanzi": "是",
+            "pinyin": "shì",
+            "meaning": "to be / yes",
+            "unit": "people",
+            "lesson": "people-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 25,
+            "entryId": "不",
+            "hanzi": "不",
+            "pinyin": "bù",
+            "meaning": "not / no",
+            "unit": "people",
+            "lesson": "people-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 26,
+            "entryId": "四",
+            "hanzi": "四",
+            "pinyin": "sì",
+            "meaning": "four",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 27,
+            "entryId": "五",
+            "hanzi": "五",
+            "pinyin": "wǔ",
+            "meaning": "five",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 28,
+            "entryId": "六",
+            "hanzi": "六",
+            "pinyin": "liù",
+            "meaning": "six",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 29,
+            "entryId": "八",
+            "hanzi": "八",
+            "pinyin": "bā",
+            "meaning": "eight",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 30,
+            "entryId": "十",
+            "hanzi": "十",
+            "pinyin": "shí",
+            "meaning": "ten",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 31,
+            "entryId": "七",
+            "hanzi": "七",
+            "pinyin": "qī",
+            "meaning": "seven",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 32,
+            "entryId": "九",
+            "hanzi": "九",
+            "pinyin": "jiǔ",
+            "meaning": "nine",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 33,
+            "entryId": "上",
+            "hanzi": "上",
+            "pinyin": "shàng",
+            "meaning": "above / up",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 34,
+            "entryId": "下",
+            "hanzi": "下",
+            "pinyin": "xià",
+            "meaning": "below / down",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 35,
+            "entryId": "手",
+            "hanzi": "手",
+            "pinyin": "shǒu",
+            "meaning": "hand",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 36,
+            "entryId": "目",
+            "hanzi": "目",
+            "pinyin": "mù",
+            "meaning": "eye",
+            "unit": "numbers-and-places",
+            "lesson": "numbers-and-places-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 37,
+            "entryId": "田",
+            "hanzi": "田",
+            "pinyin": "tián",
+            "meaning": "field",
+            "unit": "things-around-you",
+            "lesson": "things-around-you-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 38,
+            "entryId": "石",
+            "hanzi": "石",
+            "pinyin": "shí",
+            "meaning": "stone",
+            "unit": "things-around-you",
+            "lesson": "things-around-you-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 39,
+            "entryId": "门",
+            "hanzi": "门",
+            "pinyin": "mén",
+            "meaning": "door / gate",
+            "unit": "things-around-you",
+            "lesson": "things-around-you-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 40,
+            "entryId": "车",
+            "hanzi": "车",
+            "pinyin": "chē",
+            "meaning": "vehicle / car",
+            "unit": "things-around-you",
+            "lesson": "things-around-you-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 41,
+            "entryId": "马",
+            "hanzi": "马",
+            "pinyin": "mǎ",
+            "meaning": "horse",
+            "unit": "things-around-you",
+            "lesson": "things-around-you-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 42,
+            "entryId": "鸟",
+            "hanzi": "鸟",
+            "pinyin": "niǎo",
+            "meaning": "bird",
+            "unit": "things-around-you",
+            "lesson": "things-around-you-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 43,
+            "entryId": "鱼",
+            "hanzi": "鱼",
+            "pinyin": "yú",
+            "meaning": "fish",
+            "unit": "things-around-you",
+            "lesson": "things-around-you-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 44,
+            "entryId": "米",
+            "hanzi": "米",
+            "pinyin": "mǐ",
+            "meaning": "rice",
+            "unit": "things-around-you",
+            "lesson": "things-around-you-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 45,
+            "entryId": "父",
+            "hanzi": "父",
+            "pinyin": "fù",
+            "meaning": "father",
+            "unit": "family-and-school",
+            "lesson": "family-and-school-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 46,
+            "entryId": "母",
+            "hanzi": "母",
+            "pinyin": "mǔ",
+            "meaning": "mother",
+            "unit": "family-and-school",
+            "lesson": "family-and-school-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 47,
+            "entryId": "家",
+            "hanzi": "家",
+            "pinyin": "jiā",
+            "meaning": "home / family",
+            "unit": "family-and-school",
+            "lesson": "family-and-school-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 48,
+            "entryId": "学",
+            "hanzi": "学",
+            "pinyin": "xué",
+            "meaning": "study / learn",
+            "unit": "family-and-school",
+            "lesson": "family-and-school-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 49,
+            "entryId": "生",
+            "hanzi": "生",
+            "pinyin": "shēng",
+            "meaning": "life / be born",
+            "unit": "family-and-school",
+            "lesson": "family-and-school-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 50,
+            "entryId": "年",
+            "hanzi": "年",
+            "pinyin": "nián",
+            "meaning": "year",
+            "unit": "family-and-school",
+            "lesson": "family-and-school-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "none",
+            "missing": false
+          },
+          {
+            "order": 51,
+            "entryId": "你好",
+            "hanzi": "你好",
+            "pinyin": "nǐ hǎo",
+            "meaning": "hello",
+            "unit": "first-words",
+            "lesson": "first-words-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 52,
+            "entryId": "谢谢",
+            "hanzi": "谢谢",
+            "pinyin": "xièxie",
+            "meaning": "thank you / thanks",
+            "unit": "first-words",
+            "lesson": "first-words-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 53,
+            "entryId": "朋友",
+            "hanzi": "朋友",
+            "pinyin": "péngyou",
+            "meaning": "friend",
+            "unit": "first-words",
+            "lesson": "first-words-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 54,
+            "entryId": "今天",
+            "hanzi": "今天",
+            "pinyin": "jīntiān",
+            "meaning": "today",
+            "unit": "first-words",
+            "lesson": "first-words-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 55,
+            "entryId": "学校",
+            "hanzi": "学校",
+            "pinyin": "xuéxiào",
+            "meaning": "school",
+            "unit": "first-words",
+            "lesson": "first-words-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 56,
+            "entryId": "喜欢",
+            "hanzi": "喜欢",
+            "pinyin": "xǐhuan",
+            "meaning": "to like",
+            "unit": "first-words",
+            "lesson": "first-words-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 57,
+            "entryId": "妈妈",
+            "hanzi": "妈妈",
+            "pinyin": "māma",
+            "meaning": "mom / mother",
+            "unit": "first-words",
+            "lesson": "first-words-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 58,
+            "entryId": "谁",
+            "hanzi": "谁",
+            "pinyin": "shéi",
+            "meaning": "who",
+            "unit": "first-words",
+            "lesson": "first-words-2",
+            "lessonTitle": "Lesson 2",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 59,
+            "entryId": "看-look",
+            "hanzi": "看",
+            "pinyin": "kàn",
+            "meaning": "to look / to watch",
+            "unit": "first-words",
+            "lesson": "first-words-3",
+            "lessonTitle": "Lesson 3",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 60,
+            "entryId": "看-guard",
+            "hanzi": "看",
+            "pinyin": "kān",
+            "meaning": "to guard / to look after",
+            "unit": "first-words",
+            "lesson": "first-words-3",
+            "lessonTitle": "Lesson 3",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 61,
+            "entryId": "吗",
+            "hanzi": "吗",
+            "pinyin": "ma",
+            "meaning": "ends a yes/no question",
+            "unit": "grammar-words",
+            "lesson": "grammar-words-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 62,
+            "entryId": "的",
+            "hanzi": "的",
+            "pinyin": "de",
+            "meaning": "links a describing word to a noun",
+            "unit": "grammar-words",
+            "lesson": "grammar-words-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          },
+          {
+            "order": 63,
+            "entryId": "了",
+            "hanzi": "了",
+            "pinyin": "le",
+            "meaning": "marks a finished action or change",
+            "unit": "grammar-words",
+            "lesson": "grammar-words-1",
+            "lessonTitle": "Lesson 1",
+            "required": true,
+            "prerequisiteEntries": [],
+            "prerequisiteLessons": [],
+            "officialLevels": "unknown",
+            "entryReview": "ai-draft",
+            "missing": false
+          }
+        ],
+        "unmappedOfficialLevels": [
+          "人",
+          "大",
+          "小",
+          "一",
+          "二",
+          "三",
+          "日",
+          "月",
+          "水",
+          "火",
+          "山",
+          "木",
+          "口",
+          "天",
+          "好",
+          "我",
+          "你",
+          "他",
+          "她",
+          "女",
+          "子",
+          "中",
+          "国",
+          "是",
+          "不",
+          "四",
+          "五",
+          "六",
+          "八",
+          "十",
+          "七",
+          "九",
+          "上",
+          "下",
+          "手",
+          "目",
+          "田",
+          "石",
+          "门",
+          "车",
+          "马",
+          "鸟",
+          "鱼",
+          "米",
+          "父",
+          "母",
+          "家",
+          "学",
+          "生",
+          "年",
+          "你好",
+          "谢谢",
+          "朋友",
+          "今天",
+          "学校",
+          "喜欢",
+          "妈妈",
+          "谁",
+          "看-look",
+          "看-guard",
+          "吗",
+          "的",
+          "了"
+        ],
+        "missingEntries": [],
+        "outsideCurriculum": [],
+        "unreviewedEntries": [
+          "人",
+          "大",
+          "小",
+          "一",
+          "二",
+          "三",
+          "日",
+          "月",
+          "水",
+          "火",
+          "山",
+          "木",
+          "口",
+          "天",
+          "好",
+          "我",
+          "你",
+          "他",
+          "她",
+          "女",
+          "子",
+          "中",
+          "国",
+          "是",
+          "不",
+          "四",
+          "五",
+          "六",
+          "八",
+          "十",
+          "七",
+          "九",
+          "上",
+          "下",
+          "手",
+          "目",
+          "田",
+          "石",
+          "门",
+          "车",
+          "马",
+          "鸟",
+          "鱼",
+          "米",
+          "父",
+          "母",
+          "家",
+          "学",
+          "生",
+          "年",
+          "你好",
+          "谢谢",
+          "朋友",
+          "今天",
+          "学校",
+          "喜欢",
+          "妈妈",
+          "谁",
+          "看-look",
+          "看-guard",
+          "吗",
+          "的",
+          "了"
+        ],
+        "sentencesWithPrerequisites": [],
+        "unreviewedSentences": [
+          "ma-student",
+          "de-book",
+          "le-tv"
+        ]
+      }
+    ]
+  },
   "groups": {
     "people": [
       "人",
@@ -138,13 +1531,12 @@
     "title": 60,
     "hanzi": 8,
     "meaning": 40,
-    "particleMeaning": 80,
+    "particleMeaning": 44,
     "context": 120,
     "why": 140
   },
   "entries": [
     {
-      "order": 1,
       "id": "人",
       "hanzi": "人",
       "pinyin": "rén",
@@ -158,7 +1550,6 @@
       "hasExplanation": true
     },
     {
-      "order": 2,
       "id": "大",
       "hanzi": "大",
       "pinyin": "dà",
@@ -173,7 +1564,6 @@
       "hasExplanation": true
     },
     {
-      "order": 3,
       "id": "小",
       "hanzi": "小",
       "pinyin": "xiǎo",
@@ -184,7 +1574,6 @@
       "hasExplanation": false
     },
     {
-      "order": 4,
       "id": "一",
       "hanzi": "一",
       "pinyin": "yī",
@@ -200,7 +1589,6 @@
       "hasExplanation": true
     },
     {
-      "order": 5,
       "id": "二",
       "hanzi": "二",
       "pinyin": "èr",
@@ -215,7 +1603,6 @@
       "hasExplanation": false
     },
     {
-      "order": 6,
       "id": "三",
       "hanzi": "三",
       "pinyin": "sān",
@@ -230,7 +1617,6 @@
       "hasExplanation": false
     },
     {
-      "order": 7,
       "id": "日",
       "hanzi": "日",
       "pinyin": "rì",
@@ -245,7 +1631,6 @@
       "hasExplanation": true
     },
     {
-      "order": 8,
       "id": "月",
       "hanzi": "月",
       "pinyin": "yuè",
@@ -259,7 +1644,6 @@
       "hasExplanation": true
     },
     {
-      "order": 9,
       "id": "水",
       "hanzi": "水",
       "pinyin": "shuǐ",
@@ -270,7 +1654,6 @@
       "hasExplanation": false
     },
     {
-      "order": 10,
       "id": "火",
       "hanzi": "火",
       "pinyin": "huǒ",
@@ -281,7 +1664,6 @@
       "hasExplanation": false
     },
     {
-      "order": 11,
       "id": "山",
       "hanzi": "山",
       "pinyin": "shān",
@@ -292,7 +1674,6 @@
       "hasExplanation": false
     },
     {
-      "order": 12,
       "id": "木",
       "hanzi": "木",
       "pinyin": "mù",
@@ -306,7 +1687,6 @@
       "hasExplanation": true
     },
     {
-      "order": 13,
       "id": "口",
       "hanzi": "口",
       "pinyin": "kǒu",
@@ -317,7 +1697,6 @@
       "hasExplanation": false
     },
     {
-      "order": 14,
       "id": "天",
       "hanzi": "天",
       "pinyin": "tiān",
@@ -331,7 +1710,6 @@
       "hasExplanation": false
     },
     {
-      "order": 15,
       "id": "好",
       "hanzi": "好",
       "pinyin": "hǎo",
@@ -342,7 +1720,6 @@
       "hasExplanation": true
     },
     {
-      "order": 16,
       "id": "我",
       "hanzi": "我",
       "pinyin": "wǒ",
@@ -353,7 +1730,6 @@
       "hasExplanation": false
     },
     {
-      "order": 17,
       "id": "你",
       "hanzi": "你",
       "pinyin": "nǐ",
@@ -364,7 +1740,6 @@
       "hasExplanation": false
     },
     {
-      "order": 18,
       "id": "他",
       "hanzi": "他",
       "pinyin": "tā",
@@ -378,7 +1753,6 @@
       "hasExplanation": true
     },
     {
-      "order": 19,
       "id": "她",
       "hanzi": "她",
       "pinyin": "tā",
@@ -392,7 +1766,6 @@
       "hasExplanation": true
     },
     {
-      "order": 20,
       "id": "女",
       "hanzi": "女",
       "pinyin": "nǚ",
@@ -403,7 +1776,6 @@
       "hasExplanation": true
     },
     {
-      "order": 21,
       "id": "子",
       "hanzi": "子",
       "pinyin": "zǐ",
@@ -414,7 +1786,6 @@
       "hasExplanation": true
     },
     {
-      "order": 22,
       "id": "中",
       "hanzi": "中",
       "pinyin": "zhōng",
@@ -428,7 +1799,6 @@
       "hasExplanation": false
     },
     {
-      "order": 23,
       "id": "国",
       "hanzi": "国",
       "pinyin": "guó",
@@ -442,7 +1812,6 @@
       "hasExplanation": false
     },
     {
-      "order": 24,
       "id": "是",
       "hanzi": "是",
       "pinyin": "shì",
@@ -453,7 +1822,6 @@
       "hasExplanation": false
     },
     {
-      "order": 25,
       "id": "不",
       "hanzi": "不",
       "pinyin": "bù",
@@ -465,7 +1833,6 @@
       "hasExplanation": true
     },
     {
-      "order": 26,
       "id": "四",
       "hanzi": "四",
       "pinyin": "sì",
@@ -476,7 +1843,6 @@
       "hasExplanation": false
     },
     {
-      "order": 27,
       "id": "五",
       "hanzi": "五",
       "pinyin": "wǔ",
@@ -487,7 +1853,6 @@
       "hasExplanation": false
     },
     {
-      "order": 28,
       "id": "六",
       "hanzi": "六",
       "pinyin": "liù",
@@ -498,7 +1863,6 @@
       "hasExplanation": false
     },
     {
-      "order": 29,
       "id": "八",
       "hanzi": "八",
       "pinyin": "bā",
@@ -509,7 +1873,6 @@
       "hasExplanation": false
     },
     {
-      "order": 30,
       "id": "十",
       "hanzi": "十",
       "pinyin": "shí",
@@ -523,7 +1886,6 @@
       "hasExplanation": true
     },
     {
-      "order": 31,
       "id": "七",
       "hanzi": "七",
       "pinyin": "qī",
@@ -534,7 +1896,6 @@
       "hasExplanation": false
     },
     {
-      "order": 32,
       "id": "九",
       "hanzi": "九",
       "pinyin": "jiǔ",
@@ -545,7 +1906,6 @@
       "hasExplanation": false
     },
     {
-      "order": 33,
       "id": "上",
       "hanzi": "上",
       "pinyin": "shàng",
@@ -559,7 +1919,6 @@
       "hasExplanation": true
     },
     {
-      "order": 34,
       "id": "下",
       "hanzi": "下",
       "pinyin": "xià",
@@ -573,7 +1932,6 @@
       "hasExplanation": true
     },
     {
-      "order": 35,
       "id": "手",
       "hanzi": "手",
       "pinyin": "shǒu",
@@ -584,7 +1942,6 @@
       "hasExplanation": false
     },
     {
-      "order": 36,
       "id": "目",
       "hanzi": "目",
       "pinyin": "mù",
@@ -598,7 +1955,6 @@
       "hasExplanation": true
     },
     {
-      "order": 37,
       "id": "田",
       "hanzi": "田",
       "pinyin": "tián",
@@ -609,7 +1965,6 @@
       "hasExplanation": false
     },
     {
-      "order": 38,
       "id": "石",
       "hanzi": "石",
       "pinyin": "shí",
@@ -623,7 +1978,6 @@
       "hasExplanation": true
     },
     {
-      "order": 39,
       "id": "门",
       "hanzi": "门",
       "pinyin": "mén",
@@ -634,7 +1988,6 @@
       "hasExplanation": false
     },
     {
-      "order": 40,
       "id": "车",
       "hanzi": "车",
       "pinyin": "chē",
@@ -645,7 +1998,6 @@
       "hasExplanation": false
     },
     {
-      "order": 41,
       "id": "马",
       "hanzi": "马",
       "pinyin": "mǎ",
@@ -656,7 +2008,6 @@
       "hasExplanation": true
     },
     {
-      "order": 42,
       "id": "鸟",
       "hanzi": "鸟",
       "pinyin": "niǎo",
@@ -667,7 +2018,6 @@
       "hasExplanation": false
     },
     {
-      "order": 43,
       "id": "鱼",
       "hanzi": "鱼",
       "pinyin": "yú",
@@ -678,7 +2028,6 @@
       "hasExplanation": false
     },
     {
-      "order": 44,
       "id": "米",
       "hanzi": "米",
       "pinyin": "mǐ",
@@ -689,7 +2038,6 @@
       "hasExplanation": false
     },
     {
-      "order": 45,
       "id": "父",
       "hanzi": "父",
       "pinyin": "fù",
@@ -700,7 +2048,6 @@
       "hasExplanation": false
     },
     {
-      "order": 46,
       "id": "母",
       "hanzi": "母",
       "pinyin": "mǔ",
@@ -711,7 +2058,6 @@
       "hasExplanation": false
     },
     {
-      "order": 47,
       "id": "家",
       "hanzi": "家",
       "pinyin": "jiā",
@@ -722,7 +2068,6 @@
       "hasExplanation": false
     },
     {
-      "order": 48,
       "id": "学",
       "hanzi": "学",
       "pinyin": "xué",
@@ -733,7 +2078,6 @@
       "hasExplanation": false
     },
     {
-      "order": 49,
       "id": "生",
       "hanzi": "生",
       "pinyin": "shēng",
@@ -744,7 +2088,6 @@
       "hasExplanation": false
     },
     {
-      "order": 50,
       "id": "年",
       "hanzi": "年",
       "pinyin": "nián",
@@ -755,7 +2098,6 @@
       "hasExplanation": false
     },
     {
-      "order": 51,
       "id": "你好",
       "hanzi": "你好",
       "pinyin": "nǐ hǎo",
@@ -767,7 +2109,6 @@
       "hasExplanation": true
     },
     {
-      "order": 52,
       "id": "谢谢",
       "hanzi": "谢谢",
       "pinyin": "xièxie",
@@ -785,7 +2126,6 @@
       "hasExplanation": true
     },
     {
-      "order": 53,
       "id": "朋友",
       "hanzi": "朋友",
       "pinyin": "péngyou",
@@ -803,7 +2143,6 @@
       "hasExplanation": true
     },
     {
-      "order": 54,
       "id": "今天",
       "hanzi": "今天",
       "pinyin": "jīntiān",
@@ -818,7 +2157,6 @@
       "hasExplanation": true
     },
     {
-      "order": 55,
       "id": "学校",
       "hanzi": "学校",
       "pinyin": "xuéxiào",
@@ -833,7 +2171,6 @@
       "hasExplanation": true
     },
     {
-      "order": 56,
       "id": "喜欢",
       "hanzi": "喜欢",
       "pinyin": "xǐhuan",
@@ -851,7 +2188,6 @@
       "hasExplanation": true
     },
     {
-      "order": 57,
       "id": "妈妈",
       "hanzi": "妈妈",
       "pinyin": "māma",
@@ -869,7 +2205,6 @@
       "hasExplanation": true
     },
     {
-      "order": 58,
       "id": "谁",
       "hanzi": "谁",
       "pinyin": "shéi",
@@ -883,7 +2218,6 @@
       "hasExplanation": true
     },
     {
-      "order": 59,
       "id": "看-look",
       "hanzi": "看",
       "pinyin": "kàn",
@@ -895,7 +2229,6 @@
       "hasExplanation": true
     },
     {
-      "order": 60,
       "id": "看-guard",
       "hanzi": "看",
       "pinyin": "kān",
@@ -907,11 +2240,10 @@
       "hasExplanation": true
     },
     {
-      "order": 61,
       "id": "吗",
       "hanzi": "吗",
       "pinyin": "ma",
-      "meaning": "question particle: ends a yes/no question",
+      "meaning": "ends a yes/no question",
       "group": "grammar",
       "kind": "particle",
       "neutral": [
@@ -922,11 +2254,10 @@
       "hasExplanation": true
     },
     {
-      "order": 62,
       "id": "的",
       "hanzi": "的",
       "pinyin": "de",
-      "meaning": "links a describing word to a noun (我的书 = my book)",
+      "meaning": "links a describing word to a noun",
       "group": "grammar",
       "kind": "particle",
       "neutral": [
@@ -937,11 +2268,10 @@
       "hasExplanation": true
     },
     {
-      "order": 63,
       "id": "了",
       "hanzi": "了",
       "pinyin": "le",
-      "meaning": "marks a finished action or a new situation",
+      "meaning": "marks a finished action or change",
       "group": "grammar",
       "kind": "particle",
       "neutral": [
@@ -1402,6 +2732,10 @@
       "cloze.json[0] (ma-student): not yet reviewed by a person (status \"ai-draft\"): a Mandarin teacher must check that only the answer fits and every wrong option really does not",
       "cloze.json[1] (de-book): not yet reviewed by a person (status \"ai-draft\"): a Mandarin teacher must check that only the answer fits and every wrong option really does not",
       "cloze.json[2] (le-tv): not yet reviewed by a person (status \"ai-draft\"): a Mandarin teacher must check that only the answer fits and every wrong option really does not"
+    ],
+    "info": [
+      "curricula.json (starter-compat): marked provisional: its order is a placeholder, not a reviewed teaching sequence",
+      "curricula.json (starter-compat): 63 of 63 introductions have no official-level mapping (unknown, not inferred)"
     ]
   }
 }

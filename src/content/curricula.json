@@ -1,0 +1,363 @@
+{
+  "default": "starter-compat",
+  "curricula": [
+    {
+      "id": "starter-compat",
+      "version": 1,
+      "title": "Starter words",
+      "description": "Compatibility course: the existing starter vocabulary in the order of the original words.json, split into small lessons so the game stays playable. PROVISIONAL: this order was not designed or reviewed as a beginner course and will be replaced by a reviewed curriculum.",
+      "provisional": true,
+      "readiness": {
+        "minLevel": 1
+      },
+      "units": [
+        {
+          "id": "first-characters",
+          "title": "First characters",
+          "lessons": [
+            {
+              "id": "first-characters-1",
+              "title": "Lesson 1",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "人"
+                },
+                {
+                  "entryId": "大"
+                },
+                {
+                  "entryId": "小"
+                }
+              ]
+            },
+            {
+              "id": "first-characters-2",
+              "title": "Lesson 2",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "一"
+                },
+                {
+                  "entryId": "二"
+                },
+                {
+                  "entryId": "三"
+                }
+              ]
+            },
+            {
+              "id": "first-characters-3",
+              "title": "Lesson 3",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "日"
+                },
+                {
+                  "entryId": "月"
+                },
+                {
+                  "entryId": "水"
+                },
+                {
+                  "entryId": "火"
+                }
+              ]
+            },
+            {
+              "id": "first-characters-4",
+              "title": "Lesson 4",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "山"
+                },
+                {
+                  "entryId": "木"
+                },
+                {
+                  "entryId": "口"
+                },
+                {
+                  "entryId": "天"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "people",
+          "title": "People",
+          "lessons": [
+            {
+              "id": "people-1",
+              "title": "Lesson 1",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "好"
+                },
+                {
+                  "entryId": "我"
+                },
+                {
+                  "entryId": "你"
+                },
+                {
+                  "entryId": "他"
+                },
+                {
+                  "entryId": "她"
+                }
+              ]
+            },
+            {
+              "id": "people-2",
+              "title": "Lesson 2",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "女"
+                },
+                {
+                  "entryId": "子"
+                },
+                {
+                  "entryId": "中"
+                },
+                {
+                  "entryId": "国"
+                },
+                {
+                  "entryId": "是"
+                },
+                {
+                  "entryId": "不"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "numbers-and-places",
+          "title": "Numbers and places",
+          "lessons": [
+            {
+              "id": "numbers-and-places-1",
+              "title": "Lesson 1",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "四"
+                },
+                {
+                  "entryId": "五"
+                },
+                {
+                  "entryId": "六"
+                },
+                {
+                  "entryId": "八"
+                },
+                {
+                  "entryId": "十"
+                },
+                {
+                  "entryId": "七"
+                },
+                {
+                  "entryId": "九"
+                }
+              ]
+            },
+            {
+              "id": "numbers-and-places-2",
+              "title": "Lesson 2",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "上"
+                },
+                {
+                  "entryId": "下"
+                },
+                {
+                  "entryId": "手"
+                },
+                {
+                  "entryId": "目"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "things-around-you",
+          "title": "Things around you",
+          "lessons": [
+            {
+              "id": "things-around-you-1",
+              "title": "Lesson 1",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "田"
+                },
+                {
+                  "entryId": "石"
+                },
+                {
+                  "entryId": "门"
+                },
+                {
+                  "entryId": "车"
+                }
+              ]
+            },
+            {
+              "id": "things-around-you-2",
+              "title": "Lesson 2",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "马"
+                },
+                {
+                  "entryId": "鸟"
+                },
+                {
+                  "entryId": "鱼"
+                },
+                {
+                  "entryId": "米"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "family-and-school",
+          "title": "Family and school",
+          "lessons": [
+            {
+              "id": "family-and-school-1",
+              "title": "Lesson 1",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "父"
+                },
+                {
+                  "entryId": "母"
+                },
+                {
+                  "entryId": "家"
+                },
+                {
+                  "entryId": "学"
+                },
+                {
+                  "entryId": "生"
+                },
+                {
+                  "entryId": "年"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "first-words",
+          "title": "First words",
+          "lessons": [
+            {
+              "id": "first-words-1",
+              "title": "Lesson 1",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "你好"
+                },
+                {
+                  "entryId": "谢谢"
+                },
+                {
+                  "entryId": "朋友"
+                },
+                {
+                  "entryId": "今天"
+                }
+              ]
+            },
+            {
+              "id": "first-words-2",
+              "title": "Lesson 2",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "学校"
+                },
+                {
+                  "entryId": "喜欢"
+                },
+                {
+                  "entryId": "妈妈"
+                },
+                {
+                  "entryId": "谁"
+                }
+              ]
+            },
+            {
+              "id": "first-words-3",
+              "title": "Lesson 3",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "看-look"
+                },
+                {
+                  "entryId": "看-guard"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "grammar-words",
+          "title": "Grammar words",
+          "lessons": [
+            {
+              "id": "grammar-words-1",
+              "title": "Lesson 1",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "吗"
+                },
+                {
+                  "entryId": "的"
+                },
+                {
+                  "entryId": "了"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "source": [
+        {
+          "name": "ai-draft",
+          "note": "Order copied from the original words.json; lesson boundaries chosen mechanically."
+        }
+      ],
+      "review": {
+        "status": "ai-draft",
+        "note": "Provisional order. Not a pedagogical sequence; a Mandarin teacher has not reviewed it."
+      }
+    }
+  ]
+}

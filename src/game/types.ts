@@ -23,8 +23,11 @@ export type Run = {
 }
 export type RunSummary = { floor: number; kills: number; level: number; goldBanked: number }
 
+import type { CourseProgress } from './course.ts'
+
 export type Saved = {
-  version: 2
+  /** 3 = adds `courses`. v2 saves are migrated on load (save.ts). */
+  version: 3
   meta: Meta
   mastery: Mastery
   /** Progress under ids that no current entry claims (removed entries, or a hanzi that became ambiguous). Kept so nothing is lost; retried on every load. */
@@ -33,4 +36,6 @@ export type Saved = {
   lastRun: RunSummary | null
   /** Days played, warm-up day, correct total, badges. Additive: old saves load with an empty habit; no version bump. */
   habit: Habit
+  /** Per curriculum id: lesson ids completed at least once (sticky). Entry progress stays in `mastery`, shared by every curriculum. */
+  courses: Record<string, CourseProgress>
 }
