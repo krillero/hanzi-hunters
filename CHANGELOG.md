@@ -1,5 +1,12 @@
 # Changelog / test log
 
+## 2026-10-31 — Sound tuning
+- **Correct** is now a soft two-note sine chime (E5 → B5) with a faint sparkle, instead of two harsh square-wave beeps.
+- **Wrong** and **defeat** were effectively silent on phones: they used pure triangle waves around 130–260 Hz, which small phone speakers cannot reproduce. They now use sawtooth waves (the overtones carry through small speakers) at 233–392 Hz plus a triangle octave, and are louder (about 3x in a small-speaker model). Defeat is a four-step descending line, about 1.1 s.
+- Level-up, kill, combo, loot and mastered are unchanged.
+- New test: pure (sine/triangle) notes stay at 180 Hz or more, and wrong/defeat must use a harmonic-rich wave.
+- Not verified on a real phone. Tuning is by ear, so expect another round.
+
 ## 2026-10-31 — Game feel, phase 1 (see docs/GAME_FEEL_AND_PROGRESSION.md)
 - **Sound effects (new `src/audio.ts`):** short synthesised sounds (no audio files) for correct, combo (pitch rises with the streak, capped), wrong, kill, level-up, loot (more notes for rarer items), word mastered and defeat. **Vibration** patterns for the same events on phones that support it (Android browsers; ignored elsewhere). New settings `sfx` and `haptics`, both on by default and separate from the spoken-words switch; old saved settings load fine. The first tap unlocks audio (browser autoplay rules).
 - **Kill moment:** coins and XP dots fly from the monster to the gold counter and XP bar (skipped with reduced motion); post-kill healing is shown ("💚 +5 Second Wind").
