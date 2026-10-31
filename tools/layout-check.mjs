@@ -5,7 +5,7 @@ const require = createRequire(process.env.PW_ROOT ? process.env.PW_ROOT + '/' : 
 const { chromium } = require('playwright')
 const base = process.argv[2] ?? 'http://localhost:5173'
 const KNOWN = ['人', '大', '小', '一', '二', '三', '日', '月', '水', '火', '山', '木', '目', '口', '天', '石', '十']
-const save = (enemyHp) => ({ version: 2, meta: { gold: 0, upgrades: [], bestFloor: 1, runs: 0 }, lastRun: null, mastery: Object.fromEntries(KNOWN.map(h => [h, { lv: 2, ok: 0 }])), run: { floor: 2, kill: 0, kills: 3, level: 3, xp: 0, hp: 71, enemyHp, gold: 77, potions: 2, gear: [], streak: 0, hintsLeft: 0, secondLeft: 0, phase: 'fighting', reward: { xp: 0, gold: 0, loot: '', levelUps: 0, dupGold: 0 } } })
+const save = (enemyHp) => ({ version: 2, meta: { gold: 0, upgrades: [], bestFloor: 1, runs: 0 }, lastRun: null, mastery: Object.fromEntries(KNOWN.map(h => [h, { lv: 2, ok: 0 }])), run: { floor: 2, kill: 0, kills: 3, level: 3, xp: 0, hp: 71, enemyHp, gold: 77, potions: 2, gear: [], streak: 0, hintsLeft: 0, secondLeft: 0, phase: 'fighting', reward: { xp: 0, gold: 0, loot: '', levelUps: 0 } } })
 const SLOTS = { arena: '.phaser-mount', card: '.stage-card', slotHanzi: '.slot-hanzi', choices: '.answer-list', bar: '.action-bar', tools: '.compact-tools' }
 const snap = (p) => p.evaluate((sels) => { const o = {}; for (const [k, s] of Object.entries(sels)) { const e = document.querySelector(s); const r = e?.getBoundingClientRect(); o[k] = r ? `${Math.round(r.top)}/${Math.round(r.height)}` : 'missing' } const sh = document.querySelector('.app-shell'); o.overflow = sh.scrollHeight - sh.clientHeight; return o }, SLOTS)
 const browser = await chromium.launch(); let bad = 0

@@ -1,5 +1,20 @@
 # Changelog / test log
 
+## 2026-10-31 — Feedback box is for learning, combat result lives in the arena
+- Removed the "Your hit / Enemy hit" line from the answer feedback. The combat result is now a small chip strip in the arena (⚔ −17 · 💔 −4, or 🛡 Blocked / No counterattack); on a kill the same strip shows XP, gold and loot instead. The strip is absolutely positioned, so nothing in the layout moves.
+- Feedback box: a correct answer reads "✓ Correct — 田 tián · field" (character, sound and meaning together); a wrong answer shows the answer in large text with what you chose struck through. The word note gets up to 3 lines (2 on phones ≤700px tall), and mastery is shown as pips plus a short sentence ("Level up! Now level 2", "One more correct in a row to level up").
+- The auto-continue bar now says "✓ Correct" instead of the damage summary. `combatSummary` was removed.
+- Checks: `tools/layout-check.mjs` passes in all 8 cases, 56 unit tests pass, and right/wrong answers were checked visually at 411×740.
+- Removed the old floating damage numbers (−59 / −9) over the characters; the chip strip is now the only damage display. Hit animations and the COMBO! / WEAK HIT captions stay.
+- Arena text is now HTML instead of Phaser canvas text, so it is crisp on high-density phones and uses the same font as the chips. The Phaser scene keeps only sprites, hit animations, the chest, torches and the red defeat veil (removed: floating captions, combo counter, VICTORY plaque, YOU DIED title, unused reward popup).
+- New HTML arena HUD: a streak badge top-left (pips and "1 more for 🔥 +25%" until the combo bonus is active, then 🔥 ×N with "+25% next hit"; plain ×N if the Combo Strikes upgrade is not owned), captions over the fighters (🔥 COMBO +25%, WEAK HIT, 🛡 BLOCKED, +N HP), VICTORY / ELITE VICTORY / YOU DIED banners (derived from the run phase, so they survive a reload) and a FLOOR N banner.
+- The combo bonus is shown with its real value (the upgrade's % — it does not grow with the streak): caption on the enemy plus an orange damage chip "⚔ −59 · 🔥 +25%". Wrong answers get a grey chip. On arenas shorter than ~100px (phones ≤600px tall) the caption is hidden and the chips carry the information.
+- Bug fix: the 💡 explanation button was visible before answering and could reveal the answer. It now appears only when the whole word is already visible (new-word teaching card, or after answering). Related-word chips in a popup are disabled for the word that is currently being asked.
+- Removed the floating "+N XP" text over the player card (the XP chip in the arena shows it) and its unused CSS.
+- Combo text decluttered: the streak badge shows only 🔥 ×N once the bonus is active (the % is in its accessibility label), the combo bonus appears once, in the damage chip ("⚔ −43 · 🔥 +60%"), and the "COMBO +N%" caption over the enemy was removed. Captions remain for WEAK HIT, BLOCKED and potion heals.
+- Gear you already own can no longer drop: loot is picked only from gear you do not have, and once you own everything kills drop nothing. The duplicate-gear-to-gold conversion, its "(dup)" chip and the DUPLICATE reward row were removed (`duplicateGold` / `reward.dupGold`); old saves that still contain `dupGold` load fine, the field is ignored. Tests updated: skips owned gear, owning everything drops nothing.
+- Bug fix: a correct answer on an already mastered word no longer says "One more correct in a row to level up"; it says "Mastered — keep it sharp".
+
 ## 2026-10-31 — Word popups replace instead of stack
 - Tapping a related word in an explanation popup now replaces the current popup (one popup at a time, no history), so a single × closes it. The Back button and the popup stack were removed (`ExplainModal` takes a single `hanzi`).
 - Checked in a browser: open 女 → tap 她 → tap 他: one popup throughout, no Back button, one close ends it. 56 unit tests pass.

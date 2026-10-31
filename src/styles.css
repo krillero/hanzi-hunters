@@ -448,11 +448,7 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .new-dot{position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:#ff7b39;box-shadow:0 0 0 2px #101925;animation:tip-pulse 1.4s ease-in-out infinite}
 .chip-btn{position:relative}
 .scene-gold{position:relative;display:inline-flex;align-items:center}
-.gold-pop{position:absolute;left:100%;top:-2px;margin-left:6px;font:700 13px 'DM Mono',monospace;color:#8ee0a9;font-style:normal;white-space:nowrap;animation:pop-up 1.7s ease-out forwards}
-.xp-pop{position:absolute;right:8px;bottom:5px;font:700 11px 'DM Mono',monospace;color:#f4d58c;font-style:normal;animation:pop-up 1.7s ease-out forwards;pointer-events:none}
 .combatant{position:relative}
-@keyframes pop-up{0%{opacity:0;transform:translateY(6px)}15%{opacity:1;transform:translateY(0)}70%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
-@media(prefers-reduced-motion:reduce){.gold-pop,.xp-pop{animation:none;opacity:1}}
 
 .scene-gold{color:#f4d58c;font-weight:700}
 .scene-gold .coin{font-style:normal}
@@ -460,7 +456,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 /* gold counter: coin + amount in gold (an older rule greyed the last span), shrinks with an ellipsis instead of overlapping */
 .scene-label .scene-where{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;overflow:hidden}
 .scene-label .scene-where .scene-gold{margin-left:6px;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f4d58c;font-weight:700}
-.scene-label .scene-where .gold-pop{position:static;margin:0;flex:none}
 
 /* top bar: the floor text may shrink, the gold amount never does */
 .scene-label .scene-where .scene-floor{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1266,7 +1261,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
    through scrolling instead of clipping or shrinking the learning text. */
 .compact-header,.compact-location,.compact-tools,.compact-rewards{display:none}
 .arena-combatants{grid-template-columns:repeat(2,minmax(0,1fr))}
-.combat-exchange{margin:0;color:#d3e5db;font-size:12px;line-height:1.4}
 .auto-continue{flex-direction:column;gap:3px}
 .auto-continue>span:first-child{font-size:11px;line-height:1.3}
 .answer-feedback{height:auto;min-height:calc(var(--row-h) * 2 + 8px);overflow:visible}
@@ -1347,17 +1341,22 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .in-battle .result-line strong{font-size:14px}
   .in-battle .result-line span{font-size:12px}
   .in-battle .result-note{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:12px;line-height:1.3;min-height:0}
-  .in-battle .result-mastery{font-size:11px;line-height:1.3}
+  .in-battle .result-mastery{font-size:11px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .in-battle .result-mastery .pips{display:inline-flex;gap:2px;margin:0 3px 0 0;vertical-align:middle}
+  .in-battle .result-mastery .pips u{display:inline-block;width:6px;height:6px;border:1px solid #d5ad5c;background:none}
+  .in-battle .result-mastery .pips u.on{background:#f1ce80}
+  .in-battle .result-line{min-width:0}
+  .in-battle .result-line strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .in-battle .result-answer{margin:0;color:#c9d6e4;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .in-battle .result-answer b{color:#8ee0a9;font-size:15px}
+  .in-battle .result-answer s{color:#ffaaaa}
+  .in-battle .result-answer span{font-size:12px;color:#afbdd0}
+  .in-battle .result-note{-webkit-line-clamp:3}
   .in-battle .stage-wide{height:calc(var(--stage-h) + var(--choice-h) + var(--gap));min-height:0;overflow:auto}
   .in-battle .stage-end{flex:none}
   .in-battle .reward-item small{font-size:10px}
   .in-battle .reward-item strong{font-size:12px}
   .in-battle .question-panel>.reward-strip,.in-battle .question-panel>.loot-drop{display:none}
-  .arena-stage{position:relative}
-  .arena-rewards{position:absolute;left:4px;right:4px;bottom:4px;height:22px;display:flex;justify-content:center;gap:5px;pointer-events:none;overflow:hidden}
-  .arena-rewards span{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 8px;border-radius:11px;background:#0b1320e6;border:1px solid #6b5a30;color:#f1ce80;font:11px/14px 'DM Mono',monospace}
-  .arena-rewards .hot{border-color:#d5ad5c;color:#fff}
-  .arena-rewards .loot{flex-shrink:1}
   .compact-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;flex:none;margin-top:auto}
   .compact-tools button{position:relative;min-width:0;min-height:48px;padding:8px 5px;border:1px solid #394c64;border-radius:6px;background:linear-gradient(145deg,#1b2a3e,#101a29);color:#afbdd0;font-size:12px;line-height:1.25}
   .compact-tools button:first-child{color:#a7dfbe}
@@ -1378,6 +1377,7 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 }
 @media(max-width:850px) and (max-height:700px){
   .compact-location{display:none}
+  .in-battle .result-note{-webkit-line-clamp:2}
   .in-battle .scene-frame .phaser-mount{height:clamp(88px,14dvh,108px)!important}
 }
 @media(max-width:850px) and (max-height:600px){
@@ -1394,4 +1394,33 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .in-battle .slot-pinyin{font-size:18px;height:22px}
   .in-battle .slot-meaning{font-size:14px;min-height:18px;line-height:1.2}
   .compact-tools button{min-height:44px}
+}
+.arena-exchange .hurt{border-color:#a5473f;color:#ffb0a8}
+.arena-stage{position:relative}
+.arena-rewards{position:absolute;left:4px;right:4px;bottom:4px;height:22px;display:flex;justify-content:center;gap:5px;pointer-events:none;overflow:hidden}
+.arena-rewards span{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 8px;border-radius:11px;background:#0b1320e6;border:1px solid #6b5a30;color:#f1ce80;font:11px/14px 'DM Mono',monospace}
+.arena-rewards .hot{border-color:#d5ad5c;color:#fff}
+.arena-rewards .loot{flex-shrink:1}
+.arena-hud{position:absolute;inset:0;pointer-events:none;z-index:3;font-family:'DM Mono',monospace}
+.combo-badge{position:absolute;top:6px;left:6px;display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:12px;background:#0b1320e6;border:1px solid #d5ad5c;color:#ffd166;font:700 13px/16px 'DM Mono',monospace;white-space:nowrap}
+.combo-badge small{font:500 10px/12px 'DM Mono',monospace;color:#afbdd0}
+.combo-badge .pips{margin:0;gap:2px}
+.combo-badge .pips u{width:6px;height:6px;border:1px solid #d5ad5c;background:none}
+.combo-badge .pips u.on{background:#ffd166}
+.combo-badge.hot{border-color:#ff8a3d;color:#ffb36b;box-shadow:0 0 10px #ff8a3d55}
+.arena-banner{position:absolute;top:6px;left:50%;transform:translateX(-50%);padding:3px 12px;border-radius:12px;background:#172437eb;border:1px solid #d0a852;color:#ffd77d;font:700 12px/16px 'DM Mono',monospace;letter-spacing:1px;white-space:nowrap;animation:hud-pop .26s ease-out}
+.arena-banner.floor{top:50%;transform:translate(-50%,-50%);font-size:16px;padding:5px 16px}
+.arena-banner.lose{top:44%;transform:translate(-50%,-50%);background:#2a0f16f0;border-color:#ff5a6a;color:#ff7a88;font-size:20px;line-height:26px;padding:6px 18px;letter-spacing:2px}
+.arena-caption{position:absolute;top:34px;transform:translateX(-50%);padding:2px 10px;border-radius:11px;background:#0b1320e6;border:1px solid #d0a852;color:#ffd77d;font:700 12px/16px 'DM Mono',monospace;white-space:nowrap;animation:hud-pop .22s ease-out}
+.arena-caption.monster{left:73%}.arena-caption.hero{left:27%}
+.arena-caption.weak{border-color:#8a94a6;color:#c3cad6}
+.arena-caption.block{border-color:#6fb5e8;color:#9fd3ff}
+.arena-caption.heal{border-color:#4fa874;color:#8ee0a9}
+.arena-exchange .combo2{border-color:#ff8a3d;color:#ffb36b}
+.arena-exchange .weak{border-color:#8a94a6;color:#c3cad6}
+@keyframes hud-pop{from{opacity:0;scale:.75}to{opacity:1;scale:1}}
+@media (prefers-reduced-motion:reduce){.arena-banner,.arena-caption{animation:none}}
+@media (max-height:600px){
+  .arena-caption{display:none}
+  .arena-banner.lose{font-size:16px;line-height:20px;padding:4px 12px}
 }

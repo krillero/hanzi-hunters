@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { WORDS } from './data'
 import { getExplanation, hasExplanation, type Part, type Section } from './content'
 
-type Props = { hanzi: string; onClose: () => void; onOpen: (hanzi: string) => void; onSpeak: (hanzi: string) => void }
+type Props = { hanzi: string; hidden?: string; onClose: () => void; onOpen: (hanzi: string) => void; onSpeak: (hanzi: string) => void }
 
 const PartCard = ({ p }: { p: Part }) => (
   <div className="ex-part">
@@ -34,7 +34,7 @@ function renderSection(s: Section, i: number) {
 }
 
 /** Popup with the extra explanation for a word (content: src/content/explanations.json). */
-export default function ExplainModal({ hanzi, onClose, onOpen, onSpeak }: Props) {
+export default function ExplainModal({ hanzi, hidden, onClose, onOpen, onSpeak }: Props) {
   const ex = getExplanation(hanzi)
   const word = WORDS.find(w => w.hanzi === hanzi)
   const closeRef = useRef<HTMLButtonElement | null>(null)
@@ -66,7 +66,7 @@ export default function ExplainModal({ hanzi, onClose, onOpen, onSpeak }: Props)
               <div className="ex-related">{ex.related.map(h => {
                 const w = WORDS.find(x => x.hanzi === h)
                 if (!w) return null
-                const linked = hasExplanation(h) && h !== hanzi
+                const linked = hasExplanation(h) && h !== hanzi && h !== hidden
                 return <button key={h} className="ex-chip" disabled={!linked} onClick={() => onOpen(h)} aria-label={`${h} ${w.pinyin} ${w.meaning}${hasExplanation(h) ? ', open explanation' : ''}`}><span>{h}</span><small>{w.pinyin}</small></button>
               })}</div>
             </section>)}

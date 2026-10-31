@@ -69,10 +69,12 @@ test('combo and execute bonuses', () => {
   assert.equal(ask({ ...run0(), enemyHp: 8 }, { bonuses: b }).damage, Math.round(13 * 1.35))
 })
 
-test('loot: new gear is added, duplicates become gold; elites drop more often', () => {
+test('loot: only gear you do not own can drop; elites drop more often', () => {
   const r = { ...run0(), enemyHp: 1 }
   const drop = ask(r, { roll: { drop: 0.1, item: 0 } }); assert.equal(drop.loot?.name, GEAR[0].name); assert.deepEqual(drop.run.gear, [GEAR[0].name]); assert.equal(drop.run.loadout.Weapon, GEAR[0].name)
-  const dup = ask({ ...r, gear: [GEAR[0].name] }, { roll: { drop: 0.1, item: 0 } }); assert.equal(dup.loot, null); assert.equal(dup.duplicateGold, 4)
+  const second = ask({ ...r, gear: [GEAR[0].name] }, { roll: { drop: 0.1, item: 0 } }); assert.equal(second.loot?.name, GEAR[1].name, 'skips owned gear')
+  const all = ask({ ...r, gear: GEAR.map(g => g.name) }, { roll: { drop: 0.1, item: 0 } }); assert.equal(all.loot, null, 'owning everything drops nothing')
+  for (let k = 0; k < 20; k++) { const x = ask({ ...r, gear: [GEAR[0].name] }, { roll: { drop: 0.1, item: k / 20 } }); assert.notEqual(x.loot?.name, GEAR[0].name) }
   const elite = { ...r, kill: ENEMIES_PER_FLOOR - 1 }
   assert.ok(ask(elite, { roll: { drop: 0.7, item: 0.5 } }).loot, 'elite drops at 0.7')
   assert.equal(ask(r, { roll: { drop: 0.7, item: 0.5 } }).loot, null, 'normal does not')

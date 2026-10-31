@@ -20,13 +20,17 @@ import type { Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
-type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean }
-type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
+type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean; combo: number; weak: boolean }
+type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal'; text: string }
+type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
 
-function combatSummary(exchange: CombatExchange) {
-  const response = exchange.victory ? 'Enemy defeated · no counterattack'
-    : exchange.blocked ? 'Enemy hit blocked' : `Enemy hit: −${exchange.counter} HP`
-  return `Your hit: −${exchange.damage} HP · ${response}`
+/** Streak badge in the arena: pips until the combo bonus starts (needs the Combo Strikes upgrade), a flame while it is active. */
+function ComboBadge({ streak, bonusPct }: { streak: number; bonusPct: number }) {
+  if (streak < 1 || (streak < 2 && bonusPct === 0)) return null
+  const active = streak >= 2 && bonusPct > 0
+  return <span className={`combo-badge ${active ? 'hot' : ''}`} aria-label={`Streak ${streak}${active ? `, combo bonus +${bonusPct}% on the next hit` : ''}`}>
+    {active ? <>🔥 ×{streak}</> : bonusPct > 0 ? <><i className="pips" aria-hidden="true"><u className="on" /><u /></i><small>1 more for 🔥 +{bonusPct}%</small></> : <>×{streak}</>}
+  </span>
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -74,10 +78,11 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
   const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
+  const [caption, setCaption] = useState<Caption | null>(null)   // text over a fighter in the arena (HTML, so it stays crisp)
+  const [floorBanner, setFloorBanner] = useState('')
   const [reveal, setReveal] = useState<{ chosen: string; plan: Exclude<AutoPlan, null>; exchange: CombatExchange } | null>(null)   // a right answer that continues by itself
   const [menuOpen, setMenuOpen] = useState(false)
   const [newLoot, setNewLoot] = useState(false)
-  const [pop, setPop] = useState<{ key: number; gold: number; xp: number } | null>(null)
   const [card, setCard] = useState<Card | null>(null)
   const [eliminated, setEliminated] = useState<string[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
@@ -111,8 +116,6 @@ export default function App() {
   phaseRef.current = run?.phase ?? 'fighting'
   const killRef = useRef(0)
   killRef.current = run?.kill ?? 0
-  const streakRef = useRef(0)
-  streakRef.current = run?.streak ?? 0
 
   const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen): Card => {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
@@ -165,8 +168,7 @@ export default function App() {
       if (import.meta.env.DEV) (window as unknown as { __hhScene?: PixelScene }).__hhScene = scene   // dev-only handle for browser tests
       const [sprite, elite] = enemyKeyRef.current.split(':')
       if (sprite) scene.setEnemy(sprite as 'slime' | 'imp' | 'bat', elite === 'true')
-      if (phaseRef.current === 'victory') { scene.hideMonster(); scene.showVictory(killRef.current >= ENEMIES_PER_FLOOR - 1 ? 'ELITE SLAIN!' : 'ENEMY SLAIN!', false) }
-      scene.setCombo(streakRef.current)
+      if (phaseRef.current === 'victory') scene.hideMonster()
       if (phaseRef.current === 'defeat') scene.showDefeat(false)
     })
     const ro = new ResizeObserver(() => game.scale.refresh())
@@ -202,7 +204,7 @@ export default function App() {
   const answerQuestion = (option: string) => {
     if (!run || !card || answerLock.current || feedback || reveal || run.phase !== 'fighting' || eliminated.includes(option)) return
     answerLock.current = true
-    sceneRef.current?.clearFloats()
+    setCaption(null)
     const { word, question } = card
     const entry = save.mastery[word.hanzi]
     const isCorrect = option === question.answer
@@ -213,36 +215,35 @@ export default function App() {
     const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
     const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
-    sceneRef.current?.playHit('monster', r.damage, r.comboHit ? 'COMBO!' : !isCorrect ? 'WEAK HIT' : undefined)
-    if (r.outcome === 'victory') { sceneRef.current?.hideMonster(); sceneRef.current?.showVictory(isElite(run.kill) ? 'ELITE SLAIN!' : 'ENEMY SLAIN!') }
-    else if (r.counter > 0) sceneRef.current?.playHit('hero', r.counter)
-    else if (r.savedBySecondChance) sceneRef.current?.float('hero', 'BLOCKED', '#8ed1ff')
+    sceneRef.current?.playHit('monster')
+    if (!isCorrect) setCaption({ side: 'monster', kind: 'weak', text: 'WEAK HIT' })
+    if (r.outcome === 'victory') sceneRef.current?.hideMonster()
+    else if (r.counter > 0) sceneRef.current?.playHit('hero')
+    else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: '🛡 BLOCKED' })
 
-    sceneRef.current?.setCombo(r.run.streak)
     if (r.outcome === 'defeat') sceneRef.current?.showDefeat(true)
     patch(s => ({ ...s, run: r.run, mastery }))
     const plan = autoContinuePlan({ isCorrect, outcome: r.outcome, eliteKill: r.outcome === 'victory' && isElite(run.kill), setting: settings.autoContinue, masteryLevel: after })
-    const masteryNote = !entry ? 'New word added to your wordbook.'
-      : after > before ? (after >= MAX_LV ? `Mastered! ${word.hanzi} is now level ${MAX_LV}.` : `Word level up! ${word.hanzi} is now level ${after}.`)
-        : after < before ? `${word.hanzi} slipped back to level ${after}. It will return for review.`
-          : isCorrect ? 'One more correct answer to level this word up.' : 'Review this one — it will come back.'
-    const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory' }
+    const masteryNote = !entry ? 'New word — added to your wordbook'
+      : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
+        : after < before ? `Back to level ${after} — it will return for review`
+          : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : 'One more correct in a row to level up') : 'Review this one — it will come back'
+    const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
-      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, chosen: option, answer: question.answer,
+      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, lv: after, chosen: option, answer: question.answer,
       title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster', exchange
     })
     if (r.outcome === 'victory') {
       // Rewards sit in the fixed arena strip (no layout change); the counters tick up.
       const rw = r.run.reward
-      setPop({ key: Date.now(), gold: rw.gold, xp: rw.xp })
       if (r.loot) setNewLoot(true)
     }
   }
 
   const dismissFeedback = () => {
     setFeedback(null)
-    sceneRef.current?.clearFloats()
+    setCaption(null)
     if (run?.phase === 'fighting') { setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
   }
 
@@ -251,9 +252,9 @@ export default function App() {
     const next = advance(run, bonuses, ENEMIES)
     patch(s => ({ ...s, run: next }))
     setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); setFeedback(null); answerLock.current = false
-    sceneRef.current?.clearFloats()
+    setCaption(null)
     sceneRef.current?.resetMonster()
-    if (next.floor > run.floor) { sceneRef.current?.float('banner', `FLOOR ${next.floor}`, '#f0cb78'); window.setTimeout(() => sceneRef.current?.clearBanner(), 1800) }
+    if (next.floor > run.floor) { setFloorBanner(`FLOOR ${next.floor}`); window.setTimeout(() => setFloorBanner(''), 1800) }
   }
 
   /** Leave the in-place reveal of a right answer: next question, or next monster after a kill. */
@@ -262,7 +263,7 @@ export default function App() {
     const mode = reveal.plan.mode
     setReveal(null)
     if (mode === 'enemy') nextEnemy()
-    else { sceneRef.current?.clearFloats(); setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
+    else { setCaption(null); setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
   const blockingOpen = explain !== null || showBag || showWords || menuOpen
@@ -272,7 +273,6 @@ export default function App() {
     return () => window.clearTimeout(t)
     /* eslint-disable-next-line */
   }, [reveal, blockingOpen])
-  useEffect(() => { if (!pop) return; const t = window.setTimeout(() => setPop(null), 1800); return () => window.clearTimeout(t) }, [pop])
 
   const equipItem = (name: string) => {
     if (!run) return
@@ -289,7 +289,7 @@ export default function App() {
     const next = drinkPotion(run, bonuses, GEAR)
     if (!next) return
     patch(s => ({ ...s, run: next }))
-    sceneRef.current?.float('hero', `+${next.hp - run.hp}`, '#8ee0a9')
+    setCaption({ side: 'hero', kind: 'heal', text: `+${next.hp - run.hp} HP` })
   }
 
   const useHint = () => {
@@ -421,17 +421,28 @@ export default function App() {
               </div></div>
             <div className="arena-stage">
               <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
+              <div className="arena-hud" aria-hidden={!caption && !floorBanner}>
+                {run.phase === 'fighting' || run.phase === 'victory' ? <ComboBadge streak={run.streak} bonusPct={Math.round(bonuses.streakDmgPct * 100)} /> : null}
+                {run.phase === 'victory' && <span className="arena-banner win">{isElite(run.kill) ? 'ELITE VICTORY' : 'VICTORY'}</span>}
+                {run.phase === 'defeat' && <span className="arena-banner lose">YOU DIED</span>}
+                {floorBanner && run.phase === 'fighting' && <span className="arena-banner floor">{floorBanner}</span>}
+                {caption && run.phase !== 'defeat' && <span className={`arena-caption ${caption.side} ${caption.kind}`} role="status">{caption.text}</span>}
+              </div>
               {run.phase === 'victory' && <div className="arena-rewards" role="status" aria-label="Battle rewards">
                 <span>+{run.reward.xp} XP</span>
-                <span>🪙 +{run.reward.gold}{run.reward.dupGold > 0 ? ' (dup)' : ''}</span>
+                <span>🪙 +{run.reward.gold}</span>
                 {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
                 {run.reward.loot && <span className="hot loot">🎁 {run.reward.loot}</span>}
+              </div>}
+              {run.phase !== 'victory' && (feedback || reveal) && <div className="arena-rewards arena-exchange" role="status" aria-label="Combat result">
+                <span className={(feedback ?? reveal)!.exchange.combo > 0 ? 'combo2' : (feedback ?? reveal)!.exchange.weak ? 'weak' : ''}>⚔ −{(feedback ?? reveal)!.exchange.damage}{(feedback ?? reveal)!.exchange.combo > 0 ? ` · 🔥 +${(feedback ?? reveal)!.exchange.combo}%` : ''}</span>
+                {(feedback ?? reveal)!.exchange.blocked ? <span>🛡 Blocked</span> : (feedback ?? reveal)!.exchange.counter > 0 ? <span className="hurt">💔 −{(feedback ?? reveal)!.exchange.counter}</span> : <span>No counterattack</span>}
               </div>}
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
                 <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Adventurer</small></div></div>
-                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>{pop && <em key={pop.key} className="xp-pop">+{pop.xp} XP</em>}
+                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
                 <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.elite ? 'Elite ' : ''}{foe.enemy.name}</strong><small>OPPONENT</small></div></div>
@@ -580,7 +591,7 @@ export default function App() {
               <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
                 <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
-                  {hasExplanation(word.hanzi) && <button className="speak-btn tip-btn" onClick={e => { e.stopPropagation(); setExplain(word.hanzi) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
+                  {hasExplanation(word.hanzi) && show.hanzi && show.pinyin && show.meaning && <button className="speak-btn tip-btn" onClick={e => { e.stopPropagation(); setExplain(word.hanzi) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
                   <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
                 </div>
                 <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')}`}>{show.hanzi ? word.hanzi : '?'}</div>
@@ -590,12 +601,11 @@ export default function App() {
               {feedback && !revealing ? (
                 <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'}`} role="status" aria-live="polite">
                   <div className="result-line">
-                    <strong>{feedback.correct ? (feedback.exchange.victory ? '✓ Correct — enemy defeated!' : '✓ Correct!') : 'Not quite'}</strong>
-                    {!feedback.correct && <span>You chose <s>{feedback.chosen}</s> · answer <b>{feedback.answer}</b></span>}
+                    <strong>{feedback.correct ? `✓ Correct — ${feedback.word.hanzi} ${feedback.word.pinyin} · ${feedback.word.meaning}` : 'Not quite'}</strong>
                   </div>
-                  <p className="combat-exchange">{combatSummary(feedback.exchange)}</p>
+                  {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
                   <p className="result-note">{feedback.word.note}</p>
-                  {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}>{feedback.mastery}</p>}
+                  {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}><i className="pips" aria-hidden="true">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < feedback.lv ? 'on' : ''} />)}</i> {feedback.mastery}</p>}
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
@@ -614,7 +624,6 @@ export default function App() {
                 <div className="reward-item"><small>EXPERIENCE</small><strong>+{run.reward.xp} XP</strong></div>
                 <div className="reward-item"><small>GOLD</small><strong>🪙 +{run.reward.gold}</strong></div>
                 {run.reward.levelUps > 0 && <div className="reward-item reward-highlight"><small>LEVEL UP</small><strong>Level {run.level}</strong></div>}
-                {run.reward.dupGold > 0 && <div className="reward-item"><small>DUPLICATE</small><strong>+{run.reward.dupGold} 🪙</strong></div>}
               </div>
             )}
 
@@ -628,7 +637,7 @@ export default function App() {
 
             <div className="action-bar">
               {revealing
-                ? <button className="bar-btn ghost auto-continue" data-kind="continue" onClick={advanceAuto}><span>{combatSummary(reveal!.exchange)}</span><span>Tap to continue →</span></button>
+                ? <button className="bar-btn ghost auto-continue" data-kind="continue" onClick={advanceAuto}><span>✓ Correct</span><span>Tap to continue →</span></button>
                 : fighting && !feedback
                 ? <>
                     {bonuses.hints > 0
@@ -652,7 +661,7 @@ export default function App() {
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
       {menu}
-      {explain !== null && <ExplainModal hanzi={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal hanzi={explain} hidden={fighting && !feedback && !revealing ? card?.word.hanzi : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
     </main>
   )
 }
