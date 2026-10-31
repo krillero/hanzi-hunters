@@ -1424,3 +1424,31 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .arena-caption{display:none}
   .arena-banner.lose{font-size:16px;line-height:20px;padding:4px 12px}
 }
+
+/* ---- Game feel (phase 1): floor path, level-up, loot rarity, summary card ---- */
+.floor-path{display:inline-flex!important;align-items:center;gap:5px;margin:0!important}
+.floor-path i{display:block;width:9px;height:9px;border:1px solid #d7b970;border-radius:50%}
+.floor-path i.done{background:#f1ce80}
+.floor-path i.cur{background:#f1ce80;box-shadow:0 0 0 3px #f1ce8055}
+.floor-path i.elite{border-radius:0;transform:rotate(45deg);border-color:#ff8a3d;width:9px;height:9px}
+.floor-path i.elite.done,.floor-path i.elite.cur{background:#ff8a3d}
+.words-known{font:10px 'DM Mono',monospace;color:#afbdd0;white-space:nowrap}
+.arena-levelup{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#07101ccc;animation:hud-pop .26s ease-out;text-align:center;z-index:4}
+.arena-levelup .lu-badge{font:700 10px 'DM Mono',monospace;letter-spacing:1.5px;padding:2px 10px;border:1px solid #d0a852;border-radius:11px;color:#ffd77d;background:#241b08}
+.arena-levelup strong{font:700 24px 'DM Mono',monospace;letter-spacing:3px;color:#ffd77d;text-shadow:0 0 14px #ffb83a88}
+.arena-levelup small{font:11px 'DM Mono',monospace;color:#afbdd0}
+.health-fill.hp-glow{box-shadow:0 0 12px #8ee0a9;transition:width .8s ease-out}
+.arena-rewards .loot.r-rare{border-color:#6fb5e8;color:#9fd3ff;box-shadow:0 0 8px #6fb5e866}
+.arena-rewards .loot.r-epic{border-color:#c79bff;color:#e2ccff;box-shadow:0 0 10px #c79bff88}
+.summary-card{max-width:420px}
+.sum-icon{font-size:30px}
+.sum-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sum-stat{background:#162235;border:1px solid #2f435c;padding:8px 4px;text-align:center}
+.sum-stat b{display:block;font:700 20px 'DM Mono',monospace;color:#f1ce80}
+.sum-stat small{font:10px 'DM Mono',monospace;color:#afbdd0;letter-spacing:.5px}
+.sum-stat.good{border-color:#3f8f64}.sum-stat.good b{color:#8ee0a9}
+.sum-tiles{display:flex;gap:8px;flex-wrap:wrap}
+.sum-tile{min-width:52px;padding:4px 10px;background:linear-gradient(145deg,#1b2a3e,#101a29);border:1px solid #394c64;display:flex;flex-direction:column;align-items:center;font:600 22px Manrope,sans-serif;color:#f1f5fb}
+.sum-tile small{font:11px 'DM Mono',monospace;color:#f1ce80}
+.sum-go{width:100%;min-height:52px;display:block}
+@media (prefers-reduced-motion:reduce){.arena-levelup{animation:none}}

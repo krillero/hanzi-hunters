@@ -22,6 +22,7 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
     return () => window.removeEventListener('keydown', key)
   }, [onClose])
 
+  const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div className="modal menu-sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title" onClick={e => e.stopPropagation()}>
@@ -30,9 +31,19 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
           <section>
             <h3>Sound</h3>
             <button className={`switch-row ${settings.muted ? '' : 'on'}`} role="switch" aria-checked={!settings.muted} onClick={() => onChange({ ...settings, muted: !settings.muted })}>
-              <span className="switch-label">{settings.muted ? '🔇 Sound off' : '🔊 Sound on'}</span><span className="switch-knob" aria-hidden />
+              <span className="switch-label">{settings.muted ? '🔇 Spoken words off' : '🔊 Spoken words on'}</span><span className="switch-knob" aria-hidden />
             </button>
             <p className="hint-text">{settings.muted ? 'Words are not played and listening questions are skipped.' : hasVoice ? 'Words are played aloud and listening questions can appear.' : 'No Mandarin voice was found on this device, so listening questions are skipped.'}</p>
+          </section>
+          <section>
+            <h3>Effects</h3>
+            <button className={`switch-row ${settings.sfx ? 'on' : ''}`} role="switch" aria-checked={settings.sfx} onClick={() => { onChange({ ...settings, sfx: !settings.sfx }) }}>
+              <span className="switch-label">{settings.sfx ? '🎵 Sound effects on' : '🎵 Sound effects off'}</span><span className="switch-knob" aria-hidden />
+            </button>
+            {canVibrate && <button className={`switch-row ${settings.haptics ? 'on' : ''}`} role="switch" aria-checked={settings.haptics} onClick={() => onChange({ ...settings, haptics: !settings.haptics })}>
+              <span className="switch-label">{settings.haptics ? '📳 Vibration on' : '📳 Vibration off'}</span><span className="switch-knob" aria-hidden />
+            </button>}
+            <p className="hint-text">Hits, kills, level-ups and loot make short sounds{canVibrate ? ' and a small vibration' : ''}. These are separate from the spoken Mandarin words above.</p>
           </section>
           <section>
             <h3>Auto-continue after a right answer</h3>

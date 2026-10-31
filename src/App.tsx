@@ -4,6 +4,11 @@ import { PixelScene } from './game/PixelScene'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
+import SummaryModal from './SummaryModal'
+import { playSfx, unlockAudio, vibrate, type SfxName, type SfxOptions } from './audio'
+import { flyMotes } from './motes'
+import { rarityOf } from './game/rarity'
+import { accuracyPct, emptyStats, recordAnswer, type RunStats } from './game/runStats'
 import { DEFAULT_SETTINGS, SETTINGS_KEY, loadSettings, type Settings } from './settings'
 import { autoContinuePlan, type AutoPlan } from './game/flow'
 import { hasExplanation } from './content'
@@ -78,6 +83,10 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
   const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
+  const [floorStats, setFloorStats] = useState<RunStats>(emptyStats)
+  const [runStats, setRunStats] = useState<RunStats>(emptyStats)
+  const [summary, setSummary] = useState<'floor' | 'defeat' | null>(null)
+  const [levelUp, setLevelUp] = useState<{ from: number; to: number; hp: number; attack: number } | null>(null)
   const [caption, setCaption] = useState<Caption | null>(null)   // text over a fighter in the arena (HTML, so it stays crisp)
   const [floorBanner, setFloorBanner] = useState('')
   const [reveal, setReveal] = useState<{ chosen: string; plan: Exclude<AutoPlan, null>; exchange: CombatExchange } | null>(null)   // a right answer that continues by itself
@@ -133,6 +142,14 @@ export default function App() {
     return () => { try { window.speechSynthesis.removeEventListener('voiceschanged', check) } catch { /* ignore */ } }
   }, [])
   useEffect(() => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)) } catch { /* storage unavailable */ } }, [settings])
+  useEffect(() => { if (!levelUp) return; const t = window.setTimeout(() => setLevelUp(null), 2200); return () => window.clearTimeout(t) }, [levelUp])
+  // Browsers only allow sound after a tap: the first tap anywhere unlocks it.
+  useEffect(() => { const u = () => unlockAudio(); window.addEventListener('pointerdown', u, { once: true }); return () => window.removeEventListener('pointerdown', u) }, [])
+  /** One game sound + its vibration, each behind its own setting. `delay` is in seconds. */
+  const feel = (name: SfxName, opts: SfxOptions = {}, delay = 0) => {
+    if (settings.sfx) playSfx(name, opts, delay)
+    if (settings.haptics) { if (delay <= 0) vibrate(name); else window.setTimeout(() => vibrate(name), delay * 1000) }
+  }
   // Muting while a listening question is open: ask the same word as a normal question instead.
   useEffect(() => {
     if (!settings.muted || !card?.question.audio || feedback || reveal) return
@@ -223,6 +240,37 @@ export default function App() {
 
     if (r.outcome === 'defeat') sceneRef.current?.showDefeat(true)
     patch(s => ({ ...s, run: r.run, mastery }))
+
+    // Learning summary for the floor-clear / defeat cards
+    const rec = { hanzi: word.hanzi, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
+    setFloorStats(s => recordAnswer(s, rec)); setRunStats(s => recordAnswer(s, rec))
+
+    // Sound + vibration: the base sound first, then the bigger moments queued after it
+    let t = 0
+    if (r.outcome === 'defeat') { feel('defeat'); t = 0.8 }
+    else if (r.outcome === 'victory') { feel('kill'); t = 0.6 }
+    else if (!isCorrect) { feel('wrong'); t = 0.35 }
+    else if (r.comboHit) { feel('combo', { streak: r.run.streak }); t = 0.45 }
+    else { feel('correct'); t = 0.3 }
+    if (isCorrect && before >= 0 && before < MAX_LV && after >= MAX_LV) { feel('mastered', {}, t); t += 0.7 }
+    if (r.run.level > run.level) {
+      feel('levelup', {}, t); t += 0.75
+      const before2 = playerStats(run, bonuses, GEAR), after2 = playerStats(r.run, bonuses, GEAR)
+      setLevelUp({ from: run.level, to: r.run.level, hp: after2.maxHp - before2.maxHp, attack: after2.attack - before2.attack })
+    }
+    if (r.loot) { feel('loot', { rarity: rarityOf(r.loot) }, t); t += 0.4 }
+    if (r.outcome === 'victory') {
+      const levelHp = r.run.level > run.level ? playerStats(r.run, bonuses, GEAR).maxHp - playerStats(run, bonuses, GEAR).maxHp : 0
+      const healed = Math.max(0, r.run.hp - run.hp - levelHp)
+      if (healed > 0) setCaption({ side: 'hero', kind: 'heal', text: `💚 +${healed} Second Wind` })
+      window.setTimeout(() => {
+        const stage = document.querySelector('.arena-stage')?.getBoundingClientRect()
+        if (!stage) return
+        const from = { x: stage.left + stage.width * 0.73, y: stage.top + stage.height * 0.62 }
+        flyMotes(from, document.querySelector('.compact-gold'), '#ffd166', 6)
+        flyMotes(from, document.querySelector('.player-card .xp-mini'), '#8ec5ff', 5)
+      }, 380)
+    }
     const plan = autoContinuePlan({ isCorrect, outcome: r.outcome, eliteKill: r.outcome === 'victory' && isElite(run.kill), setting: settings.autoContinue, masteryLevel: after })
     const masteryNote = !entry ? 'New word — added to your wordbook'
       : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
@@ -254,7 +302,7 @@ export default function App() {
     setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); setFeedback(null); answerLock.current = false
     setCaption(null)
     sceneRef.current?.resetMonster()
-    if (next.floor > run.floor) { setFloorBanner(`FLOOR ${next.floor}`); window.setTimeout(() => setFloorBanner(''), 1800) }
+    if (next.floor > run.floor) { setFloorBanner(`FLOOR ${next.floor}`); window.setTimeout(() => setFloorBanner(''), 1800); setFloorStats(emptyStats()) }
   }
 
   /** Leave the in-place reveal of a right answer: next question, or next monster after a kill. */
@@ -307,12 +355,14 @@ export default function App() {
     const { meta, summary } = bankRun(save.meta, run)
     patch(s => ({ ...s, meta, run: null, lastRun: summary }))
     setCampMsg(''); setFeedback(null); setCard(null); setShowBag(false); setShowWords(false); answerLock.current = false
+    setSummary(null); setLevelUp(null)
   }
 
   const startRun = () => {
     setReveal(null)
     const fresh = newRun(bonuses, GEAR, ENEMIES)
     patch(s => ({ ...s, run: fresh }))
+    setFloorStats(emptyStats()); setRunStats(emptyStats()); setSummary(null)
     setCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); answerLock.current = false
   }
 
@@ -367,7 +417,7 @@ export default function App() {
         {topbar}
         <CampScreen save={save} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} />
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
-        {menu}
+      {menu}
       </main>
     )
   }
@@ -404,14 +454,14 @@ export default function App() {
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">
-        <div><strong>FLOOR {pad(run.floor)}</strong><small>ENEMY {run.kill + 1} / {ENEMIES_PER_FLOOR}</small></div>
+        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${isElite(run.kill) ? ', elite' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? 'elite' : ''}`} />)}</small></div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
         <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
       </header>
       <section className="game-layout">
         <div className="left-column">
           <div className="scene-frame">
-            <div className="compact-location"><span>The Mosslight Cavern</span><span className="encounter-dots" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={i <= run.kill ? 'reached' : ''} />)}</span></div>
+            <div className="compact-location"><span>The Mosslight Cavern</span><span className="words-known" aria-label={`${seenCount(save.mastery)} words known, ${masteredCount(save.mastery)} mastered`}>📖 {seenCount(save.mastery)} · ★ {masteredCount(save.mastery)}</span></div>
             <div className="scene-label"><span className="live-dot"></span><span className="scene-where"><span className="scene-floor"><span className="sf-wide">F{run.floor} · {run.kill + 1}/{ENEMIES_PER_FLOOR}</span><span className="sf-narrow">F{run.floor}·{run.kill + 1}/{ENEMIES_PER_FLOOR}</span></span><span className="scene-gold">🪙 {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
@@ -426,13 +476,14 @@ export default function App() {
                 {run.phase === 'victory' && <span className="arena-banner win">{isElite(run.kill) ? 'ELITE VICTORY' : 'VICTORY'}</span>}
                 {run.phase === 'defeat' && <span className="arena-banner lose">YOU DIED</span>}
                 {floorBanner && run.phase === 'fighting' && <span className="arena-banner floor">{floorBanner}</span>}
+                {levelUp && <div className="arena-levelup" role="status"><span className="lu-badge">LEVEL UP</span><strong>LV {levelUp.from} → {levelUp.to}</strong><small>{[levelUp.hp > 0 && `+${levelUp.hp} max HP`, levelUp.attack > 0 && `+${levelUp.attack} attack`].filter(Boolean).join(' · ') || 'Stronger'}</small></div>}
                 {caption && run.phase !== 'defeat' && <span className={`arena-caption ${caption.side} ${caption.kind}`} role="status">{caption.text}</span>}
               </div>
               {run.phase === 'victory' && <div className="arena-rewards" role="status" aria-label="Battle rewards">
                 <span>+{run.reward.xp} XP</span>
                 <span>🪙 +{run.reward.gold}</span>
                 {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
-                {run.reward.loot && <span className="hot loot">🎁 {run.reward.loot}</span>}
+                {run.reward.loot && <span className={`hot loot r-${rarityOf(run.reward.loot)}`}>🎁 {run.reward.loot}</span>}
               </div>}
               {run.phase !== 'victory' && (feedback || reveal) && <div className="arena-rewards arena-exchange" role="status" aria-label="Combat result">
                 <span className={(feedback ?? reveal)!.exchange.combo > 0 ? 'combo2' : (feedback ?? reveal)!.exchange.weak ? 'weak' : ''}>⚔ −{(feedback ?? reveal)!.exchange.damage}{(feedback ?? reveal)!.exchange.combo > 0 ? ` · 🔥 +${(feedback ?? reveal)!.exchange.combo}%` : ''}</span>
@@ -442,7 +493,7 @@ export default function App() {
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
                 <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Adventurer</small></div></div>
-                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className="health-fill player-fill" style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className={`health-fill player-fill ${levelUp ? "hp-glow" : ""}`} style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
                 <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.elite ? 'Elite ' : ''}{foe.enemy.name}</strong><small>OPPONENT</small></div></div>
@@ -644,7 +695,7 @@ export default function App() {
                       ? <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>
                       : <p className="bar-hint">{question.kind === 'intro' ? 'Choose its meaning to attack' : 'Choose an answer to attack'}</p>}
                   </>
-                : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? nextEnemy : endRun}>
+                : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? (lastOfFloor ? () => setSummary('floor') : nextEnemy) : () => setSummary('defeat')}>
                     {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? `Descend to floor ${run.floor + 1}` : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>
                   </button>}
             </div>
@@ -660,6 +711,7 @@ export default function App() {
       </nav>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
+        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} onClose={() => setSummary(null)} onContinue={() => { if (summary === 'floor') { setSummary(null); nextEnemy() } else endRun() }} />}
       {menu}
       {explain !== null && <ExplainModal hanzi={explain} hidden={fighting && !feedback && !revealing ? card?.word.hanzi : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
     </main>
