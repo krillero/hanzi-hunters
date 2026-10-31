@@ -21,15 +21,15 @@ import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
 type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean; combo: number; weak: boolean }
-type Caption = { side: 'hero' | 'monster'; kind: 'combo' | 'weak' | 'block' | 'heal'; text: string }
+type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal'; text: string }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
 
 /** Streak badge in the arena: pips until the combo bonus starts (needs the Combo Strikes upgrade), a flame while it is active. */
-function ComboBadge({ streak, bonusPct, compact }: { streak: number; bonusPct: number; compact: boolean }) {
+function ComboBadge({ streak, bonusPct }: { streak: number; bonusPct: number }) {
   if (streak < 1 || (streak < 2 && bonusPct === 0)) return null
   const active = streak >= 2 && bonusPct > 0
   return <span className={`combo-badge ${active ? 'hot' : ''}`} aria-label={`Streak ${streak}${active ? `, combo bonus +${bonusPct}% on the next hit` : ''}`}>
-    {active ? <>🔥 ×{streak}{!compact && <small>+{bonusPct}% next hit</small>}</> : bonusPct > 0 ? <><i className="pips" aria-hidden="true"><u className="on" /><u /></i><small>1 more for 🔥 +{bonusPct}%</small></> : <>×{streak}</>}
+    {active ? <>🔥 ×{streak}</> : bonusPct > 0 ? <><i className="pips" aria-hidden="true"><u className="on" /><u /></i><small>1 more for 🔥 +{bonusPct}%</small></> : <>×{streak}</>}
   </span>
 }
 
@@ -216,8 +216,7 @@ export default function App() {
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
     const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
     sceneRef.current?.playHit('monster')
-    if (r.comboHit) setCaption({ side: 'monster', kind: 'combo', text: `🔥 COMBO +${Math.round(bonuses.streakDmgPct * 100)}%` })
-    else if (!isCorrect) setCaption({ side: 'monster', kind: 'weak', text: 'WEAK HIT' })
+    if (!isCorrect) setCaption({ side: 'monster', kind: 'weak', text: 'WEAK HIT' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster()
     else if (r.counter > 0) sceneRef.current?.playHit('hero')
     else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: '🛡 BLOCKED' })
@@ -423,7 +422,7 @@ export default function App() {
             <div className="arena-stage">
               <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
               <div className="arena-hud" aria-hidden={!caption && !floorBanner}>
-                {run.phase === 'fighting' || run.phase === 'victory' ? <ComboBadge streak={run.streak} bonusPct={Math.round(bonuses.streakDmgPct * 100)} compact={run.phase === 'victory'} /> : null}
+                {run.phase === 'fighting' || run.phase === 'victory' ? <ComboBadge streak={run.streak} bonusPct={Math.round(bonuses.streakDmgPct * 100)} /> : null}
                 {run.phase === 'victory' && <span className="arena-banner win">{isElite(run.kill) ? 'ELITE VICTORY' : 'VICTORY'}</span>}
                 {run.phase === 'defeat' && <span className="arena-banner lose">YOU DIED</span>}
                 {floorBanner && run.phase === 'fighting' && <span className="arena-banner floor">{floorBanner}</span>}

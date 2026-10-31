@@ -1413,7 +1413,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .arena-banner.lose{top:44%;transform:translate(-50%,-50%);background:#2a0f16f0;border-color:#ff5a6a;color:#ff7a88;font-size:20px;line-height:26px;padding:6px 18px;letter-spacing:2px}
 .arena-caption{position:absolute;top:34px;transform:translateX(-50%);padding:2px 10px;border-radius:11px;background:#0b1320e6;border:1px solid #d0a852;color:#ffd77d;font:700 12px/16px 'DM Mono',monospace;white-space:nowrap;animation:hud-pop .22s ease-out}
 .arena-caption.monster{left:73%}.arena-caption.hero{left:27%}
-.arena-caption.combo{border-color:#ff8a3d;color:#ffb36b}
 .arena-caption.weak{border-color:#8a94a6;color:#c3cad6}
 .arena-caption.block{border-color:#6fb5e8;color:#9fd3ff}
 .arena-caption.heal{border-color:#4fa874;color:#8ee0a9}
