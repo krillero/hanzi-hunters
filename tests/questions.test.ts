@@ -6,13 +6,15 @@ import { buildQuestion, chooseKind, isFeasible, lookalikesOf, toneVariants, type
 
 test('vocabulary data is consistent', () => {
   assert.ok(WORDS.length >= 8, 'need enough words for 4 distinct options')
-  assert.equal(new Set(WORDS.map(w => w.hanzi)).size, WORDS.length, 'duplicate hanzi')
+  assert.equal(new Set(WORDS.map(w => w.id)).size, WORDS.length, 'duplicate id')
   for (const w of WORDS) {
     assert.equal(w.pinyin.normalize('NFC'), w.pinyin, `${w.hanzi}: pinyin not NFC`)
-    assert.ok(toneVariants(w.pinyin).includes(w.pinyin) === false)
-    assert.equal(toneVariants(w.pinyin).length, 3, `${w.hanzi}: needs a tone mark`)
-    for (const c of w.confusable ?? []) assert.ok(WORDS.some(x => x.hanzi === c))
+    assert.ok(!toneVariants(w.pinyin).includes(w.pinyin))
+    for (const c of w.confusable ?? []) assert.ok(WORDS.some(x => x.id === c))
   }
+  // the original single-character entries keep their one lexical tone, and tone variants only exist for those
+  for (const w of WORDS.filter(x => x.kind === 'character')) assert.equal(toneVariants(w.pinyin).length, 3, `${w.hanzi}: needs a tone mark`)
+  for (const w of WORDS.filter(x => [...x.hanzi].length > 1 || x.neutral.length)) assert.deepEqual(toneVariants(w.pinyin), [], `${w.hanzi}: no blind tone edits for multi-syllable or neutral-tone entries`)
 })
 
 test('toneVariants keeps the syllable and swaps only the tone', () => {

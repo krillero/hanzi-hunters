@@ -1,22 +1,11 @@
-export type Word = {
-  hanzi: string
-  pinyin: string
-  meaning: string
-  /** Used to pick plausible distractors from the same family. */
-  group: string
-  note: string
-  /** Other valid readings in context (tone change); never offered as a wrong pinyin option. */
-  alt?: string[]
-  /** Hanzi whose meaning is too close to be a fair wrong answer. */
-  confusable?: string[]
-  /** Hanzi that LOOK similar (used for look-alike discrimination questions). Symmetry is applied in code. */
-  lookalike?: string[]
-}
+export type { Word } from './content/types.ts'
 
 // Vocabulary lives in src/content/words.json (see docs/CONTENT_GUIDE.md).
 // Order matters: the first words are introduced first (see mastery.ts).
 import wordsJson from './content/words.json' with { type: 'json' }
-export const WORDS: Word[] = wordsJson as Word[]
+import { normalizeWords } from './content/entries.ts'
+import type { RawWord, Word } from './content/types.ts'
+export const WORDS: Word[] = normalizeWords(wordsJson as unknown as RawWord[])
 
 export type BossId = 'golem' | 'wraith' | 'scribe' | 'trickster'
 export type Enemy = { name: string; sprite: 'slime' | 'imp' | 'bat' | 'golem' | 'wraith' | 'scribe' | 'trickster'; emoji: string; hp: number; damage: number; xp: number; gold: number }

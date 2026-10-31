@@ -11,9 +11,9 @@ type Props = {
   onClose: () => void
 }
 
-const wordTile = (h: string) => {
-  const w = WORDS.find(x => x.hanzi === h)
-  return <div className="sum-tile" key={h}><span>{h}</span><small>{w?.pinyin ?? ''}</small></div>
+const wordTile = (id: string) => {
+  const w = WORDS.find(x => x.id === id)
+  return <div className="sum-tile" key={id}><span lang="zh">{w?.hanzi ?? id}</span><small>{w?.pinyin ?? ''}</small></div>
 }
 
 /** Floor-clear and defeat card: what you learned, not just what you earned. Real modal styling, no new design tokens. */

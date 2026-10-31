@@ -10,12 +10,12 @@ const WEIGHT = [3, 3, 2, 2, 0.6]   // how often each level is asked
 const NEW_WEIGHT = 3
 
 /** First exposure creates the entry without credit; afterwards correct answers promote, a miss demotes one level. */
-export function updateMastery(m: Mastery, hanzi: string, correct: boolean): Mastery {
-  const e = m[hanzi]
-  if (!e) return { ...m, [hanzi]: { lv: 0, ok: 0 } }
-  if (!correct) return { ...m, [hanzi]: { lv: Math.max(0, e.lv - 1), ok: 0 } }
+export function updateMastery(m: Mastery, id: string, correct: boolean): Mastery {
+  const e = m[id]
+  if (!e) return { ...m, [id]: { lv: 0, ok: 0 } }
+  if (!correct) return { ...m, [id]: { lv: Math.max(0, e.lv - 1), ok: 0 } }
   const ok = e.ok + 1
-  return { ...m, [hanzi]: ok >= PROMOTE_AFTER ? { lv: Math.min(MAX_LV, e.lv + 1), ok: 0 } : { lv: e.lv, ok } }
+  return { ...m, [id]: ok >= PROMOTE_AFTER ? { lv: Math.min(MAX_LV, e.lv + 1), ok: 0 } : { lv: e.lv, ok } }
 }
 
 export const masteredCount = (m: Mastery) => Object.values(m).filter(e => e.lv >= MAX_LV).length
@@ -50,13 +50,13 @@ export function orderedWords(words: Word[], seed: number): Word[] {
 /** Words asked a moment ago are less likely to come straight back (never impossible, so tiny pools still work). Index 0 = most recent. */
 export const RECENT_PENALTY = [0.1, 0.2, 0.3, 0.4, 0.6, 0.6]
 
-export function pickWord(words: Word[], m: Mastery, currentHanzi: string | null, rng: () => number = Math.random, recent: string[] = []): Word {
-  const pool = words.slice(0, activeCount(m, words.length)).filter(w => w.hanzi !== currentHanzi)
+export function pickWord(words: Word[], m: Mastery, currentId: string | null, rng: () => number = Math.random, recent: string[] = []): Word {
+  const pool = words.slice(0, activeCount(m, words.length)).filter(w => w.id !== currentId)
   const learning = Object.values(m).filter(e => e.lv === 0).length
   const weighted = pool.map(w => {
-    const e = m[w.hanzi]
+    const e = m[w.id]
     const base = e ? WEIGHT[e.lv] : learning >= MAX_LEARNING ? 0 : NEW_WEIGHT
-    const ri = recent.indexOf(w.hanzi)
+    const ri = recent.indexOf(w.id)
     return { w, weight: ri >= 0 && ri < RECENT_PENALTY.length ? base * RECENT_PENALTY[ri] : base }
   }).filter(x => x.weight > 0)
   const candidates = weighted.length ? weighted : pool.map(w => ({ w, weight: 1 }))

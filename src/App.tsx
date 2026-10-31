@@ -13,10 +13,12 @@ import { rarityOf } from './game/rarity'
 import { accuracyPct, emptyStats, recordAnswer, type RunStats } from './game/runStats'
 import { DEFAULT_SETTINGS, SETTINGS_KEY, loadSettings, type Settings } from './settings'
 import { autoContinuePlan, type AutoPlan } from './game/flow'
-import { hasExplanation } from './content'
+import { CLOZE, hasExplanation } from './content'
 import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appInfo'
 import { parseBackup, serializeBackup } from './game/backup'
 import { ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
+import { audioReliable, homographsOf } from './content/entries'
+import { fillBlank, lenClass } from './entryUi'
 import { MAX_LV, masteredCount, orderedWords, pickWord, seenCount, updateMastery } from './game/mastery'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, buildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
@@ -49,6 +51,9 @@ function useBump(value: number) {
   useEffect(() => { if (value > prev.current) setN(k => k + 1); prev.current = value }, [value])
   return n
 }
+
+/** Does 💡 / the Wordbook have more to show for this entry (an explanation, other readings, or pronunciation notes)? */
+const hasDetails = (w: Word) => hasExplanation(w.id) || w.variants.length > 0 || w.speech.length > 0 || homographsOf(w, WORDS).length > 0
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -159,12 +164,19 @@ export default function App() {
   killRef.current = run?.kill ?? 0
 
   // New words are introduced in this profile's own order (shuffled inside blocks), and recently asked words are less likely to repeat.
-  const ordered = useMemo(() => orderedWords(WORDS, save.habit.seed), [save.habit.seed])
+  const ordered = useMemo(() => {
+    const list = orderedWords(WORDS, save.habit.seed)
+    // Preview aid: /?first=朋友,看-look introduces these entries (ids or hanzi) before everything else, to try new content without playing to it.
+    const first = (new URLSearchParams(window.location.search).get('first') ?? '').split(',').map(s => s.trim()).filter(Boolean)
+    if (!first.length) return list
+    const lead = first.map(f => list.find(w => w.id === f) ?? list.find(w => w.hanzi === f)).filter((w): w is Word => !!w)
+    return [...lead, ...list.filter(w => !lead.includes(w))]
+  }, [save.habit.seed])
   const recentWords = useRef<string[]>([])
   const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen, forRun: Run | null = run): Card => {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
-    const forced = current === null && forcedWord.current ? WORDS.find(w => w.hanzi === forcedWord.current) : undefined
-    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind })
+    const forced = current === null && forcedWord.current ? (WORDS.find(w => w.id === forcedWord.current) ?? WORDS.find(w => w.hanzi === forcedWord.current)) : undefined
+    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind, cloze: CLOZE })
     const bossFoe = forRun && isBoss(forRun.floor, forRun.kill) ? enemyStats(ENEMIES, forRun.floor, forRun.kill) : null
     // Some bosses need a particular kind of question: tone questions break the Golem's shield, character questions the Scribe's seals,
     // and the Trickster only asks the easy-to-confuse kinds. They ask about words you already know.
@@ -175,13 +187,13 @@ export default function App() {
       : null
     if (needed) {
       const kinds = needed.kinds.filter(k => listen || !k.startsWith('listen'))
-      const knownWords = WORDS.filter(w => mastery[w.hanzi])
+      const knownWords = WORDS.filter(w => mastery[w.id] && w.kind !== 'particle')
       let last: Card | null = null
       for (let k = 0; k < 12; k++) {
         // the scheduler's pick when it is a word you already know, else any known word (never a brand-new word without teaching it)
-        let word = pickWord(ordered, mastery, last?.word.hanzi ?? current, Math.random, recentWords.current)
-        if (!mastery[word.hanzi] && knownWords.length > 0) word = knownWords[Math.floor(Math.random() * knownWords.length)]
-        const entry = mastery[word.hanzi] ?? { lv: 1, ok: 0 }   // only when nothing at all is known yet (preview URLs)
+        let word = pickWord(ordered, mastery, last?.word.id ?? current, Math.random, recentWords.current)
+        if ((!mastery[word.id] || word.kind === 'particle') && knownWords.length > 0) word = knownWords[Math.floor(Math.random() * knownWords.length)]
+        const entry = mastery[word.id] ?? { lv: 1, ok: 0 }   // only when nothing at all is known yet (preview URLs)
         last = { word, question: buildQuestion(word, entry, WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)])) }
         if (needed.ok(last.question)) return last
       }
@@ -190,7 +202,7 @@ export default function App() {
     // Echo Wraith, phase 2: the kind of question you got wrong most recently keeps coming back.
     const echo = !forced && forRun && bossFoe?.boss === 'wraith' && bossPhase(forRun, bossFoe.hp) === 2 ? [...kindHistory.current].reverse().find(h => !h.ok)?.kind : undefined
     const word = forced ?? pickWord(ordered, mastery, current, Math.random, recentWords.current)
-    return { word, question: buildQuestion(word, mastery[word.hanzi], WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
+    return { word, question: buildQuestion(word, mastery[word.id], WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
   }
   const patch = (fn: (s: Saved) => Saved) => setSave(fn)
 
@@ -215,7 +227,7 @@ export default function App() {
   useEffect(() => {
     if (!settings.muted || !card?.question.audio || feedback || reveal) return
     window.speechSynthesis?.cancel?.()
-    setCard({ word: card.word, question: buildQuestion(card.word, save.mastery[card.word.hanzi], WORDS, { canListen: false, known: new Set(Object.keys(save.mastery)), history: kindHistory.current }) })
+    setCard({ word: card.word, question: buildQuestion(card.word, save.mastery[card.word.id], WORDS, { canListen: false, known: new Set(Object.keys(save.mastery)), history: kindHistory.current, cloze: CLOZE }) })
     /* eslint-disable-next-line */
   }, [settings.muted])
   // Is a newer build deployed? Checked at start and whenever the app comes back to the foreground.
@@ -274,9 +286,10 @@ export default function App() {
       window.speechSynthesis.speak(u)
     } catch { /* speech is optional: never let it break the game */ }
   }
-  // The speaker button: when muted, tapping it turns sound back on (and plays the word).
-  const pressSpeaker = (hanzi: string) => { if (settings.muted) setSettings(st => ({ ...st, muted: false })); speak(hanzi, true) }
-  useEffect(() => { if (card?.question.audio && !feedback && !reveal) speak(card.word.hanzi) /* eslint-disable-next-line */ }, [card])
+  // The speaker button: when muted, tapping it turns sound back on (and plays the text).
+  const pressSpeaker = (text: string) => { if (settings.muted) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
+  // Words are only read aloud when the audio can be trusted to match the displayed word and reading (see audioReliable in content/entries.ts).
+  useEffect(() => { if (card?.question.audio && !feedback && !reveal && audioReliable(card.word, WORDS)) speak(card.word.hanzi) /* eslint-disable-next-line */ }, [card])
 
   // ---- actions --------------------------------------------------------------------------
   const answerQuestion = (option: string) => {
@@ -284,16 +297,16 @@ export default function App() {
     answerLock.current = true
     setCaption(null)
     const { word, question } = card
-    const entry = save.mastery[word.hanzi]
+    const entry = save.mastery[word.id]
     const isCorrect = option === question.answer
     const r = resolveAnswer({
       run, bonuses, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect, sealQuestion: foe?.boss === 'scribe' ? isCharacterQuestion(question) : isToneQuestion(question),
       roll: { drop: Math.random(), item: Math.random() }
     })
-    const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
-    recentWords.current = [word.hanzi, ...recentWords.current.filter(h => h !== word.hanzi)].slice(0, 8)
+    const mastery = updateMastery(save.mastery, word.id, isCorrect)
+    recentWords.current = [word.id, ...recentWords.current.filter(h => h !== word.id)].slice(0, 8)
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
-    const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
+    const before = entry?.lv ?? -1, after = mastery[word.id].lv
     sceneRef.current?.playHit('monster')
     if (!isCorrect && r.shieldRegrown) setCaption({ side: 'monster', kind: 'shield', text: '🖋 A SEAL GROWS BACK' })
     else if (!isCorrect && r.bossHealed > 0) setCaption({ side: 'monster', kind: 'weak', text: `🎭 DODGED · +${r.bossHealed} HP` })
@@ -310,12 +323,12 @@ export default function App() {
     if (r.outcome === 'victory' && foe?.boss) habit = { ...habit, bosses: habit.bosses + 1 }
     const earned = newBadges(habit, contextFor(mastery, habit, Math.max(save.meta.bestFloor, r.run.floor), save.meta.runs))
     if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New badge: ${earned.map(b => b.name).join(', ')}`) }
-    if (masteredNow) setCeremony(word.hanzi)
-    if (isCorrect && hasExplanation(word.hanzi) && !habit.tipsSeen.includes(word.hanzi)) { habit = { ...habit, tipsSeen: [...habit.tipsSeen, word.hanzi] }; setTipPulse(word.hanzi) }
+    if (masteredNow) setCeremony(word.id)
+    if (isCorrect && hasDetails(word) && !habit.tipsSeen.includes(word.id)) { habit = { ...habit, tipsSeen: [...habit.tipsSeen, word.id] }; setTipPulse(word.id) }
     patch(s => ({ ...s, run: r.run, mastery, habit }))
 
     // Learning summary for the floor-clear / defeat cards
-    const rec = { hanzi: word.hanzi, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
+    const rec = { id: word.id, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
     setFloorStats(s => recordAnswer(s, rec)); setRunStats(s => recordAnswer(s, rec))
 
     // Sound + vibration: the base sound first, then the bigger moments queued after it
@@ -371,14 +384,14 @@ export default function App() {
     setFeedback(null)
     setCaption(null)
     setTipPulse(null)
-    if (run?.phase === 'fighting') { setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
+    if (run?.phase === 'fighting') { setCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
 
   const nextEnemy = () => {
     if (!run) return
     const next = advance(run, bonuses, ENEMIES)
     patch(s => ({ ...s, run: next }))
-    setCard(makeCard(save.mastery, card?.word.hanzi ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
+    setCard(makeCard(save.mastery, card?.word.id ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
     setCaption(null)
     if (isBoss(next.floor, next.kill)) {
       // The full intro card only the first time you meet each boss; later floors just show the BOSS tag
@@ -395,7 +408,7 @@ export default function App() {
     const mode = reveal.plan.mode
     setReveal(null)
     if (mode === 'enemy') nextEnemy()
-    else { setCaption(null); setCard(makeCard(save.mastery, card?.word.hanzi ?? null)); setEliminated([]); answerLock.current = false }
+    else { setCaption(null); setCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
   const blockingOpen = explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null
@@ -454,8 +467,8 @@ export default function App() {
   const today = localDay()
   const warm = { available: warmupAvailable(save.habit, save.mastery, today), done: save.habit.warmupDay === today, words: pickWarmup(save.mastery, today) }
   const startWarmup = () => { setCampMsg(''); setWarmup(pickWarmup(save.mastery, today)) }
-  const warmupAnswer = (hanzi: string, isCorrect: boolean) => {
-    const mastery = updateMastery(save.mastery, hanzi, isCorrect)
+  const warmupAnswer = (id: string, isCorrect: boolean) => {
+    const mastery = updateMastery(save.mastery, id, isCorrect)
     let habit = recordPlay(save.habit, localDay()); if (isCorrect) habit = recordCorrect(habit)
     const earned = newBadges(habit, contextFor(mastery, habit, save.meta.bestFloor, save.meta.runs))
     if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New badge: ${earned.map(b => b.name).join(', ')}`) }
@@ -528,7 +541,8 @@ export default function App() {
   // ---- battle ---------------------------------------------------------------------------
   if (!card) return <main className="app-shell">{topbar}</main>
   const { word, question } = card
-  const entry = save.mastery[word.hanzi]
+  const entry = save.mastery[word.id]
+  const canSpeak = audioReliable(word, WORDS)
   const revealed = !!feedback
   const fighting = run.phase === 'fighting'
   const revealing = !!reveal   // a right answer is being shown in place before the game moves on
@@ -742,7 +756,7 @@ export default function App() {
             </section>
             </>}
           </section>}
-          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.hanzi] && !(fighting && !feedback && card?.word.hanzi === w.hanzi)).sort((a, b) => save.mastery[b.hanzi].lv - save.mastery[a.hanzi].lv).map(w => { const lv = save.mastery[w.hanzi].lv; const tip = hasExplanation(w.hanzi); const body = <><strong>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small><i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{tip && <em className="tip-badge" aria-hidden>💡</em>}</>; return tip ? <button className={`wordbook-word has-tip lv${lv}`} key={w.hanzi} onClick={() => setExplain(w.hanzi)} aria-label={`${w.hanzi}, ${w.meaning}. Open explanation`}>{body}</button> : <div className={`wordbook-word lv${lv}`} key={w.hanzi}>{body}</div> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
+          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.id] && !(fighting && !feedback && card?.word.id === w.id)).sort((a, b) => save.mastery[b.id].lv - save.mastery[a.id].lv).map(w => { const lv = save.mastery[w.id].lv; const rich = hasDetails(w); const body = <><strong className={`wb-len${lenClass(w.hanzi)}`}>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small>{w.kind === 'particle' && <u className="kind-tag">particle</u>}<i className="pips" aria-label={lv >= MAX_LV ? 'mastered' : `level ${lv}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{rich && <em className="tip-badge" aria-hidden>💡</em>}</>; return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => setExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. Open details`}>{body}</button> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
         </div>
 
         <div className="right-column">
@@ -754,22 +768,28 @@ export default function App() {
               <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
                 <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : `WORD LV ${pips}`}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
-                  {hasExplanation(word.hanzi) && show.hanzi && show.pinyin && show.meaning && <button className={`speak-btn tip-btn ${tipPulse === word.hanzi ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); setExplain(word.hanzi) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
-                  <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
+                  {hasDetails(word) && (question.cloze ? revealed || revealing : show.hanzi && show.pinyin && show.meaning) && <button className={`speak-btn tip-btn ${tipPulse === word.id ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); setExplain(word.id) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
+                  <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''} ${canSpeak ? '' : 'no-audio'}`} disabled={!canSpeak} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={!canSpeak ? 'No reliable audio for this word' : settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'} title={!canSpeak ? 'Text-to-speech cannot be trusted to read this word with the intended pronunciation' : undefined}>{!canSpeak ? '🔈' : settings.muted ? '🔇' : '🔊'}</button>
                 </div>
-                {ceremony === word.hanzi && (feedback || revealing) && <div className="confetti" aria-hidden="true">{Array.from({ length: 22 }, (_, k) => <i key={k} style={{ left: `${4 + ((k * 37) % 92)}%`, animationDelay: `${(k % 7) * 60}ms`, background: ['#ffd166', '#8ee0a9', '#6fb5e8', '#ff8a3d'][k % 4] }} />)}</div>}
-                <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')}`}>{show.hanzi ? word.hanzi : '?'}</div>
-                <div className={`slot slot-pinyin ${slot(show.pinyin, question.ask === 'pinyin')}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
-                <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
+                {ceremony === word.id && (feedback || revealing) && <div className="confetti" aria-hidden="true">{Array.from({ length: 22 }, (_, k) => <i key={k} style={{ left: `${4 + ((k * 37) % 92)}%`, animationDelay: `${(k % 7) * 60}ms`, background: ['#ffd166', '#8ee0a9', '#6fb5e8', '#ff8a3d'][k % 4] }} />)}</div>}
+                {question.cloze ? <div className="cloze-block" lang="zh">
+                  <div className="cloze-zh">{fillBlank(question.cloze.zh, revealed || revealing ? word.hanzi : null)}</div>
+                  <div className="cloze-py">{fillBlank(question.cloze.pinyin, revealed || revealing ? word.pinyin : null)}</div>
+                  <div className="cloze-en">{question.cloze.en}</div>
+                </div> : <>
+                  <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')} len${lenClass(word.hanzi)}`}>{show.hanzi ? word.hanzi : '?'}</div>
+                  <div className={`slot slot-pinyin ${slot(show.pinyin, question.ask === 'pinyin')} len${lenClass(word.pinyin)}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
+                  <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
+                </>}
               </div>
               {feedback && !revealing ? (
                 <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'} ${feedback.masteredNow ? 'is-mastered' : ''}`} role="status" aria-live="polite">
                   {feedback.masteredNow && <span className="mastered-badge">★ MASTERED</span>}
                   <div className="result-line">
-                    <strong>{feedback.correct ? `✓ Correct — ${feedback.word.hanzi} ${feedback.word.pinyin} · ${feedback.word.meaning}` : 'Not quite'}</strong>
+                    <strong>{feedback.correct ? `✓ Correct — ${feedback.word.hanzi} ${feedback.word.pinyin}${feedback.word.variants.length ? ` (also ${feedback.word.variants.join(', ')})` : ''}${feedback.word.kind === 'particle' ? '' : ` · ${feedback.word.meaning}`}` : 'Not quite'}</strong>
                   </div>
                   {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
-                  <p className="result-note">{feedback.word.note}</p>
+                  <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
                   {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}><i className="pips" aria-hidden="true">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < feedback.lv ? 'on' : ''} />)}</i> {feedback.mastery}</p>}
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
@@ -829,7 +849,7 @@ export default function App() {
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} autoEquipped={lootReveal.autoEquipped} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
       {menu}
-      {explain !== null && <ExplainModal hanzi={explain} hidden={fighting && !feedback && !revealing ? card?.word.hanzi : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal id={explain} hidden={fighting && !feedback && !revealing ? card?.word.id : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
     </main>
   )
 }

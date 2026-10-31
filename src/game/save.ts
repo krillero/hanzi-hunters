@@ -1,6 +1,6 @@
 // Save format v2 with a safe migration from the v1 prototype save. Never throws.
 import { sanitizeHabit } from './habit.ts'
-import { ENEMIES, GEAR, WORDS, type GearSlot } from '../data.ts'
+import { ENEMIES, GEAR, WORDS, type GearSlot, type Word } from '../data.ts'
 import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
 import { ENEMIES_PER_FLOOR, bossIdFor, enemyStats, hasShield, isBoss, playerStats, shieldFor } from './rules.ts'
@@ -27,14 +27,35 @@ function validUpgrades(raw: unknown): string[] {
   return out
 }
 
-function sanitizeMastery(raw: unknown): Mastery {
-  const out: Mastery = {}
-  if (!isObj(raw)) return out
-  for (const w of WORDS) {
-    const e = raw[w.hanzi]
-    if (isObj(e)) out[w.hanzi] = { lv: int(e.lv, 0, MAX_LV, 0), ok: int(e.ok, 0, 1, 0) }
+const cleanEntry = (e: unknown) => (isObj(e) ? { lv: int(e.lv, 0, MAX_LV, 0), ok: int(e.ok, 0, 1, 0) } : null)
+const better = (a: { lv: number; ok: number }, b: { lv: number; ok: number }) => (b.lv > a.lv || (b.lv === a.lv && b.ok > a.ok) ? b : a)
+
+/**
+ * Progress is stored per entry id (the hanzi, unless the entry declares another id). When the content changes, saved progress is
+ * carried over, never reset and never merged across different meanings:
+ *  - an entry's own id, or an id listed in its `aliases` (an earlier id of the SAME entry): that progress belongs to the entry (the higher level wins if both exist);
+ *  - a key that is the hanzi of exactly one entry (the entry later got an explicit id): moves to that entry;
+ *  - anything else (an entry that was removed, or a hanzi that is now shared by several entries without an alias) is kept in `legacy`
+ *    so nothing is lost, and is tried again on every load.
+ */
+export function migrateMastery(raw: unknown, legacyRaw: unknown, words: Word[] = WORDS): { mastery: Mastery; legacy: Mastery } {
+  const pool = new Map<string, { lv: number; ok: number }>()
+  for (const src of [legacyRaw, raw]) if (isObj(src)) for (const [k, v] of Object.entries(src)) {
+    const e = cleanEntry(v); if (e) pool.set(k, pool.has(k) ? better(pool.get(k)!, e) : e)
   }
-  return out
+  const hanziCount = new Map<string, number>()
+  for (const w of words) hanziCount.set(w.hanzi, (hanziCount.get(w.hanzi) ?? 0) + 1)
+  const mastery: Mastery = {}, used = new Set<string>()
+  for (const w of words) {
+    const keys = [w.id, ...w.aliases]
+    if (w.id !== w.hanzi && hanziCount.get(w.hanzi) === 1 && !words.some(o => o.id === w.hanzi)) keys.push(w.hanzi)
+    let best: { lv: number; ok: number } | null = null
+    for (const k of keys) { const e = pool.get(k); if (e && !used.has(k)) { best = best ? better(best, e) : e; used.add(k) } }
+    if (best) mastery[w.id] = best
+  }
+  const legacy: Mastery = {}
+  for (const [k, e] of pool) if (!used.has(k)) legacy[k] = e
+  return { mastery, legacy }
 }
 
 function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
@@ -69,21 +90,22 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   return run
 }
 
-export function sanitizeSave(raw: unknown): Saved {
+export function sanitizeSave(raw: unknown, words: Word[] = WORDS): Saved {
   const r = isObj(raw) ? raw : {}
+  const migrated = migrateMastery(r.mastery, r.legacyMastery, words)
   const m = isObj(r.meta) ? r.meta : {}
   const upgrades = validUpgrades(m.upgrades)
   const meta: Meta = { gold: int(m.gold, 0, 1e9, 0), upgrades, bestFloor: int(m.bestFloor, 1, 1e6, 1), runs: int(m.runs, 0, 1e9, 0) }
   const ls = isObj(r.lastRun) ? r.lastRun : null
   const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, 1e6, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0) } : null
-  return { version: 2, meta, mastery: sanitizeMastery(r.mastery), run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit) }
+  return { version: 2, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit) }
 }
 
 /** v1 prototype save -> v2: learned words become level 1, old gold is banked, the old floor becomes the best floor. */
 export function migrateV1(raw: unknown): Saved {
   const r = isObj(raw) ? raw : {}
   const mastery: Mastery = {}
-  for (const h of strs(r.learned, WORDS.map(w => w.hanzi))) mastery[h] = { lv: 1, ok: 0 }
+  for (const h of strs(r.learned, WORDS.map(w => w.hanzi))) { const w = WORDS.find(x => x.hanzi === h && x.id === x.hanzi) ?? WORDS.find(x => x.hanzi === h); if (w) mastery[w.id] = { lv: 1, ok: 0 } }
   return sanitizeSave({
     meta: { gold: r.gold, upgrades: [], bestFloor: r.floor, runs: 0 }, mastery, run: null, lastRun: null
   })

@@ -42,11 +42,11 @@ test('every gear item has a rarity decision', () => {
 
 test('run stats: new words, promotions, mastery, misses, streak and accuracy', () => {
   let s = emptyStats()
-  s = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 1, levelBefore: -1, levelAfter: 0, gold: 0 })
-  s = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 2, levelBefore: 0, levelAfter: 0, gold: 0 })
-  s = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 3, levelBefore: 0, levelAfter: 1, gold: 7 })
-  s = recordAnswer(s, { hanzi: '目', isCorrect: false, streakAfter: 0, levelBefore: 2, levelAfter: 1, gold: 0 })
-  s = recordAnswer(s, { hanzi: '好', isCorrect: true, streakAfter: 1, levelBefore: 3, levelAfter: 4, gold: 0 })
+  s = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 1, levelBefore: -1, levelAfter: 0, gold: 0 })
+  s = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 2, levelBefore: 0, levelAfter: 0, gold: 0 })
+  s = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 3, levelBefore: 0, levelAfter: 1, gold: 7 })
+  s = recordAnswer(s, { id: '目', isCorrect: false, streakAfter: 0, levelBefore: 2, levelAfter: 1, gold: 0 })
+  s = recordAnswer(s, { id: '好', isCorrect: true, streakAfter: 1, levelBefore: 3, levelAfter: 4, gold: 0 })
   assert.deepEqual(s.newWords, ['石'])
   assert.deepEqual(s.leveled, ['石', '好'])
   assert.deepEqual(s.mastered, ['好'])
@@ -54,7 +54,7 @@ test('run stats: new words, promotions, mastery, misses, streak and accuracy', (
   assert.equal(s.bestStreak, 3); assert.equal(s.gold, 7); assert.equal(s.total, 5)
   assert.equal(accuracyPct(s), 80)
   assert.equal(accuracyPct(emptyStats()), 0)
-  const again = recordAnswer(s, { hanzi: '石', isCorrect: true, streakAfter: 4, levelBefore: -1, levelAfter: 0, gold: 0 })
+  const again = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 4, levelBefore: -1, levelAfter: 0, gold: 0 })
   assert.deepEqual(again.newWords, ['石'], 'no duplicates')
 })
 

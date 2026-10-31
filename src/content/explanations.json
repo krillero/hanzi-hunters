@@ -708,5 +708,725 @@
       "木",
       "日"
     ]
+  },
+  "你好": {
+    "title": "你好 (hello)",
+    "summary": "你好 is the basic greeting. Both syllables are third tone, and in speech the first one is usually said with a rising tone.",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "Two third tones",
+        "body": "When two third-tone syllables come together, the first is said like a second tone: it sounds like ní hǎo. The dictionary pinyin stays nǐ hǎo. Learn the dictionary tone and let the speech change happen naturally."
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "你好！我是小明。",
+            "pinyin": "Nǐ hǎo! Wǒ shì Xiǎo Míng.",
+            "en": "Hello! I'm Xiaoming.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            },
+            "note": "A simple introduction: greeting first, then your name."
+          },
+          {
+            "zh": "你好吗？我很好。",
+            "pinyin": "Nǐ hǎo ma? Wǒ hěn hǎo.",
+            "en": "How are you? I'm very well.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    },
+    "related": [
+      "吗"
+    ]
+  },
+  "谢谢": {
+    "title": "谢谢 (thank you)",
+    "summary": "谢谢 is how you say thank you. The second syllable is neutral tone, so it is short and light.",
+    "sections": [
+      {
+        "type": "tips",
+        "heading": "Saying it",
+        "items": [
+          "xiè is a clear falling fourth tone; the second xie is quick and light.",
+          "Neutral tone has no tone mark in pinyin, so the second syllable is written xie, not xiè."
+        ]
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "谢谢你！",
+            "pinyin": "Xièxie nǐ!",
+            "en": "Thank you!",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "谢谢，不客气。",
+            "pinyin": "Xièxie, bú kèqi.",
+            "en": "Thanks. You're welcome.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            },
+            "note": "不 is written bù in the dictionary but said bú before a fourth-tone syllable (here 客 kè)."
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    }
+  },
+  "朋友": {
+    "title": "朋友 (friend)",
+    "summary": "朋友 has a neutral second syllable: péngyou. The 友 is short and light, and pinyin shows this by leaving off the tone mark.",
+    "sections": [
+      {
+        "type": "tips",
+        "heading": "Neutral tone",
+        "items": [
+          "A syllable without a tone mark in dictionary pinyin is neutral tone, not a forgotten mark.",
+          "Say péng with a clear rising tone and then add a quick, light you."
+        ]
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "他是我的朋友。",
+            "pinyin": "Tā shì wǒ de péngyou.",
+            "en": "He is my friend.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "我有很多朋友。",
+            "pinyin": "Wǒ yǒu hěn duō péngyou.",
+            "en": "I have many friends.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    }
+  },
+  "今天": {
+    "title": "今天 (today)",
+    "summary": "今天 means today. Both syllables are first tone, high and level.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "今天是星期五。",
+            "pinyin": "Jīntiān shì xīngqīwǔ.",
+            "en": "Today is Friday.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "你今天好吗？",
+            "pinyin": "Nǐ jīntiān hǎo ma?",
+            "en": "How are you today?",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    }
+  },
+  "学校": {
+    "title": "学校 (school)",
+    "summary": "学校 is a two-character word for school. Learn it as one word: you do not need to add up the meanings of 学 and 校.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "我的学校很大。",
+            "pinyin": "Wǒ de xuéxiào hěn dà.",
+            "en": "My school is very big.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "他在学校。",
+            "pinyin": "Tā zài xuéxiào.",
+            "en": "He is at school.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    }
+  },
+  "喜欢": {
+    "title": "喜欢 (to like)",
+    "summary": "喜欢 means to like. The second syllable is neutral tone: xǐhuan.",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "What follows it",
+        "body": "喜欢 can be followed by a noun (我喜欢你) or by a verb (我喜欢看书). Learn it as one whole word."
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "你喜欢什么？",
+            "pinyin": "Nǐ xǐhuan shénme?",
+            "en": "What do you like?",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "我喜欢看书。",
+            "pinyin": "Wǒ xǐhuan kàn shū.",
+            "en": "I like reading.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            },
+            "note": "Here 看 is read kàn: to read / to look at."
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    },
+    "related": [
+      "看-look"
+    ]
+  },
+  "妈妈": {
+    "title": "妈妈 (mom)",
+    "summary": "妈妈 is mā-ma: the second syllable is neutral tone. Many family words repeat a character this way.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "我妈妈很好。",
+            "pinyin": "Wǒ māma hěn hǎo.",
+            "en": "My mom is well.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "你妈妈好吗？",
+            "pinyin": "Nǐ māma hǎo ma?",
+            "en": "How is your mother?",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    }
+  },
+  "谁": {
+    "title": "谁 (who): shéi or shuí",
+    "summary": "Two pronunciations are both correct for 谁: shéi and shuí. They are the same word with the same meaning, so a question never counts one of them as wrong.",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "Alternate pronunciations",
+        "body": "Dictionaries list both. Different speakers and regions prefer one or the other. Hanzi Hunters shows shéi as the main reading and accepts shuí wherever the pronunciation is checked."
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "他是谁？",
+            "pinyin": "Tā shì shéi?",
+            "en": "Who is he?",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "谁是你的朋友？",
+            "pinyin": "Shéi shì nǐ de péngyou?",
+            "en": "Who is your friend?",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    },
+    "related": [
+      "朋友"
+    ]
+  },
+  "看-look": {
+    "title": "看 (kàn): to look / watch",
+    "summary": "看 has two readings with different meanings. kàn (fourth tone) is the common one: to look, watch or read. Do not mix it up with kān, which means to guard.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Same character, two readings",
+        "intro": "Which reading it is depends on the meaning. When a question is about 看, it always tells you which meaning it means.",
+        "items": [
+          {
+            "char": "看",
+            "pinyin": "kàn",
+            "meaning": "to look / to watch"
+          },
+          {
+            "char": "看",
+            "pinyin": "kān",
+            "meaning": "to guard / to look after"
+          }
+        ]
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "我看电视。",
+            "pinyin": "Wǒ kàn diànshì.",
+            "en": "I watch TV.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "你看，这是我的书。",
+            "pinyin": "Nǐ kàn, zhè shì wǒ de shū.",
+            "en": "Look, this is my book.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    },
+    "related": [
+      "看-guard"
+    ]
+  },
+  "看-guard": {
+    "title": "看 (kān): to guard",
+    "summary": "kān (first tone) means to guard or look after. It is much rarer than kàn. The character is the same, only the reading and meaning differ.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Same character, two readings",
+        "items": [
+          {
+            "char": "看",
+            "pinyin": "kān",
+            "meaning": "to guard / to look after"
+          },
+          {
+            "char": "看",
+            "pinyin": "kàn",
+            "meaning": "to look / to watch"
+          }
+        ]
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "他看门。",
+            "pinyin": "Tā kān mén.",
+            "en": "He guards the door.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "他在家看孩子。",
+            "pinyin": "Tā zài jiā kān háizi.",
+            "en": "He is at home looking after the kids.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    },
+    "related": [
+      "看-look"
+    ]
+  },
+  "吗": {
+    "title": "吗 (question particle)",
+    "summary": "吗 is not translated. Put it at the end of a statement to turn it into a yes/no question. It is always neutral tone.",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "How it works",
+        "body": "你好 is a statement: hello. 你好吗？ asks: are you well? You do not change the word order, you just add 吗 at the end."
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "你好吗？",
+            "pinyin": "Nǐ hǎo ma?",
+            "en": "How are you?",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "你是学生吗？",
+            "pinyin": "Nǐ shì xuésheng ma?",
+            "en": "Are you a student?",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    },
+    "related": [
+      "的",
+      "了"
+    ]
+  },
+  "的": {
+    "title": "的 (links a describing word to a noun)",
+    "summary": "的 has no single English word. It joins something that describes a noun to that noun: 我的书 is my book.",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "Notice the pattern",
+        "body": "The describing part comes first, then 的, then the noun: 我 + 的 + 书. It is neutral tone: short and light."
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "这是我的书。",
+            "pinyin": "Zhè shì wǒ de shū.",
+            "en": "This is my book.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "他的朋友很好。",
+            "pinyin": "Tā de péngyou hěn hǎo.",
+            "en": "His friend is very nice.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    },
+    "related": [
+      "吗",
+      "了"
+    ]
+  },
+  "了": {
+    "title": "了 (finished action or new situation)",
+    "summary": "了 has no single English word. After a verb it often shows that the action is done; at the end of a sentence it can show a change. Here it is read le (neutral tone).",
+    "sections": [
+      {
+        "type": "text",
+        "heading": "Another reading",
+        "body": "The same character is also read liǎo in other words. In this entry it is always the particle le."
+      },
+      {
+        "type": "examples",
+        "heading": "In a sentence",
+        "items": [
+          {
+            "zh": "我看了电视。",
+            "pinyin": "Wǒ kàn le diànshì.",
+            "en": "I watched TV.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          },
+          {
+            "zh": "他来了。",
+            "pinyin": "Tā lái le.",
+            "en": "He has come. / He is here now.",
+            "source": [
+              {
+                "name": "ai-draft"
+              }
+            ],
+            "review": {
+              "status": "ai-draft"
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+    },
+    "related": [
+      "吗",
+      "的"
+    ]
   }
 }

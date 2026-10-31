@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react'
 import AppData from './AppData'
+import { WORDS } from './data'
+import { CLOZE, EXPLANATIONS, SOURCES } from './content'
+import { reviewCounts, usedSources } from './content/provenance'
 import type { AutoContinue } from './game/flow'
 import type { Settings } from './settings'
 
@@ -22,6 +25,8 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
     return () => window.removeEventListener('keydown', key)
   }, [onClose])
 
+  const rc = reviewCounts(WORDS, EXPLANATIONS, CLOZE)
+  const sourcesUsed = usedSources(WORDS, EXPLANATIONS, CLOZE)
   const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
@@ -51,6 +56,11 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
               {SPEEDS.map(o => <button key={o.id} role="radio" aria-checked={settings.autoContinue === o.id} className={settings.autoContinue === o.id ? 'on' : ''} onClick={() => onChange({ ...settings, autoContinue: o.id })}>{o.label}<small>{o.hint}</small></button>)}
             </div>
             <p className="hint-text">Learn first pauses on every answer until that word reaches mastery level 2, then advances after 0.5 seconds. All modes pause after a wrong answer, defeat and clearing a floor.</p>
+          </section>
+          <section>
+            <h3>Credits &amp; content review</h3>
+            <p className="hint-text">{rc.entriesReviewed} of {rc.entries} entries, {rc.examplesReviewed} of {rc.examples} example sentences and {rc.clozeReviewed} of {rc.cloze} sentence questions have been reviewed by a person. Everything else is an unreviewed draft: treat it with care and report mistakes.</p>
+            <ul className="credits">{[...sourcesUsed].map(([name, n]) => { const info = SOURCES[name]; return <li key={name}><b>{info?.title ?? name}</b> <small>({n} item{n === 1 ? '' : 's'})</small><br /><small>{info ? `${info.license}. ${info.attribution}` : 'Not registered in sources.json'}</small>{info?.url && <><br /><small>{info.url}</small></>}</li> })}</ul>
           </section>
           {fullscreen.supported && <section><h3>Screen</h3><button className="secondary-btn menu-wide" onClick={fullscreen.toggle}>{fullscreen.on ? '🗗 Exit fullscreen' : '⛶ Fullscreen'}</button></section>}
           <AppData outdated={outdated} onUpdate={onUpdate} onExport={onExport} onImport={onImport} />

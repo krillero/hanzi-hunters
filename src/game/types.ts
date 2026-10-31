@@ -27,6 +27,8 @@ export type Saved = {
   version: 2
   meta: Meta
   mastery: Mastery
+  /** Progress under ids that no current entry claims (removed entries, or a hanzi that became ambiguous). Kept so nothing is lost; retried on every load. */
+  legacyMastery: Mastery
   run: Run | null
   lastRun: RunSummary | null
   /** Days played, warm-up day, correct total, badges. Additive: old saves load with an empty habit; no version bump. */

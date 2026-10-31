@@ -33,13 +33,20 @@
     "meaning": "one",
     "group": "number",
     "note": "First tone in isolation. 一 changes tone in many spoken contexts.",
-    "alt": [
-      "yí",
-      "yì"
-    ],
     "lookalike": [
       "二",
       "三"
+    ],
+    "speech": [
+      {
+        "pinyin": "yí",
+        "context": "before a fourth-tone syllable (一个 yí ge)",
+        "note": "Counting, dates and ordinals keep the dictionary tone yī (一, 一月, 第一)."
+      },
+      {
+        "pinyin": "yì",
+        "context": "before a first-, second- or third-tone syllable (一天 yì tiān, 一年 yì nián, 一起 yì qǐ)"
+      }
     ]
   },
   {
@@ -221,8 +228,12 @@
     "meaning": "not / no",
     "group": "grammar",
     "note": "Normally fourth tone, but it often changes to bú before another fourth-tone syllable.",
-    "alt": [
-      "bú"
+    "speech": [
+      {
+        "pinyin": "bú",
+        "context": "before a fourth-tone syllable (不是 bú shì)",
+        "note": "The dictionary tone stays bù: 不 alone, or before first-, second- or third-tone syllables (不好 bù hǎo)."
+      }
     ]
   },
   {
@@ -414,5 +425,288 @@
     "meaning": "year",
     "group": "time",
     "note": "Second tone rises. 年 means year and is common in dates and age expressions."
+  },
+  {
+    "hanzi": "你好",
+    "pinyin": "nǐ hǎo",
+    "meaning": "hello",
+    "group": "greetings",
+    "kind": "word",
+    "note": "Two third tones in a row. Say it as one greeting: nǐ hǎo.",
+    "speech": [
+      {
+        "pinyin": "ní hǎo",
+        "context": "when two third-tone syllables meet, the first is said with a rising tone",
+        "note": "The dictionary pinyin keeps the third tone on both syllables."
+      }
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "谢谢",
+    "pinyin": "xièxie",
+    "meaning": "thank you / thanks",
+    "group": "greetings",
+    "kind": "word",
+    "neutral": [
+      2
+    ],
+    "note": "The second syllable is neutral tone: short and light, so it has no tone mark.",
+    "wrongPinyin": [
+      "xiéxie",
+      "xiěxie"
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "朋友",
+    "pinyin": "péngyou",
+    "meaning": "friend",
+    "group": "people",
+    "kind": "word",
+    "neutral": [
+      2
+    ],
+    "note": "péng is second tone; the second syllable, you, is neutral: short and light.",
+    "wrongPinyin": [
+      "péngyóu",
+      "pěngyou"
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "今天",
+    "pinyin": "jīntiān",
+    "meaning": "today",
+    "group": "time",
+    "kind": "word",
+    "note": "Both syllables are first tone: high and level.",
+    "wrongPinyin": [
+      "jíntiān",
+      "jīntián"
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "学校",
+    "pinyin": "xuéxiào",
+    "meaning": "school",
+    "group": "place",
+    "kind": "word",
+    "note": "Second tone then fourth tone: rise, then fall.",
+    "wrongPinyin": [
+      "xuěxiào",
+      "xuéxiāo"
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "喜欢",
+    "pinyin": "xǐhuan",
+    "meaning": "to like",
+    "group": "feelings",
+    "kind": "word",
+    "neutral": [
+      2
+    ],
+    "note": "xǐ is third tone; huan is neutral. 喜欢 is followed by a noun or a verb: 我喜欢你, 我喜欢看书.",
+    "wrongPinyin": [
+      "xíhuan",
+      "xǐhuán"
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "妈妈",
+    "pinyin": "māma",
+    "meaning": "mom / mother",
+    "group": "people",
+    "kind": "word",
+    "neutral": [
+      2
+    ],
+    "note": "The second 妈 is neutral tone, so it is short and has no tone mark.",
+    "wrongPinyin": [
+      "mámā",
+      "mǎma"
+    ],
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "谁",
+    "pinyin": "shéi",
+    "meaning": "who",
+    "group": "questions",
+    "kind": "word",
+    "variants": [
+      "shuí"
+    ],
+    "note": "Both shéi and shuí are normal ways to say it. They mean exactly the same.",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "id": "看-look",
+    "hanzi": "看",
+    "pinyin": "kàn",
+    "meaning": "to look / to watch",
+    "group": "verbs",
+    "kind": "word",
+    "audio": "none",
+    "note": "Fourth tone. This is the everyday 看: look at, watch, read (看书).",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "id": "看-guard",
+    "hanzi": "看",
+    "pinyin": "kān",
+    "meaning": "to guard / to look after",
+    "group": "verbs",
+    "kind": "word",
+    "audio": "none",
+    "note": "First tone. The same character is read kān when it means to guard or look after (看门, 看孩子).",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "吗",
+    "pinyin": "ma",
+    "meaning": "question particle: ends a yes/no question",
+    "group": "grammar",
+    "kind": "particle",
+    "neutral": [
+      1
+    ],
+    "audio": "none",
+    "note": "Add 吗 to the end of a statement to ask a yes/no question: 你好吗？ It is always neutral tone.",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "的",
+    "pinyin": "de",
+    "meaning": "links a describing word to a noun (我的书 = my book)",
+    "group": "grammar",
+    "kind": "particle",
+    "neutral": [
+      1
+    ],
+    "audio": "none",
+    "note": "Neutral tone. It joins what describes a noun to the noun: 我的书, 他的朋友.",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
+  },
+  {
+    "hanzi": "了",
+    "pinyin": "le",
+    "meaning": "marks a finished action or a new situation",
+    "group": "grammar",
+    "kind": "particle",
+    "neutral": [
+      1
+    ],
+    "audio": "none",
+    "note": "Neutral tone here (the same character has another reading, liǎo, in other words). After a verb it can show the action is done: 我看了电视.",
+    "source": [
+      {
+        "name": "ai-draft"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Meaning and reading written from general knowledge. Not compared with CC-CEDICT or an HSK list (no dictionary access when this was drafted). A Mandarin teacher should check it."
+    }
   }
 ]
