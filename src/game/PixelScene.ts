@@ -80,11 +80,12 @@ export class PixelScene extends Phaser.Scene {
 
     const tileScale = height >= 250 ? 3 : 2
     const step = TILE * tileScale
-    const wallRows = Math.max(2, Math.round(height * 0.34 / step))
+    const compact = height < 170
+    const wallRows = Math.max(compact ? 1 : 2, Math.round(height * 0.34 / step))
     const floorY = wallRows * step
     this.floorY = floorY
-    this.actorScale = Phaser.Math.Clamp(Math.floor(height / 62), 2, 5)
-    const feetY = floorY + (height - floorY) * 0.72
+    this.actorScale = compact ? (height >= 108 ? 3 : 2) : Phaser.Math.Clamp(Math.floor(height / 62), 2, 5)
+    const feetY = floorY + (height - floorY) * (compact ? 0.84 : 0.72)
     this.heroHome = { x: Math.round(width * 0.27), y: Math.round(feetY) }
     this.monsterHome = { x: Math.round(width * 0.73), y: Math.round(feetY) }
 
@@ -277,11 +278,15 @@ export class PixelScene extends Phaser.Scene {
     // keep the label inside the scene horizontally
     const half = Math.max(...parts.map(t => t.width)) / 2 + 4
     const cx = Phaser.Math.Clamp(x, half, width - half)
-    const c = this.add.container(cx, y, parts).setDepth(10)
+    // The compact portrait scene must also keep damage and caption text inside the canvas.
+    const top = Math.min(...parts.map(t => t.y - t.displayHeight / 2))
+    const bottom = Math.max(...parts.map(t => t.y + t.displayHeight / 2))
+    const cy = Phaser.Math.Clamp(y, -top + 3, this.scale.height - bottom - 3)
+    const c = this.add.container(cx, cy, parts).setDepth(10)
     this.floatObjs[slot] = c
     if (animate) {
-      c.setScale(0.5).setAlpha(0.2).setY(y + 14)
-      this.tweens.add({ targets: c, scale: 1, alpha: 1, y, duration: 260, ease: 'Back.out', delay: slot === 'hero' ? 160 : 90 })
+      c.setScale(0.5).setAlpha(0.2).setY(cy + 14)
+      this.tweens.add({ targets: c, scale: 1, alpha: 1, y: cy, duration: 260, ease: 'Back.out', delay: slot === 'hero' ? 160 : 90 })
     }
   }
 
