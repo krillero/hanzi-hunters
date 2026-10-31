@@ -1452,3 +1452,45 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .sum-tile small{font:11px 'DM Mono',monospace;color:#f1ce80}
 .sum-go{width:100%;min-height:52px;display:block}
 @media (prefers-reduced-motion:reduce){.arena-levelup{animation:none}}
+
+/* ---- Game feel phase 2: counters, warm-up, badges, mastery ceremony ---- */
+.camp-counters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.camp-counters>div{background:#162235;border:1px solid #2f435c;padding:8px 4px;text-align:center}
+.camp-counters b{display:block;font:700 20px 'DM Mono',monospace;color:#f1ce80}
+.camp-counters small{font:10px 'DM Mono',monospace;color:#afbdd0;letter-spacing:.5px}
+.camp-counters .good{border-color:#3f8f64}.camp-counters .good b{color:#8ee0a9}
+.warmup-offer{display:flex;gap:12px;align-items:center;margin:0 0 12px;padding:12px;border:1px solid #3f8f64;background:linear-gradient(145deg,#15352b,#11271f)}
+.warmup-offer>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.warmup-offer .eyebrow{color:#8ee0a9}
+.warmup-offer strong{font-size:16px}
+.warmup-offer small{font:12px 'DM Mono',monospace;color:#afbdd0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.warmup-offer .bar-btn{min-width:84px;min-height:44px}
+.warmup-done{margin:0 0 12px;color:#8ee0a9}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px dashed #394c64;border-radius:12px;color:#6f8099;font:11px 'DM Mono',monospace;white-space:nowrap}
+.badge i{font-style:normal;filter:grayscale(1);opacity:.6}
+.badge.got{border:1px solid #d0a852;color:#ffd77d;background:#241b08}.badge.got i{filter:none;opacity:1}
+.warmup{max-width:480px;margin:0 auto;padding:6px 0 24px;display:flex;flex-direction:column;gap:12px;--stage-h:150px}
+.wu-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wu-head strong{display:block;margin-top:2px}
+.wu-dots{display:flex;gap:6px}.wu-dots i{flex:1;height:5px;background:#26354a}.wu-dots i.done{background:#8ee0a9}.wu-dots i.cur{background:#f1ce80}
+.wu-question{margin:0;font-size:17px;line-height:1.3;color:#f1ce80}
+.wu-stage{position:relative}
+.wu-speak{position:absolute;top:6px;right:6px;width:44px;height:44px}
+.wu-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;height:auto}
+.wu-choices .answer-btn{min-height:60px}
+.wu-result{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #3c7659;background:linear-gradient(145deg,#15352b,#11271f)}
+.wu-result.bad{border-color:#714349;background:#2a1c23}
+.wu-result strong{font-size:15px;color:#8ee0a9}.wu-result.bad strong{color:#ffaaaa}
+.wu-answer{margin:0;color:#c9d6e4}.wu-answer b{color:#8ee0a9;font-size:17px}.wu-answer s{color:#ffaaaa}.wu-answer span{font-size:12px;color:#afbdd0}
+.wu-note{margin:0;font-size:14px;line-height:1.4;color:#c9d6e4}
+.wu-next{min-height:48px;margin-top:4px}
+.wu-foot{text-align:center;margin:0}
+.wu-card.wu-done{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:30px 12px}
+.wu-reward{font:700 26px 'DM Mono',monospace;color:#f1ce80}
+.is-mastered{border-color:#ffd166!important;box-shadow:0 0 16px #ffd16644,inset 0 0 22px #ffd16618;position:relative}
+.mastered-badge{position:absolute;top:6px;right:8px;padding:2px 10px;border:1px solid #d0a852;border-radius:11px;background:#241b08;color:#ffd77d;font:700 11px 'DM Mono',monospace;letter-spacing:1px}
+.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:5}
+.confetti i{position:absolute;top:-8px;width:6px;height:9px;opacity:0;animation:confetti-fall 1.6s ease-in forwards}
+@keyframes confetti-fall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(150px) rotate(300deg)}}
+@media (prefers-reduced-motion:reduce){.confetti{display:none}}

@@ -1,4 +1,5 @@
 // Save format v2 with a safe migration from the v1 prototype save. Never throws.
+import { sanitizeHabit } from './habit.ts'
 import { ENEMIES, GEAR, WORDS, type GearSlot } from '../data.ts'
 import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
@@ -74,7 +75,7 @@ export function sanitizeSave(raw: unknown): Saved {
   const meta: Meta = { gold: int(m.gold, 0, 1e9, 0), upgrades, bestFloor: int(m.bestFloor, 1, 1e6, 1), runs: int(m.runs, 0, 1e9, 0) }
   const ls = isObj(r.lastRun) ? r.lastRun : null
   const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, 1e6, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0) } : null
-  return { version: 2, meta, mastery: sanitizeMastery(r.mastery), run: sanitizeRun(r.run, upgrades), lastRun }
+  return { version: 2, meta, mastery: sanitizeMastery(r.mastery), run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit) }
 }
 
 /** v1 prototype save -> v2: learned words become level 1, old gold is banked, the old floor becomes the best floor. */

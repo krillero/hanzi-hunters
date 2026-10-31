@@ -5,6 +5,8 @@ import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
 import SummaryModal from './SummaryModal'
+import WarmupScreen from './WarmupScreen'
+import { WARMUP_GOLD_PER_CORRECT, badgeById, contextFor, localDay, newBadges, pickWarmup, recordCorrect, recordPlay, warmupAvailable } from './game/habit'
 import { playSfx, unlockAudio, vibrate, type SfxName, type SfxOptions } from './audio'
 import { flyMotes } from './motes'
 import { rarityOf } from './game/rarity'
@@ -27,7 +29,7 @@ import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 type Card = { word: Word; question: Question }
 type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean; combo: number; weak: boolean }
 type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal'; text: string }
-type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
+type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; masteredNow: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
 
 /** Streak badge in the arena: pips until the combo bonus starts (needs the Combo Strikes upgrade), a flame while it is active. */
 function ComboBadge({ streak, bonusPct }: { streak: number; bonusPct: number }) {
@@ -83,6 +85,8 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
   const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
+  const [warmup, setWarmup] = useState<string[] | null>(null)
+  const [ceremony, setCeremony] = useState<string | null>(null)   // word that was just mastered (confetti for a moment)
   const [floorStats, setFloorStats] = useState<RunStats>(emptyStats)
   const [runStats, setRunStats] = useState<RunStats>(emptyStats)
   const [summary, setSummary] = useState<'floor' | 'defeat' | null>(null)
@@ -142,6 +146,7 @@ export default function App() {
     return () => { try { window.speechSynthesis.removeEventListener('voiceschanged', check) } catch { /* ignore */ } }
   }, [])
   useEffect(() => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)) } catch { /* storage unavailable */ } }, [settings])
+  useEffect(() => { if (!ceremony) return; const t = window.setTimeout(() => setCeremony(null), 2200); return () => window.clearTimeout(t) }, [ceremony])
   useEffect(() => { if (!levelUp) return; const t = window.setTimeout(() => setLevelUp(null), 2200); return () => window.clearTimeout(t) }, [levelUp])
   // Browsers only allow sound after a tap: the first tap anywhere unlocks it.
   useEffect(() => { const u = () => unlockAudio(); window.addEventListener('pointerdown', u, { once: true }); return () => window.removeEventListener('pointerdown', u) }, [])
@@ -239,7 +244,13 @@ export default function App() {
     else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: '🛡 BLOCKED' })
 
     if (r.outcome === 'defeat') sceneRef.current?.showDefeat(true)
-    patch(s => ({ ...s, run: r.run, mastery }))
+    const masteredNow = isCorrect && before >= 0 && before < MAX_LV && after >= MAX_LV
+    // Habit: days played, correct total and milestone badges (a badge toast never blocks anything)
+    let habit = recordPlay(save.habit, localDay()); if (isCorrect) habit = recordCorrect(habit)
+    const earned = newBadges(habit, contextFor(mastery, habit, Math.max(save.meta.bestFloor, r.run.floor), save.meta.runs))
+    if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New badge: ${earned.map(b => b.name).join(', ')}`) }
+    if (masteredNow) setCeremony(word.hanzi)
+    patch(s => ({ ...s, run: r.run, mastery, habit }))
 
     // Learning summary for the floor-clear / defeat cards
     const rec = { hanzi: word.hanzi, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
@@ -278,7 +289,7 @@ export default function App() {
     const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
-      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, lv: after, chosen: option, answer: question.answer,
+      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, masteredNow, lv: after, chosen: option, answer: question.answer,
       title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster', exchange
     })
     if (r.outcome === 'victory') {
@@ -365,6 +376,23 @@ export default function App() {
     setCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); answerLock.current = false
   }
 
+  // ---- daily warm-up -----------------------------------------------------------------------
+  const today = localDay()
+  const warm = { available: warmupAvailable(save.habit, save.mastery, today), done: save.habit.warmupDay === today, words: pickWarmup(save.mastery, today) }
+  const startWarmup = () => { setCampMsg(''); setWarmup(pickWarmup(save.mastery, today)) }
+  const warmupAnswer = (hanzi: string, isCorrect: boolean) => {
+    const mastery = updateMastery(save.mastery, hanzi, isCorrect)
+    let habit = recordPlay(save.habit, localDay()); if (isCorrect) habit = recordCorrect(habit)
+    const earned = newBadges(habit, contextFor(mastery, habit, save.meta.bestFloor, save.meta.runs))
+    if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New badge: ${earned.map(b => b.name).join(', ')}`) }
+    patch(s => ({ ...s, mastery, habit }))
+  }
+  const warmupDone = (correct: number) => {
+    const gold = correct * WARMUP_GOLD_PER_CORRECT
+    patch(s => ({ ...s, meta: { ...s.meta, gold: s.meta.gold + gold }, habit: { ...s.habit, warmupDay: localDay() } }))
+    setWarmup(null); setCampMsg(`Warm-up done: ${correct} right, +${gold} gold.`)
+  }
+
   const buy = (id: string) => {
     const meta = buyUpgrade(save.meta, id)
     if (!meta) return
@@ -414,7 +442,9 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        <CampScreen save={save} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} />
+        {warmup
+          ? <WarmupScreen words={warmup} mastery={save.mastery} canListen={canListen} speakWord={h => speak(h, true)} sfx={n => feel(n)} onAnswer={warmupAnswer} onDone={warmupDone} onExit={() => setWarmup(null)} />
+          : <CampScreen save={save} warmup={warm} onWarmup={startWarmup} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} />}
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {menu}
       </main>
@@ -644,12 +674,14 @@ export default function App() {
                   {hasExplanation(word.hanzi) && show.hanzi && show.pinyin && show.meaning && <button className="speak-btn tip-btn" onClick={e => { e.stopPropagation(); setExplain(word.hanzi) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
                   <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>
                 </div>
+                {ceremony === word.hanzi && (feedback || revealing) && <div className="confetti" aria-hidden="true">{Array.from({ length: 22 }, (_, k) => <i key={k} style={{ left: `${4 + ((k * 37) % 92)}%`, animationDelay: `${(k % 7) * 60}ms`, background: ['#ffd166', '#8ee0a9', '#6fb5e8', '#ff8a3d'][k % 4] }} />)}</div>}
                 <div className={`slot slot-hanzi ${slot(show.hanzi, question.ask === 'hanzi')}`}>{show.hanzi ? word.hanzi : '?'}</div>
                 <div className={`slot slot-pinyin ${slot(show.pinyin, question.ask === 'pinyin')}`}>{show.pinyin ? word.pinyin : '? ? ?'}</div>
                 <div className={`slot slot-meaning ${slot(show.meaning, question.ask === 'meaning')}`}>{show.meaning ? word.meaning : '“ ? ”'}</div>
               </div>
               {feedback && !revealing ? (
-                <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'}`} role="status" aria-live="polite">
+                <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'} ${feedback.masteredNow ? 'is-mastered' : ''}`} role="status" aria-live="polite">
+                  {feedback.masteredNow && <span className="mastered-badge">★ MASTERED</span>}
                   <div className="result-line">
                     <strong>{feedback.correct ? `✓ Correct — ${feedback.word.hanzi} ${feedback.word.pinyin} · ${feedback.word.meaning}` : 'Not quite'}</strong>
                   </div>

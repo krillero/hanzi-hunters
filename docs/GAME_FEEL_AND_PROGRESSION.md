@@ -1,6 +1,6 @@
 # Game feel, motivation and deeper learning — design document
 
-Status: **proposal, nothing in this document is implemented yet.** It describes what the game does today, what is missing, and a phased plan. Sections marked *(needs content)* depend on new, native-speaker-checked material. Mockups referenced here are in `docs/design-references/game-feel/` (see the last section).
+Status: **phases 1 and 2 are implemented (see CHANGELOG); later phases are still proposals.** It describes what the game does today, what is missing, and a phased plan. Sections marked *(needs content)* depend on new, native-speaker-checked material. Mockups referenced here are in `docs/design-references/game-feel/` (see the last section).
 
 Related docs: `GAME_DESIGN.md` (current rules), `CONTENT_GUIDE.md` (words/explanations), `public/assets/README.md` (pixel-art pipeline).
 
