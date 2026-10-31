@@ -568,7 +568,7 @@ export default function App() {
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">
-        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small>{foe.boss && <b className="boss-tag">BOSS {bossPhase(run, foe.hp)}/2</b>}</div>
+        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small></div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
         <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">☰</button>
       </header>
@@ -726,7 +726,7 @@ export default function App() {
               {feedback && !revealing ? (
                 <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'} ${feedback.masteredNow ? 'is-mastered' : ''}`} role="status" aria-live="polite">
                   <div className="result-line">
-                    <strong>{feedback.correct ? `✓ Correct — ${feedback.word.hanzi} ${feedback.word.pinyin}${feedback.word.variants.length ? ` (also ${feedback.word.variants.join(', ')})` : ''}${feedback.word.kind === 'particle' ? '' : ` · ${feedback.word.meaning}`}` : 'Not quite'}</strong>
+                    <strong>{feedback.correct ? '✓ Correct' : 'Not quite'}{feedback.correct && feedback.word.variants.length > 0 && <small className="result-also"> also {feedback.word.variants.join(', ')}</small>}</strong>
                   </div>
                   {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
                   <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>

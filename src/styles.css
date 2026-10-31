@@ -1635,3 +1635,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .menu-tools .bar-btn{position:relative;min-height:48px}
 .in-battle .compact-header .chip-btn{position:relative}
 .in-battle .compact-header strong,.in-battle .compact-header .boss-tag{white-space:nowrap}
+.in-battle .answer-feedback .result-line strong{white-space:normal;overflow:visible;text-overflow:clip}
+.result-also{font-size:13px;color:#c9d6e4;font-weight:400}
+.in-battle .arena-combatants .bar-label span:last-child{white-space:nowrap}

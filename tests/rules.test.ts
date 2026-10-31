@@ -175,6 +175,7 @@ test('loot with one item per slot: empty slot and pure upgrades are worn, pure d
   for (const a of same) for (const b of same) if (a !== b && a.slot === b.slot) {
     const v = gearVerdict(b, a); const out = drop(a.name, b.name)
     assert.equal(out.loot?.name, b.name)
+    assert.ok(out.run.gear.includes(b.name), 'found items are remembered even when left behind, so they cannot drop again this run')
     assert.equal(out.run.loadout[a.slot], v === 'better' ? b.name : a.name, `${a.name} -> ${b.name} (${v})`)
   }
 })
