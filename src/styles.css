@@ -1622,3 +1622,15 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
   .in-battle .stage-card .slot-hanzi{font-size:30px;height:32px}.in-battle .stage-card .slot-pinyin{font-size:14px;height:17px}.in-battle .stage-card .slot-meaning{font-size:12px;min-height:14px}
   .stage-card .cloze-block .cloze-zh{font-size:20px!important}.stage-card .cloze-block .cloze-py,.stage-card .cloze-block .cloze-en{font-size:11px!important}
 }
+
+/* ---- Quiet Arena: one source for each fact, feedback lives on the card ---- */
+.in-battle .arena-combatants .bar-label{margin-top:0;font-size:11px;letter-spacing:.2px;color:#c3cfde}
+.in-battle .arena-combatants .bar-label span:first-child{display:block!important;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;padding-right:6px}
+.in-battle .arena-combatants .health-track{height:8px;margin-top:4px}
+.in-battle .answer-feedback .result-line strong{font-size:clamp(15px,2.3dvh,18px);line-height:1.3}
+.in-battle .answer-feedback .result-note{font-size:clamp(14px,2dvh,16px);line-height:1.4;color:#dbe6f0}
+.in-battle .action-bar .bar-btn.ghost b{margin-left:4px;color:#f0c66b}
+.in-battle .action-bar{gap:8px}
+.menu-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu-tools .bar-btn{position:relative;min-height:48px}
+.in-battle .compact-header .chip-btn{position:relative}

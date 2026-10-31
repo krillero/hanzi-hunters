@@ -1,5 +1,15 @@
 # Changelog / test log
 
+## 2026-11-01 — Quiet Arena: a cleaner battle screen (branch dev/learning-content)
+
+Every fact now appears once. Learning comes first; the fight is the garnish.
+
+- Removed: the location line with the tiny "words known" counter, the persistent +XP / gold / loot chips, the damage-chip row, the "WEAK HIT" caption, the "choose an answer to attack" hint, the mastery sentence and MASTERED badge in the feedback box, and the "Equipped…" toast.
+- Combatant cards are now two slim HP bars (hero: level, enemy: name).
+- Feedback text is larger. Level and mastery are shown by the card's own pips.
+- The bottom Potion / Gear / Words bar is gone. Potion sits beside Hint in the action bar; Gear and Wordbook are in the ☰ menu (a dot marks new gear).
+- Text items on screen at 360×800: about 43 → 27 on a normal question, 72 → 47 at a kill (the loot card is open then).
+
 ## 2026-11-01 — Multi-character vocabulary, readings, examples, sources (branch dev/learning-content)
 - **Entries** can now be words (1–8 hanzi, e.g. 你好, 谢谢, 朋友, 今天, 学校, 喜欢), the original single characters, or grammar particles (吗, 的, 了, taught by a functional description). New optional fields: `id`, `kind`, `neutral`, `variants`, `speech`, `wrongPinyin`, `audio`, `questions`, `aliases`, `source`, `review`. The old `alt` field is replaced by `variants` (accepted pronunciations of the same word) and `speech` (connected-speech guidance); 一 and 不 were migrated.
 - **Pinyin:** multi-syllable pinyin with standard spacing, apostrophes and ü; syllable segmentation (`src/content/pinyin.ts`). **Neutral tone is explicit** (`neutral: [2]` for péngyou): an unmarked syllable that is not declared is an error, so a forgotten tone mark can never pass as neutral tone.

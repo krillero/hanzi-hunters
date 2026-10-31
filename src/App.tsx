@@ -46,11 +46,6 @@ function ComboBadge({ streak, bonusPct }: { streak: number; bonusPct: number }) 
 }
 
 /** Counts up every time `value` grows (not on first render), so a counter can play a short "bump" animation. */
-function useBump(value: number) {
-  const prev = useRef(value); const [n, setN] = useState(0)
-  useEffect(() => { if (value > prev.current) setN(k => k + 1); prev.current = value }, [value])
-  return n
-}
 
 /** Does 💡 / the Wordbook have more to show for this entry (an explanation, other readings, or pronunciation notes)? */
 const hasDetails = (w: Word) => hasExplanation(w.id) || w.variants.length > 0 || w.speech.length > 0 || homographsOf(w, WORDS).length > 0
@@ -119,7 +114,6 @@ export default function App() {
   const [bossIntro, setBossIntro] = useState<BossId | null>(() => { const j = previewStart(); return j && isBoss(j.floor, j.kill) ? bossIdFor(j.floor) : null })
   const [warmup, setWarmup] = useState<string[] | null>(null)
   const [ceremony, setCeremony] = useState<string | null>(null)   // word that was just mastered (confetti for a moment)
-  const knownBump = useBump(seenCount(save.mastery))
   const [floorStats, setFloorStats] = useState<RunStats>(emptyStats)
   const [runStats, setRunStats] = useState<RunStats>(emptyStats)
   const [summary, setSummary] = useState<'floor' | 'defeat' | null>(null)
@@ -312,7 +306,6 @@ export default function App() {
     sceneRef.current?.playHit('monster')
     if (!isCorrect && r.shieldRegrown) setCaption({ side: 'monster', kind: 'shield', text: '🖋 A SEAL GROWS BACK' })
     else if (!isCorrect && r.bossHealed > 0) setCaption({ side: 'monster', kind: 'weak', text: `🎭 DODGED · +${r.bossHealed} HP` })
-    else if (!isCorrect) setCaption({ side: 'monster', kind: 'weak', text: 'WEAK HIT' })
     else if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: foe?.boss === 'scribe' ? '💥 SEALS BROKEN' : '💥 SHIELD DOWN' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster(!!foe?.boss)
     else if (r.counter > 0) sceneRef.current?.playHit('hero')
@@ -428,7 +421,6 @@ export default function App() {
     patch(s => ({ ...s, run: next }))
     setSelectedGearName(null)
     setSelectedGearSlot(null)
-    setToast(`Equipped ${name}.`)
   }
 
   const usePotion = () => {
@@ -517,7 +509,7 @@ export default function App() {
   }
 
   // ---- camp -----------------------------------------------------------------------------
-  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onClose={() => setMenuOpen(false)} /> : null
+  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), newGear: newLoot, onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) } } : undefined} /> : null
   const topbar = (
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
@@ -575,12 +567,11 @@ export default function App() {
       <header className="compact-header" aria-label="Dungeon progress">
         <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small>{foe.boss && <b className="boss-tag">BOSS · PHASE {bossPhase(run, foe.hp)}/2</b>}</div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
-        <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Settings">⚙</button>
+        <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label={newLoot ? 'Menu, new gear found' : 'Menu'}>☰{newLoot && <i className="new-dot" aria-hidden="true" />}</button>
       </header>
       <section className="game-layout">
         <div className="left-column">
           <div className="scene-frame">
-            <div className="compact-location"><span>The Mosslight Cavern</span><span key={knownBump} className={`words-known ${knownBump > 0 ? 'bump' : ''}`} aria-label={`${seenCount(save.mastery)} words known, ${masteredCount(save.mastery)} mastered`}>📖 {seenCount(save.mastery)} · ★ {masteredCount(save.mastery)}</span></div>
             <div className="scene-label"><span className="live-dot"></span><span className="scene-where"><span className="scene-floor"><span className="sf-wide">F{run.floor} · {run.kill + 1}/{ENEMIES_PER_FLOOR}</span><span className="sf-narrow">F{run.floor}·{run.kill + 1}/{ENEMIES_PER_FLOOR}</span></span><span className="scene-gold">🪙 {run.gold}</span></span>
               <div className="scene-actions">
                 <button className="chip-btn" onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}>🧪<b>{run.potions}</b></button>
@@ -601,31 +592,13 @@ export default function App() {
                 {levelUp && <div className="arena-levelup" role="status"><span className="lu-badge">LEVEL UP</span><strong>LV {levelUp.from} → {levelUp.to}</strong><small>{[levelUp.hp > 0 && `+${levelUp.hp} max HP`, levelUp.attack > 0 && `+${levelUp.attack} attack`].filter(Boolean).join(' · ') || 'Stronger'}</small></div>}
                 {caption && run.phase !== 'defeat' && <span className={`arena-caption ${caption.side} ${caption.kind}`} role="status">{caption.text}</span>}
               </div>
-              {run.phase === 'victory' && <div className="arena-rewards" role="status" aria-label="Battle rewards">
-                <span>+{run.reward.xp} XP</span>
-                <span>🪙 +{run.reward.gold}</span>
-                {run.reward.levelUps > 0 && <span className="hot">Level {run.level}!</span>}
-                {run.reward.loot && <span className={`hot loot r-${rarityOf(run.reward.loot)}`}>🎁 {run.reward.loot}</span>}
-              </div>}
-              {run.phase !== 'victory' && (feedback || reveal) && <div className="arena-rewards arena-exchange" role="status" aria-label="Combat result">
-                {(feedback ?? reveal)!.exchange.regrown
-                  ? <span className="shield">🖋 A seal grows back</span>
-                  : (feedback ?? reveal)!.exchange.bossHeal > 0
-                  ? <span className="weak">🎭 Dodged · boss +{(feedback ?? reveal)!.exchange.bossHeal} HP</span>
-                  : (feedback ?? reveal)!.exchange.shield
-                  ? <span className="shield">{(feedback ?? reveal)!.exchange.shield === 'broken' ? `🛡 ${foe.boss === 'scribe' ? 'Seal' : 'Shield'} −1 · ${(feedback ?? reveal)!.exchange.shieldLeft} left` : `🛡 Blocked by ${foe.boss === 'scribe' ? 'seals' : 'shield'}`}</span>
-                  : <span className={(feedback ?? reveal)!.exchange.combo > 0 ? 'combo2' : (feedback ?? reveal)!.exchange.weak ? 'weak' : ''}>⚔ −{(feedback ?? reveal)!.exchange.damage}{(feedback ?? reveal)!.exchange.combo > 0 ? ` · 🔥 +${(feedback ?? reveal)!.exchange.combo}%` : ''}</span>}
-                {(feedback ?? reveal)!.exchange.blocked ? <span>🛡 Blocked</span> : (feedback ?? reveal)!.exchange.counter > 0 ? <span className="hurt">💔 −{(feedback ?? reveal)!.exchange.counter}</span> : <span>No counterattack</span>}
-              </div>}
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
-                <div className="combatant-head"><div className="avatar hero-avatar">⚔</div><div><strong>Wanderer <span className="lv-tag">Lv {run.level}</span></strong><small>Adventurer</small></div></div>
-                <div className="bar-label"><span>HERO · HP</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className={`health-fill player-fill ${levelUp ? "hp-glow" : ""}`} style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <div className="bar-label"><span>Lv {run.level}</span><span>{run.hp} / {stats.maxHp}</span></div><div className="health-track"><div className={`health-fill player-fill ${levelUp ? "hp-glow" : ""}`} style={{ width: `${Math.max(0, run.hp) / stats.maxHp * 100}%` }} /></div><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
-                <div className="combatant-head"><div className="avatar enemy-avatar">{foe.enemy.emoji}</div><div><strong>{foe.enemy.name}</strong><small>{foe.boss ? 'BOSS' : 'OPPONENT'}</small></div></div>
-                <div className="bar-label"><span>ENEMY · HP</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
+                <div className="bar-label"><span>{foe.enemy.name}</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
               </div>
             </div>
           </div>
@@ -788,13 +761,11 @@ export default function App() {
               </div>
               {feedback && !revealing ? (
                 <div className={`answer-list answer-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'} ${feedback.masteredNow ? 'is-mastered' : ''}`} role="status" aria-live="polite">
-                  {feedback.masteredNow && <span className="mastered-badge">★ MASTERED</span>}
                   <div className="result-line">
                     <strong>{feedback.correct ? `✓ Correct — ${feedback.word.hanzi} ${feedback.word.pinyin}${feedback.word.variants.length ? ` (also ${feedback.word.variants.join(', ')})` : ''}${feedback.word.kind === 'particle' ? '' : ` · ${feedback.word.meaning}`}` : 'Not quite'}</strong>
                   </div>
                   {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
                   <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
-                  {feedback.mastery && <p className={`result-mastery ${feedback.masteryUp ? 'up' : ''}`}><i className="pips" aria-hidden="true">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < feedback.lv ? 'on' : ''} />)}</i> {feedback.mastery}</p>}
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
@@ -808,30 +779,13 @@ export default function App() {
               {run.phase === 'defeat' && <p className="fb-defeat">You fell on floor <b>{run.floor}</b> with <b>{run.gold} gold</b> — banked for upgrades. Next run: level 1, no gear. Word mastery stays.</p>}
             </div>}
 
-            {run.phase === 'victory' && (
-              <div className="reward-strip" aria-label="Battle rewards">
-                <div className="reward-item"><small>EXPERIENCE</small><strong>+{run.reward.xp} XP</strong></div>
-                <div className="reward-item"><small>GOLD</small><strong>🪙 +{run.reward.gold}</strong></div>
-                {run.reward.levelUps > 0 && <div className="reward-item reward-highlight"><small>LEVEL UP</small><strong>Level {run.level}</strong></div>}
-              </div>
-            )}
-
-            {run.phase === 'victory' && run.reward.loot && (
-              <div className="loot-drop" role="status" aria-label={`Loot acquired: ${run.reward.loot}`}>
-                <span className="loot-drop-icon" aria-hidden="true">🎁</span>
-                <span className="loot-drop-copy"><small>ITEM FOUND</small><strong>{run.reward.loot}</strong></span>
-                <span className="loot-drop-tag">NEW LOOT</span>
-              </div>
-            )}
-
             <div className="action-bar">
               {revealing
                 ? <button className="bar-btn ghost auto-continue" data-kind="continue" onClick={advanceAuto}><span>✓ Correct</span><span>Tap to continue →</span></button>
                 : fighting && !feedback
                 ? <>
-                    {bonuses.hints > 0
-                      ? <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>
-                      : <p className="bar-hint">{question.kind === 'intro' ? 'Choose its meaning to attack' : 'Choose an answer to attack'}</p>}
+                    {bonuses.hints > 0 && <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>}
+                    {run.potions > 0 && <button className="bar-btn ghost potion-btn" onClick={usePotion} disabled={run.hp >= stats.maxHp} aria-label={`Use potion, ${run.potions} left`}>🧪 Potion <b>{run.potions}</b></button>}
                   </>
                 : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? (lastOfFloor ? () => setSummary('floor') : nextEnemy) : () => setSummary('defeat')}>
                     {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? `Descend to floor ${run.floor + 1}` : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>
@@ -842,11 +796,6 @@ export default function App() {
           <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear found</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div><button className="reset-btn" onClick={resetAll}>Reset ALL progress</button></section>
         </div>
       </section>
-      <nav className="compact-tools" aria-label="Battle tools">
-        <button onClick={usePotion} disabled={run.potions < 1 || run.hp >= stats.maxHp || !fighting || !!feedback || revealing} aria-label={`Use potion, ${run.potions} left`}><span aria-hidden="true">🧪</span> Potion · {run.potions}</button>
-        <button onClick={toggleGear} aria-expanded={showBag} aria-label={newLoot ? 'Character stats, new gear found' : 'Character stats'}><span aria-hidden="true">⚔</span> Gear{newLoot && <i className="new-dot" aria-hidden="true" />}</button>
-        <button onClick={() => { setShowWords(v => !v); setShowBag(false) }} aria-expanded={showWords} aria-label="Wordbook"><span aria-hidden="true">📚</span> Words · {seenCount(save.mastery)}</button>
-      </nav>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} onClose={() => setSummary(null)} onContinue={() => { if (summary === 'floor') { setSummary(null); nextEnemy() } else endRun() }} />}
