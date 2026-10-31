@@ -6,7 +6,7 @@ import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
 import SummaryModal from './SummaryModal'
 import WarmupScreen from './WarmupScreen'
-import { WARMUP_GOLD_PER_CORRECT, badgeById, contextFor, localDay, newBadges, pickWarmup, recordCorrect, recordPlay, warmupAvailable } from './game/habit'
+import { WARMUP_GOLD_PER_CORRECT, badgeById, contextFor, localDay, newBadges, newSeed, pickWarmup, recordCorrect, recordPlay, warmupAvailable } from './game/habit'
 import { playSfx, unlockAudio, vibrate, type SfxName, type SfxOptions } from './audio'
 import { flyMotes } from './motes'
 import { rarityOf } from './game/rarity'
@@ -17,20 +17,20 @@ import { hasExplanation } from './content'
 import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appInfo'
 import { parseBackup, serializeBackup } from './game/backup'
 import { ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
-import { MAX_LV, masteredCount, pickWord, seenCount, updateMastery } from './game/mastery'
-import { TONE_KINDS, buildQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
+import { MAX_LV, masteredCount, orderedWords, pickWord, seenCount, updateMastery } from './game/mastery'
+import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, buildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
 import { isUpgrade, rarityOf as rarityOfItem } from './game/rarity'
 import {
-  ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, bankRun, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
+  ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, hasShield, shieldFor, bankRun, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
 import type { Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
-type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
+type CombatExchange = { damage: number; counter: number; blocked: boolean; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number; regrown: boolean; bossHeal: number }
 type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal' | 'shield'; text: string }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; masteredNow: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
 
@@ -70,7 +70,7 @@ function initialSave(): Saved {
   }
   // Brand-new players go straight into a first run; returning players land wherever they left off.
   const brandNew = s.meta.runs === 0 && s.meta.gold === 0 && s.meta.upgrades.length === 0 && Object.keys(s.mastery).length === 0
-  if (!s.run && !s.lastRun && brandNew) return { ...s, run: newRun(computeBonuses(s.meta.upgrades), GEAR, ENEMIES) }
+  if (!s.run && !s.lastRun && brandNew) return { ...s, habit: { ...s.habit, seed: newSeed() }, run: newRun(computeBonuses(s.meta.upgrades), GEAR, ENEMIES) }
   return s
 }
 
@@ -158,29 +158,38 @@ export default function App() {
   const killRef = useRef(0)
   killRef.current = run?.kill ?? 0
 
+  // New words are introduced in this profile's own order (shuffled inside blocks), and recently asked words are less likely to repeat.
+  const ordered = useMemo(() => orderedWords(WORDS, save.habit.seed), [save.habit.seed])
+  const recentWords = useRef<string[]>([])
   const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen, forRun: Run | null = run): Card => {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
     const forced = current === null && forcedWord.current ? WORDS.find(w => w.hanzi === forcedWord.current) : undefined
     const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind })
     const bossFoe = forRun && isBoss(forRun.floor, forRun.kill) ? enemyStats(ENEMIES, forRun.floor, forRun.kill) : null
-    if (!forced && forRun && bossFoe?.boss === 'golem' && forRun.shield > 0) {
-      // Shield up: only pinyin (tone) questions can break it, so ask only those (about words you already know).
-      const kinds = TONE_KINDS.filter(k => listen || k !== 'listen2pinyin')
+    // Some bosses need a particular kind of question: tone questions break the Golem's shield, character questions the Scribe's seals,
+    // and the Trickster only asks the easy-to-confuse kinds. They ask about words you already know.
+    const boss = bossFoe?.boss ?? null
+    const needed = forced || !forRun || !boss ? null
+      : hasShield(boss) && forRun.shield > 0 ? (boss === 'golem' ? { kinds: TONE_KINDS, ok: isToneQuestion } : { kinds: CHARACTER_KINDS, ok: isCharacterQuestion })
+      : boss === 'trickster' ? { kinds: TRICK_KINDS, ok: (q: Question) => q.kind === 'homophone' || q.kind === 'lookalike' }
+      : null
+    if (needed) {
+      const kinds = needed.kinds.filter(k => listen || !k.startsWith('listen'))
       const knownWords = WORDS.filter(w => mastery[w.hanzi])
       let last: Card | null = null
       for (let k = 0; k < 12; k++) {
         // the scheduler's pick when it is a word you already know, else any known word (never a brand-new word without teaching it)
-        let word = pickWord(WORDS, mastery, last?.word.hanzi ?? current)
+        let word = pickWord(ordered, mastery, last?.word.hanzi ?? current, Math.random, recentWords.current)
         if (!mastery[word.hanzi] && knownWords.length > 0) word = knownWords[Math.floor(Math.random() * knownWords.length)]
         const entry = mastery[word.hanzi] ?? { lv: 1, ok: 0 }   // only when nothing at all is known yet (preview URLs)
         last = { word, question: buildQuestion(word, entry, WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)])) }
-        if (isToneQuestion(last.question)) return last
+        if (needed.ok(last.question)) return last
       }
       return last!
     }
     // Echo Wraith, phase 2: the kind of question you got wrong most recently keeps coming back.
     const echo = !forced && forRun && bossFoe?.boss === 'wraith' && bossPhase(forRun, bossFoe.hp) === 2 ? [...kindHistory.current].reverse().find(h => !h.ok)?.kind : undefined
-    const word = forced ?? pickWord(WORDS, mastery, current)
+    const word = forced ?? pickWord(ordered, mastery, current, Math.random, recentWords.current)
     return { word, question: buildQuestion(word, mastery[word.hanzi], WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
   }
   const patch = (fn: (s: Saved) => Saved) => setSave(fn)
@@ -278,15 +287,18 @@ export default function App() {
     const entry = save.mastery[word.hanzi]
     const isCorrect = option === question.answer
     const r = resolveAnswer({
-      run, bonuses, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect, toneQuestion: isToneQuestion(question),
+      run, bonuses, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect, sealQuestion: foe?.boss === 'scribe' ? isCharacterQuestion(question) : isToneQuestion(question),
       roll: { drop: Math.random(), item: Math.random() }
     })
     const mastery = updateMastery(save.mastery, word.hanzi, isCorrect)
+    recentWords.current = [word.hanzi, ...recentWords.current.filter(h => h !== word.hanzi)].slice(0, 8)
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
     const before = entry?.lv ?? -1, after = mastery[word.hanzi].lv
     sceneRef.current?.playHit('monster')
-    if (!isCorrect) setCaption({ side: 'monster', kind: 'weak', text: 'WEAK HIT' })
-    else if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: '💥 SHIELD DOWN' })
+    if (!isCorrect && r.shieldRegrown) setCaption({ side: 'monster', kind: 'shield', text: '🖋 A SEAL GROWS BACK' })
+    else if (!isCorrect && r.bossHealed > 0) setCaption({ side: 'monster', kind: 'weak', text: `🎭 DODGED · +${r.bossHealed} HP` })
+    else if (!isCorrect) setCaption({ side: 'monster', kind: 'weak', text: 'WEAK HIT' })
+    else if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: foe?.boss === 'scribe' ? '💥 SEALS BROKEN' : '💥 SHIELD DOWN' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster(!!foe?.boss)
     else if (r.counter > 0) sceneRef.current?.playHit('hero')
     else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: '🛡 BLOCKED' })
@@ -342,7 +354,7 @@ export default function App() {
       : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
         : after < before ? `Back to level ${after} — it will return for review`
           : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : 'One more correct in a row to level up') : 'Review this one — it will come back'
-    const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
+    const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield, regrown: r.shieldRegrown, bossHeal: r.bossHealed }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
       correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, masteredNow, lv: after, chosen: option, answer: question.answer,
@@ -485,7 +497,7 @@ export default function App() {
     if (!window.confirm('Delete ALL progress — upgrades, gold and word mastery — and start over?')) return
     try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
     const fresh = sanitizeSave(null)
-    setSave({ ...fresh, run: newRun(computeBonuses([]), GEAR, ENEMIES) })
+    setSave({ ...fresh, habit: { ...fresh.habit, seed: newSeed() }, run: newRun(computeBonuses([]), GEAR, ENEMIES) })
     setReveal(null); setCard(null); setFeedback(null); setEliminated([]); setCampMsg(''); answerLock.current = false
   }
 
@@ -564,8 +576,9 @@ export default function App() {
               <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
               <div className="arena-hud" aria-hidden={!caption && !floorBanner}>
                 {run.phase === 'fighting' || run.phase === 'victory' ? <ComboBadge streak={run.streak} bonusPct={Math.round(bonuses.streakDmgPct * 100)} /> : null}
-                {run.shield > 0 && run.phase === 'fighting' && <div className="boss-shield" role="img" aria-label={`Shield: ${run.shield} of ${SHIELD_SEGMENTS} segments left`}>SHIELD {Array.from({ length: SHIELD_SEGMENTS }, (_, i) => <i key={i} className={i < run.shield ? '' : 'off'} />)}</div>}
+                {foe.boss && hasShield(foe.boss) && (run.shield > 0 || foe.boss === 'scribe') && run.phase === 'fighting' && <div className="boss-shield" role="img" aria-label={`${foe.boss === 'scribe' ? 'Seals' : 'Shield'}: ${run.shield} of ${shieldFor(run.floor)} left`}>{foe.boss === 'scribe' ? 'INK SEALS' : 'SHIELD'} {Array.from({ length: shieldFor(run.floor) }, (_, i) => <i key={i} className={i < run.shield ? '' : 'off'} />)}</div>}
                 {foe.boss === 'wraith' && run.phase === 'fighting' && bossPhase(run, foe.hp) === 2 && <div className="boss-shield echo" role="img" aria-label="Echo phase: your weak spot comes back">ECHO</div>}
+                {foe.boss === 'trickster' && run.phase === 'fighting' && <div className="boss-shield echo" role="img" aria-label={bossPhase(run, foe.hp) === 2 ? 'A wrong answer heals it a lot' : 'A wrong answer heals it'}>{bossPhase(run, foe.hp) === 2 ? 'MISS = HEAL ×2' : 'MISS = HEAL'}</div>}
                 {run.phase === 'victory' && <span className="arena-banner win">{foe.boss ? 'BOSS DEFEATED' : 'VICTORY'}</span>}
                 {run.phase === 'defeat' && <span className="arena-banner lose">YOU DIED</span>}
                 {floorBanner && run.phase === 'fighting' && <span className="arena-banner floor">{floorBanner}</span>}
@@ -579,8 +592,12 @@ export default function App() {
                 {run.reward.loot && <span className={`hot loot r-${rarityOf(run.reward.loot)}`}>🎁 {run.reward.loot}</span>}
               </div>}
               {run.phase !== 'victory' && (feedback || reveal) && <div className="arena-rewards arena-exchange" role="status" aria-label="Combat result">
-                {(feedback ?? reveal)!.exchange.shield
-                  ? <span className="shield">{(feedback ?? reveal)!.exchange.shield === 'broken' ? `🛡 Shield −1 · ${(feedback ?? reveal)!.exchange.shieldLeft} left` : '🛡 Blocked by shield'}</span>
+                {(feedback ?? reveal)!.exchange.regrown
+                  ? <span className="shield">🖋 A seal grows back</span>
+                  : (feedback ?? reveal)!.exchange.bossHeal > 0
+                  ? <span className="weak">🎭 Dodged · boss +{(feedback ?? reveal)!.exchange.bossHeal} HP</span>
+                  : (feedback ?? reveal)!.exchange.shield
+                  ? <span className="shield">{(feedback ?? reveal)!.exchange.shield === 'broken' ? `🛡 ${foe.boss === 'scribe' ? 'Seal' : 'Shield'} −1 · ${(feedback ?? reveal)!.exchange.shieldLeft} left` : `🛡 Blocked by ${foe.boss === 'scribe' ? 'seals' : 'shield'}`}</span>
                   : <span className={(feedback ?? reveal)!.exchange.combo > 0 ? 'combo2' : (feedback ?? reveal)!.exchange.weak ? 'weak' : ''}>⚔ −{(feedback ?? reveal)!.exchange.damage}{(feedback ?? reveal)!.exchange.combo > 0 ? ` · 🔥 +${(feedback ?? reveal)!.exchange.combo}%` : ''}</span>}
                 {(feedback ?? reveal)!.exchange.blocked ? <span>🛡 Blocked</span> : (feedback ?? reveal)!.exchange.counter > 0 ? <span className="hurt">💔 −{(feedback ?? reveal)!.exchange.counter}</span> : <span>No counterattack</span>}
               </div>}
@@ -809,7 +826,7 @@ export default function App() {
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} onClose={() => setSummary(null)} onContinue={() => { if (summary === 'floor') { setSummary(null); nextEnemy() } else endRun() }} />}
-      {bossIntro && <BossIntro boss={bossIntro} onClose={() => setBossIntro(null)} />}
+      {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} autoEquipped={lootReveal.autoEquipped} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
       {menu}
       {explain !== null && <ExplainModal hanzi={explain} hidden={fighting && !feedback && !revealing ? card?.word.hanzi : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}

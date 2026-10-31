@@ -1,8 +1,9 @@
+import type { BossId } from '../data'
 import Phaser from 'phaser'
 
-export type EnemySprite = 'slime' | 'imp' | 'bat' | 'golem' | 'wraith'
-const ENEMY_SPRITES: EnemySprite[] = ['slime', 'imp', 'bat', 'golem', 'wraith']
-const BOSS_GLOW: Record<string, number> = { golem: 0x6fb5e8, wraith: 0xcfe9f2 }
+export type EnemySprite = 'slime' | 'imp' | 'bat' | 'golem' | 'wraith' | 'scribe' | 'trickster'
+const ENEMY_SPRITES: EnemySprite[] = ['slime', 'imp', 'bat', 'golem', 'wraith', 'scribe', 'trickster']
+const BOSS_GLOW: Record<string, number> = { golem: 0x6fb5e8, wraith: 0xcfe9f2, scribe: 0x6f86e0, trickster: 0xd77be8 }
 
 const BASE = import.meta.env.BASE_URL
 const TILE = 16
@@ -17,7 +18,7 @@ export class PixelScene extends Phaser.Scene {
   private assetsOk = true
   private ready = false
   private enemyKey: EnemySprite = 'slime'
-  private boss: 'golem' | 'wraith' | null = null
+  private boss: BossId | null = null
   private monsterAlive = true
   private showingChest = false
   private layer?: Phaser.GameObjects.Container
@@ -157,7 +158,7 @@ export class PixelScene extends Phaser.Scene {
 
   private monsterScale() { return this.actorScale + 1 + (this.boss ? 1 : 0) }
 
-  setEnemy(key: EnemySprite, boss: 'golem' | 'wraith' | null = null) {
+  setEnemy(key: EnemySprite, boss: BossId | null = null) {
     this.enemyKey = key
     this.boss = boss
     if (this.ready) this.build()

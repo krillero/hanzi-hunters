@@ -14,7 +14,7 @@ test('habit: sanitising never throws and drops junk', () => {
     assert.ok(h.lastPlayed === '' || /^\d{4}-\d{2}-\d{2}$/.test(h.lastPlayed))
   }
   const h = sanitizeHabit({ daysPlayed: 3.9, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, badges: ['known-10', 'known-10', 'bogus'] })
-  assert.deepEqual(h, { daysPlayed: 3, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, bosses: 0, bossesMet: [], tipsSeen: [], badges: ['known-10'] })
+  assert.deepEqual(h, { daysPlayed: 3, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, bosses: 0, bossesMet: [], seed: 0, tipsSeen: [], badges: ['known-10'] })
   assert.deepEqual(sanitizeHabit({ bosses: 2.7, tipsSeen: ['石', '石', 5, '', 'toolongword', '好'] }).tipsSeen, ['石', '好'], 'tip list: unique short strings only')
   assert.equal(sanitizeHabit({ bosses: 2.7 }).bosses, 2)
   assert.deepEqual(sanitizeHabit({ bossesMet: ['golem', 'golem', 7, 'Bad Name', 'wraith'] }).bossesMet, ['golem', 'wraith'], 'boss ids: unique lowercase words')

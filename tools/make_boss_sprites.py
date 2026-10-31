@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Recolours the existing imp and bat sheets into the two boss sprites (original art, same 2-frame 16x16 layout).
 
-  imp.png -> golem.png   (steel-blue stone body, cyan glowing horns/eyes)
-  bat.png -> wraith.png  (pale ghost wings, translucent, yellow eyes)
+  imp.png   -> golem.png     (steel-blue stone body, cyan glowing horns/eyes)
+  bat.png   -> wraith.png    (pale ghost wings, translucent, yellow eyes)
+  slime.png -> scribe.png    (deep ink-blue blob, gold eyes)
+  imp.png   -> trickster.png (magenta body, mint horns, gold glints)
 
 Re-run with:  python3 tools/make_boss_sprites.py     (needs Pillow; the PNG output is committed)
 Bosses are drawn one tile larger in the game, so they read as bigger than the normal enemies.
@@ -36,5 +38,14 @@ def recolour(src, dst, table, wing_alpha=255):
     im.save(os.path.join(ROOT, dst))
     print('wrote', dst, im.size)
 
+SCRIBE = {
+    '#4eb879': '#2f4a9a', '#2d7e5c': '#18285e', '#80e09a': '#7d96e6', '#163b35': '#ffd166',
+}
+TRICKSTER = {
+    '#c0504d': '#b04fc4', '#7e2f3a': '#5a2a78', '#e07a6a': '#e0a8f0', '#ffc15c': '#7dffb0', '#ff7b39': '#ffd166',
+}
+
 recolour('imp.png', 'golem.png', GOLEM)
 recolour('bat.png', 'wraith.png', WRAITH, wing_alpha=215)
+recolour('slime.png', 'scribe.png', SCRIBE)
+recolour('imp.png', 'trickster.png', TRICKSTER)

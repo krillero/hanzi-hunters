@@ -10,10 +10,11 @@ export type Habit = {
   correct: number         // lifetime correct answers (battle + warm-up)
   bosses: number          // bosses defeated
   bossesMet: string[]     // boss types whose intro card has been shown (later floors skip it)
+  seed: number            // shuffles the order new words are introduced in (0 = the file's order; a fresh profile gets a random one)
   tipsSeen: string[]      // words whose 💡 button has already pulsed once
   badges: string[]
 }
-export const emptyHabit = (): Habit => ({ daysPlayed: 0, lastPlayed: '', warmupDay: '', correct: 0, bosses: 0, bossesMet: [], tipsSeen: [], badges: [] })
+export const emptyHabit = (): Habit => ({ daysPlayed: 0, lastPlayed: '', warmupDay: '', correct: 0, bosses: 0, bossesMet: [], seed: 0, tipsSeen: [], badges: [] })
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 const int = (v: unknown, max: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(0, Math.floor(v))) : 0)
@@ -25,7 +26,7 @@ export function sanitizeHabit(raw: unknown): Habit {
   const badges = Array.isArray(r.badges) ? [...new Set(r.badges.filter((b): b is string => typeof b === 'string' && known.has(b)))] : []
   const tipsSeen = Array.isArray(r.tipsSeen) ? [...new Set(r.tipsSeen.filter((t): t is string => typeof t === 'string' && t.length > 0 && t.length <= 4))].slice(0, 500) : []
   const bossesMet = Array.isArray(r.bossesMet) ? [...new Set(r.bossesMet.filter((b): b is string => typeof b === 'string' && /^[a-z]{1,12}$/.test(b)))].slice(0, 20) : []
-  return { daysPlayed: int(r.daysPlayed, 1e6), lastPlayed: day(r.lastPlayed), warmupDay: day(r.warmupDay), correct: int(r.correct, 1e9), bosses: int(r.bosses, 1e6), bossesMet, tipsSeen, badges }
+  return { daysPlayed: int(r.daysPlayed, 1e6), lastPlayed: day(r.lastPlayed), warmupDay: day(r.warmupDay), correct: int(r.correct, 1e9), bosses: int(r.bosses, 1e6), bossesMet, seed: int(r.seed, 2147483647), tipsSeen, badges }
 }
 
 /** Local calendar day, e.g. 2026-10-31 (the player's own clock, not UTC). */
@@ -82,3 +83,6 @@ export function pickWarmup(mastery: Mastery, today: string, size = WARMUP_SIZE):
 export const warmupAvailable = (h: Habit, mastery: Mastery, today: string) => h.warmupDay !== today && pickWarmup(mastery, today).length >= WARMUP_MIN_WORDS
 
 export const WARMUP_GOLD_PER_CORRECT = 3
+
+/** A fresh profile's word-order seed (never 0, which means "file order"). */
+export const newSeed = () => 1 + Math.floor(Math.random() * 2147483646)

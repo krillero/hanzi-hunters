@@ -1532,3 +1532,5 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .loot-delta{text-align:center}
 .loot-actions{display:flex;gap:8px}.loot-actions .bar-btn{flex:1;min-height:48px}
 @media (prefers-reduced-motion:reduce){.words-known.bump,.tip-btn.pulse,.loot-icon{animation:none}}
+.boss-sprite.scribe{filter:drop-shadow(0 0 10px #6f86e0aa)}
+.boss-sprite.trickster{filter:drop-shadow(0 0 10px #d77be8aa)}

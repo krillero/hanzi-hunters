@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { BOSS_INFO, BOSSES, type BossId } from './data'
-import { SHIELD_SEGMENTS } from './game/rules'
+import { hasShield, shieldFor } from './game/rules'
 
 /** Intro card shown once when a boss fight starts: the boss, its one rule, its phases and what it drops. */
-export default function BossIntro({ boss, onClose }: { boss: BossId; onClose: () => void }) {
+export default function BossIntro({ boss, floor, onClose }: { boss: BossId; floor: number; onClose: () => void }) {
   const go = useRef<HTMLButtonElement | null>(null)
   const info = BOSS_INFO[boss]
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function BossIntro({ boss, onClose }: { boss: BossId; onClose: ()
         <div className="modal-body">
           <div className="boss-portrait" aria-hidden="true"><div className={`boss-sprite ${boss}`} style={{ backgroundImage: `url(${sprite})` }} /></div>
           <section><h3>How it works</h3><p>{info.rule}</p>
-            {boss === 'golem' && <div className="boss-shield static" aria-hidden="true">SHIELD {Array.from({ length: SHIELD_SEGMENTS }, (_, i) => <i key={i} />)}</div>}
+            {hasShield(boss) && <div className="boss-shield static" aria-hidden="true">{boss === 'scribe' ? 'INK SEALS' : 'SHIELD'} {Array.from({ length: shieldFor(floor) }, (_, i) => <i key={i} />)}</div>}
           </section>
           <section><h3>Phases</h3><ol className="boss-phases">{info.phases.map(p => <li key={p}>{p}</li>)}</ol></section>
           <section><h3>Reward</h3><p>{info.reward}</p></section>

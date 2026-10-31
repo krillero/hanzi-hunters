@@ -17,15 +17,20 @@ export const SHIELD_SEGMENTS = 3   // the most a shield ever has
 export const BOSS_HP = 1.7, BOSS_DAMAGE = 1.15, BOSS_REWARD = 2
 export const bossHpMult = (floor: number) => Math.min(BOSS_HP, 1.3 + 0.15 * (floor - 1))
 export const bossDamageMult = (floor: number) => Math.min(BOSS_DAMAGE, 0.8 + 0.1 * (floor - 1))
-/** Shield Golem: 2 segments on the first floors, 3 from floor 3. */
+/** Bosses with a shield / seals, and which question kind breaks it (the question's `ask`). */
+export const SEAL_ASK: Partial<Record<BossId, 'pinyin' | 'hanzi'>> = { golem: 'pinyin', scribe: 'hanzi' }
+export const hasShield = (id: BossId) => id in SEAL_ASK
+/** Mirror Trickster: a right answer hits harder, a wrong one heals it (more below half HP). */
+export const TRICKSTER_HIT = 1.4, TRICKSTER_HEAL = 0.08, TRICKSTER_HEAL_LOW = 0.16, TRICKSTER_LOW = 0.5
+/** Shield / seals: 2 segments on the first floors, 3 from floor 3. */
 export const shieldFor = (floor: number) => (floor <= 2 ? 2 : SHIELD_SEGMENTS)
 
 /** The last fight of a floor. Every floor ends with a boss. */
 export const isFinalFight = (kill: number) => kill === ENEMIES_PER_FLOOR - 1
 /** `floor` is kept in the signature so a later design can skip bosses on some floors. */
 export const isBoss = (_floor: number, kill: number) => isFinalFight(kill)
-/** The bosses take turns: Golem on floors 1, 3, 5 ..., Wraith on 2, 4, 6 .... Add a boss here (and in data.ts) to lengthen the cycle. */
-export const BOSS_ORDER: BossId[] = ['golem', 'wraith']
+/** The bosses take turns: Golem, Wraith, Scribe, Trickster, then again. Add a boss here (and in data.ts) to lengthen the cycle. */
+export const BOSS_ORDER: BossId[] = ['golem', 'wraith', 'scribe', 'trickster']
 export const bossIdFor = (floor: number): BossId => BOSS_ORDER[(Math.max(1, floor) - 1) % BOSS_ORDER.length]
 /** Echo Wraith: below this share of its HP it starts echoing the question kind you missed. */
 export const WRAITH_ECHO_AT = 0.6
@@ -69,7 +74,7 @@ const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0 }
 
 export function startFight(run: Run, b: Bonuses, enemies: Enemy[]): Run {
   return { ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: b.hints, secondLeft: b.secondChance, reward: noReward, pendingXp: 0,
-    shield: isBoss(run.floor, run.kill) && bossIdFor(run.floor) === 'golem' ? shieldFor(run.floor) : 0 }
+    shield: isBoss(run.floor, run.kill) && hasShield(bossIdFor(run.floor)) ? shieldFor(run.floor) : 0 }
 }
 
 export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[]): Run {
@@ -92,8 +97,8 @@ export type AnswerInput = {
   /** Mastery level of the word when asked (0 for a first-time intro). */
   lv: number
   isCorrect: boolean
-  /** True when the question asked for the pinyin (tone). Only these break the Shield Golem's shield. */
-  toneQuestion?: boolean
+  /** True when this is the kind of question that breaks the boss's shield / seals (tone question for the Golem, character question for the Scribe). */
+  sealQuestion?: boolean
   roll: { drop: number; item: number }
 }
 export type AnswerResult = {
@@ -101,8 +106,10 @@ export type AnswerResult = {
   outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; comboHit: boolean
   /** HP actually restored by the Second Wind upgrade (healOnKill) on this kill; 0 without the upgrade or at full HP. */
   healedOnKill: number
-  /** Shield Golem: a segment was broken by this answer / the shield was up and blocked the hit. */
-  shieldBroken: boolean; shieldBlocked: boolean
+  /** Shield / seals: a segment was broken by this answer / the shield was up and blocked the hit / a seal grew back (Scribe). */
+  shieldBroken: boolean; shieldBlocked: boolean; shieldRegrown: boolean
+  /** Mirror Trickster: HP it healed because of a wrong answer. */
+  bossHealed: number
 }
 
 export function resolveAnswer(i: AnswerInput): AnswerResult {
@@ -120,10 +127,18 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   }
   // Shield Golem: while the shield is up it blocks all damage; a correct tone answer breaks one segment.
   const shieldUp = run.shield > 0
-  const shieldBroken = shieldUp && isCorrect && !!i.toneQuestion
+  const shieldBroken = shieldUp && isCorrect && !!i.sealQuestion
   if (shieldUp) damage = 0
-  const enemyHp = Math.max(0, run.enemyHp - damage)
+  // Mirror Trickster: a right answer hits harder; a wrong one is dodged and heals it
+  let bossHealed = 0
+  if (foe.boss === 'trickster') {
+    if (isCorrect) damage = Math.round(damage * TRICKSTER_HIT)
+    else { damage = 0; bossHealed = Math.max(0, Math.min(foe.hp, run.enemyHp + Math.round(foe.hp * (run.enemyHp <= foe.hp * TRICKSTER_LOW ? TRICKSTER_HEAL_LOW : TRICKSTER_HEAL))) - run.enemyHp) }
+  }
+  const enemyHp = Math.max(0, run.enemyHp - damage) + bossHealed
   const killed = enemyHp === 0
+  // Ink Scribe: with the seals down, a wrong answer lets one grow back
+  const shieldRegrown = foe.boss === 'scribe' && !shieldUp && !isCorrect && !killed
 
   let counter = 0, savedBySecondChance = false, secondLeft = run.secondLeft
   if (!killed) {
@@ -153,7 +168,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
 
   let xp = run.xp + xpGained, level = run.level, levelUps = 0
   while (xp >= xpForLevel(level)) { xp -= xpForLevel(level); level += 1; levelUps += 1 }
-  const next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hp, secondLeft, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp, shield: shieldBroken ? run.shield - 1 : run.shield }
+  const next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hp, secondLeft, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp, shield: shieldBroken ? run.shield - 1 : shieldRegrown ? 1 : run.shield }
   const grown = playerStats(next, b, i.allGear)
   const oldMax = playerStats(run, b, i.allGear).maxHp
   if (loadout !== run.loadout && grown.maxHp > oldMax && hp > 0) hp = Math.min(grown.maxHp, hp + grown.maxHp - oldMax)
@@ -164,7 +179,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
 
   const outcome = killed ? 'victory' : hp <= 0 ? 'defeat' : 'continue'
   return {
-    damage, counter, savedBySecondChance, outcome, loot, comboHit, healedOnKill, shieldBroken, shieldBlocked: shieldUp,
+    damage, counter, savedBySecondChance, outcome, loot, comboHit, healedOnKill, shieldBroken, shieldBlocked: shieldUp, shieldRegrown, bossHealed,
     run: {
       ...next, hp,
       gold: run.gold + goldGained, kills: run.kills + (killed ? 1 : 0),
@@ -191,6 +206,8 @@ export function bankRun(meta: Meta, run: Run): { meta: Meta; summary: RunSummary
 /** 1 or 2: which phase of the boss fight this is (for the header and for choosing questions). */
 export function bossPhase(run: Pick<Run, 'floor' | 'kill' | 'shield' | 'enemyHp'>, foeHp: number): 1 | 2 {
   if (!isBoss(run.floor, run.kill)) return 1
-  if (bossIdFor(run.floor) === 'golem') return run.shield > 0 ? 1 : 2
+  const id = bossIdFor(run.floor)
+  if (hasShield(id)) return run.shield > 0 ? 1 : 2
+  if (id === 'trickster') return run.enemyHp <= foeHp * TRICKSTER_LOW ? 2 : 1
   return run.enemyHp <= foeHp * WRAITH_ECHO_AT ? 2 : 1
 }

@@ -1,5 +1,11 @@
 # Changelog / test log
 
+## 2026-10-31 — Two more bosses, and more variety in which words come first
+- **Ink Scribe** (floor 3, 7 …): ink seals that only correct *character* answers break; with the seals down a wrong answer regrows one. **Mirror Trickster** (floor 4, 8 …): only look-alike / same-sound questions; right answers hit +40 %, wrong answers deal nothing and heal it (double below half HP). The four bosses now rotate Golem → Wraith → Scribe → Trickster. New boss items: **Scribe Brush** (+3 attack) and **Trick Mantle** (+6 max HP, +2 armor). New recoloured sprites `scribe.png` (from the slime) and `trickster.png` (from the imp) via `tools/make_boss_sprites.py`.
+- Shield code generalised: `SEAL_ASK` says which question kind breaks which boss's shield; `resolveAnswer` takes `sealQuestion` (was `toneQuestion`) and reports `shieldRegrown` / `bossHealed`. Chips and captions for seals, regrowth and dodges; the simulator models the extra boss difficulty (balance numbers about the same as before).
+- **Which words come first:** a fresh profile used to start with the same 6–8 words every time (the pool is the first words of the content file). Each new profile (first start, or *Delete all progress*) now gets a random `habit.seed` that shuffles the introduction order inside blocks of 16 words, and recently asked words are less likely to repeat. Old saves keep the file order. See "Which words come first" in `docs/GAME_DESIGN.md`.
+- Tests: scribe and trickster rules, boss data completeness, word order and recency (`tests/words.test.ts`), habit seed. 87 tests pass; layout check 8/8; browser-checked both new bosses.
+
 ## 2026-10-31 — A boss at the end of every floor
 - **Every floor now ends with a boss** (replaces the elite entirely). The Shield Golem and Echo Wraith take turns: Golem on floors 1, 3, 5 …, Wraith on 2, 4, 6 …. More bosses can be added to `BOSS_ORDER` later.
 - **Gentler early bosses** that ramp up (HP ×1.3 → 1.7, damage ×0.8 → 1.15; the Golem has a 2-segment shield on floors 1–2 and 3 from floor 3). In the simulator the early pacing stays close to the pre-boss game (first run past floor 3 at 70 % accuracy: run 9 vs 6 before) and late runs end about one floor earlier (around floor 9–10 instead of 11).
