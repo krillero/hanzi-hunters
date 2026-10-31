@@ -5,17 +5,19 @@ No code changes are needed to add content. Read this whole file before editing.
 
 | File | What it holds |
 |---|---|
-| `src/content/words.json` | The vocabulary: one object per **entry** (word, character or grammar particle). **Order matters** (earlier entries are introduced first). |
+| `src/content/words.json` | The vocabulary: one object per **entry** (word, character or grammar particle). **Order does not matter**: the teaching order is the curriculum. |
+| `src/content/curricula.json` | The **teaching order**: units, lessons and the entries each lesson introduces, by entry id. See **`docs/CURRICULUM.md`**. |
 | `src/content/explanations.json` | Optional "more about this entry" popups, keyed by entry id: explanations, **example sentences**, pronunciation notes. |
-| `src/content/cloze.json` | Authored fill-in-the-blank sentence questions for grammar particles. |
-| `src/content/sources.json` | Registry of where content comes from (license + attribution for every source name used). |
+| `src/content/cloze.json` | Authored fill-in-the-blank sentence questions for grammar particles (may declare `prerequisiteEntries` / `prerequisiteLessons`). |
+| `src/content/sources.json` | Registry of where content comes from (license + attribution for every source name used). Official levels (HSK edition + level) go in `curricula.json` (`officialLevels`), never inferred. |
 | `src/content/types.ts` | TypeScript shapes for all of the above (reference). |
 | `src/content/validate.ts`, `pinyin.ts` | The rules the validator enforces. |
 
 ## The 3-step loop
 
 ```bash
-npm run validate:content   # checks all four files; prints precise errors/warnings and how much is still unreviewed
+npm run validate:content   # checks all content files incl. curricula.json; prints errors/warnings/info and how much is still unreviewed
+npm run curriculum         # readable teaching order of the active curriculum
 npm test                   # also validates, plus game-logic tests (must stay green)
 npm run dev                # preview (see "Previewing" below)
 ```
@@ -25,7 +27,7 @@ npm run dev                # preview (see "Previewing" below)
 * `/?word=<id or hanzi>` forces that entry as the first question (it is introduced as a new word). Add `&kind=<kind>` to force a question type (and to skip the intro, asking it as if you already knew the entry)
   (`meaning`, `pinyin`, `character`, `listen`, `meaning2pinyin`, `pinyin2char`, `listen2meaning`, `listen2pinyin`, `homophone`, `lookalike`, `particle`);
   the game falls back to a fair question if that kind is not possible for the entry.
-* `/?first=朋友,看-look` introduces these entries (ids or hanzi) before everything else, so new content can be played without working up to it.
+* `/?first=朋友,看-look` introduces these entries (ids or hanzi) before the curriculum, so new content can be played without working up to it (preview only; ordinary play never introduces entries outside the curriculum).
 * Try the popup: answer, then tap the 💡 button, or open the entry from the Wordbook.
 * Narrow phone check: use a 320 px wide window; long words, examples and the Wordbook must not scroll sideways.
 
@@ -223,6 +225,7 @@ A *particle* question shows an authored sentence with a blank and asks which par
 * `why` has one short reason for **every wrong option** (shown when the learner picks it) and nothing else.
 * **Make sure only the answer is correct.** The game cannot check Chinese grammar: another particle that also fits the sentence (and the English) must not be an option. A reviewer must confirm this for every item.
 * `review` is required. Items start as `ai-draft` and the validator reports them until a person marks them `human-reviewed`.
+* Optional `prerequisiteEntries` (entry ids) and `prerequisiteLessons` (curriculum lesson ids): the sentence is only **assessed** once the learner is ready on those entries / has completed those lessons; until then the particle gets another question kind. List the words and constructions the sentence relies on yourself (e.g. `["你", "是"]` for 你是学生___？ if those are in the course); nothing is inferred from the characters. Example sentences in `explanations.json` are never assessed.
 
 ---
 
@@ -282,7 +285,7 @@ Every piece of content (entry, example, explanation, sentence question) may carr
 
 - [ ] `npm run validate:content` shows **0 errors**; every warning is read and fixed or justified.
 - [ ] `npm test` is green.
-- [ ] New entries are **appended** (the order is the teaching order) and existing ids are unchanged.
+- [ ] Existing ids are unchanged. New entries are only taught once a lesson in `curricula.json` introduces them (`npm run validate:content` lists entries outside the active curriculum as INFO).
 - [ ] Tone marks and neutral tones double-checked; `wrongPinyin` really are wrong; sentence questions have exactly one fitting answer.
 - [ ] Nothing is marked `human-reviewed` unless a person did review it.
 - [ ] Opened the entry with `/?word=<id>` (and `&kind=`) in a 320 px wide window.

@@ -6,9 +6,9 @@ import type { Saved } from './game/types'
 import AppData from './AppData'
 import { BADGES } from './game/habit'
 
-type Props = { save: Saved; warmup: { available: boolean; done: boolean; words: string[] }; onWarmup: () => void; onBuy: (id: string) => void; onStart: () => void; onReset: () => void; message: string; outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void }
+type Props = { save: Saved; course: string; warmup: { available: boolean; done: boolean; words: string[] }; onWarmup: () => void; onBuy: (id: string) => void; onStart: () => void; onReset: () => void; message: string; outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void }
 
-export default function CampScreen({ save, warmup, onWarmup, onBuy, onStart, onReset, message, outdated, onUpdate, onExport, onImport }: Props) {
+export default function CampScreen({ save, course, warmup, onWarmup, onBuy, onStart, onReset, message, outdated, onUpdate, onExport, onImport }: Props) {
   const { meta, lastRun, mastery, habit } = save
   const [tab, setTab] = useState(BRANCHES[0].id)
   const owned = (branch: string) => branchNodes(branch).filter(n => meta.upgrades.includes(n.id)).length
@@ -34,6 +34,7 @@ export default function CampScreen({ save, warmup, onWarmup, onBuy, onStart, onR
         <span>Runs {meta.runs}</span>
         <span>Mastered {masteredCount(mastery)}/{WORDS.length}</span>
       </div>
+      <p className="camp-course" role="status"><span className="eyebrow">COURSE</span> {course}</p>
       <div className="camp-counters" role="status" aria-label="Your learning progress">
         <div><b>{Object.keys(mastery).length}</b><small>WORDS KNOWN</small></div>
         <div className="good"><b>{masteredCount(mastery)}</b><small>MASTERED</small></div>

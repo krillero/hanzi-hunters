@@ -8,6 +8,7 @@ type Props = {
   id: string
   index: number                        // 1-based position among the cards shown at this fight start
   total: number
+  lessonLine?: string | null            // "Greetings · Lesson 1 · 2 of 5 introduced" (null for entries outside the course, e.g. previews)
   muted: boolean
   onSpeak: (text: string) => void
   onMore: (id: string) => void          // open the full details popup
@@ -18,7 +19,7 @@ type Props = {
  * The introduction card for a word that has just unlocked: everything needed to read and learn it, no question, no pressure.
  * The word only starts appearing in questions after "Got it". Shown between enemies, never in the middle of a fight.
  */
-export default function NewWordCard({ id, index, total, muted, onSpeak, onMore, onGotIt }: Props) {
+export default function NewWordCard({ id, index, total, lessonLine, muted, onSpeak, onMore, onGotIt }: Props) {
   const word = WORDS.find(w => w.id === id)
   const ex = getExplanation(id)
   const go = useRef<HTMLButtonElement | null>(null)
@@ -36,6 +37,7 @@ export default function NewWordCard({ id, index, total, muted, onSpeak, onMore, 
           <div className="ex-titles"><h2 id="nw-title">New word{total > 1 ? ` · ${index} of ${total}` : ''}</h2><small>{word.kind === 'particle' ? 'Grammar word' : word.kind === 'character' ? 'Character' : 'Word'}</small></div>
         </div>
         <div className="modal-body">
+          {lessonLine && <p className="nw-lesson">{lessonLine}</p>}
           <div className="nw-hero">
             <div className={`nw-hanzi len${lenClass(word.hanzi)}`} lang="zh">{word.hanzi}</div>
             <div className="nw-pinyin">{word.pinyin}{canSpeak && <button className="nw-speak" onClick={() => onSpeak(word.hanzi)} aria-label="Hear the word">🔊</button>}</div>
@@ -44,6 +46,7 @@ export default function NewWordCard({ id, index, total, muted, onSpeak, onMore, 
           </div>
           <p className="nw-note">{ex?.summary ?? word.note}</p>
           {breakdown?.type === 'breakdown' && <div className="nw-parts">{breakdown.parts.map((p, k) => <span key={k} className="nw-part"><b lang="zh">{p.char}</b> {p.meaning}</span>)}</div>}
+          {examples.length > 0 && <p className="nw-ex-label">Examples (not tested)</p>}
           {examples.length > 0 && <ul className="nw-examples">{examples.map((e, k) => <li key={k}><span className="ex-zh" lang="zh">{e.zh}</span><span className="ex-py">{e.pinyin}</span><span className="ex-en">{e.en}</span></li>)}</ul>}
           {hasExplanation(id) && <button className="link-btn nw-more" onClick={() => onMore(id)}>More about {word.hanzi}</button>}
         </div>

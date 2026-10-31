@@ -1,7 +1,9 @@
 // Save format v2 with a safe migration from the v1 prototype save. Never throws.
 import { sanitizeHabit } from './habit.ts'
-import { ENEMIES, GEAR, WORDS, type GearSlot, type Word } from '../data.ts'
+import { CURRICULA, ENEMIES, GEAR, WORDS, type GearSlot, type Word } from '../data.ts'
+import type { Curriculum } from '../content/types.ts'
 import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
+import { emptyCourse, syncCourse, wordMap, type CourseProgress } from './course.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
 import { ENEMIES_PER_FLOOR, bossIdFor, enemyStats, hasShield, isBoss, playerStats, shieldFor } from './rules.ts'
 import { MAX_LV } from './mastery.ts'
@@ -90,7 +92,28 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   return run
 }
 
-export function sanitizeSave(raw: unknown, words: Word[] = WORDS): Saved {
+const ID = /^[^\s]{1,64}$/
+/**
+ * Course progress (v3). Kept for EVERY curriculum id found in the save, also ones the content no longer has, and every lesson id is kept,
+ * also ones no lesson claims any more: nothing is discarded, so a curriculum that comes back (or an alias added later) recovers it.
+ * Then every known curriculum is synced with the current mastery: a v2 save gets its lesson readiness derived from existing entry progress,
+ * and lessons that became ready are added. Entries with progress already count as introduced (mastery[id] exists), so nothing is replayed.
+ */
+export function sanitizeCourses(raw: unknown, mastery: Mastery, curricula: Curriculum[] = CURRICULA, words: Word[] = WORDS): Record<string, CourseProgress> {
+  const out: Record<string, CourseProgress> = {}
+  if (isObj(raw)) for (const [id, v] of Object.entries(raw)) {
+    if (!ID.test(id) || !isObj(v)) continue
+    const completed = Array.isArray(v.completed) ? [...new Set(v.completed.filter((x): x is string => typeof x === 'string' && ID.test(x)))].slice(0, 5000) : []
+    out[id] = { version: int(v.version, 0, 1e6, 0), completed }
+  }
+  const byId = wordMap(words)
+  for (const c of curricula) if (c && typeof c.id === 'string' && Array.isArray(c.units)) {
+    try { out[c.id] = syncCourse(c, mastery, out[c.id] ?? emptyCourse(), byId) } catch { /* malformed curriculum: the validator reports it; keep what was saved */ }
+  }
+  return out
+}
+
+export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Curriculum[] = CURRICULA): Saved {
   const r = isObj(raw) ? raw : {}
   const migrated = migrateMastery(r.mastery, r.legacyMastery, words)
   const m = isObj(r.meta) ? r.meta : {}
@@ -98,7 +121,10 @@ export function sanitizeSave(raw: unknown, words: Word[] = WORDS): Saved {
   const meta: Meta = { gold: int(m.gold, 0, 1e9, 0), upgrades, bestFloor: int(m.bestFloor, 1, 1e6, 1), runs: int(m.runs, 0, 1e9, 0) }
   const ls = isObj(r.lastRun) ? r.lastRun : null
   const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, 1e6, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0) } : null
-  return { version: 2, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit) }
+  return {
+    version: 3, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
+    courses: sanitizeCourses(r.courses, migrated.mastery, curricula, words)
+  }
 }
 
 /** v1 prototype save -> v2: learned words become level 1, old gold is banked, the old floor becomes the best floor. */

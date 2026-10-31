@@ -10,7 +10,8 @@
     "test": "node --test tests/*.test.ts",
     "typecheck": "tsc -b",
     "validate:content": "node tools/validate-content.ts",
-    "inventory": "node tools/content-inventory.ts"
+    "inventory": "node tools/content-inventory.ts",
+    "curriculum": "node tools/curriculum-report.ts"
   },
   "dependencies": {
     "phaser": "^3.90.0",

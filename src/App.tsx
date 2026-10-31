@@ -7,21 +7,22 @@ import MenuSheet from './MenuSheet'
 import NewWordCard from './NewWordCard'
 import SummaryModal from './SummaryModal'
 import WarmupScreen from './WarmupScreen'
-import { WARMUP_GOLD_PER_CORRECT, badgeById, contextFor, localDay, newBadges, newSeed, pickWarmup, recordCorrect, recordPlay, warmupAvailable } from './game/habit'
+import { WARMUP_GOLD_PER_CORRECT, badgeById, contextFor, localDay, newBadges, pickWarmup, recordCorrect, recordPlay, warmupAvailable } from './game/habit'
 import { playSfx, unlockAudio, vibrate, type SfxName, type SfxOptions } from './audio'
 import { flyMotes } from './motes'
 import { rarityOf } from './game/rarity'
 import { accuracyPct, emptyStats, recordAnswer, recordIntro, type RunStats } from './game/runStats'
 import { DEFAULT_SETTINGS, SETTINGS_KEY, loadSettings, type Settings } from './settings'
 import { autoContinuePlan, type AutoPlan } from './game/flow'
-import { CLOZE, hasExplanation } from './content'
+import { CLOZE, hasExplanation, type ClozeItem } from './content'
 import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appInfo'
 import { parseBackup, serializeBackup } from './game/backup'
-import { ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
+import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
 import { audioReliable, homographsOf } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
-import { MAX_LV, masteredCount, orderedWords, pickWord, seenCount, updateMastery, wordsToIntroduce } from './game/mastery'
-import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, buildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
+import { MAX_LV, masteredCount, seenCount, updateMastery } from './game/mastery'
+import { DEFAULT_LIMITS, courseLine, courseStatus, emptyCourse, introCapacity, introCardLine, selectIntroductions, selectReview, sentencePrereqsMet, syncCourse, wordMap, type CourseState, type IntroPlan } from './game/course'
+import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, tryBuildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
 import { gearVerdict, rarityOf as rarityOfItem } from './game/rarity'
@@ -29,7 +30,7 @@ import {
   ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, hasShield, shieldFor, bankRun, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
-import type { Run, Saved } from './game/types'
+import type { Mastery, Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 type Card = { word: Word; question: Question }
@@ -54,6 +55,17 @@ const hasDetails = (w: Word) => hasExplanation(w.id) || w.variants.length > 0 ||
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** Preview aid: /?floor=5 starts a fresh run at the last fight of that floor (the boss on floors 5, 10 ...); add &kill=0..3 for an earlier fight. */
+const WORD_MAP = wordMap(WORDS)
+/** Development diagnostics: why nothing new is introduced right now (logged once per change). Never shown to players. */
+let lastCourseLog = ''
+function logCourse(plan: IntroPlan) {
+  const line = `[course ${ACTIVE_CURRICULUM.id} v${ACTIVE_CURRICULUM.version}] ${plan.reason}: ${plan.detail}${plan.missing.length ? ` (missing from words.json: ${plan.missing.join(', ')})` : ''}`
+  if (line === lastCourseLog) return
+  lastCourseLog = line
+  console.info(line)
+  ;(window as unknown as { __hhCourse?: IntroPlan }).__hhCourse = plan
+}
+
 function previewStart(): { floor: number; kill: number } | null {
   const q = new URLSearchParams(window.location.search); const f = Number(q.get('floor'))
   if (!q.has('floor') || !Number.isInteger(f) || f < 1 || f > 99) return null
@@ -71,7 +83,7 @@ function initialSave(): Saved {
   }
   // Brand-new players go straight into a first run; returning players land wherever they left off.
   const brandNew = s.meta.runs === 0 && s.meta.gold === 0 && s.meta.upgrades.length === 0 && Object.keys(s.mastery).length === 0
-  if (!s.run && !s.lastRun && brandNew) return { ...s, habit: { ...s.habit, seed: newSeed() }, run: newRun(computeBonuses(s.meta.upgrades), GEAR, ENEMIES) }
+  if (!s.run && !s.lastRun && brandNew) return { ...s, run: newRun(computeBonuses(s.meta.upgrades), GEAR, ENEMIES) }
   return s
 }
 
@@ -157,20 +169,31 @@ export default function App() {
   const killRef = useRef(0)
   killRef.current = run?.kill ?? 0
 
-  // New words are introduced in this profile's own order (shuffled inside blocks), and recently asked words are less likely to repeat.
-  const ordered = useMemo(() => {
-    const list = orderedWords(WORDS, save.habit.seed)
-    // Preview aid: /?first=朋友,看-look introduces these entries (ids or hanzi) before everything else, to try new content without playing to it.
-    const first = (new URLSearchParams(window.location.search).get('first') ?? '').split(',').map(s => s.trim()).filter(Boolean)
-    if (!first.length) return list
-    const lead = first.map(f => list.find(w => w.id === f) ?? list.find(w => w.hanzi === f)).filter((w): w is Word => !!w)
-    return [...lead, ...list.filter(w => !lead.includes(w))]
-  }, [save.habit.seed])
+  // Teaching order comes from the active curriculum (content/curricula.json, game/course.ts), never from the order of words.json.
+  // Preview aid: /?first=朋友,看-look introduces these entries (ids or hanzi) before the curriculum, to try new content without playing to it.
+  const previewFirst = useMemo(() => (new URLSearchParams(window.location.search).get('first') ?? '').split(',').map(f => f.trim()).filter(Boolean)
+    .map(f => (WORDS.find(w => w.id === f) ?? WORDS.find(w => w.hanzi === f))?.id).filter((id): id is string => !!id), [])
+  const courseFor = (mastery: Mastery = save.mastery): CourseState =>
+    ({ curriculum: ACTIVE_CURRICULUM, mastery, progress: save.courses[ACTIVE_CURRICULUM.id] ?? emptyCourse(), words: WORD_MAP })
+  const introPlanFor = (mastery: Mastery): IntroPlan => {
+    const capacity = introCapacity(mastery, DEFAULT_LIMITS)
+    const lead = previewFirst.filter(id => !mastery[id]).slice(0, capacity)
+    if (lead.length) return { ids: lead, reason: 'introduce', lesson: null, detail: 'preview: ?first=', missing: [] }
+    return selectIntroductions(courseFor(mastery), DEFAULT_LIMITS, capacity)
+  }
+  /** Authored sentence questions are only assessed once the entries / lessons they rely on are satisfied. */
+  const sentenceCheck = (mastery: Mastery) => {
+    const st = courseFor(mastery)
+    const elsewhere = new Set(Object.values(save.courses).flatMap(p => p.completed))
+    return (item: ClozeItem) => sentencePrereqsMet(item, st, elsewhere)
+  }
   const recentWords = useRef<string[]>([])
-  const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen, forRun: Run | null = run): Card => {
+  /** The next question: a previously introduced entry (never an unseen one), or null when no fair question exists (see noCard). */
+  const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen, forRun: Run | null = run): Card | null => {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
     const forced = current === null && forcedWord.current ? (WORDS.find(w => w.id === forcedWord.current) ?? WORDS.find(w => w.hanzi === forcedWord.current)) : undefined
-    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind, cloze: CLOZE })
+    const clozeEligible = sentenceCheck(mastery)
+    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind, cloze: CLOZE, clozeEligible })
     const bossFoe = forRun && isBoss(forRun.floor, forRun.kill) ? enemyStats(ENEMIES, forRun.floor, forRun.kill) : null
     // Some bosses need a particular kind of question: tone questions break the Golem's shield, character questions the Scribe's seals,
     // and the Trickster only asks the easy-to-confuse kinds. They ask about words you already know.
@@ -181,25 +204,40 @@ export default function App() {
       : null
     if (needed) {
       const kinds = needed.kinds.filter(k => listen || !k.startsWith('listen'))
-      const knownWords = WORDS.filter(w => mastery[w.id] && w.kind !== 'particle')
       let last: Card | null = null
       for (let k = 0; k < 12; k++) {
-        // the scheduler's pick when it is a word you already know, else any known word (never a brand-new word without teaching it)
-        let word = pickWord(ordered, mastery, last?.word.id ?? current, Math.random, recentWords.current)
-        if ((!mastery[word.id] || word.kind === 'particle') && knownWords.length > 0) word = knownWords[Math.floor(Math.random() * knownWords.length)]
-        const entry = mastery[word.id] ?? { lv: 1, ok: 0 }   // only when nothing at all is known yet (preview URLs)
-        last = { word, question: buildQuestion(word, entry, WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)])) }
-        if (needed.ok(last.question)) return last
+        // a known entry (review selection never returns an unseen one); particles only when nothing else is known
+        const currentId: string | null = last ? last.word.id : current
+        const word: Word | null = selectReview(WORDS, mastery, { currentId, recent: recentWords.current, filter: w => w.kind !== 'particle' }) ?? selectReview(WORDS, mastery, { currentId, recent: recentWords.current })
+        if (!word) break
+        const question = tryBuildQuestion(word, mastery[word.id], WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)]))
+        if (!question) continue
+        last = { word, question }
+        if (needed.ok(question)) return last
       }
-      return last!
+      if (last) return last
     }
     // Echo Wraith, phase 2: the kind of question you got wrong most recently keeps coming back.
     const echo = !forced && forRun && bossFoe?.boss === 'wraith' && bossPhase(forRun, bossFoe.hp) === 2 ? [...kindHistory.current].reverse().find(h => !h.ok)?.kind : undefined
-    const word = forced ?? pickWord(ordered, mastery, current, Math.random, recentWords.current)
-    // Preview aid: with ?word=…&kind=…, an entry you have not met yet is asked as if you already knew it, so the requested question kind is shown
-    const asked = forced && forcedKind.current && !mastery[word.id] ? { lv: 1, ok: 0 } : mastery[word.id]
-    return { word, question: buildQuestion(word, asked, WORDS, opts(forced && forcedKind.current ? forcedKind.current : echo)) }
+    if (forced) {
+      // Preview aid: with ?word=…&kind=…, an entry you have not met yet is asked as if you already knew it, so the requested question kind is shown
+      const asked = forcedKind.current && !mastery[forced.id] ? { lv: 1, ok: 0 } : mastery[forced.id]
+      const question = tryBuildQuestion(forced, asked, WORDS, opts(forcedKind.current ?? undefined))
+      if (question) return { word: forced, question }
+    }
+    const tried = new Set<string>()
+    for (let k = 0; k < 8; k++) {
+      const word = selectReview(WORDS, mastery, { currentId: current, recent: recentWords.current, filter: w => !tried.has(w.id) })
+      if (!word) break
+      tried.add(word.id)
+      const question = tryBuildQuestion(word, mastery[word.id], WORDS, opts(echo))
+      if (question) return { word, question }
+    }
+    return null
   }
+  /** True when the last attempt to build a question found nothing fair to ask (shown as a content/configuration problem). */
+  const [noCard, setNoCard] = useState(false)
+  const setNextCard = (c: Card | null) => { setCard(c); setNoCard(c === null) }
   const patch = (fn: (s: Saved) => Saved) => setSave(fn)
 
   // ---- introducing new words: a card at the start of a fight, never mid-fight ----------------
@@ -214,9 +252,17 @@ export default function App() {
     const resumed = introKey.current === null
     introKey.current = key
     if (forcedWord.current || (resumed && seenCount(save.mastery) > 0)) return   // preview URLs and reloads mid-fight are left alone
-    const ids = wordsToIntroduce(ordered, save.mastery)
-    if (ids.length) { setIntroQueue(ids); setIntroTotal(ids.length) }
+    const plan = introPlanFor(save.mastery)
+    if (import.meta.env.DEV) logCourse(plan)
+    if (plan.ids.length) { setIntroQueue(plan.ids); setIntroTotal(plan.ids.length) }
   })
+  // Lesson completion is sticky: record lessons as soon as they become ready, so later mistakes never relock the course.
+  useEffect(() => {
+    const id = ACTIVE_CURRICULUM.id
+    const cur = save.courses[id] ?? emptyCourse()
+    if (syncCourse(ACTIVE_CURRICULUM, save.mastery, cur, WORD_MAP) === cur) return
+    setSave(s => ({ ...s, courses: { ...s.courses, [id]: syncCourse(ACTIVE_CURRICULUM, s.mastery, s.courses[id] ?? emptyCourse(), WORD_MAP) } }))
+  }, [save.mastery]) // eslint-disable-line react-hooks/exhaustive-deps
   const introGotIt = () => {
     const id = introQueue[0]
     if (!id) return
@@ -225,7 +271,7 @@ export default function App() {
     setFloorStats(s => recordIntro(s, id)); setRunStats(s => recordIntro(s, id))
     const rest = introQueue.slice(1)
     setIntroQueue(rest)
-    if (!rest.length) { setCard(makeCard(mastery, null)); setEliminated([]); answerLock.current = false }
+    if (!rest.length) { setNextCard(makeCard(mastery, null)); setEliminated([]); answerLock.current = false }
   }
 
   // ---- one-time setup -----------------------------------------------------------------
@@ -249,7 +295,8 @@ export default function App() {
   useEffect(() => {
     if (!settings.muted || !card?.question.audio || feedback || reveal) return
     window.speechSynthesis?.cancel?.()
-    setCard({ word: card.word, question: buildQuestion(card.word, save.mastery[card.word.id], WORDS, { canListen: false, known: new Set(Object.keys(save.mastery)), history: kindHistory.current, cloze: CLOZE }) })
+    const question = tryBuildQuestion(card.word, save.mastery[card.word.id], WORDS, { canListen: false, known: new Set(Object.keys(save.mastery)), history: kindHistory.current, cloze: CLOZE, clozeEligible: sentenceCheck(save.mastery) })
+    if (question) setCard({ word: card.word, question }); else setNextCard(makeCard(save.mastery, card.word.id, false))
     /* eslint-disable-next-line */
   }, [settings.muted])
   // Is a newer build deployed? Checked at start and whenever the app comes back to the foreground.
@@ -261,7 +308,7 @@ export default function App() {
     document.addEventListener('visibilitychange', onVisible)
     return () => { alive = false; document.removeEventListener('visibilitychange', onVisible) }
   }, [])
-  useEffect(() => { if (!card && run) setCard(makeCard()) /* eslint-disable-next-line */ }, [inCamp])
+  useEffect(() => { if (!card && run) setNextCard(makeCard()) /* eslint-disable-next-line */ }, [inCamp])
 
   useEffect(() => {
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)) } catch { /* storage unavailable */ }
@@ -409,14 +456,14 @@ export default function App() {
     setFeedback(null)
     setCaption(null)
     setTipPulse(null)
-    if (run?.phase === 'fighting') { setCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
+    if (run?.phase === 'fighting') { setNextCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
 
   const nextEnemy = () => {
     if (!run) return
     const next = advance(run, bonuses, ENEMIES)
     patch(s => ({ ...s, run: next }))
-    setCard(makeCard(save.mastery, card?.word.id ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
+    setNextCard(makeCard(save.mastery, card?.word.id ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
     setCaption(null)
     if (isBoss(next.floor, next.kill)) {
       // The full intro card only the first time you meet each boss; later floors just show the BOSS tag
@@ -433,7 +480,7 @@ export default function App() {
     const mode = reveal.plan.mode
     setReveal(null)
     if (mode === 'enemy') nextEnemy()
-    else { setCaption(null); setCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
+    else { setCaption(null); setNextCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
   const blockingOpen = explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null || introQueue.length > 0
@@ -475,7 +522,7 @@ export default function App() {
     forcedWord.current = null
     const { meta, summary } = bankRun(save.meta, run)
     patch(s => ({ ...s, meta, run: null, lastRun: summary }))
-    setCampMsg(''); setFeedback(null); setCard(null); setShowBag(false); setShowWords(false); answerLock.current = false
+    setCampMsg(''); setFeedback(null); setCard(null); setNoCard(false); setShowBag(false); setShowWords(false); answerLock.current = false
     setSummary(null); setLevelUp(null); setLootReveal(null); setBossIntro(null)
   }
 
@@ -484,7 +531,7 @@ export default function App() {
     const fresh = newRun(bonuses, GEAR, ENEMIES)
     patch(s => ({ ...s, run: fresh }))
     setFloorStats(emptyStats()); setRunStats(emptyStats()); setSummary(null)
-    setCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); answerLock.current = false
+    setNextCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); answerLock.current = false
   }
 
   // ---- daily warm-up -----------------------------------------------------------------------
@@ -534,8 +581,8 @@ export default function App() {
     if (!window.confirm('Delete ALL progress — upgrades, gold and word mastery — and start over?')) return
     try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
     const fresh = sanitizeSave(null)
-    setSave({ ...fresh, habit: { ...fresh.habit, seed: newSeed() }, run: newRun(computeBonuses([]), GEAR, ENEMIES) })
-    setReveal(null); setCard(null); setFeedback(null); setEliminated([]); setCampMsg(''); answerLock.current = false
+    setSave({ ...fresh, run: newRun(computeBonuses([]), GEAR, ENEMIES) })
+    setReveal(null); setNextCard(null); setNoCard(false); setFeedback(null); setEliminated([]); setCampMsg(''); answerLock.current = false
   }
 
   // ---- camp -----------------------------------------------------------------------------
@@ -554,8 +601,8 @@ export default function App() {
       <main className="app-shell in-camp">
         {topbar}
         {warmup
-          ? <WarmupScreen words={warmup} mastery={save.mastery} canListen={canListen} speakWord={h => speak(h, true)} sfx={n => feel(n)} onAnswer={warmupAnswer} onDone={warmupDone} onExit={() => setWarmup(null)} />
-          : <CampScreen save={save} warmup={warm} onWarmup={startWarmup} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} />}
+          ? <WarmupScreen words={warmup} mastery={save.mastery} clozeEligible={sentenceCheck(save.mastery)} canListen={canListen} speakWord={h => speak(h, true)} sfx={n => feel(n)} onAnswer={warmupAnswer} onDone={warmupDone} onExit={() => setWarmup(null)} />
+          : <CampScreen save={save} course={courseLine(courseStatus(courseFor()))} warmup={warm} onWarmup={startWarmup} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} />}
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {menu}
       </main>
@@ -563,7 +610,27 @@ export default function App() {
   }
 
   // ---- battle ---------------------------------------------------------------------------
-  if (!card) return <main className="app-shell">{topbar}</main>
+  if (!card) {
+    // Nothing to ask yet: either the introduction cards are about to show, or the content cannot produce a fair question.
+    const plan = introPlanFor(save.mastery)
+    const problem = introQueue.length === 0 && run.phase === 'fighting' && (noCard || (seenCount(save.mastery) === 0 && plan.ids.length === 0))
+    return (
+      <main className="app-shell">
+        {topbar}
+        {problem && <section className="content-error" role="alert">
+          <h2>No words to practise</h2>
+          <p>{seenCount(save.mastery) === 0
+            ? `The course “${ACTIVE_CURRICULUM.title}” has no word that can be introduced.`
+            : 'None of the words you know can be asked as a fair question right now.'}</p>
+          <p className="hint-text">This is a content or configuration problem, not something you did. Your progress is safe. If you maintain this game: run <code>npm run validate:content</code> and check <code>src/content/curricula.json</code> and <code>words.json</code>. ({plan.reason}: {plan.detail})</p>
+          <button className="bar-btn main" onClick={endRun}>Back to camp</button>
+        </section>}
+        {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
+        {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+        {menu}
+      </main>
+    )
+  }
   const { word, question } = card
   const entry = save.mastery[word.id]
   const canSpeak = audioReliable(word, WORDS)
@@ -790,7 +857,7 @@ export default function App() {
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} onClose={() => setSummary(null)} onContinue={() => { if (summary === 'floor') { setSummary(null); nextEnemy() } else endRun() }} />}
-      {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
+      {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
       {menu}

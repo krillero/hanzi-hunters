@@ -129,6 +129,75 @@ export type ClozeItem = {
   /** For every wrong option: one short reason it does not fit here. */
   why: Record<string, string>
   note?: string
+  /** Entries the learner must be ready on before this sentence is assessed (the words and constructions it relies on). Authored, never inferred from characters. */
+  prerequisiteEntries?: string[]
+  /** Lessons (any curriculum) that must be completed before this sentence is assessed. */
+  prerequisiteLessons?: string[]
   source?: SourceRef[]
   review: Review
+}
+
+// ---- curricula (curricula.json) ----------------------------------------------------------------------
+// A curriculum is the TEACHING ORDER. It only references vocabulary entries by their stable `id`; definitions stay in words.json,
+// and progress stays keyed by entry id, so the same entry can belong to several curricula without duplicating either.
+// Ordering has exactly one representation: array position (units, then lessons, then introductions). There are no numeric ranks.
+
+/** Where an entry sits in an official syllabus. Metadata only: never used to order teaching. Missing = unknown (never inferred). */
+export type OfficialLevel = {
+  /** Key in sources.json, e.g. "HSK". */
+  source: string
+  /** The exact edition, e.g. "HSK 3.0 (2021)" or "HSK 2.0 (2012)". Required: editions differ. */
+  edition: string
+  /** The level as that edition names it, e.g. "1" or "1-3". */
+  level: string
+  /** Optional page / list reference in that edition. */
+  ref?: string
+}
+
+/** One vocabulary entry introduced by a lesson. */
+export type Introduction = {
+  /** Entry id in words.json (the hanzi unless the entry declares an explicit id). */
+  entryId: string
+  /** Entries that must be ready (see `readiness`) before this one is introduced. Explicit only: nothing is inferred from characters. */
+  prerequisiteEntries?: string[]
+  /** false = taught in order, but not needed for the lesson to count as ready. Default true. */
+  required?: boolean
+  officialLevels?: OfficialLevel[]
+}
+
+export type Lesson = {
+  /** Stable id: saved lesson completion is keyed by it, never by position. Never reuse an id for different content. */
+  id: string
+  title: string
+  /** Lessons that must be ready (or were completed before) before this lesson introduces anything. */
+  prerequisiteLessons?: string[]
+  /** Earlier ids of this same lesson; their saved completion carries over. */
+  aliases?: string[]
+  introductions: Introduction[]
+}
+
+export type Unit = { id: string; title: string; lessons: Lesson[] }
+
+/** When is an entry "ready to advance"? It has been introduced and reached `minLevel` (mastery level, 1 to 4). Default { minLevel: 1 }. */
+export type Readiness = { minLevel: number }
+
+export type Curriculum = {
+  /** Stable id (lowercase letters, digits, dashes). Saved course progress is keyed by it. */
+  id: string
+  /** Positive integer. Raise it whenever units, lessons or introductions change (see docs/CURRICULUM.md). */
+  version: number
+  title: string
+  description?: string
+  /** true = the order is a placeholder that has not been pedagogically designed or reviewed. */
+  provisional?: boolean
+  readiness?: Readiness
+  units: Unit[]
+  source?: SourceRef[]
+  review?: Review
+}
+
+export type CurriculaFile = {
+  /** Id of the curriculum the game uses. */
+  default: string
+  curricula: Curriculum[]
 }

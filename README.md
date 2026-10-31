@@ -25,7 +25,7 @@ npm run build
 npm run preview
 ```
 
-`npm run build` runs TypeScript project builds followed by Vite. **Build status: verified** (see `CHANGELOG.md` for exactly what was run). `npm test` runs the rules/save/data tests (13 tests, no extra dependency; needs Node 22.18+ for built-in TypeScript stripping).
+`npm run build` runs TypeScript project builds followed by Vite. **Build status: verified** (see `CHANGELOG.md` for exactly what was run). `npm test` runs the rules/save/content/curriculum tests (no extra dependency; needs Node 22.18+ for built-in TypeScript stripping).
 
 ## Project map
 
@@ -72,7 +72,7 @@ hanzi-hunters/
 - There is no backend, account system, cloud save, analytics or multiplayer.
 - Local progress is stored in the browser using `localStorage`; different browsers/devices do not share progress.
 - Gear is a prototype system: owned items are unlocked/equipped and bonuses stack. There is no full inventory/equipment-slot management yet.
-- Vocabulary is a starter set, not a reviewed curriculum. Have a qualified Mandarin educator review linguistic content before public release.
+- Vocabulary is a starter set, and the shipped curriculum order is provisional, not a reviewed course. Have a qualified Mandarin educator review linguistic content and the teaching order before public release.
 - PWA setup is present, but HTTPS deployment, installability, offline behavior and mobile-device behavior have not been verified.
 
 ## Suggested first task for a new agent
@@ -85,7 +85,7 @@ hanzi-hunters/
 The game caches itself for offline use, so a normal reload can show an old version. In the game: **camp → App & data → Update app** (or tap **Update** on the "new version available" banner). Your progress is stored separately and is not deleted. **Export progress** there saves a backup file you can import again, for example before clearing browser data. Do not use the browser's "Clear site data": it deletes the save.
 
 ## Adding words and explanations
-Vocabulary (single characters, multi-character words, grammar particles), example sentences, sentence questions and their sources are JSON files in `src/content/`. See **`docs/CONTENT_GUIDE.md`** (format, rules, checklist and a ready-made prompt for another agent). Validate with `npm run validate:content`; preview any word with `/?word=她`. To hand content work to another agent use `docs/AGENT_PROMPT.md`; `npm run inventory` regenerates `docs/content-inventory.json` (what exists now).
+Vocabulary (single characters, multi-character words, grammar particles), example sentences, sentence questions and their sources are JSON files in `src/content/`. **The teaching order is a separate curriculum file** (`src/content/curricula.json`, see **`docs/CURRICULUM.md`**); the order of `words.json` does not matter. The shipped curriculum is a provisional compatibility course; `docs/CURRICULUM.md` §7 explains how to install the reviewed 100-word course. `npm run curriculum` prints the effective teaching order. See **`docs/CONTENT_GUIDE.md`** (format, rules, checklist and a ready-made prompt for another agent). Validate with `npm run validate:content`; preview any word with `/?word=她`. To hand content work to another agent use `docs/AGENT_PROMPT.md`; `npm run inventory` regenerates `docs/content-inventory.json` (what exists now).
 
 ## Playing on a phone
 Use the ⛶ button (top right) for fullscreen. For the best experience install it: Android Chrome/Brave menu → *Install app* / *Add to Home screen*; iPhone Safari Share → *Add to Home Screen*. The installed app runs without browser bars.

@@ -30,8 +30,10 @@ RULES THAT MATTER MOST
 - Only include facts you are confident are correct. If unsure, leave it out and list it under "unsure" in
   your report. Never present a folk-etymology or mnemonic as history; label it a memory aid.
 - Pinyin uses tone MARKS (tā), never numbers (ta1). Simplified characters only.
-- Keep new words appended after the existing ones (the order is the teaching order) unless a word clearly
-  belongs earlier; do not reorder or rewrite existing entries unless fixing a verified error (say so in your report).
+- The order of words.json does NOT matter: the teaching order is src/content/curricula.json (docs/CURRICULUM.md).
+  Add new entries anywhere (appending is simplest); a new entry is only taught once a curriculum lesson introduces it.
+  Do not rename or rewrite existing entries unless fixing a verified error (say so in your report). Changing the
+  curriculum order is a separate, reviewed task: do not reorder curricula.json unless asked.
 - Use words.json "group" values that already exist where they fit (people, nature, number, size, body,
   place, grammar); create a new lowercase group only when none fits (e.g. "animals").
 - Use "variants" for other accepted pronunciations of the SAME word and meaning, "speech" for connected-speech

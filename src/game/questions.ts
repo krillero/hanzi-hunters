@@ -57,6 +57,9 @@ export type QuestionOptions = {
   known?: Set<string>
   /** Authored fill-in-the-blank items (cloze.json). Without them, particle questions are not possible. */
   cloze?: ClozeItem[]
+  /** Are this sentence's prerequisites (entries / lessons it relies on) satisfied for the learner? Without it, only sentences that
+   *  declare no prerequisites are assessed. Sentences that fail are never asked: another eligible kind is chosen instead. */
+  clozeEligible?: (item: ClozeItem) => boolean
   /** Recent results this session, used to avoid repeats and to favour weaker kinds. */
   history?: KindResult[]
 }
@@ -198,14 +201,18 @@ export const KIND_WEIGHTS: Record<number, Partial<Record<QKind, number>>> = {
   4: { character: 2, listen: 2, pinyin2char: 2, listen2pinyin: 2, listen2meaning: 2, meaning2pinyin: 2, lookalike: 3, homophone: 3, pinyin: 1, meaning: 1 }
 }
 
-/** Authored fill-in-the-blank items whose correct answer is this particle. */
-const clozeFor = (word: Word, opts: Pick<QuestionOptions, 'cloze'>) => (opts.cloze ?? []).filter(c => c.answer === word.id)
+/** Authored fill-in-the-blank items whose correct answer is this particle and whose prerequisites are satisfied. */
+const hasPrereqs = (c: ClozeItem) => !!(c.prerequisiteEntries?.length || c.prerequisiteLessons?.length)
+export const clozeFor = (word: Word, opts: Pick<QuestionOptions, 'cloze' | 'clozeEligible'>) =>
+  (opts.cloze ?? []).filter(c => c.answer === word.id && (opts.clozeEligible ? opts.clozeEligible(c) : !hasPrereqs(c)))
+
+type FeasibilityOptions = Pick<QuestionOptions, 'canListen' | 'known' | 'cloze' | 'clozeEligible'>
 
 /** A kind the entry's own `questions` list does not allow is never asked (the first exposure, `intro`, is always allowed). */
 export const kindAllowed = (kind: QKind, word: Word) => kind === 'intro' || !word.questions || word.questions.includes(kind)
 
 /** Can this kind be asked fairly for this word right now? */
-export function isFeasible(kind: QKind, word: Word, all: Word[], opts: Pick<QuestionOptions, 'canListen' | 'known' | 'cloze'> = {}): boolean {
+export function isFeasible(kind: QKind, word: Word, all: Word[], opts: FeasibilityOptions = {}): boolean {
   if (kind === 'intro') return true
   if (!kindAllowed(kind, word)) return false
   if (kind === 'particle') return word.kind === 'particle' && clozeFor(word, opts).length > 0
@@ -221,7 +228,7 @@ export function isFeasible(kind: QKind, word: Word, all: Word[], opts: Pick<Ques
 }
 
 /** The kind to fall back to when the wanted one is not possible: `meaning` if allowed, else the first allowed feasible kind. */
-export function fallbackKind(word: Word, all: Word[], opts: Pick<QuestionOptions, 'canListen' | 'known' | 'cloze'> = {}): QKind {
+export function fallbackKind(word: Word, all: Word[], opts: FeasibilityOptions = {}): QKind {
   const order: QKind[] = ['meaning', 'particle', 'character', 'pinyin2char', 'pinyin', 'meaning2pinyin']
   return order.find(k => kindAllowed(k, word) && isFeasible(k, word, all, opts)) ?? 'meaning'
 }
@@ -251,11 +258,41 @@ export function chooseKind(word: Word, entry: MasteryEntry | undefined, all: Wor
 
 // ------------------------------------------------------------------------------------------
 
+/** A generated multiple-choice question needs the answer plus at least two safe wrong options; an authored sentence at least one. */
+export const MIN_CHOICES = 3
+export const MIN_SENTENCE_CHOICES = 2
+/** Exactly one option is the answer, no two options read the same, and there are enough of them. */
+export const isFairQuestion = (q: Question) =>
+  q.options.filter(o => o === q.answer).length === 1 && new Set(q.options).size === q.options.length &&
+  q.options.length >= (q.kind === 'particle' ? MIN_SENTENCE_CHOICES : MIN_CHOICES)
+
+/**
+ * A fair question for this entry, or null when none can be built (too few safe distractors for every allowed kind).
+ * Tries the requested / chosen kind first, then the fallback order, then any other kind; a kind is only used when the entry allows it
+ * (`questions`), it is feasible now, and the result is fair. Never returns a one-option (or two-option generated) question.
+ */
+export function tryBuildQuestion(word: Word, entry: MasteryEntry | undefined, words: Word[], opts: QuestionOptions = {}): Question | null {
+  if (!entry) { const q = buildKind('intro', word, entry, words, opts); return isFairQuestion(q) ? q : null }
+  const first = opts.kind ?? chooseKind(word, entry, words, opts)
+  const order = [...new Set<QKind>([first, 'meaning', 'particle', 'character', 'pinyin2char', 'pinyin', 'meaning2pinyin', ...QUESTION_KINDS.filter(k => k !== 'intro')])]
+  for (const kind of order) {
+    if (kind === 'intro' || !isFeasible(kind, word, words, opts)) continue
+    const q = buildKind(kind, word, entry, words, opts)
+    if (isFairQuestion(q)) return q
+  }
+  return null
+}
+
+/** Like tryBuildQuestion, for callers that know the content is large enough (tests, tools). Throws instead of returning an unfair question. */
 export function buildQuestion(word: Word, entry: MasteryEntry | undefined, words: Word[], opts: QuestionOptions = {}): Question {
+  const q = tryBuildQuestion(word, entry, words, opts)
+  if (!q) throw new Error(`No fair question can be built for "${word.id}" (too few safe options for every allowed question kind)`)
+  return q
+}
+
+function buildKind(kind: QKind, word: Word, entry: MasteryEntry | undefined, words: Word[], opts: QuestionOptions): Question {
   const rng = opts.rng ?? Math.random
   const lv = entry?.lv ?? 0
-  let kind: QKind = !entry ? 'intro' : opts.kind ?? chooseKind(word, entry, words, opts)
-  if (kind !== 'intro' && !isFeasible(kind, word, words, opts)) kind = fallbackKind(word, words, opts)
 
   const pool = poolFor(word, words, opts.known)
   const difficulty = difficultyFor(lv)
@@ -267,7 +304,7 @@ export function buildQuestion(word: Word, entry: MasteryEntry | undefined, words
   const hanziOptions = (soundOnly = false) =>
     shuffle([word.hanzi, ...distractors(word, pool, words, rng, 3, soundOnly ? soundOk : undefined, difficulty, true).map(w => w.hanzi)], rng)
   const q = (p: Omit<Question, 'audio'> & { audio?: boolean }): Question => ({ audio: false, ...p })
-  const pinyinChoices = (meaningShown: boolean) => pinyinOptions(word, words, rng, meaningShown) ?? [word.pinyin]
+  const pinyinChoices = (meaningShown: boolean) => pinyinOptions(word, words, rng, meaningShown) ?? [word.pinyin]   // [answer] alone is rejected by isFairQuestion
 
   switch (kind) {
     case 'intro': return q({

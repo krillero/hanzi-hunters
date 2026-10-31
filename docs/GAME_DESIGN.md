@@ -33,7 +33,7 @@ Not yet: spaced review by time, per-kind history across sessions, sentence/conte
 - Tone-change readings (`alt`, e.g. 不 bú, 一 yí/yì) are never offered as wrong pinyin.
 - 2 correct answers in a row promote a word; a miss drops it one level. Level 4 = mastered (asked rarely).
 - Harder levels deal bonus damage (+0/10/25/40 %).
-- The pool of words starts at 6 and grows by one per word that reaches level 1; no new word is introduced while 4 words are still at level 0.
+- New entries come in curriculum order (see below); no new entry is introduced while 4 entries are still at level 0, and entries met may exceed entries at level 1+ by at most 6.
 
 ## Flow after an answer
 Right answer: the card reveals the word in place and the game continues by itself (Quick 1 s / Relaxed 2.5 s / Off in settings); after a normal kill the next monster follows ~1.5 s later. Always paused: wrong answer, defeat, floor cleared (elite). Rewards are shown in the scene and counters, loot sets a NEW dot on Gear. Sound off = no audio and no listening questions.
@@ -49,8 +49,8 @@ No upgrade answers questions; a test enforces that every effect is power or conv
 ## Balance (tools/simulate.ts, tests/balance.test.ts)
 Bot play at 60/75/90 % accuracy: first death on floor 1–3 with enough gold for the first node within 2 runs; a full tree takes ≥ 8 runs; with a full tree the average run still ends around floors 9–12. Tune in `src/game/rules.ts` (scaling) and `src/game/upgrades.ts` (COST_BASE, effects). The bot is a model, not real players — expect to retune after human playtests.
 
-## Save format v2 (`hanzi-hunters-save-v2`)
-`{ version, meta{gold,upgrades,bestFloor,runs}, mastery{entryId:{lv,ok}}, legacyMastery{id:{lv,ok}}, run|null, lastRun|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges} }`. Every field is validated on load (`src/game/save.ts`); a mid-run reload resumes the run. The v1 prototype save is migrated once: learned words → level 1, gold → banked, floor → best floor. The v1 key is left untouched.
+## Save format v3 (key `hanzi-hunters-save-v2`)
+`{ version: 3, meta{gold,upgrades,bestFloor,runs}, mastery{entryId:{lv,ok}}, legacyMastery{id:{lv,ok}}, run|null, lastRun|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges}, courses{curriculumId:{version,completed[lessonId]}} }`. v2 saves are migrated on load (course progress derived from mastery; see `docs/CURRICULUM.md` §4). Every field is validated on load (`src/game/save.ts`); a mid-run reload resumes the run. The v1 prototype save is migrated once: learned words → level 1, gold → banked, floor → best floor. The v1 key is left untouched.
 
 **Progress is keyed by entry id** (the hanzi unless the content file gives the entry an `id`), so saves written before ids existed load unchanged. `migrateMastery` carries progress over when content changes: an entry's own id or one of its `aliases` (an earlier id of the same entry; the higher level wins), or a hanzi that is now used by exactly one entry. Progress nobody claims (a removed entry, or an ambiguous shared hanzi) is parked in `legacyMastery` instead of being deleted, and is retried on every load. Different meanings are never merged. `habit`, `legacyMastery` and the id keys were added without a version bump (older apps ignore them).
 
@@ -79,9 +79,10 @@ Bot play at 60/75/90 % accuracy: first death on floor 1–3 with enough gold for
 * **Longer floors:** `ENEMIES_PER_FLOOR` (rules.ts) is one constant. A trial with 10 per floor typechecks, and the simulator pacing stays similar, but it needs: the pacing and save tests' thresholds re-checked, the header path (10 nodes overflow the header by ~22 px on a 320 px phone: shrink the nodes or drop the BOSS tag), and a look at per-floor rewards.
 * Loot reveal: rare/epic gear, boss gear, or a clear upgrade over what you wear opens a chest card that compares the stats with the equipped item (and offers *Equip now*); other drops stay a chip. Auto-continue waits while the card is open.
 
-## Which words come first (`src/game/mastery.ts`)
-* The pool starts with the first 6 words of the content file and grows by one for every word that has reached level 1; inside the pool, weak words are weighted higher than mastered ones. A word in the pool that has not been introduced yet is never asked: it is introduced (one per fight start, in the profile's order, unless 4 words are still at level 0) by its card. A brand-new player gets the first 3 cards at once so there is something to ask about. A reload in the middle of a fight does not show a card.
-* Before, a fresh profile therefore always started with the same 6–8 words (人 大 小 一 二 三 …). Now each new profile (first start or *Delete all progress*) gets a random `habit.seed` that shuffles the order **inside blocks of 16 words** (`orderedWords`), so the easy-first order of the file is kept but the opening differs. Old saves have seed 0 = file order, so nothing changes for them.
-* Words asked in the last few questions are less likely to repeat (`RECENT_PENALTY`; this session only, across runs).
-* Simulated: 200 fresh profiles saw 16 different words in their first 12 questions instead of 8. The limit that remains is the content order and the starting pool of 6.
+## Which words come first (`src/game/course.ts`, `src/content/curricula.json`)
+* The teaching order is the active **curriculum** (units → lessons → introductions), not the order of `words.json`. Full rules: `docs/CURRICULUM.md`.
+* New entries are introduced on their card, in curriculum order, the same for every player (no random seed any more): a brand-new player gets 3 cards at once, then at most one per fight start, none while 4 entries are still at level 0. Lessons with unmet prerequisite lessons are skipped; an entry whose prerequisite entries are not ready yet makes its lesson wait. A reload in the middle of a fight does not show a card.
+* Review questions only ask entries already introduced (`selectReview`): weak entries are weighted higher than mastered ones, and entries asked in the last few questions are less likely to repeat (`RECENT_PENALTY`; this session only).
+* A lesson counts as ready when every required entry is at level 1 (configurable per curriculum); it is then recorded as completed and never relocks.
+* The old behaviour (file order, shuffled inside blocks of 16 by `habit.seed`) is gone; `habit.seed` is still saved but unused.
 

@@ -1658,3 +1658,13 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .nw-foot{flex:none;padding:10px 14px 14px;border-top:1px solid #28374a}
 .nw-foot .bar-btn{width:100%;min-height:52px}
 .nw-speak{width:44px;height:44px;border-radius:50%;border:1px solid #3b526b;background:#1a2c40;color:#c4d8eb;font-size:20px;line-height:1;flex:none}
+
+/* curriculum progress (course.ts): lesson line on the introduction card and in camp; content/configuration error */
+.nw-lesson{margin:0;font:12px 'DM Mono',monospace;color:#9eb4ca;letter-spacing:.3px;text-align:center;overflow-wrap:anywhere}
+.nw-ex-label{margin:4px 0 -4px;font:11px 'DM Mono',monospace;color:#8798ab;letter-spacing:.5px;text-transform:uppercase}
+.camp-course{margin:10px 0 0;padding:10px 12px;background:#111b29;border:1px solid #2c3b50;font-size:14px;line-height:1.4;color:#dbe6f0;overflow-wrap:anywhere}
+.camp-course .eyebrow{margin-right:6px}
+.content-error{margin:16px;padding:16px;background:#1d1520;border:1px solid #7a3d4f;color:#f0dfe4;display:grid;gap:10px;max-width:640px}
+.content-error h2{margin:0;font-size:20px}
+.content-error p{margin:0;line-height:1.45;overflow-wrap:anywhere}
+.content-error code{font-size:12px;background:#2a1f2c;padding:1px 4px}

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { WORDS, type Word } from './data'
-import { CLOZE } from './content'
+import { CLOZE, type ClozeItem } from './content'
 import { audioReliable } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
-import { buildQuestion, type KindResult, type Question } from './game/questions'
+import { tryBuildQuestion, type KindResult, type Question } from './game/questions'
 import type { Mastery } from './game/types'
 import type { SfxName } from './audio'
 import { WARMUP_GOLD_PER_CORRECT } from './game/habit'
@@ -11,6 +11,7 @@ import { WARMUP_GOLD_PER_CORRECT } from './game/habit'
 type Props = {
   words: string[]                       // entry ids to review, in order
   mastery: Mastery                      // live mastery (the parent updates it after every answer)
+  clozeEligible?: (item: ClozeItem) => boolean   // sentence questions only when their prerequisites are met
   canListen: boolean
   speakWord: (text: string) => void
   sfx: (name: SfxName) => void
@@ -22,8 +23,12 @@ type Props = {
 const slotClass = (shown: boolean, asked: boolean) => (shown ? 'on' : asked ? 'ask' : 'dim')
 
 /** The optional daily warm-up: a few quick review questions about words you already know. No HP, no enemies, no risk. */
-export default function WarmupScreen({ words, mastery, canListen, speakWord, sfx, onAnswer, onDone, onExit }: Props) {
-  const list = useMemo(() => words.map(id => WORDS.find(w => w.id === id)).filter((w): w is Word => !!w), [words])
+export default function WarmupScreen({ words, mastery, clozeEligible, canListen, speakWord, sfx, onAnswer, onDone, onExit }: Props) {
+  // Only entries a fair question can be built for (tiny or unusual content could leave one without enough safe options).
+  const list = useMemo(() => words.map(id => WORDS.find(w => w.id === id)).filter((w): w is Word => !!w)
+    .filter(w => tryBuildQuestion(w, mastery[w.id] ?? { lv: 1, ok: 0 }, WORDS, { canListen: false, known: new Set(Object.keys(mastery)), cloze: CLOZE, clozeEligible }) !== null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [words])
   const [i, setI] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
@@ -32,7 +37,7 @@ export default function WarmupScreen({ words, mastery, canListen, speakWord, sfx
   const word = list[i]
   const canSpeak = word ? audioReliable(word, WORDS) : false
   const question: Question | null = useMemo(
-    () => (word ? buildQuestion(word, mastery[word.id] ?? { lv: 1, ok: 0 }, WORDS, { canListen, known, history: history.current, cloze: CLOZE }) : null),
+    () => (word ? tryBuildQuestion(word, mastery[word.id] ?? { lv: 1, ok: 0 }, WORDS, { canListen, known, history: history.current, cloze: CLOZE, clozeEligible }) : null),
     // Rebuilt only when the step changes; mastery changes after answering must not reshuffle the choices.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [i, word?.id]
