@@ -5,7 +5,7 @@ import { WORDS } from '../src/data.ts'
 import { CLOZE } from '../src/content/index.ts'
 import { normalizeWords } from '../src/content/entries.ts'
 import type { ClozeItem, Curriculum, RawWord } from '../src/content/types.ts'
-import { emptyCourse, sentencePrereqsMet, syncCourse, wordMap, type CourseState } from '../src/game/course.ts'
+import { emptyCourse, recordPeaks, sentencePrereqsMet, syncCourse, wordMap, type CourseState, type PeakLevels } from '../src/game/course.ts'
 import { MIN_CHOICES, buildQuestion, clozeFor, isFairQuestion, tryBuildQuestion, type QKind } from '../src/game/questions.ts'
 import type { Mastery } from '../src/game/types.ts'
 
@@ -16,7 +16,7 @@ const gated: ClozeItem = { ...base, id: 'ma-gated', prerequisiteEntries: ['你',
 const known = new Set(WORDS.map(w => w.id))
 const c: Curriculum = { id: 't', version: 1, title: 'T', units: [{ id: 'u', title: 'U', lessons: [
   { id: 'people-1', title: 'p1', introductions: [{ entryId: '你' }] }, { id: 'people-2', title: 'p2', introductions: [{ entryId: '是' }, { entryId: '吗' }] }] }] }
-const st = (m: Mastery, p = emptyCourse()): CourseState => ({ curriculum: c, mastery: m, progress: p, words: wordMap(WORDS) })
+const st = (m: Mastery, p = emptyCourse(), peak: PeakLevels = recordPeaks({}, m)): CourseState => ({ curriculum: c, mastery: m, progress: p, words: wordMap(WORDS), peak })
 
 test('an authored sentence is only assessed once its prerequisite entries and lessons are satisfied', () => {
   const early: Mastery = { 你: { lv: 1, ok: 0 }, 是: { lv: 0, ok: 0 }, 吗: { lv: 0, ok: 1 } }
@@ -35,7 +35,7 @@ test('an authored sentence is only assessed once its prerequisite entries and le
   assert.equal(q?.kind, 'particle'); assert.equal(q?.cloze?.itemId, 'ma-gated')
   // a completed prerequisite lesson stays satisfied after mistakes (no relocking)
   const forgot: Mastery = { 你: { lv: 1, ok: 0 }, 是: { lv: 0, ok: 0 }, 吗: { lv: 1, ok: 0 } }
-  assert.equal(sentencePrereqsMet(gated, st(forgot, p)), true)
+  assert.equal(sentencePrereqsMet(gated, st(forgot, p, recordPeaks({}, later))), true, '是 earned readiness before the mistake')
 })
 
 test('without an eligibility check, only sentences that declare no prerequisites are assessed (safe default)', () => {

@@ -5,7 +5,7 @@ import { ACTIVE_CURRICULUM, WORDS } from '../src/data.ts'
 import type { Curriculum, Introduction, Word } from '../src/content/types.ts'
 import {
   courseLine, courseStatus, emptyCourse, entrySatisfied, introCardLine, isPracticed, isReady, lessonSatisfied, orphanLessons,
-  selectIntroductions, selectReview, stepsOf, syncCourse, wordMap, type CourseProgress, type CourseState
+  recordPeaks, selectIntroductions, selectReview, stepsOf, syncCourse, wordMap, type CourseProgress, type CourseState, type PeakLevels
 } from '../src/game/course.ts'
 import { updateMastery } from '../src/game/mastery.ts'
 import { sanitizeSave } from '../src/game/save.ts'
@@ -22,7 +22,8 @@ function course(units: [string, L[]][], over: Partial<Curriculum> = {}): Curricu
     ...over
   }
 }
-const state = (c: Curriculum, m: Mastery, p: CourseProgress = emptyCourse(), words: Word[] = WORDS): CourseState => ({ curriculum: c, mastery: m, progress: p, words: wordMap(words) })
+/** `peak` defaults to the current levels (as if no level was ever lost). */
+const state = (c: Curriculum, m: Mastery, p: CourseProgress = emptyCourse(), words: Word[] = WORDS, peak: PeakLevels = recordPeaks({}, m)): CourseState => ({ curriculum: c, mastery: m, progress: p, words: wordMap(words), peak })
 const ALL = { maxLearning: 99, minKnown: 0, perFight: 99, startingPool: 99 }
 
 /** Plays like the game: introductions at the start of each fight, then review questions answered right with probability `acc`. */
@@ -143,10 +144,12 @@ test('no relocking: once a lesson is completed, later mistakes send entries to r
   assert.deepEqual(p.completed, ['a'])
   let m = updateMastery(ready, '人', false); m = updateMastery(m, '大', false)
   assert.deepEqual(m, { 人: lv(0), 大: lv(0) })
-  assert.deepEqual(syncCourse(c, m, p).completed, ['a'], 'completion is never removed')
-  assert.equal(lessonSatisfied(state(c, m, p), 'a'), true)
-  assert.equal(entrySatisfied(state(c, m, p), '人'), true, 'an entry of a completed lesson stays satisfied as a prerequisite')
-  assert.deepEqual(selectIntroductions(state(c, m, p), ALL).ids, ['小'], 'lesson b stays unlocked')
+  const earned = recordPeaks({}, ready)   // readiness history: 人 and 大 reached level 1 before the mistakes
+  assert.deepEqual(syncCourse(c, m, p, undefined, earned).completed, ['a'], 'completion is never removed')
+  assert.equal(lessonSatisfied(state(c, m, p, WORDS, earned), 'a'), true)
+  assert.equal(entrySatisfied(state(c, m, p, WORDS, earned), '人'), true, 'readiness 人 earned before the mistake is kept')
+  assert.equal(entrySatisfied(state(c, m, p, WORDS, {}), '人'), false, 'lesson membership alone never makes an entry satisfied')
+  assert.deepEqual(selectIntroductions(state(c, m, p, WORDS, earned), ALL).ids, ['小'], 'lesson b stays unlocked')
   // the weak entries are what review asks most
   const known: Mastery = { ...m, 小: lv(3) }
   const rng = lcg(2); let weak = 0
@@ -209,7 +212,7 @@ test('migration: a v2 save keeps mastery, gold, gear, runs; known entries count 
     lastRun: null, habit: { daysPlayed: 3, correct: 50 }
   }
   const s = sanitizeSave(v2, WORDS, [COMPAT])
-  assert.equal(s.version, 3)
+  assert.equal(s.version, 4)
   assert.deepEqual(s.meta, { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7 })
   assert.deepEqual(s.mastery, v2.mastery)
   assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 40); assert.equal(s.habit.correct, 50)

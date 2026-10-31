@@ -4,7 +4,7 @@ import { advance, bankRun, bossIdFor, drinkPotion, isBoss, newRun, playerStats, 
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { buildQuestion } from '../src/game/questions.ts'
 import { updateMastery } from '../src/game/mastery.ts'
-import { emptyCourse, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress } from '../src/game/course.ts'
+import { emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
 
 export function simulate(accuracy: number, runsToPlay: number, seed = 1) {
@@ -13,10 +13,11 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1) {
   let meta: Meta = { gold: 0, upgrades: [], bestFloor: 1, runs: 0 }
   let mastery: Mastery = {}
   let course: CourseProgress = emptyCourse()
+  let peak: PeakLevels = {}
   const byId = wordMap(WORDS)
   // Like the game: introduction cards (curriculum order) at the start of each fight, then questions about known entries only.
   const introduce = () => {
-    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId }).ids) mastery = updateMastery(mastery, id, true)
+    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) mastery = updateMastery(mastery, id, true)
   }
   const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng })!
   const log: { run: number; floor: number; gold: number; mastered: number; upgrades: number }[] = []
@@ -37,7 +38,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1) {
       const p = !entry ? 1 : Math.min(0.98, accuracy + 0.04 * entry.lv - (sealed ? (boss === 'golem' ? 0.06 : 0.04) : boss === 'trickster' ? 0.08 : 0))
       const ok = rng() < p
       const r = resolveAnswer({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect: ok, sealQuestion: sealed, roll: { drop: rng(), item: rng() } })
-      run = r.run; mastery = updateMastery(mastery, word.id, ok); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId); word = pick(word.id)
+      run = r.run; mastery = updateMastery(mastery, word.id, ok); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
       void q
     }
     const banked = bankRun(meta, run); meta = banked.meta
