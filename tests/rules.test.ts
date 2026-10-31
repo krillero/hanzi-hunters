@@ -143,6 +143,8 @@ test('XP is paid only when the monster is killed (answers bank it, the kill pays
   assert.equal(advance({ ...kill.run, pendingXp: 9 }, none, ENEMIES).pendingXp, 0)
   const dead = ask({ ...run0(), hp: 1, pendingXp: 20 }, { isCorrect: false })
   assert.equal(dead.outcome, 'defeat'); assert.equal(dead.run.xp, 0, 'dying pays nothing')
+})
+
 test('healedOnKill reports only the Second Wind upgrade, not the level-up heal or new gear', () => {
   const dying = { ...run0(), enemyHp: 1, hp: 10, xp: 9999 }                    // kill + level-up(s)
   const noUpgrade = ask(dying)
