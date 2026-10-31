@@ -50,4 +50,9 @@ No upgrade answers questions; a test enforces that every effect is power or conv
 Bot play at 60/75/90 % accuracy: first death on floor 1–3 with enough gold for the first node within 2 runs; a full tree takes ≥ 8 runs; with a full tree the average run still ends around floors 9–12. Tune in `src/game/rules.ts` (scaling) and `src/game/upgrades.ts` (COST_BASE, effects). The bot is a model, not real players — expect to retune after human playtests.
 
 ## Save format v2 (`hanzi-hunters-save-v2`)
-`{ version, meta{gold,upgrades,bestFloor,runs}, mastery{hanzi:{lv,ok}}, run|null, lastRun|null }`. Every field is validated on load (`src/game/save.ts`); a mid-run reload resumes the run. The v1 prototype save is migrated once: learned words → level 1, gold → banked, floor → best floor. The v1 key is left untouched.
+`{ version, meta{gold,upgrades,bestFloor,runs}, mastery{hanzi:{lv,ok}}, run|null, lastRun|null, habit{daysPlayed,lastPlayed,warmupDay,correct,badges} }`. `habit` was added without a version bump (old saves get an empty one). Every field is validated on load (`src/game/save.ts`); a mid-run reload resumes the run. The v1 prototype save is migrated once: learned words → level 1, gold → banked, floor → best floor. The v1 key is left untouched.
+
+## Daily warm-up, days played and badges (`src/game/habit.ts`)
+* Warm-up: once per local day, up to 5 known words (lowest level first, then fewest right in a row, day-stable tie-break), at least 3 known words needed. Right answers update mastery as usual and earn 3 gold each; nothing is risked.
+* Days played: +1 the first time you answer on a new local day; never decreases.
+* Badges: 9 milestones in `BADGES`; checked after every battle and warm-up answer, stored in `habit.badges`.

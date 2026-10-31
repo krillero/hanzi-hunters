@@ -2,6 +2,8 @@ export type MasteryEntry = { lv: number; ok: number }
 /** Per-word mastery keyed by hanzi. A word with no entry has never been shown. */
 export type Mastery = Record<string, MasteryEntry>
 
+import type { Habit } from './habit.ts'
+
 export type Meta = { gold: number; upgrades: string[]; bestFloor: number; runs: number }
 
 import type { GearSlot } from '../data.ts'
@@ -25,4 +27,6 @@ export type Saved = {
   mastery: Mastery
   run: Run | null
   lastRun: RunSummary | null
+  /** Days played, warm-up day, correct total, badges. Additive: old saves load with an empty habit; no version bump. */
+  habit: Habit
 }
