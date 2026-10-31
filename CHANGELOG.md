@@ -5,6 +5,7 @@
 - Feedback box: a correct answer reads "✓ Correct — 田 tián · field" (character, sound and meaning together); a wrong answer shows the answer in large text with what you chose struck through. The word note gets up to 3 lines (2 on phones ≤700px tall), and mastery is shown as pips plus a short sentence ("Level up! Now level 2", "One more correct in a row to level up").
 - The auto-continue bar now says "✓ Correct" instead of the damage summary. `combatSummary` was removed.
 - Checks: `tools/layout-check.mjs` passes in all 8 cases, 56 unit tests pass, and right/wrong answers were checked visually at 411×740.
+- Bug fix: a correct answer on an already mastered word no longer says "One more correct in a row to level up"; it says "Mastered — keep it sharp".
 
 ## 2026-10-31 — Word popups replace instead of stack
 - Tapping a related word in an explanation popup now replaces the current popup (one popup at a time, no history), so a single × closes it. The Back button and the popup stack were removed (`ExplainModal` takes a single `hanzi`).

@@ -219,7 +219,7 @@ export default function App() {
     const masteryNote = !entry ? 'New word — added to your wordbook'
       : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
         : after < before ? `Back to level ${after} — it will return for review`
-          : isCorrect ? 'One more correct in a row to level up' : 'Review this one — it will come back'
+          : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : 'One more correct in a row to level up') : 'Review this one — it will come back'
     const exchange: CombatExchange = { damage: r.damage, counter: r.counter, blocked: r.savedBySecondChance, victory: r.outcome === 'victory' }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
