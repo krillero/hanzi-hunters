@@ -98,8 +98,8 @@ curricula (once in each); its definition and progress are shared.
   "prerequisiteLessons": ["greetings-2"] }
 ```
 
-The sentence is only **assessed** once every listed entry is ready (or belongs to a completed lesson) and every listed lesson is
-completed (lessons of any curriculum). Otherwise another eligible question kind is asked. List the words and constructions the
+The sentence is only **assessed** once every listed entry is ready (the same `entrySatisfied` rule as introduction prerequisites,
+see §3; membership of a completed lesson does not count) and every listed lesson is completed (lessons of any curriculum). Otherwise another eligible question kind is asked. List the words and constructions the
 sentence relies on yourself; the game never derives them from the characters. Sentences without these fields are always eligible
 (as before). Example sentences in `explanations.json` are **optional reading**, never assessed: they may contain unfamiliar words
 as long as pinyin and translation are given. The introduction card labels them "Examples (not tested)".
@@ -143,14 +143,32 @@ allow-list is never bypassed.
 |---|---|---|
 | **Introduced** | The learner tapped "Got it" on the entry's introduction card (or had progress before curricula existed). | `mastery[id]` exists |
 | **Practiced** | Answered correctly at least once since being introduced (a later miss at level 0 resets this). | `lv ≥ 1` or `ok ≥ 1` |
-| **Ready to advance** | Enough initial practice to continue the course. | `lv ≥ readiness.minLevel` (default 1) |
+| **Ready to advance** | Introduced, and has reached the curriculum's threshold now **or at some earlier time**. Earned readiness is never revoked. | `max(lv, peak[id]) ≥ readiness.minLevel` (default 1), only if `mastery[id]` exists |
 | **Lesson ready** | Every *required* entry of the lesson is ready. Recorded as **completed** the first time it happens. | `courses[id].completed` |
 | **Long-term mastery** | Separate concept (level 4, "mastered"). Lesson completion never claims it. | `lv = 4` |
 
 Mastery levels are unchanged: two correct answers in a row raise the level by one, a miss lowers it by one.
 
-**No relocking.** Completion is sticky. A lesson's prerequisites are satisfied by a completed lesson even if its entries later drop
-back to level 0, and an entry of a completed lesson stays satisfied as a prerequisite. Weak entries simply come up more in review.
+### Lesson completion vs entry readiness (two separate persistent facts)
+
+| | Lesson completion | Entry readiness |
+|---|---|---|
+| Stored as | `courses[curriculumId].completed` (lesson ids) | `peak[entryId]`: the highest mastery level the entry has actually reached |
+| Satisfies | `prerequisiteLessons` only | `prerequisiteEntries` of introductions **and** of sentence questions (one function, `entrySatisfied`) |
+| Earned when | every required entry of the lesson is ready (first time) | the entry reaches the curriculum's `minLevel` |
+| Survives mistakes / curriculum updates | yes | yes (the peak never goes down) |
+
+* **Belonging to a completed lesson never makes an entry ready.** A word inserted into a completed lesson by a curriculum update
+  (e.g. 你 added to lesson A after the learner completed it with 我) is unseen: it is introduced next, and any prerequisite on it
+  (a later introduction, a sentence question) stays blocked until 你 itself reaches the threshold. Lesson A stays completed, so
+  lessons that require lesson A stay unlocked.
+* **Seeing the introduction card does not make an entry ready**, nor does one right answer (practiced); reaching `minLevel` does.
+* **An unseen entry is never ready**, whatever a stored peak says.
+* **No relocking.** A later mistake lowers `mastery[id].lv` but not `peak[id]`, so earned readiness and completed lessons stay.
+  Weak entries simply come up more in review.
+* Peaks are per entry id and shared by every curriculum, but each curriculum compares them with **its own** threshold: an entry that
+  reached level 1 is ready in a `minLevel: 1` course and not ready in a `minLevel: 2` course.
+* Lesson readiness uses the same per-entry rule, so a lesson completes once each required entry has reached the threshold at some point.
 
 **Configuring readiness.** Set `"readiness": { "minLevel": 2 }` on a curriculum to require more practice before lessons count as
 ready. The engine default lives in `DEFAULT_READINESS` (`src/game/course.ts`); the introduction limits in `DEFAULT_LIMITS`.
@@ -159,19 +177,32 @@ ready. The engine default lives in `DEFAULT_READINESS` (`src/game/course.ts`); t
 
 ## 4. Saves
 
-Save format v3 (`SAVE_KEY` is still `hanzi-hunters-save-v2`; the `version` field inside says 3):
+Save format v4 (`SAVE_KEY` is still `hanzi-hunters-save-v2`; the `version` field inside says 4):
 
 ```json
-"courses": { "starter-compat": { "version": 1, "completed": ["first-characters-1", "first-characters-2"] } }
+"courses": { "starter-compat": { "version": 1, "completed": ["first-characters-1", "first-characters-2"] } },
+"peak": { "人": 2, "大": 1, "一": 1 },
+"legacyPeak": {}
 ```
 
+* `peak`: highest mastery level reached per entry id (entries that never got past level 0 have no key). Updated in the same state
+  update as every mastery change (`withLearning` in `src/game/save.ts`), never lowered.
+* Peaks migrate through entry `aliases` and hanzi→id moves **exactly like mastery** (one shared implementation); peaks no current
+  entry claims are parked in `legacyPeak` (like `legacyMastery`) and recovered if the entry returns.
+* **Migration from v2/v3 (no readiness history):** peaks are derived from the **current** mastery level only. Conservative fallback:
+  an entry that was ready once but has dropped back below the threshold is treated as not ready until it is re-earned, even if its
+  lesson is completed; readiness is never inferred from lesson membership, and unseen entries get none. Completed lessons are
+  preserved, so lesson prerequisites stay unlocked and the course is not relocked; only explicit entry prerequisites on such an
+  entry wait until it reaches the threshold again.
+* Backups (export / import) carry `peak` and `legacyPeak`; imports accept save versions 2 to 4 (and the v1 prototype).
+
 * Entry progress stays in `mastery`, keyed by entry id and shared by every curriculum. Nothing in the save refers to array positions.
-* **Migration from v2** (`sanitizeCourses` in `src/game/save.ts`, tested in `tests/course.test.ts`): mastery, gold, upgrades, run,
+* **Migration from v2 to v3** (`sanitizeCourses` in `src/game/save.ts`, tested in `tests/course.test.ts`): mastery, gold, upgrades, run,
   gear and habit are kept as they are; entries with progress count as introduced (no introduction replay); lessons whose required
   entries are already ready are marked completed; progress for entries outside the curriculum stays in `mastery`.
 * Course progress for unknown curriculum ids and unknown lesson ids is **kept**, never discarded, so it can be recovered.
-* `courses` can always be re-derived from `mastery`; an older build that drops the field loses nothing permanent (only stickiness for
-  lessons whose entries have since dropped below the readiness level).
+* An older build that drops `courses` / `peak` loses the history it cannot store: on the next load here, completion and peaks are
+  re-derived from mastery (same conservative fallback as above).
 * `habit.seed` is still read and written for compatibility but no longer affects word order.
 
 ---
@@ -208,8 +239,8 @@ What happens to existing players on the next load:
 | Change | Effect |
 |---|---|
 | Lessons or units reordered | Nothing lost; completion is by lesson id. New introductions follow the new order. |
-| Entry moved to another lesson | Not introduced again (it already has progress). Both lessons recompute readiness; completed stays completed. |
-| New entry added to a completed lesson | The lesson stays completed (later lessons stay unlocked); the new entry is introduced next (earliest unseen). |
+| Entry moved to another lesson | Not introduced again (it already has progress); its readiness (peak, by entry id) moves with it unchanged. Completed lessons stay completed. |
+| New entry added to a completed lesson | The lesson stays completed (later lessons stay unlocked); the new entry is introduced next (earliest unseen) and satisfies entry prerequisites only after reaching the threshold itself. |
 | New lessons / entries appended | Introduced in order once reached. |
 | Lesson renamed with `aliases` | Old completion carries over. |
 | Lesson removed or renamed without alias | Its completion id stays in the save (reported by `orphanLessons`), recoverable by adding the alias later. |

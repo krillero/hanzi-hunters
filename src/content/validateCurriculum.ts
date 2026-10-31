@@ -36,7 +36,7 @@ export function simulatedOrder(c: Curriculum, entryIds: Set<string>): string[] {
   const m: Mastery = {}
   const out: string[] = []
   for (let guard = 0; guard < 100000; guard++) {
-    const plan = selectIntroductions({ curriculum: c, mastery: m, progress: { version: c.version, completed: [] }, words }, undefined, 1)
+    const plan = selectIntroductions({ curriculum: c, mastery: m, progress: { version: c.version, completed: [] }, words, peak: {} }, undefined, 1)
     if (!plan.ids.length) break
     for (const id of plan.ids) { out.push(id); m[id] = { lv: MAX_LV, ok: 0 } }
   }

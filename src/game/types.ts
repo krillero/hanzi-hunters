@@ -23,11 +23,11 @@ export type Run = {
 }
 export type RunSummary = { floor: number; kills: number; level: number; goldBanked: number }
 
-import type { CourseProgress } from './course.ts'
+import type { CourseProgress, PeakLevels } from './course.ts'
 
 export type Saved = {
-  /** 3 = adds `courses`. v2 saves are migrated on load (save.ts). */
-  version: 3
+  /** 3 = adds `courses`; 4 = adds `peak` / `legacyPeak`. Older saves are migrated on load (save.ts). */
+  version: 4
   meta: Meta
   mastery: Mastery
   /** Progress under ids that no current entry claims (removed entries, or a hanzi that became ambiguous). Kept so nothing is lost; retried on every load. */
@@ -38,4 +38,8 @@ export type Saved = {
   habit: Habit
   /** Per curriculum id: lesson ids completed at least once (sticky). Entry progress stays in `mastery`, shared by every curriculum. */
   courses: Record<string, CourseProgress>
+  /** Highest mastery level each entry has ever reached (entry readiness history, by entry id). Never decreases. */
+  peak: PeakLevels
+  /** Peaks under ids no current entry claims; kept and retried on every load, like legacyMastery. */
+  legacyPeak: PeakLevels
 }

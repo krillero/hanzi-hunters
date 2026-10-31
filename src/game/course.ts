@@ -7,8 +7,14 @@
 // Vocabulary states, from weakest to strongest:
 //   introduced          the learner saw the entry's introduction card            mastery[id] exists
 //   practiced           answered right at least once since (and not lost since)  lv >= 1 or ok >= 1
-//   ready to advance    enough initial practice to continue the course           lv >= readiness.minLevel (default 1)
+//   ready to advance    enough initial practice to continue the course           highest level ever reached >= readiness.minLevel
 //   long-term mastery   a separate, later concept (MAX_LV). Lesson completion never claims it.
+//
+// Two different persistent facts, never confused:
+//   lesson completion   (courses[id].completed)  keeps LESSON prerequisites unlocked after mistakes and curriculum updates.
+//   entry readiness     (peak[entryId])          the highest mastery level an entry has actually reached. ENTRY prerequisites
+//                                                (introductions and sentence questions) use only this, never lesson membership,
+//                                                so a word added later to a completed lesson must still be introduced and practised.
 import type { Curriculum, Introduction, Lesson, Readiness, Unit, Word } from '../content/types.ts'
 import type { Mastery, MasteryEntry } from './types.ts'
 import { MAX_LEARNING, MAX_LV, MIN_KNOWN, STARTING_POOL } from './mastery.ts'
@@ -37,6 +43,22 @@ export const DEFAULT_LIMITS: IntroLimits = { maxLearning: MAX_LEARNING, minKnown
 export const isIntroduced = (m: Mastery, id: string) => !!m[id]
 export const isPracticed = (e: MasteryEntry | undefined) => !!e && (e.lv >= 1 || e.ok >= 1)
 export const isReady = (e: MasteryEntry | undefined, r: Readiness = DEFAULT_READINESS) => !!e && e.lv >= r.minLevel
+
+/** Highest mastery level each entry has ever reached, by stable entry id (shared by every curriculum; each compares it with its own threshold). */
+export type PeakLevels = Record<string, number>
+
+/** Raises peaks to the current levels. Returns the same object when nothing changed. Peaks never go down. */
+export function recordPeaks(peak: PeakLevels, m: Mastery): PeakLevels {
+  let out: PeakLevels | null = null
+  for (const [id, e] of Object.entries(m)) if (e.lv > (peak[id] ?? 0)) (out ??= { ...peak })[id] = Math.min(MAX_LV, e.lv)
+  return out ?? peak
+}
+
+/** The highest level this entry has reached: -1 if it was never introduced (an unseen entry is never ready, whatever a peak says). */
+export const reachedLevel = (m: Mastery, peak: PeakLevels, id: string) => (m[id] ? Math.max(m[id].lv, peak[id] ?? 0) : -1)
+
+/** THE readiness rule (one implementation): introduced, and has reached the curriculum's threshold now or at some point before. */
+export const entryReady = (m: Mastery, peak: PeakLevels, id: string, r: Readiness) => reachedLevel(m, peak, id) >= r.minLevel
 export const isLongTermMastered = (e: MasteryEntry | undefined) => !!e && e.lv >= MAX_LV
 
 // ---- the curriculum as a flat sequence ---------------------------------------------------------------------
@@ -68,12 +90,12 @@ export const emptyCourse = (): CourseProgress => ({ version: 0, completed: [] })
 /** Is this lesson completed (sticky), counting ids it had before a rename (`aliases`)? */
 export const lessonCompleted = (lesson: Lesson, p: CourseProgress) => p.completed.includes(lesson.id) || (lesson.aliases ?? []).some(a => p.completed.includes(a))
 
-/** Lesson readiness right now: every required entry introduced and ready. A lesson without required entries is ready once all its entries are introduced. */
-export function lessonReadyNow(lesson: Lesson, m: Mastery, r: Readiness, words?: Map<string, Word>): boolean {
+/** Lesson readiness: every required entry introduced and ready (entryReady). A lesson without required entries is ready once all its entries are introduced. */
+export function lessonReadyNow(lesson: Lesson, m: Mastery, r: Readiness, words?: Map<string, Word>, peak: PeakLevels = {}): boolean {
   const intros = lesson.introductions.filter(i => !words || words.has(i.entryId))
   const required = intros.filter(i => i.required !== false)
   if (!required.length) return intros.every(i => isIntroduced(m, i.entryId))
-  return required.every(i => isReady(m[i.entryId], r))
+  return required.every(i => entryReady(m, peak, i.entryId, r))
 }
 
 /**
@@ -81,12 +103,12 @@ export function lessonReadyNow(lesson: Lesson, m: Mastery, r: Readiness, words?:
  * newly ready lessons are added, renamed lessons (aliases) pick up their old completion, ids that no longer exist are kept.
  * Returns the same object when nothing changed (cheap to call after every answer).
  */
-export function syncCourse(c: Curriculum, m: Mastery, p: CourseProgress = emptyCourse(), words?: Map<string, Word>): CourseProgress {
+export function syncCourse(c: Curriculum, m: Mastery, p: CourseProgress = emptyCourse(), words?: Map<string, Word>, peak: PeakLevels = {}): CourseProgress {
   const r = readinessOf(c)
   const add: string[] = []
   for (const { lesson } of lessonsOf(c)) {
     if (p.completed.includes(lesson.id)) continue
-    if (lessonCompleted(lesson, p) || lessonReadyNow(lesson, m, r, words)) add.push(lesson.id)
+    if (lessonCompleted(lesson, p) || lessonReadyNow(lesson, m, r, words, peak)) add.push(lesson.id)
   }
   if (!add.length && p.version === c.version) return p
   return { version: c.version, completed: [...p.completed, ...add] }
@@ -100,20 +122,23 @@ export function orphanLessons(c: Curriculum, p: CourseProgress): string[] {
 
 // ---- prerequisites -----------------------------------------------------------------------------------------
 
-export type CourseState = { curriculum: Curriculum; mastery: Mastery; progress: CourseProgress; words: Map<string, Word> }
+export type CourseState = { curriculum: Curriculum; mastery: Mastery; progress: CourseProgress; words: Map<string, Word>; peak: PeakLevels }
 export const wordMap = (words: Word[]) => new Map(words.map(w => [w.id, w]))
 
 /** A prerequisite lesson is satisfied when it was completed once (sticky) or is ready right now. */
 export function lessonSatisfied(s: CourseState, lessonId: string): boolean {
   const ref = lessonsOf(s.curriculum).find(l => l.lesson.id === lessonId)
   if (!ref) return s.progress.completed.includes(lessonId)
-  return lessonCompleted(ref.lesson, s.progress) || lessonReadyNow(ref.lesson, s.mastery, readinessOf(s.curriculum), s.words)
+  return lessonCompleted(ref.lesson, s.progress) || lessonReadyNow(ref.lesson, s.mastery, readinessOf(s.curriculum), s.words, s.peak)
 }
 
-/** A prerequisite entry is satisfied when it is ready now, or belongs to a completed lesson (so later mistakes never relock the course). */
+/**
+ * A prerequisite ENTRY is satisfied only by that entry's own readiness: reached the threshold now or earlier (peak), so later
+ * mistakes never revoke it. Membership of a completed lesson never counts: a word inserted into a completed lesson stays
+ * unsatisfied until it is introduced and practised. Used for introductions and sentence questions alike.
+ */
 export function entrySatisfied(s: CourseState, entryId: string): boolean {
-  if (isReady(s.mastery[entryId], readinessOf(s.curriculum))) return true
-  return lessonsOf(s.curriculum).some(l => lessonCompleted(l.lesson, s.progress) && l.lesson.introductions.some(i => i.entryId === entryId))
+  return entryReady(s.mastery, s.peak, entryId, readinessOf(s.curriculum))
 }
 
 // ---- which entries to introduce ------------------------------------------------------------------------------
@@ -257,15 +282,15 @@ export function courseStatus(s: CourseState, limits: IntroLimits = DEFAULT_LIMIT
   const r = readinessOf(s.curriculum)
   const lessons = lessonsOf(s.curriculum)
   const plan = selectIntroductions(s, limits, Number.POSITIVE_INFINITY)
-  const current = plan.lesson ?? lessons.find(l => !lessonCompleted(l.lesson, s.progress) && !lessonReadyNow(l.lesson, s.mastery, r, s.words)) ?? null
+  const current = plan.lesson ?? lessons.find(l => !lessonCompleted(l.lesson, s.progress) && !lessonReadyNow(l.lesson, s.mastery, r, s.words, s.peak)) ?? null
   const intros = current ? current.lesson.introductions.filter(i => s.words.has(i.entryId)) : []
   const req = intros.filter(i => i.required !== false)
   const all = stepsOf(s.curriculum).filter(st => s.words.has(st.intro.entryId))
-  const completed = lessons.filter(l => lessonCompleted(l.lesson, s.progress) || lessonReadyNow(l.lesson, s.mastery, r, s.words)).length
+  const completed = lessons.filter(l => lessonCompleted(l.lesson, s.progress) || lessonReadyNow(l.lesson, s.mastery, r, s.words, s.peak)).length
   return {
     title: s.curriculum.title, provisional: !!s.curriculum.provisional, lesson: current,
     introduced: intros.filter(i => isIntroduced(s.mastery, i.entryId)).length, total: intros.length,
-    ready: req.filter(i => isReady(s.mastery[i.entryId], r)).length, required: req.length,
+    ready: req.filter(i => entryReady(s.mastery, s.peak, i.entryId, r)).length, required: req.length,
     lessonsCompleted: completed, lessonsTotal: lessons.length,
     courseIntroduced: all.filter(st => isIntroduced(s.mastery, st.intro.entryId)).length, courseTotal: all.length,
     complete: !current

@@ -1,5 +1,12 @@
 # Changelog / test log
 
+## 2026-10-31 — Fix: lesson completion no longer grants entry readiness (branch ccr-8843666c-wh7qyo)
+
+- **Bug:** `entrySatisfied()` treated any entry of a completed lesson as a satisfied prerequisite, so a word added to that lesson by a curriculum update (never seen) unlocked sentence questions and introductions that require it.
+- **Fix:** lesson completion and entry readiness are separate persistent facts. Entry readiness = introduced and the highest level ever reached (`peak`, new in save v4) meets the curriculum's own threshold. One rule (`entryReady`) serves introduction prerequisites, sentence prerequisites, lesson readiness and the progress line. Completed lessons still unlock later lessons and are never removed.
+- **Save v4:** adds `peak` / `legacyPeak`, migrated through entry ids and aliases with the same code as mastery. Older saves derive peaks from current levels only (conservative: readiness lost before the upgrade must be re-earned; lessons stay completed). Peaks and lesson completion are now updated in the same state update as each mastery change (`withLearning`), replacing the after-render effect. Backups accept v2-v4.
+- **Tests:** new `tests/readiness.test.ts` (reproduction + 11 required behaviours); two older tests that encoded the faulty rule now pass the earned history explicitly. `npm run validate:content` 0 errors (20 pre-existing warnings), `npm test` 155 pass, `npm run build` pass.
+
 ## 2026-10-31 — Curriculum-based teaching order (branch ccr-8843666c-wh7qyo)
 
 - **Vocabulary and teaching order are separate.** `src/content/curricula.json` (new) lists curricula → units → lessons → introductions by stable entry id; array position is the only ordering. Optional lesson / entry prerequisites, `required: false` entries, lesson `aliases`, per-curriculum `readiness`, and official-level mappings (`source` + exact `edition` + `level`; missing = unknown, never inferred). The order of `words.json` no longer matters. Format and rules: `docs/CURRICULUM.md`.

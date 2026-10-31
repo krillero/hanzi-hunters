@@ -3,7 +3,7 @@ import { sanitizeHabit } from './habit.ts'
 import { CURRICULA, ENEMIES, GEAR, WORDS, type GearSlot, type Word } from '../data.ts'
 import type { Curriculum } from '../content/types.ts'
 import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
-import { emptyCourse, syncCourse, wordMap, type CourseProgress } from './course.ts'
+import { emptyCourse, recordPeaks, syncCourse, wordMap, type CourseProgress, type PeakLevels } from './course.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
 import { ENEMIES_PER_FLOOR, bossIdFor, enemyStats, hasShield, isBoss, playerStats, shieldFor } from './rules.ts'
 import { MAX_LV } from './mastery.ts'
@@ -41,23 +41,41 @@ const better = (a: { lv: number; ok: number }, b: { lv: number; ok: number }) =>
  *    so nothing is lost, and is tried again on every load.
  */
 export function migrateMastery(raw: unknown, legacyRaw: unknown, words: Word[] = WORDS): { mastery: Mastery; legacy: Mastery } {
-  const pool = new Map<string, { lv: number; ok: number }>()
+  const r = migrateById(raw, legacyRaw, words, cleanEntry, better)
+  return { mastery: r.claimed, legacy: r.legacy }
+}
+
+/** The id rules above, for any per-entry value (mastery entries, peak levels), so both always move together. */
+function migrateById<T>(raw: unknown, legacyRaw: unknown, words: Word[], clean: (v: unknown) => T | null, pick: (a: T, b: T) => T): { claimed: Record<string, T>; legacy: Record<string, T> } {
+  const pool = new Map<string, T>()
   for (const src of [legacyRaw, raw]) if (isObj(src)) for (const [k, v] of Object.entries(src)) {
-    const e = cleanEntry(v); if (e) pool.set(k, pool.has(k) ? better(pool.get(k)!, e) : e)
+    const e = clean(v); if (e !== null) pool.set(k, pool.has(k) ? pick(pool.get(k)!, e) : e)
   }
   const hanziCount = new Map<string, number>()
   for (const w of words) hanziCount.set(w.hanzi, (hanziCount.get(w.hanzi) ?? 0) + 1)
-  const mastery: Mastery = {}, used = new Set<string>()
+  const claimed: Record<string, T> = {}, used = new Set<string>()
   for (const w of words) {
     const keys = [w.id, ...w.aliases]
     if (w.id !== w.hanzi && hanziCount.get(w.hanzi) === 1 && !words.some(o => o.id === w.hanzi)) keys.push(w.hanzi)
-    let best: { lv: number; ok: number } | null = null
-    for (const k of keys) { const e = pool.get(k); if (e && !used.has(k)) { best = best ? better(best, e) : e; used.add(k) } }
-    if (best) mastery[w.id] = best
+    let best: T | null = null
+    for (const k of keys) { const e = pool.get(k); if (e !== undefined && !used.has(k)) { best = best !== null ? pick(best, e) : e; used.add(k) } }
+    if (best !== null) claimed[w.id] = best
   }
-  const legacy: Mastery = {}
+  const legacy: Record<string, T> = {}
   for (const [k, e] of pool) if (!used.has(k)) legacy[k] = e
-  return { mastery, legacy }
+  return { claimed, legacy }
+}
+
+/**
+ * Entry readiness history (v4): the highest mastery level each entry has reached. Migrates through ids / aliases exactly like
+ * mastery; unclaimed peaks are parked in `legacyPeak`. Then raised to the current mastery levels.
+ * Saves older than v4 have no history: their peaks are derived from the CURRENT level only (conservative). An entry that was ready
+ * once but has since dropped below the threshold is not ready again until it is re-earned. Lesson membership never counts.
+ */
+export function migratePeaks(raw: unknown, legacyRaw: unknown, mastery: Mastery, words: Word[] = WORDS): { peak: PeakLevels; legacy: PeakLevels } {
+  const lvl = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? int(v, 0, MAX_LV, 0) : null)
+  const r = migrateById(raw, legacyRaw, words, lvl, (a, b) => Math.max(a, b))
+  return { peak: recordPeaks(r.claimed, mastery), legacy: r.legacy }
 }
 
 function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
@@ -94,12 +112,12 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
 
 const ID = /^[^\s]{1,64}$/
 /**
- * Course progress (v3). Kept for EVERY curriculum id found in the save, also ones the content no longer has, and every lesson id is kept,
+ * Course progress (v3+). Kept for EVERY curriculum id found in the save, also ones the content no longer has, and every lesson id is kept,
  * also ones no lesson claims any more: nothing is discarded, so a curriculum that comes back (or an alias added later) recovers it.
  * Then every known curriculum is synced with the current mastery: a v2 save gets its lesson readiness derived from existing entry progress,
  * and lessons that became ready are added. Entries with progress already count as introduced (mastery[id] exists), so nothing is replayed.
  */
-export function sanitizeCourses(raw: unknown, mastery: Mastery, curricula: Curriculum[] = CURRICULA, words: Word[] = WORDS): Record<string, CourseProgress> {
+export function sanitizeCourses(raw: unknown, mastery: Mastery, curricula: Curriculum[] = CURRICULA, words: Word[] = WORDS, peak: PeakLevels = recordPeaks({}, mastery)): Record<string, CourseProgress> {
   const out: Record<string, CourseProgress> = {}
   if (isObj(raw)) for (const [id, v] of Object.entries(raw)) {
     if (!ID.test(id) || !isObj(v)) continue
@@ -108,7 +126,7 @@ export function sanitizeCourses(raw: unknown, mastery: Mastery, curricula: Curri
   }
   const byId = wordMap(words)
   for (const c of curricula) if (c && typeof c.id === 'string' && Array.isArray(c.units)) {
-    try { out[c.id] = syncCourse(c, mastery, out[c.id] ?? emptyCourse(), byId) } catch { /* malformed curriculum: the validator reports it; keep what was saved */ }
+    try { out[c.id] = syncCourse(c, mastery, out[c.id] ?? emptyCourse(), byId, peak) } catch { /* malformed curriculum: the validator reports it; keep what was saved */ }
   }
   return out
 }
@@ -116,14 +134,16 @@ export function sanitizeCourses(raw: unknown, mastery: Mastery, curricula: Curri
 export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Curriculum[] = CURRICULA): Saved {
   const r = isObj(raw) ? raw : {}
   const migrated = migrateMastery(r.mastery, r.legacyMastery, words)
+  const peaks = migratePeaks(r.peak, r.legacyPeak, migrated.mastery, words)
   const m = isObj(r.meta) ? r.meta : {}
   const upgrades = validUpgrades(m.upgrades)
   const meta: Meta = { gold: int(m.gold, 0, 1e9, 0), upgrades, bestFloor: int(m.bestFloor, 1, 1e6, 1), runs: int(m.runs, 0, 1e9, 0) }
   const ls = isObj(r.lastRun) ? r.lastRun : null
   const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, 1e6, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0) } : null
   return {
-    version: 3, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
-    courses: sanitizeCourses(r.courses, migrated.mastery, curricula, words)
+    version: 4, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
+    peak: peaks.peak, legacyPeak: peaks.legacy,
+    courses: sanitizeCourses(r.courses, migrated.mastery, curricula, words, peaks.peak)
   }
 }
 
@@ -147,3 +167,15 @@ export function loadSave(storage: Pick<Storage, 'getItem'>): Saved {
   return sanitizeSave(null)
 }
 
+
+/**
+ * Call after every mastery change (the app does it in the same state update): raises entry peaks to the current levels and records
+ * newly ready lessons of `curriculum`. Returns the same object when nothing changed. Peaks and completed lessons never go down.
+ */
+export function withLearning(s: Saved, curriculum: Curriculum, words: Map<string, Word>): Saved {
+  const peak = recordPeaks(s.peak, s.mastery)
+  const cur = s.courses[curriculum.id] ?? emptyCourse()
+  const next = syncCourse(curriculum, s.mastery, cur, words, peak)
+  if (peak === s.peak && next === cur) return s
+  return { ...s, peak, courses: next === cur ? s.courses : { ...s.courses, [curriculum.id]: next } }
+}

@@ -21,7 +21,7 @@ import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS, type BossId, type Word } from 
 import { audioReliable, homographsOf } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
 import { MAX_LV, masteredCount, seenCount, updateMastery } from './game/mastery'
-import { DEFAULT_LIMITS, courseLine, courseStatus, emptyCourse, introCapacity, introCardLine, selectIntroductions, selectReview, sentencePrereqsMet, syncCourse, wordMap, type CourseState, type IntroPlan } from './game/course'
+import { DEFAULT_LIMITS, courseLine, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, tryBuildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
@@ -29,7 +29,7 @@ import { gearVerdict, rarityOf as rarityOfItem } from './game/rarity'
 import {
   ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, hasShield, shieldFor, bankRun, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
-import { SAVE_KEY, loadSave, sanitizeSave } from './game/save'
+import { SAVE_KEY, loadSave, sanitizeSave, withLearning } from './game/save'
 import type { Mastery, Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
@@ -174,7 +174,7 @@ export default function App() {
   const previewFirst = useMemo(() => (new URLSearchParams(window.location.search).get('first') ?? '').split(',').map(f => f.trim()).filter(Boolean)
     .map(f => (WORDS.find(w => w.id === f) ?? WORDS.find(w => w.hanzi === f))?.id).filter((id): id is string => !!id), [])
   const courseFor = (mastery: Mastery = save.mastery): CourseState =>
-    ({ curriculum: ACTIVE_CURRICULUM, mastery, progress: save.courses[ACTIVE_CURRICULUM.id] ?? emptyCourse(), words: WORD_MAP })
+    ({ curriculum: ACTIVE_CURRICULUM, mastery, progress: save.courses[ACTIVE_CURRICULUM.id] ?? emptyCourse(), words: WORD_MAP, peak: recordPeaks(save.peak, mastery) })
   const introPlanFor = (mastery: Mastery): IntroPlan => {
     const capacity = introCapacity(mastery, DEFAULT_LIMITS)
     const lead = previewFirst.filter(id => !mastery[id]).slice(0, capacity)
@@ -238,7 +238,8 @@ export default function App() {
   /** True when the last attempt to build a question found nothing fair to ask (shown as a content/configuration problem). */
   const [noCard, setNoCard] = useState(false)
   const setNextCard = (c: Card | null) => { setCard(c); setNoCard(c === null) }
-  const patch = (fn: (s: Saved) => Saved) => setSave(fn)
+  // Every save change goes through withLearning: entry peaks and lesson completion are updated in the same state update as mastery.
+  const patch = (fn: (s: Saved) => Saved) => setSave(s => withLearning(fn(s), ACTIVE_CURRICULUM, WORD_MAP))
 
   // ---- introducing new words: a card at the start of a fight, never mid-fight ----------------
   const [introQueue, setIntroQueue] = useState<string[]>([])
@@ -256,13 +257,6 @@ export default function App() {
     if (import.meta.env.DEV) logCourse(plan)
     if (plan.ids.length) { setIntroQueue(plan.ids); setIntroTotal(plan.ids.length) }
   })
-  // Lesson completion is sticky: record lessons as soon as they become ready, so later mistakes never relock the course.
-  useEffect(() => {
-    const id = ACTIVE_CURRICULUM.id
-    const cur = save.courses[id] ?? emptyCourse()
-    if (syncCourse(ACTIVE_CURRICULUM, save.mastery, cur, WORD_MAP) === cur) return
-    setSave(s => ({ ...s, courses: { ...s.courses, [id]: syncCourse(ACTIVE_CURRICULUM, s.mastery, s.courses[id] ?? emptyCourse(), WORD_MAP) } }))
-  }, [save.mastery]) // eslint-disable-line react-hooks/exhaustive-deps
   const introGotIt = () => {
     const id = introQueue[0]
     if (!id) return
