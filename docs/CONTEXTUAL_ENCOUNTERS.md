@@ -8,6 +8,8 @@ expedition. Existing depth progression and combat rules remain in charge.
 | hello | reply: answer 你好！ | 你好 再见 谢谢 | 3 |
 | goodbye | reply: answer 再见！ | 你好 再见 谢谢 | 3 |
 | sorry | reply: you spilled their water | 对不起 谢谢 你好 | 5 |
+| friend-he, friend-she | point: 他/她是我朋友。 → tap the man or woman | 他 她 是 我 朋友 | 20 |
+| count-three, -four, -five | point: 这里有三/四/五个人。 → tap the right group | 这里 有 个 人 三 四 五 | 35 |
 | tea | gather: 我要茶。 | 我 要 谢谢 茶 水 米饭 菜 | 65 |
 | meal | gather: 我要米饭。我要菜。 | 我 要 谢谢 茶 水 米饭 菜 | 65 |
 
@@ -18,10 +20,13 @@ so no new vocabulary is silently introduced. Among eligible scenes, the one
 completed on the fewest distinct days is offered; file order breaks ties.
 
 Kinds: **reply** = choose the one right thing to say (single choice, button
-"Say it"); **gather** = choose every item asked for (button "Prepare"). The
+"Say it"); **gather** = choose every item asked for (button "Prepare");
+**point** = choose the picture the traveler's Chinese line describes (single
+choice, button "Point"; the options are pictures, so they stay visible at every
+stage and only their English captions follow the stage). The
 title, instruction and button are shared by every scene of a kind, so they never
 name the answer. A reply scene's explanation names the answer, so it only
-appears after a wrong choice; a gather scene's recipe hint is also shown at the
+appears after a wrong choice (same for point scenes); a gather scene's recipe hint is also shown at the
 first stage and with help.
 
 First completion or weak prerequisites: Chinese, pinyin, translation and grammar
@@ -56,8 +61,11 @@ https://www.learnjapaneserpg.com/ (adaptive dialogue concept).
 - `situation` (optional English context, shown at every stage; must not
   translate the answer) and/or `zh` + `py` + `en` (the traveler's line).
 - `grammar` (optional, first stage only), `note` (explanation of the answer).
-- `options`: 2-6 of `{ id, en, icon }`; `answer`: option ids (exactly one for
-  `reply`; at least one option must be wrong).
+- `options`: 2-6 of `{ id, en, icon }`. In `reply`/`gather` scenes `id` is a
+  word id; in `point` scenes every option is a picture: `{ id, en, icon,
+  "picture": true }` with a plain id such as `woman` (no Chinese label).
+- `answer`: option ids (exactly one for `reply` and `point`; at least one
+  option must be wrong).
 - `result`, `resultIcon`, optional `closing` `{ zh, py, en }`.
 Broken scenes are reported by `npm run validate:content` and skipped by the game.
 Preview any scene with `/?encounter=<id>&stage=0|1|2`.

@@ -5,9 +5,13 @@ import type { Saved, Mastery } from './types.ts'
 import encountersJson from '../content/encounters.json' with { type: 'json' }
 import { WORDS } from '../data.ts'
 
-/** gather: pick every item the traveler asked for (several). reply: pick the one right thing to say. */
-export type EncounterKind = 'gather' | 'reply'
-export type EncounterOption = { id: string; en: string; icon: string }
+/**
+ * gather: pick every item the traveler asked for (several). reply: pick the one right thing to say.
+ * point: pick the picture the traveler's Chinese line describes (the options are pictures, not words).
+ */
+export type EncounterKind = 'gather' | 'reply' | 'point'
+/** A word option's id is its word id; a picture option (`picture: true`) has a free id and no Chinese label. */
+export type EncounterOption = { id: string; en: string; icon: string; picture?: boolean }
 export type Line = { zh: string; py: string; en: string }
 export type Scene = {
   id: string; kind: EncounterKind
@@ -33,10 +37,13 @@ export type Scene = {
 export const KIND_TEXT: Record<EncounterKind, { title: string; action: string; instruction: string }> = {
   gather: { title: 'A traveler’s request', action: 'Prepare', instruction: 'Choose what the traveler asked for, then tap Prepare. You can change your selection.' },
   reply: { title: 'A traveler on the road', action: 'Say it', instruction: 'Choose what to say, then tap Say it. You can change your choice.' },
+  point: { title: 'A traveler at the campfire', action: 'Point', instruction: 'Choose the picture that matches what the traveler says, then tap Point. You can change your choice.' },
 }
+/** Kinds with exactly one right option (tapping another option replaces the choice). */
+export const isSingle = (kind: EncounterKind) => kind !== 'gather'
 export const ENCOUNTER_GOLD = 3
 
-const KINDS: EncounterKind[] = ['gather', 'reply']
+const KINDS: EncounterKind[] = ['gather', 'reply', 'point']
 const isStr = (x: unknown): x is string => typeof x === 'string' && x.trim() !== ''
 const HANZI = /\p{Script=Han}/u
 
@@ -68,12 +75,16 @@ function sceneErrors(s: Scene, wordIds: string[]): string[] {
   if (options.length < 2 || options.length > 6) out.push('needs 2-6 options')
   if (new Set(ids).size !== ids.length) out.push('option ids must be unique')
   for (const o of options) {
-    if (!isStr(o?.id) || !requires.includes(o.id)) out.push(`option "${o?.id}" must be listed in requires (the player must know it)`)
+    if (o?.picture === true) { if (!isStr(o.id) || HANZI.test(o.id)) out.push(`picture option "${o?.id}" needs a plain id without Chinese`) }
+    else if (!isStr(o?.id) || !requires.includes(o.id)) out.push(`option "${o?.id}" must be listed in requires (the player must know it)`)
     if (!isStr(o?.en) || !isStr(o?.icon)) out.push(`option "${o?.id}" needs en and icon`)
   }
+  // A point scene shows pictures only; the other kinds show words (the Chinese is what is being practised).
+  if (s.kind === 'point' && (options.some(o => o?.picture !== true) || !isStr(s.zh))) out.push('a point scene needs a Chinese line and picture options only')
+  if (s.kind !== 'point' && options.some(o => o?.picture === true)) out.push(`picture options are only for point scenes`)
   const answer = Array.isArray(s.answer) ? s.answer : []
   if (!answer.length || answer.some(a => !ids.includes(a)) || new Set(answer).size !== answer.length) out.push('answer must be distinct option ids')
-  if (s.kind === 'reply' && answer.length !== 1) out.push('a reply scene has exactly one answer')
+  if (isSingle(s.kind) && answer.length !== 1) out.push(`a ${s.kind} scene has exactly one answer`)
   if (answer.length >= ids.length) out.push('at least one option must be wrong')
   if (!isStr(s.zh) && !isStr(s.situation)) out.push('needs a Chinese line (zh) or a situation')
   if (isStr(s.zh) && (!isStr(s.py) || !isStr(s.en))) out.push('zh needs py and en')
@@ -124,10 +135,10 @@ export function complete(s: Saved, date: string): Saved {
   return { ...s, encounterHistory: { ...s.encounterHistory, [e.id]: { dates } }, run: { ...s.run, gold: s.run.gold + ENCOUNTER_GOLD, encounter: { ...e, status: 'complete' } } }
 }
 
-/** Toggle an option: a reply scene keeps one choice, a gather scene any number. */
+/** Toggle an option: reply/point scenes keep one choice, a gather scene any number. */
 export function choose(state: EncounterState, scene: Scene, id: string): EncounterState {
   const on = state.selected.includes(id)
-  const selected = on ? state.selected.filter(x => x !== id) : scene.kind === 'reply' ? [id] : [...state.selected, id]
+  const selected = on ? state.selected.filter(x => x !== id) : isSingle(scene.kind) ? [id] : [...state.selected, id]
   return { ...state, selected }
 }
 
@@ -149,7 +160,7 @@ export function cleanEncounter(raw: unknown): EncounterState | undefined {
   const ids = scene.options.map(x => x.id)
   const selected = Array.isArray(e.selected) ? [...new Set(e.selected.filter(x => ids.includes(x)))] : []
   const order = Array.isArray(e.order) && e.order.length === ids.length && new Set(e.order).size === ids.length && e.order.every(x => ids.includes(x)) ? e.order : ids
-  return { id: e.id, stage: [0, 1, 2].includes(e.stage) ? e.stage : 0, status: ['offer', 'active', 'complete', 'closed'].includes(e.status) ? e.status : 'closed', selected: scene.kind === 'reply' ? selected.slice(0, 1) : selected, order, help: e.help === true }
+  return { id: e.id, stage: [0, 1, 2].includes(e.stage) ? e.stage : 0, status: ['offer', 'active', 'complete', 'closed'].includes(e.status) ? e.status : 'closed', selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
 }
 
 /** Preview aid for /?encounter=<scene id>&stage=<0|1|2>: a ready-to-play scene, or null when the id is not a scene. */

@@ -101,3 +101,23 @@ test('preview link builds a playable scene only for known ids and clamps the sta
   const p = previewEncounter('meal', '2')!; assert.equal(p.status, 'active'); assert.equal(p.stage, 2)
   assert.equal(previewEncounter('hello', '9')!.stage, 0)
 })
+
+test('scenes unlock early in the default course: greetings by word 5, who-is-it by 20, counting by 35', () => {
+  const course = [...new Set(stepsOf(ACTIVE_CURRICULUM).map(st => st.intro.entryId))]
+  const unlockAt = (id: string) => Math.max(...sceneById(id)!.requires.map(w => course.indexOf(w) + 1))
+  assert.ok(unlockAt('hello') <= 3 && unlockAt('sorry') <= 5)
+  assert.ok(unlockAt('friend-he') <= 20 && unlockAt('friend-she') <= 20)
+  assert.ok(['count-three', 'count-four', 'count-five'].every(id => unlockAt(id) <= 35))
+  for (const s of SCENES) assert.ok(s.requires.every(w => course.includes(w)), `${s.id} uses a word outside the course`)
+})
+
+test('point scenes: picture options only, one answer, and the pictures stay out of other kinds', () => {
+  const he = encountersJson.scenes.find(s => s.id === 'friend-he')!
+  const bad = (patch: object) => validateEncounters({ scenes: [{ ...he, ...patch }] }, wordIds).join()
+  assert.match(bad({ answer: ['man', 'woman'] }), /exactly one answer|at least one option must be wrong/)
+  assert.match(bad({ options: [...he.options, { id: '朋友', en: 'friend', icon: '🧑' }] }), /picture options only/)
+  const hello = encountersJson.scenes.find(s => s.id === 'hello')!
+  assert.match(validateEncounters({ scenes: [{ ...hello, options: [...hello.options, { id: 'x', en: 'x', icon: '❓', picture: true }] }] }, wordIds).join(), /only for point scenes/)
+  const scene = sceneById('friend-he')!, p = previewEncounter('friend-he', '1')!
+  assert.deepEqual(choose(choose(p, scene, 'man'), scene, 'woman').selected, ['woman'])
+})

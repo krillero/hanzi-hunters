@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { ENCOUNTER_GOLD, KIND_TEXT, choose, isCorrect, optionPinyin, sceneById, type EncounterState } from './game/encounters'
+import { ENCOUNTER_GOLD, KIND_TEXT, choose, isCorrect, isSingle, optionPinyin, sceneById, type EncounterState } from './game/encounters'
 
 /** `preview`: opened from /?encounter=… — nothing is saved, so the texts must not promise gold or a next floor. */
 export default function EncounterScreen({ state, onChange, onComplete, onLeave, preview = false }: { state: EncounterState; onChange: (e: EncounterState) => void; onComplete: () => void; onLeave: () => void; preview?: boolean }) {
@@ -9,7 +9,8 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave, 
   useEffect(() => { const old = document.activeElement as HTMLElement | null; box.current?.focus(); return () => old?.focus() }, [])
   if (!scene) return null
   const text = KIND_TEXT[scene.kind]
-  // At the hardest stage the item pictures are hidden too (they alone would give the answer); asking for help brings them back.
+  // At the hardest stage the pictures on word options are hidden too (they alone would give the answer); asking for help brings
+  // them back. Picture options (point scenes) always show their picture: it is the choice itself.
   const py = state.stage < 2 || state.help, english = state.stage === 0 || state.help, pictures = py
   const onKey = (e: KeyboardEvent) => {
     e.stopPropagation()
@@ -23,7 +24,7 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave, 
   }
   const submit = () => {
     if (isCorrect(scene, state.selected)) onComplete()
-    else setError(`Not quite. ${scene.note} Change your ${scene.kind === 'reply' ? 'choice' : 'selection'} and try again.`)
+    else setError(`Not quite. ${scene.note} Change your ${isSingle(scene.kind) ? 'choice' : 'selection'} and try again.`)
   }
   return <div className="modal-backdrop encounter-backdrop"><div ref={box} tabIndex={-1} className="modal encounter" role="dialog" aria-modal="true" aria-labelledby="enc-title" onKeyDown={onKey}>
     <div className="modal-head"><h2 id="enc-title">{text.title}</h2></div>
@@ -46,10 +47,12 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave, 
           const item = scene.options.find(x => x.id === id)
           if (!item) return null
           return <button key={id} aria-pressed={state.selected.includes(id)} onClick={() => { setError(''); onChange(choose(state, scene, id)) }}>
-            {pictures && <span aria-hidden="true">{item.icon}</span>}<b lang="zh">{id}</b>{py && <small>{optionPinyin(id)}</small>}{english && <small>{item.en}</small>}
+            {item.picture
+              ? <><span className="enc-picture" role="img" aria-label={english ? item.en : `Picture ${state.order.indexOf(id) + 1}`}>{item.icon}</span>{english && <small>{item.en}</small>}</>
+              : <>{pictures && <span aria-hidden="true">{item.icon}</span>}<b lang="zh">{id}</b>{py && <small>{optionPinyin(id)}</small>}{english && <small>{item.en}</small>}</>}
           </button>
         })}</div>
-        {/* A gather note is a recipe hint; a reply note names the answer, so it only appears after a wrong choice. */}
+        {/* A gather note is a recipe hint; reply/point notes name the answer, so they only appear after a wrong choice. */}
         {scene.kind === 'gather' && (state.stage === 0 || state.help) && <p>{scene.note}</p>}
         <p role="status">{error}</p>
         <button className="bar-btn main" onClick={submit}>{text.action}</button>
