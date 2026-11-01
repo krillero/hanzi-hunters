@@ -32,7 +32,7 @@ import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
 import { gearVerdict, rarityOf as rarityOfItem } from './game/rarity'
 import {
-  DEPTHS, ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, challengeFor, depthName, unlockedDepth, victoryBonus, SHIELD_SEGMENTS, advance, hasShield, isExpeditionWon, sealAsk, shieldFor, bankRun, type RunResult, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
+  DEPTHS, ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, sigilText, challengeFor, depthName, unlockedDepth, victoryBonus, SHIELD_SEGMENTS, advance, hasShield, isExpeditionWon, sealAsk, shieldFor, bankRun, type RunResult, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, clearOldSaves, loadSave, sanitizeSave, withLearning } from './game/save'
 import type { Mastery, Run, Saved } from './game/types'
@@ -613,7 +613,7 @@ export default function App() {
 
   const startRun = (depth: number) => {
     setReveal(null)
-    const fresh = newRun(bonuses, GEAR, ENEMIES, Math.min(depth, unlockedDepth(save.meta.depthCleared)))
+    const fresh = newRun(bonuses, GEAR, ENEMIES, Math.min(depth, unlockedDepth(save.meta.depthCleared)), save.meta.depthCleared)
     patch(s => ({ ...s, run: fresh }))
     setFloorStats(emptyStats()); setRunStats(emptyStats()); setSummary(null)
     setNextCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); setRunMilestones([]); answerLock.current = false
@@ -871,6 +871,7 @@ export default function App() {
                   <div className="bonus-line"><span>🧪 Potions<small>Available now</small></span><b>{run.potions} remaining · +{stats.potionHearts} ♥ each</b></div>
                   <div className="bonus-line"><span>💡 Hints<small>Per fight</small></span><b>{run.hintsLeft} remaining</b></div>
                   <div className="bonus-line"><span>🔁 Second chance<small>Per expedition</small></span><b>{run.secondLeft} of {stats.secondChances} left</b></div>
+                  {(run.sigil ?? 0) > 0 && <div className="bonus-line"><span>🔱 Warden Sigil Lv {run.sigil}<small>Kept forever</small></span><b>{sigilText(run.sigil)}</b></div>}
                   <div className="bonus-line"><span>🎒 Loot chance<small>Current enemy</small></span><b>{Math.round(lootChance * 100)}%</b></div>
                 </div>
               </details>
@@ -947,7 +948,7 @@ export default function App() {
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen key={`${trialState.id}:${trialState.step ?? 1}`} warden={foe?.boss === 'warden'} trial={t} state={trialState} onAnswer={answerTrial} onClose={leaveTrial} /> : null })()}
         {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onComplete={() => patch(s => complete(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
-        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
+        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} sigil={run.depth > save.meta.depthCleared ? { level: run.depth, text: sigilText(run.depth) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}

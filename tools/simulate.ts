@@ -55,7 +55,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
     const b = computeBonuses(meta.upgrades)
     introduce()
     // the bot always plays the deepest depth it has unlocked
-    let run = newRun(b, GEAR, ENEMIES, unlockedDepth(meta.depthCleared)), word = pick(null), answers = 0
+    let run = newRun(b, GEAR, ENEMIES, unlockedDepth(meta.depthCleared), meta.depthCleared), word = pick(null), answers = 0
     const startHearts = run.hearts, potionHearts = playerStats(run, b, GEAR).potionHearts
     const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0, trials: 0, trialsRight: 0, calmSaves: 0 }
     let fightAnswers = 0, longestFight = 0

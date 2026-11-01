@@ -96,7 +96,8 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
     if (chosen) loadout[slot] = chosen
   }
   const floor = int(raw.floor, 1, EXPEDITION_FLOORS, 1), kill = int(raw.kill, 0, ENEMIES_PER_FLOOR - 1, 0), level = int(raw.level, 1, 999, 1)
-  const stats = playerStats({ level, loadout }, b, GEAR)
+  const sigil = int(raw.sigil, 0, MAX_DEPTH, 0)
+  const stats = playerStats({ level, loadout, sigil }, b, GEAR)
   const depth = int(raw.depth, 1, MAX_DEPTH, 1)
   const foeHp = enemyStats(ENEMIES, floor, kill, depth).hp
   let phase: Run['phase'] = raw.phase === 'victory' || raw.phase === 'defeat' ? raw.phase : 'fighting'
@@ -115,7 +116,7 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
     potions: int(raw.potions, 0, 999, 0), streak: int(raw.streak, 0, 999, 0),
     enemyHp: phase === 'victory' ? 0 : int(raw.enemyHp, 1, foeHp, foeHp),
     hintsLeft: int(raw.hintsLeft, 0, stats.hints, stats.hints),
-    secondLeft: int(raw.secondLeft, 0, stats.secondChances, 0), calm: int(raw.calm, 0, 1, 0),
+    secondLeft: int(raw.secondLeft, 0, stats.secondChances, 0), calm: int(raw.calm, 0, 1, 0), sigil,
     reward: { xp: int(rw.xp, 0, 1e9, 0), gold: int(rw.gold, 0, 1e9, 0), loot: typeof rw.loot === 'string' && GEAR.some(g => g.name === rw.loot) ? rw.loot : '', levelUps: int(rw.levelUps, 0, 999, 0), hearts: int(rw.hearts, 0, 99, 0) }
   }
   return run

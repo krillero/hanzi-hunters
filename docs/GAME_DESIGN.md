@@ -82,7 +82,6 @@ Item names are their identity in saves. Effects: attack, max hearts, hints per f
 | Guardian Helm | +4 max HP · +1 armor | +1 max heart · +1 hint per fight | same |
 | Golem Plate (boss) | +12 max HP · +1 armor | +1 max heart · +1 second chance per floor | +1 max heart · +1 hint per fight |
 | Trick Mantle (boss) | +6 max HP · +2 armor | +1 second chance per floor · +1 hint per fight | +1 max heart · +10 % mastery damage |
-| Warden Sigil (final boss) | — | — | +15 % mastery damage · +1 hint per fight |
 
 Weapons and the other accessories are unchanged. A gear review for depths is planned in PR 2.
 
@@ -113,6 +112,18 @@ Per-depth enemy HP: without it (only the boss and the question mix) a 75 % playe
 
 Tried and rejected for depth 1: more enemy HP (×1.25–1.8) makes expeditions only a little longer (damage grows with levels and mastery) but drops 60 % players to no wins at all and pushes 75 % to a median of 10 expeditions. So expeditions are about 35–40 answers (6–8 minutes), shorter than first estimated; harder question mixes per depth (PR 2) are the planned way to add challenge. Longest fights are shield bosses. `tests/balance.test.ts` guards the targets, bounded expeditions (≤ 100 answers, fights ≤ 24: a 40-seed sweep shows a rare 22-answer shield fight at 0.75 accuracy, with or without boss trials) and that hearts only come back from potions and Second Wind. Tune `TUNING` (`src/game/rules.ts`) and `src/game/upgrades.ts`. The bot is a model, not real players — expect to retune after human playtests.
 
+## Warden Sigil (`sigilBonus` in `src/game/rules.ts`)
+A relic kept forever instead of loot from the Cavern Warden (an item would vanish at once, because beating it ends the expedition).
+Its **level is the number of depths cleared** (`Meta.depthCleared`), so it needs no slot, no choice and no new save field; each
+expedition fixes its level when it starts (`Run.sigil`). Level 1: **+1 hint per fight, +10 % mastery damage**; **+5 % mastery
+damage per further level** (level 5: +30 %). Shown at camp, in the run's bonus list and on the victory card of a first clear.
+
+Balance (simulator, 20 seeds, 40 expeditions; the bot never uses hints, so only the damage is measured), off (the old game) vs
+on: 0.75 accuracy wins 64.4 % → 68.8 %, depth 3/4 cleared after 11/12 → 10/11 expeditions, answers per expedition 62.1 → 58.4;
+0.85 and 0.90 clear one depth per expedition either way (wins 97.0 → 96.6 %, 99.5 → 99.5 %) with expeditions about 7 % shorter
+(59.6 → 54.8, 56.4 → 52.0 answers). Stronger scalings were measured and not taken: 15 % + 5 %/level (0.75 wins 70.5 %),
+10 % + 10 %/level (74.6 %, expeditions about 10 % shorter).
+
 ## Save format v1 (key `hanzi-hunters-save`)
 Saves were **restarted at v1 with expeditions** (2026-11-01): the earlier keys (`hanzi-hunters-save-v1`, `hanzi-hunters-save-v2`) are deleted on start (`clearOldSaves`) and never read, and backups from before are rejected. There are no migrations from earlier formats.
 
@@ -134,7 +145,7 @@ Optional additive fields (old saves load without them): `run.encounter`, `run.tr
 
 ## Bosses (`src/game/rules.ts`, `src/data.ts`)
 * **Every floor ends with a boss** (the 4th fight): **Shield Golem** (floor 1), **Echo Wraith** (2), **Ink Scribe** (3), **Mirror Trickster** (4) (`BOSS_ORDER`), and the final boss **Cavern Warden** (floor 5, `FINAL_BOSS`). To add a boss: a sprite, an entry in `BOSSES` / `BOSS_INFO` (`data.ts`), its place in `bossIdFor`, and its rule in `resolveAnswer` / `makeCard`.
-* **Cavern Warden** (final boss): 2 **tone wards** then 2 **ink seals** (`WARDEN_WARDS`, `WARDEN_SEALS`; `sealAsk` says which question kind breaks the current segment: tone questions for wards, character questions for seals, with the same safe fallback), then an **echo** phase like the Wraith's. Beating it wins the expedition. Placeholder art: the Golem sprite with a gold glow. Drops the **Warden Sigil** the first time.
+* **Cavern Warden** (final boss): 2 **tone wards** then 2 **ink seals** (`WARDEN_WARDS`, `WARDEN_SEALS`; `sealAsk` says which question kind breaks the current segment: tone questions for wards, character questions for seals, with the same safe fallback), then an **echo** phase like the Wraith's. Beating it wins the expedition. Placeholder art: the Golem sprite with a gold glow. Drops **no item** (the expedition ends right after it): its reward is the **Warden Sigil** relic (below).
   **Gauntlet** (`src/game/trials.ts`): right after the first tone ward breaks, two steps: a tone trial (right: the last ward breaks), then a torn note (right: every remaining seal breaks). Each is answered once; a wrong step is an ordinary wrong answer and the next step still follows. Once per fight, no mastery change.
 * Stats: base enemy × boss multipliers, then the per-floor scaling. Early bosses are gentler and ramp up: HP ×(1.3 + 0.15·(floor−1)) up to `BOSS_HP` 1.7, rewards ×`BOSS_REWARD` 2. Bosses have no attack: like every enemy, a mistake against them costs exactly one heart (before protection), and protected practice causes no boss penalty either.
 * **Shield Golem:** a shield that blocks all damage: 2 segments (`shieldFor`; 3 for the Scribe on floor 3). Only a correct *pinyin* (tone) question breaks a segment; while the shield is up the game asks pinyin questions about words you know. **Safe fallback** (`pickSealCard`): if no such question can be built from your words (e.g. only particles known), the game asks another fair question marked `sealFallback`, and a correct answer to it breaks a segment too, so a shield is never unbreakable (`tests/hearts.test.ts` beats every boss with the first lesson's words). Wrong answers never repair it. Once down it is a normal fight. `Run.shield` is saved.

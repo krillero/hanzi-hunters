@@ -17,6 +17,8 @@ export type Run = {
   trial?: import('./trials').TrialState
   /** Echo Wraith calmed by its trial: the next wrong answer this expedition costs no heart (0 or 1; kept until used). */
   calm?: number
+  /** Warden Sigil level for this expedition (depths cleared when it started; see rules.sigilBonus). Old saves: 0. */
+  sigil?: number
   /** The expedition's depth (1..MAX_DEPTH): harder question mix, more gold, tougher final boss. */
   depth: number
   floor: number; kill: number; kills: number
