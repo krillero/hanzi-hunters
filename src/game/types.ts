@@ -23,10 +23,8 @@ export type Run = {
   calm?: number
   /** Warden Sigil level for this expedition (depths cleared when it started; see rules.sigilBonus). Old saves: 0. */
   sigil?: number
-  /** An event's result for one floor: Blessing (next mistake costs no heart) or Shaken (next mistake cannot be saved). Used once. */
-  omen?: { kind: 'blessing' | 'shaken'; floor: number }
-  /** Hints spent on event help between fights, taken from the next fight's hints. */
-  hintDebt?: number
+  /** An event's Blessing for one floor: the next mistake on that floor costs no heart. Used once. */
+  omen?: { kind: 'blessing'; floor: number }
   /** The expedition's depth (1..MAX_DEPTH): harder question mix, more gold, tougher final boss. */
   depth: number
   floor: number; kill: number; kills: number

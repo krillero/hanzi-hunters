@@ -3,7 +3,7 @@
 Short scenes appear after a non-final floor summary, once per expedition. They
 open straight into the task and cannot be skipped: a wrong choice explains the
 answer, so a scene can always be finished. The first choice decides an omen for
-the next floor (Blessing / Shaken, see Reward and cost). (A save from the old
+the next floor (Blessing, see Reward). (A save from the old
 intro step, status "offer", loads as active.)
 
 | Scene | Kind | Needs (all at least Familiar) | Words from course position* |
@@ -57,30 +57,26 @@ Item order is shuffled once and persisted. Help is free.
 Wrong choices explain and allow editing. Completed scenes show the result and,
 if the scene has one, the traveler's closing line (谢谢！ for tea/meal).
 These are short visual state changes, not a fully animated crafting simulation.
-### Reward and cost (src/game/encounters.ts submitEncounter, Run.omen)
-The **first** choice decides an omen for the **next floor** (the scene comes
-after a floor boss), used once, on that floor only:
-- Right first time: **✨ Blessing**: the next mistake on that floor costs no
-  heart (used before a calmed Wraith's charge or a second chance).
-- Wrong first time: **🌧 Shaken**: the next mistake on that floor costs **2
-  hearts**, and no calm charge or second chance can save it (practice questions
-  stay protected; with 1 heart left it costs that one). The scene stays open to fix (it still teaches); fixing it
-  completes it without a Blessing.
-- No gold. No hearts, XP or mastery credit change. Repeat submissions are
-  no-ops. A ✨ / 🌧 chip next to the hearts shows an active omen.
-- **Help** ("Translation" / "Pinyin & translation") costs **one hint of the
-  next fight** (Run.hintDebt, taken by startFight); once bought it can be shown
-  and hidden freely. Without a hint for the next fight it cannot be bought
-  (base hints are 0; they come from upgrades, gear and the Warden Sigil).
-- "Continue to next floor" appears only once the scene is complete (Escape does
-  the same); there is no skip or leave button.
-- Balance (simulator models events since this change: after floors 1-4 when
-  every word is Familiar, right first time with the player's accuracy, never
-  buying help; 20 seeds, events off → on, Shaken = 2 hearts): wins 0.60
-  5.4 → 5.0 %, 0.75 61.0 → 71.5 %, 0.85 96.9 → 97.8 %, 0.90 99.1 → 99.6 %;
-  hearts lost/run 0.75 9.86 → 8.35, 0.85 2.50 → 1.81. With Shaken = "cannot be
-  saved" (1 heart) it was 72.9 % / 1.39: Shaken rarely cost anything for players
-  without second chances or calm, so it now costs 2 hearts.
+### Reward (src/game/encounters.ts submitEncounter, Run.omen)
+Events are welcoming: a wrong choice shows the explanation and can be fixed, at
+no cost. A right choice on the **first** try, made from the Chinese (the free
+translation never opened), earns **✨ Blessing** for the **next floor** (the
+scene comes after a floor boss): the next mistake on that floor costs no heart,
+used once, before a calmed Wraith's charge or a second chance (practice
+questions keep their own protection). A ✨ chip next to the hearts shows it.
+- The translation ("Translation" / "Pinyin & translation") is free and can be
+  shown and hidden at will; opening it before answering means no Blessing for
+  that scene (`helped`). Without that rule, opening the English first would make
+  every Blessing free.
+- No gold; no hearts, XP or mastery credit change. Repeat submissions are
+  no-ops. "Continue to next floor" appears only once the scene is complete.
+- History: an earlier version had 🌧 Shaken (a wrong first choice made the next
+  mistake cost 2 hearts) and charged a hint for help; both were removed to keep
+  events welcoming. Old saves drop a pending Shaken and the hint debt.
+- Balance (simulator, 20 seeds, events off → on; the bot is right first time
+  with its accuracy and never opens the translation): wins 0.60 5.4 → 5.3 %,
+  0.75 61.0 → 76.5 %, 0.85 96.9 → 98.0 %; hearts lost/run 0.75 9.86 → 7.91,
+  0.85 2.50 → 1.30. (With Shaken it was 71.5 % / 1.81.)
 
 ## Architecture and persistence
 src/content/encounters.json: the scenes (content; format below).
@@ -117,9 +113,9 @@ used only for decoration and for picture options; no external artwork or audio
 App.tsx: offers a scene from the floor summary and continues to the next floor
 through the normal nextEnemy path; an open scene blocks battle auto-advance and
 speech. Saved.run.encounter keeps the scene, option order, selection, whether
-help was bought/shown and the first-try result; Saved.encounterHistory keeps up
+the translation was shown/opened and the first-try result; Saved.encounterHistory keeps up
 to 30 completion dates per scene (rotation); Saved.recentEvents the last 12
-scenes/trials shown; Run.omen and Run.hintDebt the stakes. All are optional
+scenes/trials shown; Run.omen the Blessing. All are optional
 additive fields of the v1 save: old saves load with none of them, old saved
 encounters drop fields that no longer exist (the day-based stage). Older app
 versions discard the added fields: avoid rolling back during an active scene.
@@ -330,7 +326,7 @@ prerequisite words. It never changes the save; Close preview removes the paramet
 
 ## Testing and review
 - Automated: tests/encounters.test.ts (content validation, eligibility at
-  Familiar, per-word help, offer rotation, first-try Blessing/Shaken, paid help
+  Familiar, per-word help, offer rotation, first-try Blessing, free translation
   and hint debt, omen rules in resolveAnswer, saves), tests/trials.test.ts and
   tests/trialgen.test.ts (every boss trial; every generated trial from the whole
   course with several seeds). Run `npm run test:brief`; content changes also
@@ -342,7 +338,7 @@ prerequisite words. It never changes the save; Close preview removes the paramet
   which never touch the save: `/?encounter=hello&level=2` (pinyin, no English,
   no option icons), `&level=3` (characters only), `/?encounter=friend-he`
   (picture options), `/?trial=scribe-friend&level=2` (blanked pinyin),
-  `/?trial=warden` (two steps). In a real run: help shows its hint price, a
-  wrong first choice announces Shaken, the next floor shows the ✨ / 🌧 chip.
+  `/?trial=warden` (two steps). In a real run: the translation is free, a right
+  first answer without it gives the Blessing, the next floor shows the ✨ chip.
 - Still needs a person: Mandarin review of the scene and trial texts and of the
   generation rules (see Generated trials), and real-device playtesting.

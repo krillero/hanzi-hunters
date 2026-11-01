@@ -35,7 +35,7 @@ export type RunLog = {
 export type SimOptions = {
   /** Expeditions played per calendar day (time-gated mastery levels need real days). Default SIM_RUNS_PER_DAY. */
   runsPerDay?: number
-  /** Model the events after floor bosses (Blessing / Shaken for the next floor). Default true. */
+  /** Model the events after floor bosses (a Blessing for the next floor). Default true. */
   events?: boolean
   /** Start with every upgrade bought (an "upgraded" player) instead of buying greedily after each run. */
   maxed?: boolean
@@ -77,10 +77,10 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
     dueThisFight = 0
     while (run.phase !== 'defeat' && !isExpeditionWon(run) && answers < ANSWER_CAP) {
       if (run.phase === 'victory') {
-        // An event after a floor boss (floors 1-4) when its words are Familiar: right first time = Blessing, else Shaken, for the
-        // next floor. The bot never buys help; a reply/gather choice is about as hard as a normal question.
+        // An event after a floor boss (floors 1-4) when its words are Familiar: right first time = Blessing for the next floor
+        // (a wrong first try costs nothing). The bot never opens the translation; a reply/gather choice is about as hard as a normal question.
         if (opts.events !== false && run.kill === ENEMIES_PER_FLOOR - 1 && run.floor < EXPEDITION_FLOORS && (SCENES.some(sc => eligible(mastery, sc)) || validGeneratedScenes(mastery, rng).length > 0)) {
-          run = { ...run, omen: { kind: rng() < accuracy ? 'blessing' : 'shaken', floor: run.floor + 1 } }; stat.events++
+          if (rng() < accuracy) run = { ...run, omen: { kind: 'blessing', floor: run.floor + 1 } }; stat.events++
         }
         run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; dueThisFight = 0; continue
       }

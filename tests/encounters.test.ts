@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import encountersJson from '../src/content/encounters.json' with { type: 'json' }
-import { offer, submitEncounter, payHelp, helpHintsLeft, sceneFor, validGeneratedScenes, choose, cleanEncounter, previewEncounter, validateEncounters, sceneById, SCENES } from '../src/game/encounters.ts'
+import { offer, submitEncounter, toggleHelp, sceneFor, validGeneratedScenes, choose, cleanEncounter, previewEncounter, validateEncounters, sceneById, SCENES } from '../src/game/encounters.ts'
 import { pinyinFor, showPinyin, wordsIn, fixedLevel, levelOf } from '../src/game/support.ts'
 import { blankedPinyin } from '../src/game/trialgen.ts'
 import { sanitizeSave } from '../src/game/save.ts'
@@ -79,29 +79,28 @@ test('right on the first try: Blessing for the next floor, no gold; repeats chan
   assert.equal(submitEncounter(reloaded, '2026-11-02'), reloaded); assert.equal(offer(reloaded), reloaded)
 })
 
-test('wrong first choice: Shaken for the next floor; fixing it completes without a Blessing; later misses add nothing', () => {
+test('a wrong first choice costs nothing: it explains, can be fixed, and only the Blessing is missed', () => {
   const s = offer(ready(), () => 0.5)
   const scene = sceneFor(s.run!.encounter)!
   const wrong = scene.options.map(o => o.id).filter(id => !scene.answer.includes(id)).slice(0, 1)
   const w = submitEncounter(active(s, wrong), '2026-11-01')
   assert.equal(w.run!.encounter!.status, 'active'); assert.equal(w.run!.encounter!.first, 'wrong')
-  assert.deepEqual(w.run!.omen, { kind: 'shaken', floor: s.run!.floor + 1 })
+  assert.equal(w.run!.omen, undefined); assert.equal(w.run!.hearts, s.run!.hearts)
   assert.equal(submitEncounter(w, '2026-11-01'), w, 'a second wrong choice changes nothing')
   const fixed = submitEncounter({ ...w, run: { ...w.run!, encounter: { ...w.run!.encounter!, selected: [...scene.answer] } } }, '2026-11-01')
-  assert.equal(fixed.run!.encounter!.status, 'complete'); assert.equal(fixed.run!.omen!.kind, 'shaken', 'still Shaken')
+  assert.equal(fixed.run!.encounter!.status, 'complete'); assert.equal(fixed.run!.omen, undefined, 'no Blessing, nothing else either')
 })
 
-test('help costs one hint of the next fight, once; without hints it cannot be bought', () => {
+test('the translation is free; opening it before answering means no Blessing (showing it again later is free too)', () => {
   const s = offer(ready(), () => 0.5)
-  assert.equal(helpHintsLeft(s), 0, 'a new player has no hints'); assert.equal(payHelp(s), s)
-  const rich = { ...s, meta: { ...s.meta, upgrades: ['S1'] } }   // Eagle Eye: 1 hint per fight
-  assert.equal(helpHintsLeft(rich), 1)
-  const paid = payHelp(rich)
-  assert.equal(paid.run!.hintDebt, 1); assert.equal(paid.run!.encounter!.paid, true); assert.equal(paid.run!.encounter!.help, true)
-  assert.equal(payHelp(paid), paid, 'bought once'); assert.equal(helpHintsLeft(paid), 0)
-  const next = advance(closeIt(paid), computeBonuses(['S1']), ENEMIES, GEAR)!
-  assert.equal(next.hintsLeft, 0, 'the next fight starts one hint short'); assert.equal(next.hintDebt, 0)
-  assert.equal(advance({ ...next, phase: 'victory', enemyHp: 0 }, computeBonuses(['S1']), ENEMIES, GEAR)!.hintsLeft, 1, 'and the fight after is back to normal')
+  const scene = sceneFor(s.run!.encounter)!
+  const opened = toggleHelp(s.run!.encounter!)
+  assert.equal(opened.help, true); assert.equal(opened.helped, true)
+  const closed = toggleHelp(opened); assert.equal(closed.help, false); assert.equal(closed.helped, true, 'once opened, it counts')
+  const done = submitEncounter({ ...s, run: { ...s.run!, encounter: { ...closed, selected: [...scene.answer] } } }, '2026-11-01')
+  assert.equal(done.run!.encounter!.status, 'complete'); assert.equal(done.run!.encounter!.first, 'right'); assert.equal(done.run!.omen, undefined)
+  assert.equal(done.run!.hintsLeft, s.run!.hintsLeft, 'no hint spent')
+  assert.equal(cleanEncounter({ ...s.run!.encounter!, paid: true })!.helped, true, 'an old save with bought help counts as opened')
 })
 
 
@@ -168,24 +167,19 @@ test('an encounter opens straight into the scene; a save from the old intro step
   assert.equal(cleanEncounter({ id: 'hello', stage: 0, status: 'offer', selected: [], order: ['你好', '再见', '谢谢'], help: false })!.status, 'active')
 })
 
-test('omens count once, on their floor: Blessing saves a heart first; Shaken costs 2 hearts, ignoring calm and second chances, not practice', () => {
-  const base = { ...newRun(NO_BONUSES, GEAR, ENEMIES), floor: 2, kill: 0, phase: 'fighting' as const, enemyHp: 30, secondLeft: 1, calm: 1 }
+test('a Blessing counts once, on its floor, before calm and second chances; practice keeps its own protection; old Shaken is dropped', () => {
+  const base = { ...newRun(NO_BONUSES, GEAR, ENEMIES), floor: 2, kill: 0, phase: 'fighting' as const, enemyHp: 30, calm: 1 }
   const wrong = (run: Run, practice = false) => resolveAnswer({ run, bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, lv: 1, isCorrect: false, practice, roll: { drop: 0.99, item: 0 } })
   const blessed = wrong({ ...base, omen: { kind: 'blessing', floor: 2 } })
   assert.ok(blessed.savedByBlessing); assert.equal(blessed.heartsLost, 0); assert.equal(blessed.run.omen, undefined); assert.equal(blessed.run.calm, 1, 'calm kept for later')
-  const shaken = wrong({ ...base, omen: { kind: 'shaken', floor: 2 } })
-  assert.ok(shaken.shakenHit); assert.equal(shaken.heartsLost, 2, 'Shaken: the mistake costs 2 hearts'); assert.equal(shaken.savedBySecondChance, false); assert.equal(shaken.run.calm, 1); assert.equal(shaken.run.omen, undefined)
-  const practice = wrong({ ...base, omen: { kind: 'shaken', floor: 2 } }, true)
-  assert.ok(practice.practiceSaved); assert.deepEqual(practice.run.omen, { kind: 'shaken', floor: 2 }, 'a protected practice question does not use it up')
-  const later = wrong({ ...base, floor: 3, omen: { kind: 'shaken', floor: 2 } })
-  assert.equal(later.shakenHit, false, 'another floor: no effect'); assert.ok(later.savedByCalm)
+  const practice = wrong({ ...base, omen: { kind: 'blessing', floor: 2 } }, true)
+  assert.ok(practice.practiceSaved); assert.deepEqual(practice.run.omen, { kind: 'blessing', floor: 2 }, 'a protected practice question does not use it up')
+  const later = wrong({ ...base, floor: 3, omen: { kind: 'blessing', floor: 2 } })
+  assert.equal(later.savedByBlessing, false, 'another floor: no effect'); assert.ok(later.savedByCalm)
+  const old = sanitizeSave({ ...sanitizeSave(null), run: { ...base, omen: { kind: 'shaken', floor: 2 }, hintDebt: 1 } })
+  assert.equal(old.run!.omen, undefined); assert.equal((old.run as Record<string, unknown>).hintDebt, undefined)
 })
 
-test('Shaken with one heart left costs that heart only (hearts lost never exceed hearts left)', () => {
-  const run: Run = { ...newRun(NO_BONUSES, GEAR, ENEMIES), floor: 2, kill: 0, phase: 'fighting', enemyHp: 30, hearts: 1, omen: { kind: 'shaken', floor: 2 } }
-  const r = resolveAnswer({ run, bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, lv: 1, isCorrect: false, roll: { drop: 0.99, item: 0 } })
-  assert.equal(r.heartsLost, 1); assert.equal(r.run.hearts, 0); assert.equal(r.outcome, 'defeat')
-})
 
 test('generated events: valid, every word Familiar, counting answers have exactly N tiles, requests ask exactly for the answer', () => {
   const familiar: Mastery = Object.fromEntries(WORDS.map(w => [w.id, { lv: 2, ok: 0 }]))
