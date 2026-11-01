@@ -29,7 +29,7 @@ npm run dev                # preview (see "Previewing" below)
   the game falls back to a fair question if that kind is not possible for the entry.
 * `/?first=朋友,看-look` introduces these entries (ids or hanzi) before the curriculum, so new content can be played without working up to it (preview only; ordinary play never introduces entries outside the curriculum).
 * Try the popup: answer, then tap the 💡 button, or open the entry from the Wordbook.
-* Narrow phone check: use a 320 px wide window; long words, examples and the Wordbook must not scroll sideways.
+* Narrow phone check: use a 360 px wide window (the narrowest supported width); long words, examples and the Wordbook must not scroll sideways.
 
 ---
 
@@ -186,7 +186,9 @@ Section types: `text` (`heading?`, `body` ≤ 700), `tips` (`heading?`, `items` 
 
 **Example fields:** `zh`, `pinyin` (sentence case, standard spacing and punctuation, tone marks), `en` (natural English, not word-for-word), optional `note`, `source`, `review`, and `audio: false` to disable the 🔊 button. The validator warns if the pinyin and the characters have different syllable counts, and if the sentence does not contain the entry it explains.
 
-**What the popup also shows automatically** (nothing to write): dictionary pinyin and a neutral-tone remark, accepted `variants`, other readings of the same hanzi (with a link), the `speech` notes under "In connected speech (guidance, not the dictionary tone)", and an "About this entry" block with kind, review status and sources. Entries without an authored explanation still open this popup from the Wordbook.
+**What the popup also shows automatically** (nothing to write): the hanzi, pinyin and meaning in the header, the entry's note (or the explanation's `summary`), a neutral-tone remark (only when the note does not already mention neutral tone), accepted `variants`, other readings of the same hanzi (with a link), and the `speech` notes. Entries that are not `human-reviewed` get a small **draft** tag next to the meaning; sources, licenses and review notes are **not** shown in the popup (they stay in the data and in Settings → Credits). Entries without an authored explanation still open this popup from the Wordbook.
+
+**Do not repeat what is already shown.** `summary` is the popup's first paragraph, so never add a section that restates it or the entry's `note`; only write an explanation when it adds something (a comparison, an example, a pronunciation detail). Example `note`s are for something specific to that sentence, not general disclaimers ("optional example", "AI draft"): review status belongs in the `review` field.
 
 ### Writing rules (important)
 
@@ -243,7 +245,7 @@ Every piece of content (entry, example, explanation, sentence question) may carr
 * **HSK** (official, edition-labelled materials): a guide to *which* beginner words to teach. State the edition in `ref` (e.g. `"HSK 3.0 (2021) level 1"`); HSK 2.0 and 3.0 differ. Do not copy the lists.
 * **Tatoeba** (mostly CC BY 2.0 FR, some CC0): community sentences. Review each sentence individually; keep author and sentence number in `ref`.
 * `review.status`: `ai-draft` (written by an AI, no person checked it), `imported` (taken from a dataset, no person checked it), `human-reviewed` (**requires `reviewer` and `date`**; only use when a person really reviewed it). A missing `review` counts as unreviewed.
-* Attribution is shown in **Settings → Credits & content review**, and per entry in the details popup ("About this entry"). It never appears on answer buttons.
+* Attribution is shown in **Settings → Credits & content review** (sources used, licenses, how much is unreviewed). Gameplay shows only a small "draft" tag on unreviewed entries in the details popup; sources never appear on answer buttons or in popups.
 * `npm run validate:content` prints how many entries, examples and sentence questions are not yet reviewed by a person. That list is what a Mandarin teacher should work through.
 
 ---
@@ -288,14 +290,14 @@ Every piece of content (entry, example, explanation, sentence question) may carr
 - [ ] Existing ids are unchanged. New entries are only taught once a lesson in `curricula.json` introduces them (`npm run validate:content` lists entries outside the active curriculum as INFO).
 - [ ] Tone marks and neutral tones double-checked; `wrongPinyin` really are wrong; sentence questions have exactly one fitting answer.
 - [ ] Nothing is marked `human-reviewed` unless a person did review it.
-- [ ] Opened the entry with `/?word=<id>` (and `&kind=`) in a 320 px wide window.
+- [ ] Opened the entry with `/?word=<id>` (and `&kind=`) in a 360 px wide window.
 - [ ] Report what needs Mandarin-teacher review.
 
 ---
 
 ## Copy-paste prompt for another agent
 
-A complete ready-to-use version lives in `docs/AGENT_PROMPT.md`; the current content is listed in `docs/content-inventory.json` (regenerate with `npm run inventory`). Short version:
+For choosing a whole new batch of vocabulary (sources, HSK levels, candidate checker, lessons from the first 100), see `docs/vocabulary-toolkit/README.md`. A complete ready-to-use version lives in `docs/AGENT_PROMPT.md`; the current content is listed in `docs/content-inventory.json` (regenerate with `npm run inventory`). Short version:
 
 > You are adding learning content to the Hanzi Hunters project. Read `docs/CONTENT_GUIDE.md` first and follow it exactly.
 > Edit only `src/content/*.json`; do not change code. Task: **<describe the task>**.

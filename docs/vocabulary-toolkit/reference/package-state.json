@@ -1,0 +1,871 @@
+{
+  "selected": [
+    "你好",
+    "谢谢",
+    "再见",
+    "请",
+    "对不起",
+    "我",
+    "你",
+    "他",
+    "她",
+    "您",
+    "是",
+    "人",
+    "好",
+    "很",
+    "吗",
+    "叫",
+    "名字",
+    "谁",
+    "什么",
+    "朋友",
+    "不",
+    "也",
+    "有",
+    "没有",
+    "的",
+    "这",
+    "那",
+    "哪",
+    "这里",
+    "个",
+    "一",
+    "二",
+    "三",
+    "四",
+    "五",
+    "六",
+    "七",
+    "八",
+    "九",
+    "十",
+    "零",
+    "两",
+    "多",
+    "少",
+    "大",
+    "小",
+    "家",
+    "妈妈",
+    "爸爸",
+    "孩子",
+    "喜欢",
+    "哥哥",
+    "姐姐",
+    "弟弟",
+    "妹妹",
+    "高兴",
+    "想",
+    "要",
+    "吃",
+    "喝",
+    "水",
+    "茶",
+    "咖啡",
+    "米饭",
+    "菜",
+    "来",
+    "去",
+    "回",
+    "在",
+    "学校",
+    "今天",
+    "明天",
+    "昨天",
+    "现在",
+    "时候",
+    "年",
+    "月",
+    "天",
+    "星期",
+    "点",
+    "热",
+    "冷",
+    "忙",
+    "累",
+    "学生",
+    "老师",
+    "学习",
+    "汉语",
+    "字",
+    "看-look",
+    "听",
+    "说",
+    "读",
+    "写",
+    "书",
+    "钱",
+    "买",
+    "多少",
+    "商店",
+    "块"
+  ],
+  "mapping": {
+    "你好": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "147",
+      "pinyin": "nǐ hǎo"
+    },
+    "谢谢": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "241",
+      "pinyin": "xièxie"
+    },
+    "再见": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "271",
+      "pinyin": "zàijiàn"
+    },
+    "请": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "165",
+      "pinyin": "qǐng"
+    },
+    "对不起": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "45",
+      "pinyin": "duìbuqǐ"
+    },
+    "我": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "221",
+      "pinyin": "wǒ"
+    },
+    "你": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "146",
+      "pinyin": "nǐ"
+    },
+    "他": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "200",
+      "pinyin": "tā"
+    },
+    "她": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "204",
+      "pinyin": "tā"
+    },
+    "您": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "150",
+      "pinyin": "nín"
+    },
+    "是": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "188",
+      "pinyin": "shì"
+    },
+    "不": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "13",
+      "pinyin": "bù"
+    },
+    "吗": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "115",
+      "pinyin": "ma"
+    },
+    "也": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "253",
+      "pinyin": "yě"
+    },
+    "很": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "79",
+      "pinyin": "hěn"
+    },
+    "叫": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "91",
+      "pinyin": "jiào"
+    },
+    "名字": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "128",
+      "pinyin": "míngzi"
+    },
+    "什么": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "182",
+      "pinyin": "shénme"
+    },
+    "哪": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "131",
+      "pinyin": "nǎ"
+    },
+    "一": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "254",
+      "pinyin": "yī"
+    },
+    "二": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "49",
+      "pinyin": "èr"
+    },
+    "三": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "173",
+      "pinyin": "sān"
+    },
+    "四": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "198",
+      "pinyin": "sì"
+    },
+    "五": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "223",
+      "pinyin": "wǔ"
+    },
+    "六": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "113",
+      "pinyin": "liù"
+    },
+    "七": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "160",
+      "pinyin": "qī"
+    },
+    "八": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "2",
+      "pinyin": "bā"
+    },
+    "九": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "95",
+      "pinyin": "jiǔ"
+    },
+    "十": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "184",
+      "pinyin": "shí"
+    },
+    "零": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "112",
+      "pinyin": "líng"
+    },
+    "个": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "60",
+      "pinyin": "gè"
+    },
+    "两": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "111",
+      "pinyin": "liǎng"
+    },
+    "有": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "263",
+      "pinyin": "yǒu"
+    },
+    "没有": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "122",
+      "pinyin": "méiyǒu"
+    },
+    "人": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "170",
+      "pinyin": "rén"
+    },
+    "朋友": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "156",
+      "pinyin": "péngyou"
+    },
+    "家": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "86",
+      "pinyin": "jiā"
+    },
+    "妈妈": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "114",
+      "pinyin": "māma"
+    },
+    "爸爸": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "3",
+      "pinyin": "bàba"
+    },
+    "哥哥": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "58",
+      "pinyin": "gēge"
+    },
+    "姐姐": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "92",
+      "pinyin": "jiějie"
+    },
+    "弟弟": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "31",
+      "pinyin": "dìdi"
+    },
+    "妹妹": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "123",
+      "pinyin": "mèimei"
+    },
+    "孩子": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "68",
+      "pinyin": "háizi"
+    },
+    "喜欢": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "225",
+      "pinyin": "xǐhuan"
+    },
+    "想": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "233",
+      "pinyin": "xiǎng"
+    },
+    "要": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "252",
+      "pinyin": "yào"
+    },
+    "吃": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "21",
+      "pinyin": "chī"
+    },
+    "喝": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "77",
+      "pinyin": "hē"
+    },
+    "水": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "192",
+      "pinyin": "shuǐ"
+    },
+    "茶": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "17",
+      "pinyin": "chá"
+    },
+    "咖啡": {
+      "level": "2",
+      "printedPage": 86,
+      "pdfPage": 89,
+      "entry": "377",
+      "pinyin": "kāfēi"
+    },
+    "米饭": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "125",
+      "pinyin": "mǐfàn"
+    },
+    "菜": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "16",
+      "pinyin": "cài"
+    },
+    "来": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "106",
+      "pinyin": "lái"
+    },
+    "去": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "167",
+      "pinyin": "qù"
+    },
+    "回": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "81",
+      "pinyin": "huí"
+    },
+    "在": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "272",
+      "pinyin": "zài"
+    },
+    "这里": {
+      "level": "1",
+      "printedPage": 84,
+      "pdfPage": 87,
+      "entry": "282",
+      "pinyin": "zhèlǐ"
+    },
+    "今天": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "94",
+      "pinyin": "jīntiān"
+    },
+    "明天": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "130",
+      "pinyin": "míngtiān"
+    },
+    "昨天": {
+      "level": "1",
+      "printedPage": 84,
+      "pdfPage": 87,
+      "entry": "297",
+      "pinyin": "zuótiān"
+    },
+    "现在": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "232",
+      "pinyin": "xiànzài"
+    },
+    "时候": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "185",
+      "pinyin": "shíhou"
+    },
+    "年": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "149",
+      "pinyin": "nián"
+    },
+    "月": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "269",
+      "pinyin": "yuè"
+    },
+    "天": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "207",
+      "pinyin": "tiān"
+    },
+    "星期": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "243",
+      "pinyin": "xīngqī"
+    },
+    "点": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "33",
+      "pinyin": "diǎn"
+    },
+    "大": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "25",
+      "pinyin": "dà"
+    },
+    "小": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "234",
+      "pinyin": "xiǎo"
+    },
+    "多": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "46",
+      "pinyin": "duō"
+    },
+    "少": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "180",
+      "pinyin": "shǎo"
+    },
+    "好": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "71",
+      "pinyin": "hǎo"
+    },
+    "热": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "169",
+      "pinyin": "rè"
+    },
+    "冷": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "109",
+      "pinyin": "lěng"
+    },
+    "忙": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "118",
+      "pinyin": "máng"
+    },
+    "累": {
+      "level": "2",
+      "printedPage": 86,
+      "pdfPage": 89,
+      "entry": "388",
+      "pinyin": "lèi"
+    },
+    "高兴": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "57",
+      "pinyin": "gāoxìng"
+    },
+    "老师": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "107",
+      "pinyin": "lǎoshī"
+    },
+    "学校": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "250",
+      "pinyin": "xuéxiào"
+    },
+    "学习": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "249",
+      "pinyin": "xuéxí"
+    },
+    "汉语": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "69",
+      "pinyin": "Hànyǔ"
+    },
+    "看-look": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "99",
+      "pinyin": "kàn"
+    },
+    "听": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "209",
+      "pinyin": "tīng"
+    },
+    "说": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "196",
+      "pinyin": "shuō"
+    },
+    "读": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "42",
+      "pinyin": "dú"
+    },
+    "写": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "240",
+      "pinyin": "xiě"
+    },
+    "书": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "190",
+      "pinyin": "shū"
+    },
+    "字": {
+      "level": "1",
+      "printedPage": 84,
+      "pdfPage": 87,
+      "entry": "296",
+      "pinyin": "zì"
+    },
+    "的": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "30",
+      "pinyin": "de"
+    },
+    "这": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "279",
+      "pinyin": "zhè"
+    },
+    "那": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "136",
+      "pinyin": "nà"
+    },
+    "钱": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "164",
+      "pinyin": "qián"
+    },
+    "买": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "116",
+      "pinyin": "mǎi"
+    },
+    "多少": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "47",
+      "pinyin": "duōshao"
+    },
+    "商店": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "174",
+      "pinyin": "shāngdiàn"
+    },
+    "块": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "105",
+      "pinyin": "kuài"
+    },
+    "谁": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "181",
+      "pinyin": "shéi/shuí"
+    },
+    "学生": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "248",
+      "pinyin": "xuéshēng"
+    }
+  },
+  "oldIds": [
+    "人",
+    "大",
+    "小",
+    "一",
+    "二",
+    "三",
+    "日",
+    "月",
+    "水",
+    "火",
+    "山",
+    "木",
+    "口",
+    "天",
+    "好",
+    "我",
+    "你",
+    "他",
+    "她",
+    "女",
+    "子",
+    "中",
+    "国",
+    "是",
+    "不",
+    "四",
+    "五",
+    "六",
+    "八",
+    "十",
+    "七",
+    "九",
+    "上",
+    "下",
+    "手",
+    "目",
+    "田",
+    "石",
+    "门",
+    "车",
+    "马",
+    "鸟",
+    "鱼",
+    "米",
+    "父",
+    "母",
+    "家",
+    "学",
+    "生",
+    "年",
+    "你好",
+    "谢谢",
+    "朋友",
+    "今天",
+    "学校",
+    "喜欢",
+    "妈妈",
+    "谁",
+    "看-look",
+    "看-guard",
+    "吗",
+    "的",
+    "了"
+  ]
+}

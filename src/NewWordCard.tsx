@@ -8,7 +8,7 @@ type Props = {
   id: string
   index: number                        // 1-based position among the cards shown at this fight start
   total: number
-  lessonLine?: string | null            // "Greetings · Lesson 1 · 2 of 5 introduced" (null for entries outside the course, e.g. previews)
+  lessonLine?: string | null            // "Lesson 1 · Greetings" (null for entries outside the course, e.g. previews)
   muted: boolean
   onSpeak: (text: string) => void
   onMore: (id: string) => void          // open the full details popup
@@ -34,10 +34,9 @@ export default function NewWordCard({ id, index, total, lessonLine, muted, onSpe
     <div className="modal-backdrop" role="presentation">
       <div className="modal newword-card" role="dialog" aria-modal="true" aria-labelledby="nw-title">
         <div className="modal-head">
-          <div className="ex-titles"><h2 id="nw-title">New word{total > 1 ? ` · ${index} of ${total}` : ''}</h2><small>{word.kind === 'particle' ? 'Grammar word' : word.kind === 'character' ? 'Character' : 'Word'}</small></div>
+          <div className="ex-titles"><h2 id="nw-title">{word.kind === 'particle' ? 'New grammar word' : word.kind === 'character' ? 'New character' : 'New word'}{total > 1 ? ` · ${index} of ${total}` : ''}</h2>{lessonLine && <small>{lessonLine}</small>}</div>
         </div>
         <div className="modal-body">
-          {lessonLine && <p className="nw-lesson">{lessonLine}</p>}
           <div className="nw-hero">
             <div className={`nw-hanzi len${lenClass(word.hanzi)}`} lang="zh">{word.hanzi}</div>
             <div className="nw-pinyin">{word.pinyin}{canSpeak && <button className="nw-speak" onClick={() => onSpeak(word.hanzi)} aria-label="Hear the word">🔊</button>}</div>
@@ -46,7 +45,7 @@ export default function NewWordCard({ id, index, total, lessonLine, muted, onSpe
           </div>
           <p className="nw-note">{ex?.summary ?? word.note}</p>
           {breakdown?.type === 'breakdown' && <div className="nw-parts">{breakdown.parts.map((p, k) => <span key={k} className="nw-part"><b lang="zh">{p.char}</b> {p.meaning}</span>)}</div>}
-          {examples.length > 0 && <p className="nw-ex-label">Examples (not tested)</p>}
+          {examples.length > 0 && <p className="nw-ex-label">Examples</p>}
           {examples.length > 0 && <ul className="nw-examples">{examples.map((e, k) => <li key={k}><span className="ex-zh" lang="zh">{e.zh}</span><span className="ex-py">{e.pinyin}</span><span className="ex-en">{e.en}</span></li>)}</ul>}
           {hasExplanation(id) && <button className="link-btn nw-more" onClick={() => onMore(id)}>More about {word.hanzi}</button>}
         </div>

@@ -192,11 +192,11 @@ test('progress line: "Unit · Lesson n · k of N introduced", no ids or schema w
   const c = course([['greetings', [{ id: 'g1', entries: ['你好', '谢谢', '朋友', '人', '大'] }]]])
   c.units[0].title = 'Greetings'
   const m: Mastery = { 你好: lv(0), 谢谢: lv(0) }
-  assert.equal(courseLine(courseStatus(state(c, m))), 'Greetings · Lesson 1 · 2 of 5 introduced')
-  assert.equal(introCardLine(state(c, m), '朋友'), 'Greetings · Lesson 1 · 3 of 5 introduced', 'the card being shown counts')
+  assert.equal(courseLine(courseStatus(state(c, m))), 'Lesson 1 · Greetings · 2 of 5 introduced')
+  assert.equal(introCardLine(state(c, m), '朋友'), 'Lesson 1 · Greetings', 'short label: no second counter next to "New word · n of m"')
   assert.equal(introCardLine(state(c, m), '水'), null)
   const all: Mastery = { 你好: lv(1), 谢谢: lv(0), 朋友: lv(0), 人: lv(0), 大: lv(0) }
-  assert.equal(courseLine(courseStatus(state(c, all))), 'Greetings · Lesson 1 · 1 of 5 ready')
+  assert.equal(courseLine(courseStatus(state(c, all))), 'Lesson 1 · Greetings · 1 of 5 ready')
 })
 
 // ---- saves and curriculum updates ----------------------------------------------------------------------------------
@@ -262,7 +262,7 @@ test('curriculum update: an entry inserted into a completed lesson is introduced
   assert.ok(p2.completed.includes('a'), 'still completed although 水 is new')
   const plan = selectIntroductions(state(v2, m, p2), ALL)
   assert.deepEqual(plan.ids, ['水', '火'], 'the new entry comes first (earliest), lesson b is not relocked')
-  assert.equal(courseLine(courseStatus(state(v2, m, p2))), 'U · Lesson 1 · 2 of 3 introduced')
+  assert.equal(courseLine(courseStatus(state(v2, m, p2))), 'Lesson 1 · U · 2 of 3 introduced')
 })
 
 test('curriculum update: a renamed lesson keeps its completion through "aliases"; without an alias the old id is kept', () => {

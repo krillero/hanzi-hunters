@@ -11,18 +11,23 @@
       "了"
     ],
     "why": {
-      "的": "的 links a describing word to a noun; it does not ask a yes/no question.",
-      "了": "了 marks a finished action or a new situation; it does not turn a statement into a question."
+      "的": "的 does not turn this statement into the intended yes/no question.",
+      "了": "了 does not supply the intended yes/no question marker here."
     },
-    "note": "Add 吗 to the end of a statement to ask yes or no.",
+    "note": "A statement followed by 吗 can ask a yes/no question.",
+    "prerequisiteEntries": [
+      "你",
+      "是",
+      "学生"
+    ],
     "source": [
       {
-        "name": "ai-draft"
+        "name": "HH-editorial-2026"
       }
     ],
     "review": {
       "status": "ai-draft",
-      "note": "Written by the project's AI assistant. A Mandarin teacher must check that only the answer fits the sentence AND the English meaning, and that every wrong option really does not."
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
     }
   },
   {
@@ -37,44 +42,54 @@
       "了"
     ],
     "why": {
-      "吗": "吗 comes at the end of a yes/no question, not between 我 and 书.",
-      "了": "了 marks a finished action or a new situation; it cannot link 我 and 书."
+      "吗": "吗 does not link the owner 我 to the noun 书.",
+      "了": "了 does not link the owner 我 to the noun 书."
     },
-    "note": "的 joins 我 (the owner) to 书 (the thing).",
+    "note": "我的书 means my book.",
+    "prerequisiteEntries": [
+      "这",
+      "是",
+      "我",
+      "书"
+    ],
     "source": [
       {
-        "name": "ai-draft"
+        "name": "HH-editorial-2026"
       }
     ],
     "review": {
       "status": "ai-draft",
-      "note": "Written by the project's AI assistant. A Mandarin teacher must check that only the answer fits the sentence AND the English meaning, and that every wrong option really does not."
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
     }
   },
   {
     "id": "le-tv",
     "answer": "了",
-    "zh": "我看___电视。",
-    "pinyin": "Wǒ kàn ___ diànshì.",
-    "en": "I watched TV.",
+    "zh": "他来___。",
+    "pinyin": "Tā lái ___.",
+    "en": "He has arrived; he is here now.",
     "options": [
       "吗",
       "的",
       "了"
     ],
     "why": {
-      "吗": "吗 goes at the end of a question, not after a verb in the middle of a sentence.",
-      "的": "的 would turn 我看 into a description of the TV (the TV I watch), not say that you watched it."
+      "吗": "吗 would ask a yes/no question, not state the new situation in the English cue.",
+      "的": "的 does not mark the arrival as a newly relevant situation in this sentence."
     },
-    "note": "了 after the verb shows the action is done.",
+    "note": "Sentence-final 了 can mark a new situation. It is not a universal past-tense ending.",
+    "prerequisiteEntries": [
+      "他",
+      "来"
+    ],
     "source": [
       {
-        "name": "ai-draft"
+        "name": "HH-editorial-2026"
       }
     ],
     "review": {
       "status": "ai-draft",
-      "note": "Written by the project's AI assistant. A Mandarin teacher must check that only the answer fits the sentence AND the English meaning, and that every wrong option really does not."
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
     }
   }
 ]

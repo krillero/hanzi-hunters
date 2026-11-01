@@ -9,6 +9,7 @@ You are continuing an existing prototype. Read `README.md`, `DEVELOPMENT_BRIEF.m
 4. **Preserve the core learning loop.** Every battle question should have an unambiguous correct answer; pinyin tone marks must be preserved; the feedback should teach rather than shame; the player should not be able to submit multiple answers to the same question.
 5. **Keep React and Phaser responsibilities clear.** React currently owns game state and most UI; Phaser owns the decorative/animated encounter scene. Avoid creating duplicate, conflicting sources of truth for HP, enemy identity or progression.
 6. **Mobile-first.** Test narrow portrait widths, touch targets, text wrapping, safe-area spacing and scroll behavior. Do not require keyboard/mouse to complete the core loop.
+   **360 CSS px is the narrowest supported width.** Test at 360 px (and wider phones, e.g. 390/412); do not test below 360 px and do not add styles or media queries that only target screens narrower than 360 px.
 7. **Avoid unnecessary dependencies.** Explain why any new runtime dependency is needed. Keep package lockfile in sync if one is created/updated.
 8. **Do not claim untested work.** State what commands ran, whether they passed, and what still needs real-device/manual testing.
 9. **Protect user progress when changing saves.** `SAVE_KEY` currently identifies the persisted schema. If changing the shape, add a versioned migration or safe fallback instead of assuming every stored value is current.

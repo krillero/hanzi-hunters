@@ -1,0 +1,33 @@
+SOURCE NOTES AND RIGHTS
+Prepared 2026-11-01.
+
+1. CC-CEDICT, MDBG published download
+https://www.mdbg.net/chinese/dictionary?page=cc-cedict
+https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
+License: Creative Commons Attribution-ShareAlike 4.0 International.
+https://creativecommons.org/licenses/by-sa/4.0/
+Credit: CC-CEDICT editors/contributors, hosted by MDBG, building on CEDICT by Paul Andrew Denisowski.
+All 127 retained vocabulary entries were matched by written form and selected reading. Exact matching dictionary entries appear in dictionary-checks.json. English button meanings are shortened editorial selections, not exhaustive definitions. Teaching notes and examples are AI-assisted adaptations, not dictionary quotations. This package's revised vocabulary, notes, examples, and course sequence are supplied under CC BY-SA 4.0; this does not relicense unrelated game code or assets.
+
+2. Official HSK syllabus
+Official landing page: https://www.chinesetest.cn/HSK (Examination Syllabus)
+PDF: https://hsk.cn-bj.ufileos.com/3.0/%E6%96%B0%E7%89%88HSK%E8%80%83%E8%AF%95%E5%A4%A7%E7%BA%B21219.pdf
+Title: HSK 考试大纲 / Syllabus for the Chinese Proficiency Test.
+Cover: published 2025-11; implemented 2026-07.
+Publisher: Center for Language Education and Cooperation.
+Used for individual factual level, headword, pronunciation and page references. The full PDF is not redistributed and is not relicensed here. Printed page numbers differ by three from PDF page indices. The level annotation for 好 is 1(2)(4): the adjective 'good' is level 1. This syllabus is distinct from the broader 2021 proficiency grading standards.
+
+PRONUNCIATION CONVENTIONS
+Mandarin dictionary tones, simplified Chinese. Neutral-tone positions are explicitly declared.
+学生: CC-CEDICT xuésheng; official syllabus xuéshēng. Both accepted.
+谁: shéi and shuí accepted; the syllabus explicitly lists both.
+这/那/哪: colloquial zhèi/nèi/něi accepted in their relevant contexts.
+一: yāo is included as an accepted digit-reading variant; yí/yì are contextual speech changes, not dictionary senses.
+Example pinyin uses dictionary tones, with a note explaining yī -> yí in 一个. Examples are not audio-assessed; example speaker buttons are disabled pending voice verification.
+
+VERIFICATION LIMITS
+Dictionary checking establishes attested readings and senses, not that every note or example has been professionally proofread. All review fields remain ai-draft. Course provisional remains true. The 20 unique examples are original editorial drafts, not copied from Tatoeba or claimed to be teacher-reviewed. Existing broad grammatical glosses for 是, 不, 子, 年 and others were tightened. Unsupported historical and phonetic-component stories were removed.
+
+Downloaded source SHA256 hashes:
+cedict.gz 014fcac31706affb535661d50eec0d70c6aa416b96fe3cab1dbc64095c200552
+hsk-syllabus.pdf d8b6646599bc9a0c9616a4cb06d4b37461f8792f70a3171016d00fcd8eda09ad

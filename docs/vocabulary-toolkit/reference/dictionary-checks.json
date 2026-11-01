@@ -1,0 +1,2820 @@
+[
+  {
+    "entryId": "人",
+    "hanzi": "人",
+    "pinyin": "rén",
+    "selectedGloss": "person / people",
+    "cedictMatches": [
+      {
+        "traditional": "人",
+        "pinyin": "ren2",
+        "definition": "person; people/CL:個|个[ge4],位[wei4],名[ming2]",
+        "raw": "人 人 [ren2] /person; people/CL:個|个[ge4],位[wei4],名[ming2]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "170",
+      "pinyin": "rén"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "大",
+    "hanzi": "大",
+    "pinyin": "dà",
+    "selectedGloss": "big / large",
+    "cedictMatches": [
+      {
+        "traditional": "大",
+        "pinyin": "da4",
+        "definition": "big; large; great/older (than another person)/eldest (as in 大姐[da4 jie3])/greatly; freely; fully/(dialect) father/(dialect) uncle (father's brother)",
+        "raw": "大 大 [da4] /big; large; great/older (than another person)/eldest (as in 大姐[da4 jie3])/greatly; freely; fully/(dialect) father/(dialect) uncle (father's brother)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "25",
+      "pinyin": "dà"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "小",
+    "hanzi": "小",
+    "pinyin": "xiǎo",
+    "selectedGloss": "small",
+    "cedictMatches": [
+      {
+        "traditional": "小",
+        "pinyin": "xiao3",
+        "definition": "small/tiny/few/young",
+        "raw": "小 小 [xiao3] /small/tiny/few/young/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "234",
+      "pinyin": "xiǎo"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "一",
+    "hanzi": "一",
+    "pinyin": "yī",
+    "selectedGloss": "one",
+    "cedictMatches": [
+      {
+        "traditional": "一",
+        "pinyin": "yi1",
+        "definition": "one/single/a (article)/as soon as/entire; whole; all; throughout/\"one\" radical in Chinese characters (Kangxi radical 1)/also pr. [yao1] for greater clarity when spelling out numbers digit by digit",
+        "raw": "一 一 [yi1] /one/single/a (article)/as soon as/entire; whole; all; throughout/\"one\" radical in Chinese characters (Kangxi radical 1)/also pr. [yao1] for greater clarity when spelling out numbers digit by digit/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "254",
+      "pinyin": "yī"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "二",
+    "hanzi": "二",
+    "pinyin": "èr",
+    "selectedGloss": "two (counting)",
+    "cedictMatches": [
+      {
+        "traditional": "二",
+        "pinyin": "er4",
+        "definition": "two/2/(Beijing dialect) stupid",
+        "raw": "二 二 [er4] /two/2/(Beijing dialect) stupid/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "49",
+      "pinyin": "èr"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "三",
+    "hanzi": "三",
+    "pinyin": "sān",
+    "selectedGloss": "three",
+    "cedictMatches": [
+      {
+        "traditional": "三",
+        "pinyin": "San1",
+        "definition": "surname San",
+        "raw": "三 三 [San1] /surname San/"
+      },
+      {
+        "traditional": "三",
+        "pinyin": "san1",
+        "definition": "three/3",
+        "raw": "三 三 [san1] /three/3/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "173",
+      "pinyin": "sān"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "日",
+    "hanzi": "日",
+    "pinyin": "rì",
+    "selectedGloss": "sun / day",
+    "cedictMatches": [
+      {
+        "traditional": "日",
+        "pinyin": "ri4",
+        "definition": "(bound form) sun/day/day of the month/(bound form) Japan (abbr. for 日本[Ri4 ben3])/(vulgar) to fuck; to have sex with",
+        "raw": "日 日 [ri4] /(bound form) sun/day/day of the month/(bound form) Japan (abbr. for 日本[Ri4 ben3])/(vulgar) to fuck; to have sex with/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "月",
+    "hanzi": "月",
+    "pinyin": "yuè",
+    "selectedGloss": "moon / month",
+    "cedictMatches": [
+      {
+        "traditional": "月",
+        "pinyin": "yue4",
+        "definition": "moon/month/monthly/CL:個|个[ge4],輪|轮[lun2]",
+        "raw": "月 月 [yue4] /moon/month/monthly/CL:個|个[ge4],輪|轮[lun2]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "269",
+      "pinyin": "yuè"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "水",
+    "hanzi": "水",
+    "pinyin": "shuǐ",
+    "selectedGloss": "water",
+    "cedictMatches": [
+      {
+        "traditional": "水",
+        "pinyin": "Shui3",
+        "definition": "surname Shui/Shui ethnic group",
+        "raw": "水 水 [Shui3] /surname Shui/Shui ethnic group/"
+      },
+      {
+        "traditional": "水",
+        "pinyin": "shui3",
+        "definition": "water/(after a name) ... River/to swim (used mostly in 會水|会水[hui4 shui3] and 水性[shui3 xing4])/(coll.) lacking in substance; shoddy/(bound form) additional cost; extra income/classifier for washings of a garment",
+        "raw": "水 水 [shui3] /water/(after a name) ... River/to swim (used mostly in 會水|会水[hui4 shui3] and 水性[shui3 xing4])/(coll.) lacking in substance; shoddy/(bound form) additional cost; extra income/classifier for washings of a garment/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "192",
+      "pinyin": "shuǐ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "火",
+    "hanzi": "火",
+    "pinyin": "huǒ",
+    "selectedGloss": "fire",
+    "cedictMatches": [
+      {
+        "traditional": "火",
+        "pinyin": "Huo3",
+        "definition": "surname Huo",
+        "raw": "火 火 [Huo3] /surname Huo/"
+      },
+      {
+        "traditional": "火",
+        "pinyin": "huo3",
+        "definition": "fire/urgent/ammunition/fiery or flaming/internal heat (Chinese medicine)/hot (popular)/classifier for military units (old)/Kangxi radical 86",
+        "raw": "火 火 [huo3] /fire/urgent/ammunition/fiery or flaming/internal heat (Chinese medicine)/hot (popular)/classifier for military units (old)/Kangxi radical 86/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "山",
+    "hanzi": "山",
+    "pinyin": "shān",
+    "selectedGloss": "mountain",
+    "cedictMatches": [
+      {
+        "traditional": "山",
+        "pinyin": "Shan1",
+        "definition": "surname Shan",
+        "raw": "山 山 [Shan1] /surname Shan/"
+      },
+      {
+        "traditional": "山",
+        "pinyin": "shan1",
+        "definition": "mountain; hill (CL:座[zuo4])/(coll.) small bundle of straw for silkworms to spin cocoons on",
+        "raw": "山 山 [shan1] /mountain; hill (CL:座[zuo4])/(coll.) small bundle of straw for silkworms to spin cocoons on/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "木",
+    "hanzi": "木",
+    "pinyin": "mù",
+    "selectedGloss": "wood / tree",
+    "cedictMatches": [
+      {
+        "traditional": "木",
+        "pinyin": "Mu4",
+        "definition": "surname Mu",
+        "raw": "木 木 [Mu4] /surname Mu/"
+      },
+      {
+        "traditional": "木",
+        "pinyin": "mu4",
+        "definition": "(bound form) tree/(bound form) wood/unresponsive; numb; wooden",
+        "raw": "木 木 [mu4] /(bound form) tree/(bound form) wood/unresponsive; numb; wooden/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "口",
+    "hanzi": "口",
+    "pinyin": "kǒu",
+    "selectedGloss": "mouth / opening",
+    "cedictMatches": [
+      {
+        "traditional": "口",
+        "pinyin": "kou3",
+        "definition": "mouth/classifier for things with mouths (people, domestic animals, cannons, wells etc)/classifier for bites or mouthfuls",
+        "raw": "口 口 [kou3] /mouth/classifier for things with mouths (people, domestic animals, cannons, wells etc)/classifier for bites or mouthfuls/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "天",
+    "hanzi": "天",
+    "pinyin": "tiān",
+    "selectedGloss": "day / sky",
+    "cedictMatches": [
+      {
+        "traditional": "天",
+        "pinyin": "tian1",
+        "definition": "day/sky/heaven",
+        "raw": "天 天 [tian1] /day/sky/heaven/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "207",
+      "pinyin": "tiān"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "好",
+    "hanzi": "好",
+    "pinyin": "hǎo",
+    "selectedGloss": "good",
+    "cedictMatches": [
+      {
+        "traditional": "好",
+        "pinyin": "hao3",
+        "definition": "good/appropriate; proper/all right!/(before a verb) easy to/(before a verb) good to/(before an adjective for exclamatory effect) so/(verb complement indicating completion)/(of two people) close; on intimate terms/(after a form of address) hello",
+        "raw": "好 好 [hao3] /good/appropriate; proper/all right!/(before a verb) easy to/(before a verb) good to/(before an adjective for exclamatory effect) so/(verb complement indicating completion)/(of two people) close; on intimate terms/(after a form of address) hello/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "71",
+      "pinyin": "hǎo"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "我",
+    "hanzi": "我",
+    "pinyin": "wǒ",
+    "selectedGloss": "I / me",
+    "cedictMatches": [
+      {
+        "traditional": "我",
+        "pinyin": "wo3",
+        "definition": "I; me; my",
+        "raw": "我 我 [wo3] /I; me; my/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "221",
+      "pinyin": "wǒ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "你",
+    "hanzi": "你",
+    "pinyin": "nǐ",
+    "selectedGloss": "you",
+    "cedictMatches": [
+      {
+        "traditional": "你",
+        "pinyin": "ni3",
+        "definition": "you (informal, as opposed to courteous 您[nin2])",
+        "raw": "你 你 [ni3] /you (informal, as opposed to courteous 您[nin2])/"
+      },
+      {
+        "traditional": "妳",
+        "pinyin": "ni3",
+        "definition": "you (Note: In Taiwan, 妳 is used to address females, but in mainland China, it is not commonly used. Instead, 你 is used to address both males and females.)",
+        "raw": "妳 你 [ni3] /you (Note: In Taiwan, 妳 is used to address females, but in mainland China, it is not commonly used. Instead, 你 is used to address both males and females.)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "146",
+      "pinyin": "nǐ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "他",
+    "hanzi": "他",
+    "pinyin": "tā",
+    "selectedGloss": "he / him",
+    "cedictMatches": [
+      {
+        "traditional": "他",
+        "pinyin": "ta1",
+        "definition": "(third-person singular) (since the early 20th century, usu. male) he; him; his/(bound form) other; another; some other (as in 他日[ta1 ri4] and 他人[ta1 ren2])",
+        "raw": "他 他 [ta1] /(third-person singular) (since the early 20th century, usu. male) he; him; his/(bound form) other; another; some other (as in 他日[ta1 ri4] and 他人[ta1 ren2])/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "200",
+      "pinyin": "tā"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "她",
+    "hanzi": "她",
+    "pinyin": "tā",
+    "selectedGloss": "she / her",
+    "cedictMatches": [
+      {
+        "traditional": "她",
+        "pinyin": "ta1",
+        "definition": "she",
+        "raw": "她 她 [ta1] /she/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "204",
+      "pinyin": "tā"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "女",
+    "hanzi": "女",
+    "pinyin": "nǚ",
+    "selectedGloss": "woman / female",
+    "cedictMatches": [
+      {
+        "traditional": "女",
+        "pinyin": "nu:3",
+        "definition": "female/woman/daughter",
+        "raw": "女 女 [nu:3] /female/woman/daughter/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "子",
+    "hanzi": "子",
+    "pinyin": "zǐ",
+    "selectedGloss": "child",
+    "cedictMatches": [
+      {
+        "traditional": "子",
+        "pinyin": "zi3",
+        "definition": "son/child/seed/egg/small thing/1st earthly branch: 11 p.m.–1 a.m., midnight, 11th solar month (7th December to 5th January), year of the rat/viscount, fourth of five orders of nobility 五等爵位[wu3 deng3 jue2 wei4]/ancient Chinese compass point: 0° (north)/subsidiary; subordinate; (prefix) sub-",
+        "raw": "子 子 [zi3] /son/child/seed/egg/small thing/1st earthly branch: 11 p.m.–1 a.m., midnight, 11th solar month (7th December to 5th January), year of the rat/viscount, fourth of five orders of nobility 五等爵位[wu3 deng3 jue2 wei4]/ancient Chinese compass point: 0° (north)/subsidiary; subordinate; (prefix) sub-/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "中",
+    "hanzi": "中",
+    "pinyin": "zhōng",
+    "selectedGloss": "middle / center",
+    "cedictMatches": [
+      {
+        "traditional": "中",
+        "pinyin": "Zhong1",
+        "definition": "(bound form) China; Chinese/surname Zhong",
+        "raw": "中 中 [Zhong1] /(bound form) China; Chinese/surname Zhong/"
+      },
+      {
+        "traditional": "中",
+        "pinyin": "zhong1",
+        "definition": "within; among; in/middle; center/while (doing sth); during/(dialect) OK; all right",
+        "raw": "中 中 [zhong1] /within; among; in/middle; center/while (doing sth); during/(dialect) OK; all right/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "国",
+    "hanzi": "国",
+    "pinyin": "guó",
+    "selectedGloss": "country",
+    "cedictMatches": [
+      {
+        "traditional": "國",
+        "pinyin": "Guo2",
+        "definition": "surname Guo",
+        "raw": "國 国 [Guo2] /surname Guo/"
+      },
+      {
+        "traditional": "國",
+        "pinyin": "guo2",
+        "definition": "country; nation; state/(bound form) national",
+        "raw": "國 国 [guo2] /country; nation; state/(bound form) national/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "是",
+    "hanzi": "是",
+    "pinyin": "shì",
+    "selectedGloss": "be (identity)",
+    "cedictMatches": [
+      {
+        "traditional": "是",
+        "pinyin": "shi4",
+        "definition": "to be (followed by substantives only)/correct; right; true/(respectful acknowledgement of a command) very well/(adverb for emphatic assertion)",
+        "raw": "是 是 [shi4] /to be (followed by substantives only)/correct; right; true/(respectful acknowledgement of a command) very well/(adverb for emphatic assertion)/"
+      },
+      {
+        "traditional": "昰",
+        "pinyin": "shi4",
+        "definition": "variant of 是[shi4]",
+        "raw": "昰 是 [shi4] /variant of 是[shi4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "188",
+      "pinyin": "shì"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "不",
+    "hanzi": "不",
+    "pinyin": "bù",
+    "selectedGloss": "not",
+    "cedictMatches": [
+      {
+        "traditional": "不",
+        "pinyin": "bu4",
+        "definition": "no; not so/(bound form) not; un-",
+        "raw": "不 不 [bu4] /no; not so/(bound form) not; un-/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "13",
+      "pinyin": "bù"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "四",
+    "hanzi": "四",
+    "pinyin": "sì",
+    "selectedGloss": "four",
+    "cedictMatches": [
+      {
+        "traditional": "四",
+        "pinyin": "si4",
+        "definition": "four/4",
+        "raw": "四 四 [si4] /four/4/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "198",
+      "pinyin": "sì"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "五",
+    "hanzi": "五",
+    "pinyin": "wǔ",
+    "selectedGloss": "five",
+    "cedictMatches": [
+      {
+        "traditional": "五",
+        "pinyin": "wu3",
+        "definition": "five/5",
+        "raw": "五 五 [wu3] /five/5/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "223",
+      "pinyin": "wǔ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "六",
+    "hanzi": "六",
+    "pinyin": "liù",
+    "selectedGloss": "six",
+    "cedictMatches": [
+      {
+        "traditional": "六",
+        "pinyin": "liu4",
+        "definition": "six/6",
+        "raw": "六 六 [liu4] /six/6/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "113",
+      "pinyin": "liù"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "八",
+    "hanzi": "八",
+    "pinyin": "bā",
+    "selectedGloss": "eight",
+    "cedictMatches": [
+      {
+        "traditional": "八",
+        "pinyin": "ba1",
+        "definition": "eight",
+        "raw": "八 八 [ba1] /eight/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "2",
+      "pinyin": "bā"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "十",
+    "hanzi": "十",
+    "pinyin": "shí",
+    "selectedGloss": "ten",
+    "cedictMatches": [
+      {
+        "traditional": "十",
+        "pinyin": "shi2",
+        "definition": "ten/10",
+        "raw": "十 十 [shi2] /ten/10/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "184",
+      "pinyin": "shí"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "七",
+    "hanzi": "七",
+    "pinyin": "qī",
+    "selectedGloss": "seven",
+    "cedictMatches": [
+      {
+        "traditional": "七",
+        "pinyin": "qi1",
+        "definition": "seven/7",
+        "raw": "七 七 [qi1] /seven/7/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "160",
+      "pinyin": "qī"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "九",
+    "hanzi": "九",
+    "pinyin": "jiǔ",
+    "selectedGloss": "nine",
+    "cedictMatches": [
+      {
+        "traditional": "九",
+        "pinyin": "jiu3",
+        "definition": "nine/9",
+        "raw": "九 九 [jiu3] /nine/9/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "95",
+      "pinyin": "jiǔ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "上",
+    "hanzi": "上",
+    "pinyin": "shàng",
+    "selectedGloss": "above / up",
+    "cedictMatches": [
+      {
+        "traditional": "上",
+        "pinyin": "shang4",
+        "definition": "(bound form) up; upper; above; previous/first (of multiple parts)/to climb; to get onto; to go up/to attend (class or university)/(directional complement) up/(noun suffix) on; above",
+        "raw": "上 上 [shang4] /(bound form) up; upper; above; previous/first (of multiple parts)/to climb; to get onto; to go up/to attend (class or university)/(directional complement) up/(noun suffix) on; above/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "下",
+    "hanzi": "下",
+    "pinyin": "xià",
+    "selectedGloss": "below / down",
+    "cedictMatches": [
+      {
+        "traditional": "下",
+        "pinyin": "xia4",
+        "definition": "down/downwards/below/lower/later/next (week etc)/second (of two parts)/to decline/to go down/to arrive at (a decision, conclusion etc)/measure word to show the frequency of an action",
+        "raw": "下 下 [xia4] /down/downwards/below/lower/later/next (week etc)/second (of two parts)/to decline/to go down/to arrive at (a decision, conclusion etc)/measure word to show the frequency of an action/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "手",
+    "hanzi": "手",
+    "pinyin": "shǒu",
+    "selectedGloss": "hand",
+    "cedictMatches": [
+      {
+        "traditional": "手",
+        "pinyin": "shou3",
+        "definition": "hand/(formal) to hold/person engaged in certain types of work/person skilled in certain types of work/personal(ly)/convenient/classifier for skill/CL:雙|双[shuang1],隻|只[zhi1]",
+        "raw": "手 手 [shou3] /hand/(formal) to hold/person engaged in certain types of work/person skilled in certain types of work/personal(ly)/convenient/classifier for skill/CL:雙|双[shuang1],隻|只[zhi1]/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "目",
+    "hanzi": "目",
+    "pinyin": "mù",
+    "selectedGloss": "eye",
+    "cedictMatches": [
+      {
+        "traditional": "目",
+        "pinyin": "mu4",
+        "definition": "eye/(literary) to look; to regard/eye (of a net); mesh/mesh size; grit size (abbr. for 目數|目数[mu4 shu4])/item; section/list; catalogue/(taxonomy) order/name; title",
+        "raw": "目 目 [mu4] /eye/(literary) to look; to regard/eye (of a net); mesh/mesh size; grit size (abbr. for 目數|目数[mu4 shu4])/item; section/list; catalogue/(taxonomy) order/name; title/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "田",
+    "hanzi": "田",
+    "pinyin": "tián",
+    "selectedGloss": "field",
+    "cedictMatches": [
+      {
+        "traditional": "田",
+        "pinyin": "Tian2",
+        "definition": "surname Tian",
+        "raw": "田 田 [Tian2] /surname Tian/"
+      },
+      {
+        "traditional": "田",
+        "pinyin": "tian2",
+        "definition": "field/farm/CL:片[pian4]",
+        "raw": "田 田 [tian2] /field/farm/CL:片[pian4]/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "石",
+    "hanzi": "石",
+    "pinyin": "shí",
+    "selectedGloss": "stone",
+    "cedictMatches": [
+      {
+        "traditional": "石",
+        "pinyin": "Shi2",
+        "definition": "surname Shi/abbr. for Shijiazhuang 石家莊|石家庄[Shi2 jia1 zhuang1], the capital of Hebei",
+        "raw": "石 石 [Shi2] /surname Shi/abbr. for Shijiazhuang 石家莊|石家庄[Shi2 jia1 zhuang1], the capital of Hebei/"
+      },
+      {
+        "traditional": "石",
+        "pinyin": "shi2",
+        "definition": "rock/stone/stone inscription/one of the eight categories of ancient musical instruments 八音[ba1 yin1]",
+        "raw": "石 石 [shi2] /rock/stone/stone inscription/one of the eight categories of ancient musical instruments 八音[ba1 yin1]/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "门",
+    "hanzi": "门",
+    "pinyin": "mén",
+    "selectedGloss": "door / gate",
+    "cedictMatches": [
+      {
+        "traditional": "門",
+        "pinyin": "Men2",
+        "definition": "surname Men",
+        "raw": "門 门 [Men2] /surname Men/"
+      },
+      {
+        "traditional": "門",
+        "pinyin": "men2",
+        "definition": "gate; door; doorway; gateway; opening (CL:扇[shan4])/valve; switch; other door-like or gate-like structure/way to do sth; knack; method; approach/family; household; lineage/(bound form) sect; school; faction (religious or academic)/(bound form) class; category; division; phylum/classifier for courses, fields of study, branches of technology, relatives by marriage, guns etc/(suffix) -gate (scandal)",
+        "raw": "門 门 [men2] /gate; door; doorway; gateway; opening (CL:扇[shan4])/valve; switch; other door-like or gate-like structure/way to do sth; knack; method; approach/family; household; lineage/(bound form) sect; school; faction (religious or academic)/(bound form) class; category; division; phylum/classifier for courses, fields of study, branches of technology, relatives by marriage, guns etc/(suffix) -gate (scandal)/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "车",
+    "hanzi": "车",
+    "pinyin": "chē",
+    "selectedGloss": "vehicle / car",
+    "cedictMatches": [
+      {
+        "traditional": "車",
+        "pinyin": "Che1",
+        "definition": "surname Che",
+        "raw": "車 车 [Che1] /surname Che/"
+      },
+      {
+        "traditional": "車",
+        "pinyin": "che1",
+        "definition": "car/vehicle/CL:輛|辆[liang4]/machine/to shape with a lathe/Kangxi radical 159",
+        "raw": "車 车 [che1] /car/vehicle/CL:輛|辆[liang4]/machine/to shape with a lathe/Kangxi radical 159/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "马",
+    "hanzi": "马",
+    "pinyin": "mǎ",
+    "selectedGloss": "horse",
+    "cedictMatches": [
+      {
+        "traditional": "馬",
+        "pinyin": "Ma3",
+        "definition": "surname Ma/abbr. for Malaysia 馬來西亞|马来西亚[Ma3 lai2 xi1 ya4]",
+        "raw": "馬 马 [Ma3] /surname Ma/abbr. for Malaysia 馬來西亞|马来西亚[Ma3 lai2 xi1 ya4]/"
+      },
+      {
+        "traditional": "馬",
+        "pinyin": "ma3",
+        "definition": "horse/CL:匹[pi3]/horse or cavalry piece in Chinese chess/knight in Western chess",
+        "raw": "馬 马 [ma3] /horse/CL:匹[pi3]/horse or cavalry piece in Chinese chess/knight in Western chess/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "鸟",
+    "hanzi": "鸟",
+    "pinyin": "niǎo",
+    "selectedGloss": "bird",
+    "cedictMatches": [
+      {
+        "traditional": "鳥",
+        "pinyin": "niao3",
+        "definition": "bird/CL:隻|只[zhi1],群[qun2]/\"bird\" radical in Chinese characters (Kangxi radical 196)/(dialect) to pay attention to/(intensifier) damned/goddamn",
+        "raw": "鳥 鸟 [niao3] /bird/CL:隻|只[zhi1],群[qun2]/\"bird\" radical in Chinese characters (Kangxi radical 196)/(dialect) to pay attention to/(intensifier) damned/goddamn/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "鱼",
+    "hanzi": "鱼",
+    "pinyin": "yú",
+    "selectedGloss": "fish",
+    "cedictMatches": [
+      {
+        "traditional": "魚",
+        "pinyin": "Yu2",
+        "definition": "surname Yu",
+        "raw": "魚 鱼 [Yu2] /surname Yu/"
+      },
+      {
+        "traditional": "魚",
+        "pinyin": "yu2",
+        "definition": "fish (CL:條|条[tiao2],尾[wei3])/used in the names of various aquatic animals that are not fish (including abalone 鮑魚|鲍鱼[bao4 yu2], alligators and crocodiles 鱷魚|鳄鱼[e4 yu2] and octopi 章魚|章鱼[zhang1 yu2])",
+        "raw": "魚 鱼 [yu2] /fish (CL:條|条[tiao2],尾[wei3])/used in the names of various aquatic animals that are not fish (including abalone 鮑魚|鲍鱼[bao4 yu2], alligators and crocodiles 鱷魚|鳄鱼[e4 yu2] and octopi 章魚|章鱼[zhang1 yu2])/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "米",
+    "hanzi": "米",
+    "pinyin": "mǐ",
+    "selectedGloss": "uncooked rice",
+    "cedictMatches": [
+      {
+        "traditional": "米",
+        "pinyin": "Mi3",
+        "definition": "surname Mi",
+        "raw": "米 米 [Mi3] /surname Mi/"
+      },
+      {
+        "traditional": "米",
+        "pinyin": "mi3",
+        "definition": "uncooked rice/meter (unit of length)/(slang) Chinese yuan",
+        "raw": "米 米 [mi3] /uncooked rice/meter (unit of length)/(slang) Chinese yuan/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "父",
+    "hanzi": "父",
+    "pinyin": "fù",
+    "selectedGloss": "father",
+    "cedictMatches": [
+      {
+        "traditional": "父",
+        "pinyin": "fu4",
+        "definition": "(bound form) father/(bound form) male relative of father's generation (as in 伯父[bo2 fu4])/(computing) (bound form) parent-",
+        "raw": "父 父 [fu4] /(bound form) father/(bound form) male relative of father's generation (as in 伯父[bo2 fu4])/(computing) (bound form) parent-/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "母",
+    "hanzi": "母",
+    "pinyin": "mǔ",
+    "selectedGloss": "mother",
+    "cedictMatches": [
+      {
+        "traditional": "母",
+        "pinyin": "mu3",
+        "definition": "mother/elderly female relative/origin/source/(of animals) female",
+        "raw": "母 母 [mu3] /mother/elderly female relative/origin/source/(of animals) female/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "家",
+    "hanzi": "家",
+    "pinyin": "jiā",
+    "selectedGloss": "home / family",
+    "cedictMatches": [
+      {
+        "traditional": "傢",
+        "pinyin": "jia1",
+        "definition": "used in 傢伙|家伙[jia1 huo5] and 傢俱|家俱[jia1 ju4]",
+        "raw": "傢 家 [jia1] /used in 傢伙|家伙[jia1 huo5] and 傢俱|家俱[jia1 ju4]/"
+      },
+      {
+        "traditional": "家",
+        "pinyin": "jia1",
+        "definition": "home/family/(polite) my (sister, uncle etc)/classifier for families or businesses/refers to the philosophical schools of pre-Han China/noun suffix for a specialist in some activity, such as a musician or revolutionary, corresponding to English -ist, -er, -ary or -ian/CL:個|个[ge4]",
+        "raw": "家 家 [jia1] /home/family/(polite) my (sister, uncle etc)/classifier for families or businesses/refers to the philosophical schools of pre-Han China/noun suffix for a specialist in some activity, such as a musician or revolutionary, corresponding to English -ist, -er, -ary or -ian/CL:個|个[ge4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "86",
+      "pinyin": "jiā"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "学",
+    "hanzi": "学",
+    "pinyin": "xué",
+    "selectedGloss": "learn / study",
+    "cedictMatches": [
+      {
+        "traditional": "學",
+        "pinyin": "xue2",
+        "definition": "to learn/to study/to imitate/science/-ology",
+        "raw": "學 学 [xue2] /to learn/to study/to imitate/science/-ology/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "生",
+    "hanzi": "生",
+    "pinyin": "shēng",
+    "selectedGloss": "life / be born",
+    "cedictMatches": [
+      {
+        "traditional": "生",
+        "pinyin": "sheng1",
+        "definition": "to grow; to give birth; to produce; to be born/to arise; to occur/to light (a fire)/to live; to be alive/life/raw; uncooked; unprocessed/unfamiliar; strange/(bound form) student; person engaged in a field/(bound form) male role in traditional opera/(bound form) life; lifetime/(bound form) means of livelihood/(bound form) very; intensely (as in 生疼[sheng1 teng2])/(bound form) in a forced manner (as in 生拉硬拽[sheng1 la1 ying4 zhuai4])",
+        "raw": "生 生 [sheng1] /to grow; to give birth; to produce; to be born/to arise; to occur/to light (a fire)/to live; to be alive/life/raw; uncooked; unprocessed/unfamiliar; strange/(bound form) student; person engaged in a field/(bound form) male role in traditional opera/(bound form) life; lifetime/(bound form) means of livelihood/(bound form) very; intensely (as in 生疼[sheng1 teng2])/(bound form) in a forced manner (as in 生拉硬拽[sheng1 la1 ying4 zhuai4])/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "年",
+    "hanzi": "年",
+    "pinyin": "nián",
+    "selectedGloss": "year",
+    "cedictMatches": [
+      {
+        "traditional": "年",
+        "pinyin": "Nian2",
+        "definition": "surname Nian",
+        "raw": "年 年 [Nian2] /surname Nian/"
+      },
+      {
+        "traditional": "年",
+        "pinyin": "nian2",
+        "definition": "year/CL:個|个[ge4]",
+        "raw": "年 年 [nian2] /year/CL:個|个[ge4]/"
+      },
+      {
+        "traditional": "秊",
+        "pinyin": "nian2",
+        "definition": "grain/harvest (old)/variant of 年[nian2]",
+        "raw": "秊 年 [nian2] /grain/harvest (old)/variant of 年[nian2]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "149",
+      "pinyin": "nián"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "你好",
+    "hanzi": "你好",
+    "pinyin": "nǐ hǎo",
+    "selectedGloss": "hello",
+    "cedictMatches": [
+      {
+        "traditional": "你好",
+        "pinyin": "ni3 hao3",
+        "definition": "hello; hi",
+        "raw": "你好 你好 [ni3 hao3] /hello; hi/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "147",
+      "pinyin": "nǐ hǎo"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "谢谢",
+    "hanzi": "谢谢",
+    "pinyin": "xièxie",
+    "selectedGloss": "thank you",
+    "cedictMatches": [
+      {
+        "traditional": "謝謝",
+        "pinyin": "xie4 xie5",
+        "definition": "to thank/thanks/thank you",
+        "raw": "謝謝 谢谢 [xie4 xie5] /to thank/thanks/thank you/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "241",
+      "pinyin": "xièxie"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "朋友",
+    "hanzi": "朋友",
+    "pinyin": "péngyou",
+    "selectedGloss": "friend",
+    "cedictMatches": [
+      {
+        "traditional": "朋友",
+        "pinyin": "peng2 you5",
+        "definition": "friend/CL:個|个[ge4],位[wei4]",
+        "raw": "朋友 朋友 [peng2 you5] /friend/CL:個|个[ge4],位[wei4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "156",
+      "pinyin": "péngyou"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "今天",
+    "hanzi": "今天",
+    "pinyin": "jīntiān",
+    "selectedGloss": "today",
+    "cedictMatches": [
+      {
+        "traditional": "今天",
+        "pinyin": "jin1 tian1",
+        "definition": "today/the present time; now",
+        "raw": "今天 今天 [jin1 tian1] /today/the present time; now/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "94",
+      "pinyin": "jīntiān"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "学校",
+    "hanzi": "学校",
+    "pinyin": "xuéxiào",
+    "selectedGloss": "school",
+    "cedictMatches": [
+      {
+        "traditional": "學校",
+        "pinyin": "xue2 xiao4",
+        "definition": "school/CL:所[suo3]",
+        "raw": "學校 学校 [xue2 xiao4] /school/CL:所[suo3]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "250",
+      "pinyin": "xuéxiào"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "喜欢",
+    "hanzi": "喜欢",
+    "pinyin": "xǐhuan",
+    "selectedGloss": "like / be fond of",
+    "cedictMatches": [
+      {
+        "traditional": "喜歡",
+        "pinyin": "xi3 huan5",
+        "definition": "to like; to be fond of/to be happy; to be pleased/to tend to",
+        "raw": "喜歡 喜欢 [xi3 huan5] /to like; to be fond of/to be happy; to be pleased/to tend to/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "225",
+      "pinyin": "xǐhuan"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "妈妈",
+    "hanzi": "妈妈",
+    "pinyin": "māma",
+    "selectedGloss": "mom / mother",
+    "cedictMatches": [
+      {
+        "traditional": "媽媽",
+        "pinyin": "ma1 ma5",
+        "definition": "mama/mommy/mother/CL:個|个[ge4],位[wei4]",
+        "raw": "媽媽 妈妈 [ma1 ma5] /mama/mommy/mother/CL:個|个[ge4],位[wei4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "114",
+      "pinyin": "māma"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "谁",
+    "hanzi": "谁",
+    "pinyin": "shéi",
+    "selectedGloss": "who",
+    "cedictMatches": [
+      {
+        "traditional": "誰",
+        "pinyin": "shei2",
+        "definition": "who/also pr. [shui2]",
+        "raw": "誰 谁 [shei2] /who/also pr. [shui2]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "181",
+      "pinyin": "shéi/shuí"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "看-look",
+    "hanzi": "看",
+    "pinyin": "kàn",
+    "selectedGloss": "look / watch / read",
+    "cedictMatches": [
+      {
+        "traditional": "看",
+        "pinyin": "kan4",
+        "definition": "to see; to look at/to read/to watch/to visit; to call on/to consider; to regard as/to look after/to treat (a patient or illness)/to depend on/to feel (that)/(after a verb) to give it a try/to watch out for",
+        "raw": "看 看 [kan4] /to see; to look at/to read/to watch/to visit; to call on/to consider; to regard as/to look after/to treat (a patient or illness)/to depend on/to feel (that)/(after a verb) to give it a try/to watch out for/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "99",
+      "pinyin": "kàn"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "看-guard",
+    "hanzi": "看",
+    "pinyin": "kān",
+    "selectedGloss": "guard / look after",
+    "cedictMatches": [
+      {
+        "traditional": "看",
+        "pinyin": "kan1",
+        "definition": "to look after/to take care of/to watch/to guard",
+        "raw": "看 看 [kan1] /to look after/to take care of/to watch/to guard/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "吗",
+    "hanzi": "吗",
+    "pinyin": "ma",
+    "selectedGloss": "marks a yes/no question",
+    "cedictMatches": [
+      {
+        "traditional": "嗎",
+        "pinyin": "ma5",
+        "definition": "(question particle for \"yes-no\" questions)",
+        "raw": "嗎 吗 [ma5] /(question particle for \"yes-no\" questions)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "115",
+      "pinyin": "ma"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "的",
+    "hanzi": "的",
+    "pinyin": "de",
+    "selectedGloss": "marks possession / description",
+    "cedictMatches": [
+      {
+        "traditional": "的",
+        "pinyin": "de5",
+        "definition": "of; ~'s (possessive particle)/(used after an attribute when it modifies a noun)/(used at the end of a declarative sentence for emphasis)/(used after a noun, verb or adjective to form a nominal expression, as in 皮革的[pi2 ge2 de5] \"one made of leather\" or 跑堂兒的|跑堂儿的[pao3 tang2 r5 de5] \"a waiter (literally, one who runs back and forth in a restaurant)\" or 新的[xin1 de5] \"new one\")/also pr. [di4] or [di5] in poetry and songs",
+        "raw": "的 的 [de5] /of; ~'s (possessive particle)/(used after an attribute when it modifies a noun)/(used at the end of a declarative sentence for emphasis)/(used after a noun, verb or adjective to form a nominal expression, as in 皮革的[pi2 ge2 de5] \"one made of leather\" or 跑堂兒的|跑堂儿的[pao3 tang2 r5 de5] \"a waiter (literally, one who runs back and forth in a restaurant)\" or 新的[xin1 de5] \"new one\")/also pr. [di4] or [di5] in poetry and songs/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "30",
+      "pinyin": "de"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "了",
+    "hanzi": "了",
+    "pinyin": "le",
+    "selectedGloss": "marks an event or new situation",
+    "cedictMatches": [
+      {
+        "traditional": "了",
+        "pinyin": "le5",
+        "definition": "(completed action marker)/(modal particle indicating change of state, situation now)/(modal particle intensifying preceding clause)",
+        "raw": "了 了 [le5] /(completed action marker)/(modal particle indicating change of state, situation now)/(modal particle intensifying preceding clause)/"
+      }
+    ],
+    "officialMapping": null,
+    "inFirst100": false
+  },
+  {
+    "entryId": "再见",
+    "hanzi": "再见",
+    "pinyin": "zàijiàn",
+    "selectedGloss": "goodbye",
+    "cedictMatches": [
+      {
+        "traditional": "再見",
+        "pinyin": "zai4 jian4",
+        "definition": "goodbye/see you again later",
+        "raw": "再見 再见 [zai4 jian4] /goodbye/see you again later/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "271",
+      "pinyin": "zàijiàn"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "请",
+    "hanzi": "请",
+    "pinyin": "qǐng",
+    "selectedGloss": "please / invite",
+    "cedictMatches": [
+      {
+        "traditional": "請",
+        "pinyin": "qing3",
+        "definition": "to ask/to invite/please (do sth)/to treat (to a meal etc)/to request",
+        "raw": "請 请 [qing3] /to ask/to invite/please (do sth)/to treat (to a meal etc)/to request/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "165",
+      "pinyin": "qǐng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "对不起",
+    "hanzi": "对不起",
+    "pinyin": "duìbuqǐ",
+    "selectedGloss": "sorry / excuse me",
+    "cedictMatches": [
+      {
+        "traditional": "對不起",
+        "pinyin": "dui4 bu5 qi3",
+        "definition": "I'm sorry; excuse me; I beg your pardon/to let (sb) down; to disappoint",
+        "raw": "對不起 对不起 [dui4 bu5 qi3] /I'm sorry; excuse me; I beg your pardon/to let (sb) down; to disappoint/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "45",
+      "pinyin": "duìbuqǐ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "您",
+    "hanzi": "您",
+    "pinyin": "nín",
+    "selectedGloss": "you (polite)",
+    "cedictMatches": [
+      {
+        "traditional": "您",
+        "pinyin": "nin2",
+        "definition": "you (courteous, as opposed to informal 你[ni3])",
+        "raw": "您 您 [nin2] /you (courteous, as opposed to informal 你[ni3])/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "150",
+      "pinyin": "nín"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "也",
+    "hanzi": "也",
+    "pinyin": "yě",
+    "selectedGloss": "also / too",
+    "cedictMatches": [
+      {
+        "traditional": "也",
+        "pinyin": "Ye3",
+        "definition": "surname Ye",
+        "raw": "也 也 [Ye3] /surname Ye/"
+      },
+      {
+        "traditional": "也",
+        "pinyin": "ye3",
+        "definition": "also; too; as well; (not ...) either/(used after a verbal or nominal expression X to indicate that X is an extreme or unexpected case) even (X)/(literary) particle having functions similar to 啊[a5]",
+        "raw": "也 也 [ye3] /also; too; as well; (not ...) either/(used after a verbal or nominal expression X to indicate that X is an extreme or unexpected case) even (X)/(literary) particle having functions similar to 啊[a5]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "253",
+      "pinyin": "yě"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "很",
+    "hanzi": "很",
+    "pinyin": "hěn",
+    "selectedGloss": "very",
+    "cedictMatches": [
+      {
+        "traditional": "很",
+        "pinyin": "hen3",
+        "definition": "very; quite/(also, often used before an adjective without intensifying its meaning, i.e. as a meaningless syntactic element)",
+        "raw": "很 很 [hen3] /very; quite/(also, often used before an adjective without intensifying its meaning, i.e. as a meaningless syntactic element)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "79",
+      "pinyin": "hěn"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "叫",
+    "hanzi": "叫",
+    "pinyin": "jiào",
+    "selectedGloss": "be called / call",
+    "cedictMatches": [
+      {
+        "traditional": "叫",
+        "pinyin": "jiao4",
+        "definition": "to shout/to call/to order/to ask/to be called/by (indicates agent in the passive mood)",
+        "raw": "叫 叫 [jiao4] /to shout/to call/to order/to ask/to be called/by (indicates agent in the passive mood)/"
+      },
+      {
+        "traditional": "呌",
+        "pinyin": "jiao4",
+        "definition": "variant of 叫[jiao4]",
+        "raw": "呌 叫 [jiao4] /variant of 叫[jiao4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "91",
+      "pinyin": "jiào"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "名字",
+    "hanzi": "名字",
+    "pinyin": "míngzi",
+    "selectedGloss": "name",
+    "cedictMatches": [
+      {
+        "traditional": "名字",
+        "pinyin": "ming2 zi5",
+        "definition": "name (of a person or thing)",
+        "raw": "名字 名字 [ming2 zi5] /name (of a person or thing)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "128",
+      "pinyin": "míngzi"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "什么",
+    "hanzi": "什么",
+    "pinyin": "shénme",
+    "selectedGloss": "what",
+    "cedictMatches": [
+      {
+        "traditional": "什麼",
+        "pinyin": "shen2 me5",
+        "definition": "what?/something; anything",
+        "raw": "什麼 什么 [shen2 me5] /what?/something; anything/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "182",
+      "pinyin": "shénme"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "哪",
+    "hanzi": "哪",
+    "pinyin": "nǎ",
+    "selectedGloss": "which",
+    "cedictMatches": [
+      {
+        "traditional": "哪",
+        "pinyin": "na3",
+        "definition": "how/which",
+        "raw": "哪 哪 [na3] /how/which/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "131",
+      "pinyin": "nǎ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "零",
+    "hanzi": "零",
+    "pinyin": "líng",
+    "selectedGloss": "zero",
+    "cedictMatches": [
+      {
+        "traditional": "零",
+        "pinyin": "ling2",
+        "definition": "zero/nought/zero sign/fractional/fragmentary/odd (of numbers)/(placed between two numbers to indicate a smaller quantity followed by a larger one)/fraction/(in mathematics) remainder (after division)/extra/to wither and fall/to wither",
+        "raw": "零 零 [ling2] /zero/nought/zero sign/fractional/fragmentary/odd (of numbers)/(placed between two numbers to indicate a smaller quantity followed by a larger one)/fraction/(in mathematics) remainder (after division)/extra/to wither and fall/to wither/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "112",
+      "pinyin": "líng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "个",
+    "hanzi": "个",
+    "pinyin": "gè",
+    "selectedGloss": "general classifier",
+    "cedictMatches": [
+      {
+        "traditional": "個",
+        "pinyin": "ge4",
+        "definition": "(classifier used before a noun that has no specific classifier)/(bound form) individual",
+        "raw": "個 个 [ge4] /(classifier used before a noun that has no specific classifier)/(bound form) individual/"
+      },
+      {
+        "traditional": "箇",
+        "pinyin": "ge4",
+        "definition": "variant of 個|个[ge4]",
+        "raw": "箇 个 [ge4] /variant of 個|个[ge4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "60",
+      "pinyin": "gè"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "两",
+    "hanzi": "两",
+    "pinyin": "liǎng",
+    "selectedGloss": "two (before classifiers)",
+    "cedictMatches": [
+      {
+        "traditional": "兩",
+        "pinyin": "liang3",
+        "definition": "two/both/some/a few/tael, unit of weight equal to 50 grams (modern) or 1⁄16 of a catty 斤[jin1] (old)",
+        "raw": "兩 两 [liang3] /two/both/some/a few/tael, unit of weight equal to 50 grams (modern) or 1⁄16 of a catty 斤[jin1] (old)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "111",
+      "pinyin": "liǎng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "有",
+    "hanzi": "有",
+    "pinyin": "yǒu",
+    "selectedGloss": "have / there is",
+    "cedictMatches": [
+      {
+        "traditional": "有",
+        "pinyin": "you3",
+        "definition": "to have; there is/(bound form) having; with; -ful; -ed; -al (as in 有意[you3 yi4] intentional)",
+        "raw": "有 有 [you3] /to have; there is/(bound form) having; with; -ful; -ed; -al (as in 有意[you3 yi4] intentional)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "263",
+      "pinyin": "yǒu"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "没有",
+    "hanzi": "没有",
+    "pinyin": "méiyǒu",
+    "selectedGloss": "not have / there is no",
+    "cedictMatches": [
+      {
+        "traditional": "沒有",
+        "pinyin": "mei2 you3",
+        "definition": "haven't/hasn't/doesn't exist/to not have/to not be",
+        "raw": "沒有 没有 [mei2 you3] /haven't/hasn't/doesn't exist/to not have/to not be/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "122",
+      "pinyin": "méiyǒu"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "爸爸",
+    "hanzi": "爸爸",
+    "pinyin": "bàba",
+    "selectedGloss": "dad / father",
+    "cedictMatches": [
+      {
+        "traditional": "爸爸",
+        "pinyin": "ba4 ba5",
+        "definition": "(coll.) father; dad/CL:位[wei4]",
+        "raw": "爸爸 爸爸 [ba4 ba5] /(coll.) father; dad/CL:位[wei4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "3",
+      "pinyin": "bàba"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "哥哥",
+    "hanzi": "哥哥",
+    "pinyin": "gēge",
+    "selectedGloss": "older brother",
+    "cedictMatches": [
+      {
+        "traditional": "哥哥",
+        "pinyin": "ge1 ge5",
+        "definition": "older brother/CL:個|个[ge4],位[wei4]",
+        "raw": "哥哥 哥哥 [ge1 ge5] /older brother/CL:個|个[ge4],位[wei4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "58",
+      "pinyin": "gēge"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "姐姐",
+    "hanzi": "姐姐",
+    "pinyin": "jiějie",
+    "selectedGloss": "older sister",
+    "cedictMatches": [
+      {
+        "traditional": "姐姐",
+        "pinyin": "jie3 jie5",
+        "definition": "older sister/CL:個|个[ge4]",
+        "raw": "姐姐 姐姐 [jie3 jie5] /older sister/CL:個|个[ge4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "92",
+      "pinyin": "jiějie"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "弟弟",
+    "hanzi": "弟弟",
+    "pinyin": "dìdi",
+    "selectedGloss": "younger brother",
+    "cedictMatches": [
+      {
+        "traditional": "弟弟",
+        "pinyin": "di4 di5",
+        "definition": "younger brother/CL:個|个[ge4],位[wei4]",
+        "raw": "弟弟 弟弟 [di4 di5] /younger brother/CL:個|个[ge4],位[wei4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "31",
+      "pinyin": "dìdi"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "妹妹",
+    "hanzi": "妹妹",
+    "pinyin": "mèimei",
+    "selectedGloss": "younger sister",
+    "cedictMatches": [
+      {
+        "traditional": "妹妹",
+        "pinyin": "mei4 mei5",
+        "definition": "younger sister/young woman/CL:個|个[ge4]",
+        "raw": "妹妹 妹妹 [mei4 mei5] /younger sister/young woman/CL:個|个[ge4]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "123",
+      "pinyin": "mèimei"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "孩子",
+    "hanzi": "孩子",
+    "pinyin": "háizi",
+    "selectedGloss": "child",
+    "cedictMatches": [
+      {
+        "traditional": "孩子",
+        "pinyin": "hai2 zi5",
+        "definition": "child",
+        "raw": "孩子 孩子 [hai2 zi5] /child/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "68",
+      "pinyin": "háizi"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "想",
+    "hanzi": "想",
+    "pinyin": "xiǎng",
+    "selectedGloss": "think / want to",
+    "cedictMatches": [
+      {
+        "traditional": "想",
+        "pinyin": "xiang3",
+        "definition": "to think (about)/to think of; to devise/to think (that); to believe (that)/to desire; to want (to)/to miss (feel wistful about the absence of)",
+        "raw": "想 想 [xiang3] /to think (about)/to think of; to devise/to think (that); to believe (that)/to desire; to want (to)/to miss (feel wistful about the absence of)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "233",
+      "pinyin": "xiǎng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "要",
+    "hanzi": "要",
+    "pinyin": "yào",
+    "selectedGloss": "want / need",
+    "cedictMatches": [
+      {
+        "traditional": "要",
+        "pinyin": "yao4",
+        "definition": "to want; to need; to ask for/will; shall; about to/need to; should/if (same as 要是[yao4 shi5])/(bound form) important",
+        "raw": "要 要 [yao4] /to want; to need; to ask for/will; shall; about to/need to; should/if (same as 要是[yao4 shi5])/(bound form) important/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "252",
+      "pinyin": "yào"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "吃",
+    "hanzi": "吃",
+    "pinyin": "chī",
+    "selectedGloss": "eat",
+    "cedictMatches": [
+      {
+        "traditional": "吃",
+        "pinyin": "chi1",
+        "definition": "to eat; to consume/to eat at (a cafeteria etc)/to eradicate; to destroy/to absorb/to suffer (shock, injury, defeat etc)",
+        "raw": "吃 吃 [chi1] /to eat; to consume/to eat at (a cafeteria etc)/to eradicate; to destroy/to absorb/to suffer (shock, injury, defeat etc)/"
+      },
+      {
+        "traditional": "喫",
+        "pinyin": "chi1",
+        "definition": "variant of 吃[chi1]",
+        "raw": "喫 吃 [chi1] /variant of 吃[chi1]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "21",
+      "pinyin": "chī"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "喝",
+    "hanzi": "喝",
+    "pinyin": "hē",
+    "selectedGloss": "drink",
+    "cedictMatches": [
+      {
+        "traditional": "喝",
+        "pinyin": "he1",
+        "definition": "to drink/variant of 嗬[he1]",
+        "raw": "喝 喝 [he1] /to drink/variant of 嗬[he1]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "77",
+      "pinyin": "hē"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "茶",
+    "hanzi": "茶",
+    "pinyin": "chá",
+    "selectedGloss": "tea",
+    "cedictMatches": [
+      {
+        "traditional": "茶",
+        "pinyin": "cha2",
+        "definition": "tea/tea plant/CL:杯[bei1],壺|壶[hu2]",
+        "raw": "茶 茶 [cha2] /tea/tea plant/CL:杯[bei1],壺|壶[hu2]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "17",
+      "pinyin": "chá"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "咖啡",
+    "hanzi": "咖啡",
+    "pinyin": "kāfēi",
+    "selectedGloss": "coffee",
+    "cedictMatches": [
+      {
+        "traditional": "咖啡",
+        "pinyin": "ka1 fei1",
+        "definition": "(loanword) coffee/CL:杯[bei1]",
+        "raw": "咖啡 咖啡 [ka1 fei1] /(loanword) coffee/CL:杯[bei1]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "2",
+      "printedPage": 86,
+      "pdfPage": 89,
+      "entry": "377",
+      "pinyin": "kāfēi"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "米饭",
+    "hanzi": "米饭",
+    "pinyin": "mǐfàn",
+    "selectedGloss": "cooked rice",
+    "cedictMatches": [
+      {
+        "traditional": "米飯",
+        "pinyin": "mi3 fan4",
+        "definition": "(cooked) rice",
+        "raw": "米飯 米饭 [mi3 fan4] /(cooked) rice/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "125",
+      "pinyin": "mǐfàn"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "菜",
+    "hanzi": "菜",
+    "pinyin": "cài",
+    "selectedGloss": "vegetables / dish",
+    "cedictMatches": [
+      {
+        "traditional": "菜",
+        "pinyin": "cai4",
+        "definition": "vegetable; greens (CL:棵[ke1])/dish (of food) (CL:樣|样[yang4],道[dao4],盤|盘[pan2])/(of one's skills etc) weak; poor/(coll.) (one's) type",
+        "raw": "菜 菜 [cai4] /vegetable; greens (CL:棵[ke1])/dish (of food) (CL:樣|样[yang4],道[dao4],盤|盘[pan2])/(of one's skills etc) weak; poor/(coll.) (one's) type/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "16",
+      "pinyin": "cài"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "来",
+    "hanzi": "来",
+    "pinyin": "lái",
+    "selectedGloss": "come",
+    "cedictMatches": [
+      {
+        "traditional": "來",
+        "pinyin": "lai2",
+        "definition": "to come/(used as a substitute for a more specific verb)/hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])/ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])/for the past (amount of time)/(prefix) the coming ...; the next ... (as in 來世|来世[lai2 shi4])/(between two verbs) in order to/(after a round number) approximately/(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])",
+        "raw": "來 来 [lai2] /to come/(used as a substitute for a more specific verb)/hither (directional complement for motion toward the speaker, as in 回來|回来[hui2 lai5])/ever since (as in 自古以來|自古以来[zi4 gu3 yi3 lai2])/for the past (amount of time)/(prefix) the coming ...; the next ... (as in 來世|来世[lai2 shi4])/(between two verbs) in order to/(after a round number) approximately/(used after 得[de2] to indicate possibility, as in 談得來|谈得来[tan2 de5 lai2], or after 不[bu4] to indicate impossibility, as in 吃不來|吃不来[chi1 bu5 lai2])/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "106",
+      "pinyin": "lái"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "去",
+    "hanzi": "去",
+    "pinyin": "qù",
+    "selectedGloss": "go",
+    "cedictMatches": [
+      {
+        "traditional": "去",
+        "pinyin": "qu4",
+        "definition": "to go/to go to (a place)/(of a time etc) last/just passed/to send/to remove/to get rid of/to reduce/to be apart from in space or time/to die (euphemism)/to play (a part)/(when used either before or after a verb) to go in order to do sth/(after a verb of motion indicates movement away from the speaker)/(used after certain verbs to indicate detachment or separation)",
+        "raw": "去 去 [qu4] /to go/to go to (a place)/(of a time etc) last/just passed/to send/to remove/to get rid of/to reduce/to be apart from in space or time/to die (euphemism)/to play (a part)/(when used either before or after a verb) to go in order to do sth/(after a verb of motion indicates movement away from the speaker)/(used after certain verbs to indicate detachment or separation)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "167",
+      "pinyin": "qù"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "回",
+    "hanzi": "回",
+    "pinyin": "huí",
+    "selectedGloss": "return / go back",
+    "cedictMatches": [
+      {
+        "traditional": "回",
+        "pinyin": "Hui2",
+        "definition": "Hui ethnic group (Chinese Muslims)",
+        "raw": "回 回 [Hui2] /Hui ethnic group (Chinese Muslims)/"
+      },
+      {
+        "traditional": "回",
+        "pinyin": "hui2",
+        "definition": "to go back; to return; to turn back; to turn around/to reply; to answer/classifier for literary divisions (acts of a play, sections or chapters of a classic book)/classifier for occurrences or times",
+        "raw": "回 回 [hui2] /to go back; to return; to turn back; to turn around/to reply; to answer/classifier for literary divisions (acts of a play, sections or chapters of a classic book)/classifier for occurrences or times/"
+      },
+      {
+        "traditional": "迴",
+        "pinyin": "hui2",
+        "definition": "to curve/to return/to revolve",
+        "raw": "迴 回 [hui2] /to curve/to return/to revolve/"
+      },
+      {
+        "traditional": "逥",
+        "pinyin": "hui2",
+        "definition": "variant of 迴|回[hui2]",
+        "raw": "逥 回 [hui2] /variant of 迴|回[hui2]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "81",
+      "pinyin": "huí"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "在",
+    "hanzi": "在",
+    "pinyin": "zài",
+    "selectedGloss": "be at / in",
+    "cedictMatches": [
+      {
+        "traditional": "在",
+        "pinyin": "zai4",
+        "definition": "to exist; to be alive/(of sb or sth) to be (located) at/(used before a verb to indicate an action in progress)",
+        "raw": "在 在 [zai4] /to exist; to be alive/(of sb or sth) to be (located) at/(used before a verb to indicate an action in progress)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "272",
+      "pinyin": "zài"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "这里",
+    "hanzi": "这里",
+    "pinyin": "zhèlǐ",
+    "selectedGloss": "here",
+    "cedictMatches": [
+      {
+        "traditional": "這裏",
+        "pinyin": "zhe4 li3",
+        "definition": "variant of 這裡|这里[zhe4 li3]",
+        "raw": "這裏 这里 [zhe4 li3] /variant of 這裡|这里[zhe4 li3]/"
+      },
+      {
+        "traditional": "這裡",
+        "pinyin": "zhe4 li3",
+        "definition": "here",
+        "raw": "這裡 这里 [zhe4 li3] /here/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 84,
+      "pdfPage": 87,
+      "entry": "282",
+      "pinyin": "zhèlǐ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "明天",
+    "hanzi": "明天",
+    "pinyin": "míngtiān",
+    "selectedGloss": "tomorrow",
+    "cedictMatches": [
+      {
+        "traditional": "明天",
+        "pinyin": "ming2 tian1",
+        "definition": "tomorrow",
+        "raw": "明天 明天 [ming2 tian1] /tomorrow/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "130",
+      "pinyin": "míngtiān"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "昨天",
+    "hanzi": "昨天",
+    "pinyin": "zuótiān",
+    "selectedGloss": "yesterday",
+    "cedictMatches": [
+      {
+        "traditional": "昨天",
+        "pinyin": "zuo2 tian1",
+        "definition": "yesterday",
+        "raw": "昨天 昨天 [zuo2 tian1] /yesterday/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 84,
+      "pdfPage": 87,
+      "entry": "297",
+      "pinyin": "zuótiān"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "现在",
+    "hanzi": "现在",
+    "pinyin": "xiànzài",
+    "selectedGloss": "now",
+    "cedictMatches": [
+      {
+        "traditional": "現在",
+        "pinyin": "xian4 zai4",
+        "definition": "now; at present; currently",
+        "raw": "現在 现在 [xian4 zai4] /now; at present; currently/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "232",
+      "pinyin": "xiànzài"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "时候",
+    "hanzi": "时候",
+    "pinyin": "shíhou",
+    "selectedGloss": "time / moment",
+    "cedictMatches": [
+      {
+        "traditional": "時候",
+        "pinyin": "shi2 hou5",
+        "definition": "time/length of time/moment/period",
+        "raw": "時候 时候 [shi2 hou5] /time/length of time/moment/period/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "185",
+      "pinyin": "shíhou"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "星期",
+    "hanzi": "星期",
+    "pinyin": "xīngqī",
+    "selectedGloss": "week",
+    "cedictMatches": [
+      {
+        "traditional": "星期",
+        "pinyin": "xing1 qi1",
+        "definition": "week/CL:個|个[ge4]/day of the week/Sunday",
+        "raw": "星期 星期 [xing1 qi1] /week/CL:個|个[ge4]/day of the week/Sunday/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "243",
+      "pinyin": "xīngqī"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "点",
+    "hanzi": "点",
+    "pinyin": "diǎn",
+    "selectedGloss": "o'clock / point",
+    "cedictMatches": [
+      {
+        "traditional": "點",
+        "pinyin": "dian3",
+        "definition": "to touch briefly; to tap/to mark with a dot; to check off (on a list)/to order (food etc); to select/to mention; to bring up (a topic or person)/to hint at; to imply/to administer (eye medicine etc) in drops/to light (a fire, a lamp etc); to ignite/to nod (one's head) in agreement; to beckon by moving (one's hand) up and down/point; dot; spot; speck/dot stroke in Chinese characters/(math.) decimal point/point in time or space/(after a number) o'clock/a small amount; a bit; (after a verb or adjective) a bit more/classifier for small amounts",
+        "raw": "點 点 [dian3] /to touch briefly; to tap/to mark with a dot; to check off (on a list)/to order (food etc); to select/to mention; to bring up (a topic or person)/to hint at; to imply/to administer (eye medicine etc) in drops/to light (a fire, a lamp etc); to ignite/to nod (one's head) in agreement; to beckon by moving (one's hand) up and down/point; dot; spot; speck/dot stroke in Chinese characters/(math.) decimal point/point in time or space/(after a number) o'clock/a small amount; a bit; (after a verb or adjective) a bit more/classifier for small amounts/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 77,
+      "pdfPage": 80,
+      "entry": "33",
+      "pinyin": "diǎn"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "多",
+    "hanzi": "多",
+    "pinyin": "duō",
+    "selectedGloss": "many / much",
+    "cedictMatches": [
+      {
+        "traditional": "多",
+        "pinyin": "duo1",
+        "definition": "many; much; more; a lot of/too many; in excess/(after a numeral) ... odd/how (to what extent) (Taiwan pr. [duo2])/(bound form) multi-; poly-",
+        "raw": "多 多 [duo1] /many; much; more; a lot of/too many; in excess/(after a numeral) ... odd/how (to what extent) (Taiwan pr. [duo2])/(bound form) multi-; poly-/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "46",
+      "pinyin": "duō"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "少",
+    "hanzi": "少",
+    "pinyin": "shǎo",
+    "selectedGloss": "few / little",
+    "cedictMatches": [
+      {
+        "traditional": "少",
+        "pinyin": "shao3",
+        "definition": "few/less/to lack/to be missing/to stop (doing sth)/seldom",
+        "raw": "少 少 [shao3] /few/less/to lack/to be missing/to stop (doing sth)/seldom/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "180",
+      "pinyin": "shǎo"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "热",
+    "hanzi": "热",
+    "pinyin": "rè",
+    "selectedGloss": "hot",
+    "cedictMatches": [
+      {
+        "traditional": "熱",
+        "pinyin": "re4",
+        "definition": "to warm up/to heat up/hot (of weather)/heat/fervent",
+        "raw": "熱 热 [re4] /to warm up/to heat up/hot (of weather)/heat/fervent/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "169",
+      "pinyin": "rè"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "冷",
+    "hanzi": "冷",
+    "pinyin": "lěng",
+    "selectedGloss": "cold",
+    "cedictMatches": [
+      {
+        "traditional": "冷",
+        "pinyin": "Leng3",
+        "definition": "surname Leng",
+        "raw": "冷 冷 [Leng3] /surname Leng/"
+      },
+      {
+        "traditional": "冷",
+        "pinyin": "leng3",
+        "definition": "cold",
+        "raw": "冷 冷 [leng3] /cold/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "109",
+      "pinyin": "lěng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "忙",
+    "hanzi": "忙",
+    "pinyin": "máng",
+    "selectedGloss": "busy",
+    "cedictMatches": [
+      {
+        "traditional": "忙",
+        "pinyin": "mang2",
+        "definition": "busy/hurriedly/to hurry/to rush",
+        "raw": "忙 忙 [mang2] /busy/hurriedly/to hurry/to rush/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "118",
+      "pinyin": "máng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "累",
+    "hanzi": "累",
+    "pinyin": "lèi",
+    "selectedGloss": "tired",
+    "cedictMatches": [
+      {
+        "traditional": "累",
+        "pinyin": "lei4",
+        "definition": "tired/weary/to strain/to wear out/to work hard",
+        "raw": "累 累 [lei4] /tired/weary/to strain/to wear out/to work hard/"
+      }
+    ],
+    "officialMapping": {
+      "level": "2",
+      "printedPage": 86,
+      "pdfPage": 89,
+      "entry": "388",
+      "pinyin": "lèi"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "高兴",
+    "hanzi": "高兴",
+    "pinyin": "gāoxìng",
+    "selectedGloss": "happy / pleased",
+    "cedictMatches": [
+      {
+        "traditional": "高興",
+        "pinyin": "gao1 xing4",
+        "definition": "happy/glad/willing (to do sth)/in a cheerful mood",
+        "raw": "高興 高兴 [gao1 xing4] /happy/glad/willing (to do sth)/in a cheerful mood/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "57",
+      "pinyin": "gāoxìng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "学生",
+    "hanzi": "学生",
+    "pinyin": "xuésheng",
+    "selectedGloss": "student",
+    "cedictMatches": [
+      {
+        "traditional": "學生",
+        "pinyin": "xue2 sheng5",
+        "definition": "student/schoolchild",
+        "raw": "學生 学生 [xue2 sheng5] /student/schoolchild/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "248",
+      "pinyin": "xuéshēng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "老师",
+    "hanzi": "老师",
+    "pinyin": "lǎoshī",
+    "selectedGloss": "teacher",
+    "cedictMatches": [
+      {
+        "traditional": "老師",
+        "pinyin": "lao3 shi1",
+        "definition": "teacher",
+        "raw": "老師 老师 [lao3 shi1] /teacher/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "107",
+      "pinyin": "lǎoshī"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "学习",
+    "hanzi": "学习",
+    "pinyin": "xuéxí",
+    "selectedGloss": "study / learn",
+    "cedictMatches": [
+      {
+        "traditional": "學習",
+        "pinyin": "xue2 xi2",
+        "definition": "to learn; to study",
+        "raw": "學習 学习 [xue2 xi2] /to learn; to study/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "249",
+      "pinyin": "xuéxí"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "汉语",
+    "hanzi": "汉语",
+    "pinyin": "hànyǔ",
+    "selectedGloss": "Chinese language",
+    "cedictMatches": [
+      {
+        "traditional": "漢語",
+        "pinyin": "Han4 yu3",
+        "definition": "Chinese language",
+        "raw": "漢語 汉语 [Han4 yu3] /Chinese language/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "69",
+      "pinyin": "Hànyǔ"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "听",
+    "hanzi": "听",
+    "pinyin": "tīng",
+    "selectedGloss": "listen / hear",
+    "cedictMatches": [
+      {
+        "traditional": "聽",
+        "pinyin": "ting1",
+        "definition": "to listen to; to hear/to heed; to obey/a can (loanword from English \"tin\")/classifier for canned beverages/to let be; to allow (Taiwan pr. [ting4])/(literary) to administer; to deal with (Taiwan pr. [ting4])",
+        "raw": "聽 听 [ting1] /to listen to; to hear/to heed; to obey/a can (loanword from English \"tin\")/classifier for canned beverages/to let be; to allow (Taiwan pr. [ting4])/(literary) to administer; to deal with (Taiwan pr. [ting4])/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "209",
+      "pinyin": "tīng"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "说",
+    "hanzi": "说",
+    "pinyin": "shuō",
+    "selectedGloss": "speak / say",
+    "cedictMatches": [
+      {
+        "traditional": "說",
+        "pinyin": "shuo1",
+        "definition": "to speak; to talk; to say/to explain; to comment/to scold; to tell off/(bound form) theory; doctrine",
+        "raw": "說 说 [shuo1] /to speak; to talk; to say/to explain; to comment/to scold; to tell off/(bound form) theory; doctrine/"
+      },
+      {
+        "traditional": "説",
+        "pinyin": "shuo1",
+        "definition": "variant of 說|说[shuo1]",
+        "raw": "説 说 [shuo1] /variant of 說|说[shuo1]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "196",
+      "pinyin": "shuō"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "读",
+    "hanzi": "读",
+    "pinyin": "dú",
+    "selectedGloss": "read",
+    "cedictMatches": [
+      {
+        "traditional": "讀",
+        "pinyin": "du2",
+        "definition": "to read out; to read aloud/to read/to attend (school); to study (a subject in school)/to pronounce",
+        "raw": "讀 读 [du2] /to read out; to read aloud/to read/to attend (school); to study (a subject in school)/to pronounce/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "42",
+      "pinyin": "dú"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "写",
+    "hanzi": "写",
+    "pinyin": "xiě",
+    "selectedGloss": "write",
+    "cedictMatches": [
+      {
+        "traditional": "寫",
+        "pinyin": "xie3",
+        "definition": "to write",
+        "raw": "寫 写 [xie3] /to write/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 82,
+      "pdfPage": 85,
+      "entry": "240",
+      "pinyin": "xiě"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "书",
+    "hanzi": "书",
+    "pinyin": "shū",
+    "selectedGloss": "book",
+    "cedictMatches": [
+      {
+        "traditional": "書",
+        "pinyin": "Shu1",
+        "definition": "abbr. for 書經|书经[Shu1 jing1]",
+        "raw": "書 书 [Shu1] /abbr. for 書經|书经[Shu1 jing1]/"
+      },
+      {
+        "traditional": "書",
+        "pinyin": "shu1",
+        "definition": "book/letter/document/CL:本[ben3],冊|册[ce4],部[bu4]/to write",
+        "raw": "書 书 [shu1] /book/letter/document/CL:本[ben3],冊|册[ce4],部[bu4]/to write/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "190",
+      "pinyin": "shū"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "字",
+    "hanzi": "字",
+    "pinyin": "zì",
+    "selectedGloss": "written character",
+    "cedictMatches": [
+      {
+        "traditional": "字",
+        "pinyin": "zi4",
+        "definition": "letter/symbol/character/word/CL:個|个[ge4]/courtesy or style name traditionally given to males aged 20 in dynastic China",
+        "raw": "字 字 [zi4] /letter/symbol/character/word/CL:個|个[ge4]/courtesy or style name traditionally given to males aged 20 in dynastic China/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 84,
+      "pdfPage": 87,
+      "entry": "296",
+      "pinyin": "zì"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "这",
+    "hanzi": "这",
+    "pinyin": "zhè",
+    "selectedGloss": "this",
+    "cedictMatches": [
+      {
+        "traditional": "這",
+        "pinyin": "zhe4",
+        "definition": "(pronoun) this; these/(bound form) this; the (followed by a noun)/(bound form) this; these (followed by a classifier) (in this sense, commonly pr. [zhei4], esp. in Beijing)",
+        "raw": "這 这 [zhe4] /(pronoun) this; these/(bound form) this; the (followed by a noun)/(bound form) this; these (followed by a classifier) (in this sense, commonly pr. [zhei4], esp. in Beijing)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 83,
+      "pdfPage": 86,
+      "entry": "279",
+      "pinyin": "zhè"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "那",
+    "hanzi": "那",
+    "pinyin": "nà",
+    "selectedGloss": "that",
+    "cedictMatches": [
+      {
+        "traditional": "那",
+        "pinyin": "na4",
+        "definition": "(specifier) that; the; those (colloquial pr. [nei4])/(pronoun) that (referring to persons, things or situations)/then (in that case)",
+        "raw": "那 那 [na4] /(specifier) that; the; those (colloquial pr. [nei4])/(pronoun) that (referring to persons, things or situations)/then (in that case)/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 80,
+      "pdfPage": 83,
+      "entry": "136",
+      "pinyin": "nà"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "钱",
+    "hanzi": "钱",
+    "pinyin": "qián",
+    "selectedGloss": "money",
+    "cedictMatches": [
+      {
+        "traditional": "錢",
+        "pinyin": "Qian2",
+        "definition": "surname Qian",
+        "raw": "錢 钱 [Qian2] /surname Qian/"
+      },
+      {
+        "traditional": "錢",
+        "pinyin": "qian2",
+        "definition": "coin/money/CL:筆|笔[bi3]/unit of weight, one tenth of a tael 兩|两[liang3]",
+        "raw": "錢 钱 [qian2] /coin/money/CL:筆|笔[bi3]/unit of weight, one tenth of a tael 兩|两[liang3]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "164",
+      "pinyin": "qián"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "买",
+    "hanzi": "买",
+    "pinyin": "mǎi",
+    "selectedGloss": "buy",
+    "cedictMatches": [
+      {
+        "traditional": "買",
+        "pinyin": "mai3",
+        "definition": "to buy/to purchase",
+        "raw": "買 买 [mai3] /to buy/to purchase/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "116",
+      "pinyin": "mǎi"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "多少",
+    "hanzi": "多少",
+    "pinyin": "duōshao",
+    "selectedGloss": "how much / how many",
+    "cedictMatches": [
+      {
+        "traditional": "多少",
+        "pinyin": "duo1 shao5",
+        "definition": "how much?; how many?/(phone number, student ID etc) what number?",
+        "raw": "多少 多少 [duo1 shao5] /how much?; how many?/(phone number, student ID etc) what number?/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 78,
+      "pdfPage": 81,
+      "entry": "47",
+      "pinyin": "duōshao"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "商店",
+    "hanzi": "商店",
+    "pinyin": "shāngdiàn",
+    "selectedGloss": "shop / store",
+    "cedictMatches": [
+      {
+        "traditional": "商店",
+        "pinyin": "shang1 dian4",
+        "definition": "store; shop/CL:家[jia1]",
+        "raw": "商店 商店 [shang1 dian4] /store; shop/CL:家[jia1]/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 81,
+      "pdfPage": 84,
+      "entry": "174",
+      "pinyin": "shāngdiàn"
+    },
+    "inFirst100": true
+  },
+  {
+    "entryId": "块",
+    "hanzi": "块",
+    "pinyin": "kuài",
+    "selectedGloss": "yuan (spoken) / piece",
+    "cedictMatches": [
+      {
+        "traditional": "塊",
+        "pinyin": "kuai4",
+        "definition": "lump; chunk; piece/classifier for pieces of cloth, cake, soap etc/(coll.) classifier for money and currency units",
+        "raw": "塊 块 [kuai4] /lump; chunk; piece/classifier for pieces of cloth, cake, soap etc/(coll.) classifier for money and currency units/"
+      }
+    ],
+    "officialMapping": {
+      "level": "1",
+      "printedPage": 79,
+      "pdfPage": 82,
+      "entry": "105",
+      "pinyin": "kuài"
+    },
+    "inFirst100": true
+  }
+]

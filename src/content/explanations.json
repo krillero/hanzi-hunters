@@ -1,752 +1,86 @@
 {
-  "他": {
-    "title": "他 (he) vs 她 (she)",
-    "summary": "他 and 她 sound exactly the same: tā. Only the writing tells them apart, so learn to spot the left-hand side.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Spot the difference",
-        "intro": "Both are a left part plus the same right part, 也. Only the left part changes.",
-        "items": [
-          {
-            "char": "他",
-            "pinyin": "tā",
-            "meaning": "he / him",
-            "note": "Left part 亻 = the “person” radical, a squashed 人."
-          },
-          {
-            "char": "她",
-            "pinyin": "tā",
-            "meaning": "she / her",
-            "note": "Left part 女 = “woman”, the character you already know."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Tips for telling them apart",
-        "items": [
-          "Look left first. A thin, upright 亻 means a person (he). A curvy 女 means a woman (she).",
-          "女 is the same character as in 女 (nǚ, woman), so 她 literally contains “woman”.",
-          "In speech they are identical. You only know who is meant from the conversation, so in a listening question you must use context.",
-          "Memory aid (not etymology): the right part 也 is shared, so cover it with your thumb and look only at the left."
-        ]
-      },
-      {
-        "type": "breakdown",
-        "heading": "Built from",
-        "parts": [
-          {
-            "char": "亻",
-            "pinyin": "rén",
-            "meaning": "person (radical form of 人)",
-            "note": "Radicals are reused in many characters."
-          },
-          {
-            "char": "也",
-            "pinyin": "yě",
-            "meaning": "also (here it mostly hints the sound)"
-          }
-        ]
-      },
-      {
-        "type": "text",
-        "heading": "Good to know",
-        "body": "A third tā, 它, is used for things and animals (“it”). Adding 们 makes it plural: 他们 (tāmen) is a group of men or a mixed group, and 她们 (tāmen) is a group of women."
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "他是中国人。",
-            "pinyin": "Tā shì Zhōngguórén.",
-            "en": "He is Chinese."
-          },
-          {
-            "zh": "她是中国人。",
-            "pinyin": "Tā shì Zhōngguórén.",
-            "en": "She is Chinese."
-          }
-        ]
-      }
-    ],
-    "related": [
-      "她",
-      "人",
-      "女"
-    ]
-  },
-  "她": {
-    "title": "她 (she) vs 他 (he)",
-    "summary": "她 is tā, “she”. It sounds the same as 他 (he), but the left part is 女, “woman”.",
-    "sections": [
-      {
-        "type": "breakdown",
-        "heading": "Built from",
-        "parts": [
-          {
-            "char": "女",
-            "pinyin": "nǚ",
-            "meaning": "woman",
-            "note": "Reused in 好 (hǎo, good) and many other characters."
-          },
-          {
-            "char": "也",
-            "pinyin": "yě",
-            "meaning": "also (here it mostly hints the sound)"
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Tips for telling them apart",
-        "items": [
-          "If the left part is 女 you are looking at 她 (she). If it is the thin 亻 it is 他 (he).",
-          "Say “woman + also” to yourself when you see 她. It is a memory aid, not the real history.",
-          "The two are written differently but spoken identically, so a wrong answer between them is very common. Do not worry, just look left."
-        ]
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "她是女人。",
-            "pinyin": "Tā shì nǚrén.",
-            "en": "She is a woman."
-          }
-        ]
-      }
-    ],
-    "related": [
-      "他",
-      "女",
-      "好"
-    ]
-  },
-  "好": {
-    "title": "好 is built from 女 and 子",
-    "summary": "好 (hǎo, good) is a small picture made from two characters you already know: 女 (woman) and 子 (child).",
-    "sections": [
-      {
-        "type": "breakdown",
-        "heading": "Built from",
-        "intro": "Many characters are built from smaller parts that you meet again and again.",
-        "parts": [
-          {
-            "char": "女",
-            "pinyin": "nǚ",
-            "meaning": "woman"
-          },
-          {
-            "char": "子",
-            "pinyin": "zǐ",
-            "meaning": "child"
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "A woman with her child: something good. This is a story to help you remember, scholars debate the real origin.",
-          "You will meet 女 again inside 她 (she), so learning the parts pays off twice."
-        ]
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "你好!",
-            "pinyin": "Nǐ hǎo!",
-            "en": "Hello!"
-          }
-        ]
-      }
-    ],
-    "related": [
-      "女",
-      "子",
-      "她"
-    ]
-  },
-  "日": {
-    "title": "日 (sun / day) vs 月 (moon / month)",
-    "summary": "日 can mean sun or day; 月 can mean moon or month. Both are common, box-like characters, so compare the inner strokes.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Spot the difference",
-        "intro": "Compare the insides and the overall shape.",
-        "items": [
-          {
-            "char": "日",
-            "pinyin": "rì",
-            "meaning": "sun / day",
-            "note": "A squarish, closed box with ONE stroke across the middle."
-          },
-          {
-            "char": "月",
-            "pinyin": "yuè",
-            "meaning": "moon / month",
-            "note": "Narrower and taller, with TWO strokes inside; the left side sweeps outwards at the bottom."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Tips",
-        "items": [
-          "Memory aid, not etymology: imagine 日 as a little sun drawn in a box.",
-          "日 is not the same as 口 (kǒu, mouth): 口 is an empty box, 日 has a stroke across the middle.",
-          "日 and 月 each have two common meanings (sun / day, moon / month). Context tells you which one is meant."
-        ]
-      }
-    ],
-    "related": [
-      "月",
-      "口",
-      "天"
-    ]
-  },
-  "月": {
-    "title": "月 (moon / month) vs 日 (sun / day)",
-    "summary": "月 means moon or month, while 日 means sun or day. Both meanings appear often in beginner Chinese.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Compare the shapes",
-        "items": [
-          {
-            "char": "月",
-            "pinyin": "yuè",
-            "meaning": "moon / month",
-            "note": "Narrower and taller, TWO strokes inside; the left side sweeps outwards at the bottom."
-          },
-          {
-            "char": "日",
-            "pinyin": "rì",
-            "meaning": "sun / day",
-            "note": "A squarish, closed box with ONE stroke across the middle."
-          }
-        ]
-      },
-      {
-        "type": "text",
-        "heading": "Two meanings",
-        "body": "月 can mean the moon or a month, and 日 can mean the sun or a day. In many phrases the two meanings are not interchangeable translations, so learn them in context."
-      }
-    ],
-    "related": [
-      "日",
-      "天"
-    ]
-  },
   "人": {
-    "title": "人 (person) and 大 (big)",
-    "summary": "人 means person. 大 means big. Their shapes are related-looking, but 大 has an extra stroke across the upper body.",
+    "title": "人 (rén)",
+    "summary": "Can refer to a person or to people; the character itself does not mark singular or plural. 三个人 means three people.",
     "sections": [
       {
         "type": "compare",
-        "heading": "One extra stroke",
+        "heading": "Compare the written forms",
         "items": [
           {
             "char": "人",
             "pinyin": "rén",
-            "meaning": "person",
-            "note": "Two strokes, opening out like a person standing."
+            "meaning": "person / people"
           },
           {
             "char": "大",
             "pinyin": "dà",
-            "meaning": "big",
-            "note": "An extra horizontal stroke crosses the figure."
+            "meaning": "big / large"
           }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "Memory aid, not character history: picture 大 as a person stretching their arms wide to look big.",
-          "Count the strokes when the two shapes blur together."
         ]
       }
     ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "人 人 [ren2]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
     "related": [
-      "大",
-      "小"
+      "大"
     ]
   },
   "大": {
-    "title": "大 (big) and 人 (person)",
-    "summary": "大 means big; 人 means person. The added horizontal stroke is the quickest way to tell 大 apart from 人.",
+    "title": "大 (dà)",
+    "summary": "Describes something big or large. In a simple description say 很大, rather than inserting 是 before 大.",
     "sections": [
       {
         "type": "compare",
-        "heading": "Check the middle",
+        "heading": "Compare the written forms",
         "items": [
           {
             "char": "大",
             "pinyin": "dà",
-            "meaning": "big",
-            "note": "Has a horizontal stroke across the figure."
+            "meaning": "big / large"
           },
           {
             "char": "人",
             "pinyin": "rén",
-            "meaning": "person",
-            "note": "Does not have that extra horizontal stroke."
+            "meaning": "person / people"
+          },
+          {
+            "char": "天",
+            "pinyin": "tiān",
+            "meaning": "day / sky"
           }
         ]
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "Memory aid, not etymology: imagine a person spreading their arms wide to show something is big."
-        ]
-      }
-    ],
-    "related": [
-      "人",
-      "小"
-    ]
-  },
-  "一": {
-    "title": "一 (one) and its tone changes",
-    "summary": "一 is yī when said alone, but its tone commonly changes in connected speech. These are pronunciation changes, not different characters.",
-    "sections": [
-      {
-        "type": "text",
-        "heading": "The common rule",
-        "body": "一 is usually yí before a fourth-tone syllable and yì before a first-, second-, or third-tone syllable in common connected-speech patterns. It remains yī when counted or spoken alone."
       },
       {
         "type": "examples",
-        "heading": "Listen in context",
+        "heading": "Example",
         "items": [
           {
-            "zh": "一",
-            "pinyin": "yī",
-            "en": "one (said alone)"
-          },
-          {
-            "zh": "一天",
-            "pinyin": "yì tiān",
-            "en": "one day (before a first tone)"
-          },
-          {
-            "zh": "一个",
-            "pinyin": "yí ge",
-            "en": "one (of something), before a fourth tone"
-          }
-        ]
-      }
-    ],
-    "related": [
-      "不",
-      "二",
-      "三"
-    ]
-  },
-  "不": {
-    "title": "不 (bù) changes before a fourth tone",
-    "summary": "不 means not. It is usually bù alone, but becomes bú before a following fourth-tone syllable in ordinary speech.",
-    "sections": [
-      {
-        "type": "text",
-        "heading": "The common rule",
-        "body": "不 changes from fourth tone bù to second tone bú before a following fourth-tone syllable. The written character stays 不."
-      },
-      {
-        "type": "examples",
-        "heading": "A common example",
-        "items": [
-          {
-            "zh": "不是",
-            "pinyin": "bú shì",
-            "en": "is not (before a fourth tone)"
-          },
-          {
-            "zh": "不好",
-            "pinyin": "bù hǎo",
-            "en": "not good (before a third tone, no change)"
-          },
-          {
-            "zh": "不",
-            "pinyin": "bù",
-            "en": "not (said alone)"
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Remember",
-        "items": [
-          "This is a pronunciation rule in connected speech, not a spelling change."
-        ]
-      }
-    ],
-    "related": [
-      "一",
-      "是",
-      "好"
-    ]
-  },
-  "木": {
-    "title": "木 (wood / tree) and 目 (eye)",
-    "summary": "木 and 目 are both pronounced mù, but they mean different things. Look at the shape and the meaning rather than the sound alone.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Same sound, different character",
-        "items": [
-          {
-            "char": "木",
-            "pinyin": "mù",
-            "meaning": "wood / tree",
-            "note": "Looks like a tree: a cross on top with two legs spreading out below."
-          },
-          {
-            "char": "目",
-            "pinyin": "mù",
-            "meaning": "eye",
-            "note": "A tall narrow box divided by two strokes inside."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "Memory aid, not etymology: 目 is an eye with lines inside; 木 is a tree with its roots spread out.",
-          "Both are read mù, so in a listening question you need the meaning or context, not the sound."
-        ]
-      }
-    ],
-    "related": [
-      "目",
-      "山"
-    ]
-  },
-  "十": {
-    "title": "十 (ten) and 石 (stone)",
-    "summary": "十 means ten and 石 means stone. They are pronounced the same in Mandarin (shí), so the sound alone cannot distinguish them.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Same pinyin, different meaning",
-        "items": [
-          {
-            "char": "十",
-            "pinyin": "shí",
-            "meaning": "ten",
-            "note": "Only two crossing strokes."
-          },
-          {
-            "char": "石",
-            "pinyin": "shí",
-            "meaning": "stone",
-            "note": "A long top stroke with a falling stroke, and a 口 box underneath."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "How to choose",
-        "items": [
-          "Reading: if there is a 口 box at the bottom, it is 石 (stone). A plain cross is 十 (ten).",
-          "Listening: both are shí, so use the sentence to decide which meaning fits."
-        ]
-      }
-    ],
-    "related": [
-      "石",
-      "一"
-    ]
-  },
-  "石": {
-    "title": "石 (stone) and 十 (ten)",
-    "summary": "石 means stone and 十 means ten. Both are shí, so they are homophones: the pronunciation is the same.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Look at the strokes",
-        "items": [
-          {
-            "char": "石",
-            "pinyin": "shí",
-            "meaning": "stone",
-            "note": "A long top stroke with a falling stroke, and a 口 box underneath."
-          },
-          {
-            "char": "十",
-            "pinyin": "shí",
-            "meaning": "ten",
-            "note": "Only two crossing strokes."
-          }
-        ]
-      },
-      {
-        "type": "text",
-        "heading": "Good to know",
-        "body": "Because 石 and 十 sound the same, listening alone cannot tell you which is meant. The rest of the sentence, or the written character, decides."
-      }
-    ],
-    "related": [
-      "十",
-      "田"
-    ]
-  },
-  "女": {
-    "title": "女 (woman) appears in other characters",
-    "summary": "女 means woman or female. You have already seen it as the left-hand part of 她 and as one part of 好.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Where you will see 女",
-        "intro": "A familiar part helps you recognise a new character.",
-        "items": [
-          {
-            "char": "女",
-            "pinyin": "nǚ",
-            "meaning": "woman"
-          },
-          {
-            "char": "她",
-            "pinyin": "tā",
-            "meaning": "she / her",
-            "note": "女 on the left, 也 on the right."
-          },
-          {
-            "char": "好",
-            "pinyin": "hǎo",
-            "meaning": "good",
-            "note": "女 and 子 side by side."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Tips",
-        "items": [
-          "Many characters about women or family use 女 as a part, for example 妈 (mā, mum) and 妹 (mèi, younger sister).",
-          "Treat this as a shape-recognition trick, not a claim that a character's meaning is simply the sum of its parts."
-        ]
-      }
-    ],
-    "related": [
-      "她",
-      "好",
-      "子"
-    ]
-  },
-  "子": {
-    "title": "子 (child) appears in 好",
-    "summary": "子 means child and is one of the parts in 好 (hǎo, good). The association can help you remember the character.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Where you will see 子",
-        "intro": "A familiar character can turn up inside a new one.",
-        "items": [
-          {
-            "char": "子",
-            "pinyin": "zǐ",
-            "meaning": "child"
-          },
-          {
-            "char": "好",
-            "pinyin": "hǎo",
-            "meaning": "good",
-            "note": "女 and 子 side by side."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "A woman with a child can be a memory story for 好, but this is not a proven explanation of the character's origin."
-        ]
-      }
-    ],
-    "related": [
-      "好",
-      "女"
-    ]
-  },
-  "上": {
-    "title": "上 (above) and 下 (below)",
-    "summary": "上 means above or up; 下 means below or down. Their meanings are opposites and their short strokes sit on opposite sides of a long horizontal line.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Above or below?",
-        "items": [
-          {
-            "char": "上",
-            "pinyin": "shàng",
-            "meaning": "above / up",
-            "note": "The short stroke sits above the long line."
-          },
-          {
-            "char": "下",
-            "pinyin": "xià",
-            "meaning": "below / down",
-            "note": "The short stroke sits below the long line."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "Use the short stroke as a tiny diagram: above the line for 上, below it for 下.",
-          "With 中 (middle) you get the set 上 中 下: above, middle, below."
-        ]
-      }
-    ],
-    "related": [
-      "下",
-      "中"
-    ]
-  },
-  "下": {
-    "title": "下 (below) and 上 (above)",
-    "summary": "下 means below or down, the opposite of 上 (above or up). Check where the short stroke sits relative to the long line.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Compare the pair",
-        "items": [
-          {
-            "char": "下",
-            "pinyin": "xià",
-            "meaning": "below / down",
-            "note": "The short stroke sits below the long line."
-          },
-          {
-            "char": "上",
-            "pinyin": "shàng",
-            "meaning": "above / up",
-            "note": "The short stroke sits above the long line."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "This is a visual memory aid: the short stroke shows on which side of the line the meaning lies.",
-          "With 中 (middle) you get the set 上 中 下: above, middle, below."
-        ]
-      }
-    ],
-    "related": [
-      "上",
-      "中"
-    ]
-  },
-  "马": {
-    "title": "马 (horse)",
-    "summary": "马 means horse. Its shape is distinctive, and it is a useful early character to recognise.",
-    "sections": [
-      {
-        "type": "text",
-        "heading": "Meaning and sound",
-        "body": "马 is pronounced with a third tone. Keep the pitch low in careful isolated pronunciation; in natural speech, the exact contour depends on context."
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "You may imagine the shape as a stylised horse, but treat this as a memory aid rather than a full account of the character's history."
-        ]
-      }
-    ],
-    "related": [
-      "鸟",
-      "鱼"
-    ]
-  },
-  "目": {
-    "title": "目 (eye) and 木 (wood)",
-    "summary": "目 means eye and is pronounced mù, just like 木 (wood / tree). The extra inner lines help distinguish the written forms.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Look at the inside",
-        "items": [
-          {
-            "char": "目",
-            "pinyin": "mù",
-            "meaning": "eye",
-            "note": "A tall narrow box divided by two strokes inside."
-          },
-          {
-            "char": "木",
-            "pinyin": "mù",
-            "meaning": "wood / tree",
-            "note": "A cross with two legs spreading out below."
-          }
-        ]
-      },
-      {
-        "type": "tips",
-        "heading": "Memory aid",
-        "items": [
-          "Imagine 目 as an eye with lines inside. This is a memory aid, not a claim about the character's history.",
-          "目 is mostly seen inside longer words. In everyday speech people usually say 眼睛 (yǎnjing) for eye."
-        ]
-      }
-    ],
-    "related": [
-      "木",
-      "日"
-    ]
-  },
-  "你好": {
-    "title": "你好 (hello)",
-    "summary": "你好 is the basic greeting. Both syllables are third tone, and in speech the first one is usually said with a rising tone.",
-    "sections": [
-      {
-        "type": "text",
-        "heading": "Two third tones",
-        "body": "When two third-tone syllables come together, the first is said like a second tone: it sounds like ní hǎo. The dictionary pinyin stays nǐ hǎo. Learn the dictionary tone and let the speech change happen naturally."
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "你好！我是小明。",
-            "pinyin": "Nǐ hǎo! Wǒ shì Xiǎo Míng.",
-            "en": "Hello! I'm Xiaoming.",
+            "zh": "我的学校很大。",
+            "pinyin": "Wǒ de xuéxiào hěn dà.",
+            "en": "My school is big.",
+            "audio": false,
             "source": [
               {
-                "name": "ai-draft"
+                "name": "HH-editorial-2026"
               }
             ],
             "review": {
-              "status": "ai-draft"
-            },
-            "note": "A simple introduction: greeting first, then your name."
-          },
-          {
-            "zh": "你好吗？我很好。",
-            "pinyin": "Nǐ hǎo ma? Wǒ hěn hǎo.",
-            "en": "How are you? I'm very well.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
             }
           }
         ]
@@ -754,550 +88,506 @@
     ],
     "source": [
       {
-        "name": "ai-draft"
+        "name": "CC-CEDICT",
+        "ref": "大 大 [da4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
       }
     ],
     "review": {
       "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
     },
     "related": [
-      "吗"
+      "人",
+      "天"
     ]
   },
-  "谢谢": {
-    "title": "谢谢 (thank you)",
-    "summary": "谢谢 is how you say thank you. The second syllable is neutral tone, so it is short and light.",
+  "一": {
+    "title": "一 (yī)",
+    "summary": "Yī is the dictionary reading and is used in counting. Before a fourth tone it normally becomes yí; before a first, second, or third tone it normally becomes yì.",
     "sections": [
       {
-        "type": "tips",
-        "heading": "Saying it",
+        "type": "compare",
+        "heading": "Compare the written forms",
         "items": [
-          "xiè is a clear falling fourth tone; the second xie is quick and light.",
-          "Neutral tone has no tone mark in pinyin, so the second syllable is written xie, not xiè."
+          {
+            "char": "一",
+            "pinyin": "yī",
+            "meaning": "one"
+          },
+          {
+            "char": "二",
+            "pinyin": "èr",
+            "meaning": "two (counting)"
+          },
+          {
+            "char": "三",
+            "pinyin": "sān",
+            "meaning": "three"
+          }
         ]
       },
       {
         "type": "examples",
-        "heading": "In a sentence",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我有一个哥哥。",
+            "pinyin": "Wǒ yǒu yī ge gēge.",
+            "en": "I have an older brother.",
+            "audio": false,
+            "note": "Spoken: yí ge. 一 changes to yí before 个.",
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "一 一 [yi1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "二",
+      "三"
+    ]
+  },
+  "二": {
+    "title": "二 (èr)",
+    "summary": "Use 二 when counting or reading digits. Before most classifiers, 两 is normally used instead: 两个人 means two people.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "二",
+            "pinyin": "èr",
+            "meaning": "two (counting)"
+          },
+          {
+            "char": "一",
+            "pinyin": "yī",
+            "meaning": "one"
+          },
+          {
+            "char": "三",
+            "pinyin": "sān",
+            "meaning": "three"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "二 二 [er4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "一",
+      "三"
+    ]
+  },
+  "三": {
+    "title": "三 (sān)",
+    "summary": "First tone: high and level. 三个人 means three people.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "三",
+            "pinyin": "sān",
+            "meaning": "three"
+          },
+          {
+            "char": "一",
+            "pinyin": "yī",
+            "meaning": "one"
+          },
+          {
+            "char": "二",
+            "pinyin": "èr",
+            "meaning": "two (counting)"
+          }
+        ]
+      },
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我有三个朋友。",
+            "pinyin": "Wǒ yǒu sān ge péngyou.",
+            "en": "I have three friends.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "三 三 [San1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "一",
+      "二"
+    ]
+  },
+  "日": {
+    "title": "日 (rì)",
+    "summary": "A character used for sun or day, especially in compounds and written dates. For the sun in ordinary conversation, 太阳 is usual; 天 is common when counting days.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "日",
+            "pinyin": "rì",
+            "meaning": "sun / day"
+          },
+          {
+            "char": "月",
+            "pinyin": "yuè",
+            "meaning": "moon / month"
+          },
+          {
+            "char": "口",
+            "pinyin": "kǒu",
+            "meaning": "mouth / opening"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "日 日 [ri4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "月",
+      "口"
+    ]
+  },
+  "月": {
+    "title": "月 (yuè)",
+    "summary": "In dates, a number plus 月 names the month: 三月 is March. 月 also means moon; everyday speech often uses 月亮 for the moon.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "月",
+            "pinyin": "yuè",
+            "meaning": "moon / month"
+          },
+          {
+            "char": "日",
+            "pinyin": "rì",
+            "meaning": "sun / day"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "月 月 [yue4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "日"
+    ]
+  },
+  "水": {
+    "title": "水 (shuǐ)",
+    "summary": "喝水 means drink water. The final ui is written with the tone mark on i: shuǐ.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我想喝水。",
+            "pinyin": "Wǒ xiǎng hē shuǐ.",
+            "en": "I want to drink water.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "水 水 [Shui3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "木": {
+    "title": "木 (mù)",
+    "summary": "A character meaning wood or tree, often used inside compounds. 树 is the usual everyday word for a tree.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "木",
+            "pinyin": "mù",
+            "meaning": "wood / tree"
+          },
+          {
+            "char": "目",
+            "pinyin": "mù",
+            "meaning": "eye"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "木 木 [Mu4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "目"
+    ]
+  },
+  "天": {
+    "title": "天 (tiān)",
+    "summary": "Can mean day or sky. 三天 means three days; 今天 means today.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "天",
+            "pinyin": "tiān",
+            "meaning": "day / sky"
+          },
+          {
+            "char": "大",
+            "pinyin": "dà",
+            "meaning": "big / large"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "天 天 [tian1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "大"
+    ]
+  },
+  "我": {
+    "title": "我 (wǒ)",
+    "summary": "Use 我 for yourself. Chinese pronouns do not change form between I and me.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "她是我的朋友。",
+            "pinyin": "Tā shì wǒ de péngyou.",
+            "en": "She is my friend.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我有三个朋友。",
+            "pinyin": "Wǒ yǒu sān ge péngyou.",
+            "en": "I have three friends.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "我 我 [wo3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "你": {
+    "title": "你 (nǐ)",
+    "summary": "The usual singular you. 您 (nín) is a more respectful form.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
         "items": [
           {
             "zh": "谢谢你！",
             "pinyin": "Xièxie nǐ!",
             "en": "Thank you!",
+            "audio": false,
             "source": [
               {
-                "name": "ai-draft"
+                "name": "HH-editorial-2026"
               }
             ],
             "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "谢谢，不客气。",
-            "pinyin": "Xièxie, bú kèqi.",
-            "en": "Thanks. You're welcome.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            },
-            "note": "不 is written bù in the dictionary but said bú before a fourth-tone syllable (here 客 kè)."
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    }
-  },
-  "朋友": {
-    "title": "朋友 (friend)",
-    "summary": "朋友 has a neutral second syllable: péngyou. The 友 is short and light, and pinyin shows this by leaving off the tone mark.",
-    "sections": [
-      {
-        "type": "tips",
-        "heading": "Neutral tone",
-        "items": [
-          "A syllable without a tone mark in dictionary pinyin is neutral tone, not a forgotten mark.",
-          "Say péng with a clear rising tone and then add a quick, light you."
-        ]
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "他是我的朋友。",
-            "pinyin": "Tā shì wǒ de péngyou.",
-            "en": "He is my friend.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "我有很多朋友。",
-            "pinyin": "Wǒ yǒu hěn duō péngyou.",
-            "en": "I have many friends.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    }
-  },
-  "今天": {
-    "title": "今天 (today)",
-    "summary": "今天 means today. Both syllables are first tone, high and level.",
-    "sections": [
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "今天是星期五。",
-            "pinyin": "Jīntiān shì xīngqīwǔ.",
-            "en": "Today is Friday.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "你今天好吗？",
-            "pinyin": "Nǐ jīntiān hǎo ma?",
-            "en": "How are you today?",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    }
-  },
-  "学校": {
-    "title": "学校 (school)",
-    "summary": "学校 is a two-character word for school. Learn it as one word: you do not need to add up the meanings of 学 and 校.",
-    "sections": [
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "我的学校很大。",
-            "pinyin": "Wǒ de xuéxiào hěn dà.",
-            "en": "My school is very big.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "他在学校。",
-            "pinyin": "Tā zài xuéxiào.",
-            "en": "He is at school.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    }
-  },
-  "喜欢": {
-    "title": "喜欢 (to like)",
-    "summary": "喜欢 means to like. The second syllable is neutral tone: xǐhuan.",
-    "sections": [
-      {
-        "type": "text",
-        "heading": "What follows it",
-        "body": "喜欢 can be followed by a noun (我喜欢你) or by a verb (我喜欢看书). Learn it as one whole word."
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "你喜欢什么？",
-            "pinyin": "Nǐ xǐhuan shénme?",
-            "en": "What do you like?",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "我喜欢看书。",
-            "pinyin": "Wǒ xǐhuan kàn shū.",
-            "en": "I like reading.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            },
-            "note": "Here 看 is read kàn: to read / to look at."
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    },
-    "related": [
-      "看-look"
-    ]
-  },
-  "妈妈": {
-    "title": "妈妈 (mom)",
-    "summary": "妈妈 is mā-ma: the second syllable is neutral tone. Many family words repeat a character this way.",
-    "sections": [
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "我妈妈很好。",
-            "pinyin": "Wǒ māma hěn hǎo.",
-            "en": "My mom is well.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "你妈妈好吗？",
-            "pinyin": "Nǐ māma hǎo ma?",
-            "en": "How is your mother?",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    }
-  },
-  "谁": {
-    "title": "谁 (who): shéi or shuí",
-    "summary": "Two pronunciations are both correct for 谁: shéi and shuí. They are the same word with the same meaning, so a question never counts one of them as wrong.",
-    "sections": [
-      {
-        "type": "text",
-        "heading": "Alternate pronunciations",
-        "body": "Dictionaries list both. Different speakers and regions prefer one or the other. Hanzi Hunters shows shéi as the main reading and accepts shuí wherever the pronunciation is checked."
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "他是谁？",
-            "pinyin": "Tā shì shéi?",
-            "en": "Who is he?",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "谁是你的朋友？",
-            "pinyin": "Shéi shì nǐ de péngyou?",
-            "en": "Who is your friend?",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    },
-    "related": [
-      "朋友"
-    ]
-  },
-  "看-look": {
-    "title": "看 (kàn): to look / watch",
-    "summary": "看 has two readings with different meanings. kàn (fourth tone) is the common one: to look, watch or read. Do not mix it up with kān, which means to guard.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Same character, two readings",
-        "intro": "Which reading it is depends on the meaning. When a question is about 看, it always tells you which meaning it means.",
-        "items": [
-          {
-            "char": "看",
-            "pinyin": "kàn",
-            "meaning": "to look / to watch"
-          },
-          {
-            "char": "看",
-            "pinyin": "kān",
-            "meaning": "to guard / to look after"
-          }
-        ]
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "我看电视。",
-            "pinyin": "Wǒ kàn diànshì.",
-            "en": "I watch TV.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "你看，这是我的书。",
-            "pinyin": "Nǐ kàn, zhè shì wǒ de shū.",
-            "en": "Look, this is my book.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    },
-    "related": [
-      "看-guard"
-    ]
-  },
-  "看-guard": {
-    "title": "看 (kān): to guard",
-    "summary": "kān (first tone) means to guard or look after. It is much rarer than kàn. The character is the same, only the reading and meaning differ.",
-    "sections": [
-      {
-        "type": "compare",
-        "heading": "Same character, two readings",
-        "items": [
-          {
-            "char": "看",
-            "pinyin": "kān",
-            "meaning": "to guard / to look after"
-          },
-          {
-            "char": "看",
-            "pinyin": "kàn",
-            "meaning": "to look / to watch"
-          }
-        ]
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "他看门。",
-            "pinyin": "Tā kān mén.",
-            "en": "He guards the door.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "他在家看孩子。",
-            "pinyin": "Tā zài jiā kān háizi.",
-            "en": "He is at home looking after the kids.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
-            }
-          }
-        ]
-      }
-    ],
-    "source": [
-      {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    },
-    "related": [
-      "看-look"
-    ]
-  },
-  "吗": {
-    "title": "吗 (question particle)",
-    "summary": "吗 is not translated. Put it at the end of a statement to turn it into a yes/no question. It is always neutral tone.",
-    "sections": [
-      {
-        "type": "text",
-        "heading": "How it works",
-        "body": "你好 is a statement: hello. 你好吗？ asks: are you well? You do not change the word order, you just add 吗 at the end."
-      },
-      {
-        "type": "examples",
-        "heading": "In a sentence",
-        "items": [
-          {
-            "zh": "你好吗？",
-            "pinyin": "Nǐ hǎo ma?",
-            "en": "How are you?",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
             }
           },
           {
             "zh": "你是学生吗？",
             "pinyin": "Nǐ shì xuésheng ma?",
             "en": "Are you a student?",
+            "audio": false,
             "source": [
               {
-                "name": "ai-draft"
+                "name": "HH-editorial-2026"
               }
             ],
             "review": {
-              "status": "ai-draft"
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
             }
           }
         ]
@@ -1305,55 +595,2155 @@
     ],
     "source": [
       {
-        "name": "ai-draft"
+        "name": "CC-CEDICT",
+        "ref": "你 你 [ni3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
       }
     ],
     "review": {
       "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    },
-    "related": [
-      "的",
-      "了"
-    ]
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
   },
-  "的": {
-    "title": "的 (links a describing word to a noun)",
-    "summary": "的 has no single English word. It joins something that describes a noun to that noun: 我的书 is my book.",
+  "他": {
+    "title": "他 (tā)",
+    "summary": "Written 他 refers to he or him. It sounds exactly like 她 (she/her), so speech needs context.",
     "sections": [
       {
-        "type": "text",
-        "heading": "Notice the pattern",
-        "body": "The describing part comes first, then 的, then the noun: 我 + 的 + 书. It is neutral tone: short and light."
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "他",
+            "pinyin": "tā",
+            "meaning": "he / him"
+          },
+          {
+            "char": "她",
+            "pinyin": "tā",
+            "meaning": "she / her"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "他 他 [ta1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "她"
+    ]
+  },
+  "她": {
+    "title": "她 (tā)",
+    "summary": "Written 她 refers to she or her. It sounds exactly like 他 (he/him); the 女 component helps distinguish the writing.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "她",
+            "pinyin": "tā",
+            "meaning": "she / her"
+          },
+          {
+            "char": "他",
+            "pinyin": "tā",
+            "meaning": "he / him"
+          }
+        ]
       },
       {
         "type": "examples",
-        "heading": "In a sentence",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "她是我的朋友。",
+            "pinyin": "Tā shì wǒ de péngyou.",
+            "en": "She is my friend.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "她 她 [ta1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "他"
+    ]
+  },
+  "是": {
+    "title": "是 (shì)",
+    "summary": "Links a person or thing to an identity or category: 我是学生 means I am a student. It is not a general equivalent of English yes or the is before an adjective.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "她是我的朋友。",
+            "pinyin": "Tā shì wǒ de péngyou.",
+            "en": "She is my friend.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "你是学生吗？",
+            "pinyin": "Nǐ shì xuésheng ma?",
+            "en": "Are you a student?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "是 是 [shi4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "五": {
+    "title": "五 (wǔ)",
+    "summary": "Third tone. In ordinary speech a third tone is often low rather than a full dip and rise.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "今天是星期五。",
+            "pinyin": "Jīntiān shì xīngqīwǔ.",
+            "en": "Today is Friday.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "五 五 [wu3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "八": {
+    "title": "八 (bā)",
+    "summary": "First tone. 八个人 means eight people.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "现在是八点。",
+            "pinyin": "Xiànzài shì bā diǎn.",
+            "en": "It is eight o’clock now.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "八 八 [ba1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "十": {
+    "title": "十 (shí)",
+    "summary": "十一 means eleven and 二十 means twenty. 十 and 石 (stone) are pronounced alike.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "十",
+            "pinyin": "shí",
+            "meaning": "ten"
+          },
+          {
+            "char": "石",
+            "pinyin": "shí",
+            "meaning": "stone"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "十 十 [shi2]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "石"
+    ]
+  },
+  "上": {
+    "title": "上 (shàng)",
+    "summary": "Can mean above or up. It also has other uses in phrases such as 上学, go to school.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "上",
+            "pinyin": "shàng",
+            "meaning": "above / up"
+          },
+          {
+            "char": "下",
+            "pinyin": "xià",
+            "meaning": "below / down"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "上 上 [shang4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "下"
+    ]
+  },
+  "下": {
+    "title": "下 (xià)",
+    "summary": "Can mean below or down. It also has other uses, so the whole phrase determines the meaning.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "下",
+            "pinyin": "xià",
+            "meaning": "below / down"
+          },
+          {
+            "char": "上",
+            "pinyin": "shàng",
+            "meaning": "above / up"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "下 下 [xia4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "上"
+    ]
+  },
+  "目": {
+    "title": "目 (mù)",
+    "summary": "A character meaning eye, mostly used in compounds. The ordinary conversational word for eye is 眼睛 (yǎnjing). 目 and 木 sound alike.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "目",
+            "pinyin": "mù",
+            "meaning": "eye"
+          },
+          {
+            "char": "木",
+            "pinyin": "mù",
+            "meaning": "wood / tree"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "目 目 [mu4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "木"
+    ]
+  },
+  "石": {
+    "title": "石 (shí)",
+    "summary": "A character meaning stone, commonly used in compounds. 石头 (shítou) is an everyday word for a stone. 石 also has another reading in a traditional unit of measure.",
+    "sections": [
+      {
+        "type": "compare",
+        "heading": "Compare the written forms",
+        "items": [
+          {
+            "char": "石",
+            "pinyin": "shí",
+            "meaning": "stone"
+          },
+          {
+            "char": "十",
+            "pinyin": "shí",
+            "meaning": "ten"
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "石 石 [Shi2]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    },
+    "related": [
+      "十"
+    ]
+  },
+  "家": {
+    "title": "家 (jiā)",
+    "summary": "Can mean home or family. 回家 means return home; 家 does not only refer to the physical building.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我妈妈在家。",
+            "pinyin": "Wǒ māma zài jiā.",
+            "en": "My mom is at home.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "你什么时候回家？",
+            "pinyin": "Nǐ shénme shíhou huí jiā?",
+            "en": "When are you going home?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "家 家 [jia1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "谢谢": {
+    "title": "谢谢 (xièxie)",
+    "summary": "Use to thank someone. The second syllable is neutral and usually shorter and lighter than the first.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "谢谢你！",
+            "pinyin": "Xièxie nǐ!",
+            "en": "Thank you!",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "謝謝 谢谢 [xie4 xie5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "朋友": {
+    "title": "朋友 (péngyou)",
+    "summary": "An everyday word for friend. The second syllable, you, is neutral: péngyou.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "她是我的朋友。",
+            "pinyin": "Tā shì wǒ de péngyou.",
+            "en": "She is my friend.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我有三个朋友。",
+            "pinyin": "Wǒ yǒu sān ge péngyou.",
+            "en": "I have three friends.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "朋友 朋友 [peng2 you5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "今天": {
+    "title": "今天 (jīntiān)",
+    "summary": "Both syllables have first tone. 今天 is today, 昨天 yesterday, and 明天 tomorrow.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "今天是星期五。",
+            "pinyin": "Jīntiān shì xīngqīwǔ.",
+            "en": "Today is Friday.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我今天很忙。",
+            "pinyin": "Wǒ jīntiān hěn máng.",
+            "en": "I am busy today.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "今天 今天 [jin1 tian1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "学校": {
+    "title": "学校 (xuéxiào)",
+    "summary": "A place of education. The tones are second then fourth.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我明天去学校。",
+            "pinyin": "Wǒ míngtiān qù xuéxiào.",
+            "en": "I am going to school tomorrow.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我的学校很大。",
+            "pinyin": "Wǒ de xuéxiào hěn dà.",
+            "en": "My school is big.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "學校 学校 [xue2 xiao4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "喜欢": {
+    "title": "喜欢 (xǐhuan)",
+    "summary": "Can be followed by a noun or an activity: 喜欢茶 means like tea; 喜欢看书 means like reading. The second syllable, huan, is neutral.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我喜欢喝茶。",
+            "pinyin": "Wǒ xǐhuan hē chá.",
+            "en": "I like drinking tea.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我喜欢看书。",
+            "pinyin": "Wǒ xǐhuan kàn shū.",
+            "en": "I like reading.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "喜歡 喜欢 [xi3 huan5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "妈妈": {
+    "title": "妈妈 (māma)",
+    "summary": "An everyday word for mother. The first syllable has first tone and the second is neutral.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我妈妈在家。",
+            "pinyin": "Wǒ māma zài jiā.",
+            "en": "My mom is at home.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "媽媽 妈妈 [ma1 ma5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "看-look": {
+    "title": "看 (kàn)",
+    "summary": "Use kàn for looking, watching, or reading. 看书 means read a book. 看 also has the reading kān for guarding or looking after.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我喜欢看书。",
+            "pinyin": "Wǒ xǐhuan kàn shū.",
+            "en": "I like reading.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "看 看 [kan4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "吗": {
+    "title": "吗 (ma)",
+    "summary": "At the end of a statement, 吗 makes a yes/no question. This particle is neutral tone; do not add it automatically to questions already containing 什么 or 谁.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "你是学生吗？",
+            "pinyin": "Nǐ shì xuésheng ma?",
+            "en": "Are you a student?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "嗎 吗 [ma5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "的": {
+    "title": "的 (de)",
+    "summary": "Links an owner or description to a noun: 我的书 means my book. This grammatical use is neutral de; the character has other readings in other words.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "她是我的朋友。",
+            "pinyin": "Tā shì wǒ de péngyou.",
+            "en": "She is my friend.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我的学校很大。",
+            "pinyin": "Wǒ de xuéxiào hěn dà.",
+            "en": "My school is big.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "的 的 [de5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "很": {
+    "title": "很 (hěn)",
+    "summary": "Often comes before an adjective. In an ordinary description it may simply make the sentence natural, without strongly emphasizing very.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我的学校很大。",
+            "pinyin": "Wǒ de xuéxiào hěn dà.",
+            "en": "My school is big.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我今天很忙。",
+            "pinyin": "Wǒ jīntiān hěn máng.",
+            "en": "I am busy today.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "很 很 [hen3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "叫": {
+    "title": "叫 (jiào)",
+    "summary": "Use 我叫... to give your name. 叫 also means to call or shout in other contexts.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "你叫什么名字？",
+            "pinyin": "Nǐ jiào shénme míngzi?",
+            "en": "What is your name?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "叫 叫 [jiao4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "名字": {
+    "title": "名字 (míngzi)",
+    "summary": "Means a person's or thing's name. The second syllable, zi, is neutral.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "你叫什么名字？",
+            "pinyin": "Nǐ jiào shénme míngzi?",
+            "en": "What is your name?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "名字 名字 [ming2 zi5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "什么": {
+    "title": "什么 (shénme)",
+    "summary": "Use to ask what something is or what someone does or wants. The second syllable, me, is neutral. 什么 stays where the answer would go in the sentence.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "你叫什么名字？",
+            "pinyin": "Nǐ jiào shénme míngzi?",
+            "en": "What is your name?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "你什么时候回家？",
+            "pinyin": "Nǐ shénme shíhou huí jiā?",
+            "en": "When are you going home?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "什麼 什么 [shen2 me5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "个": {
+    "title": "个 (gè)",
+    "summary": "A common counting word between a number and a noun: 三个人 means three people. Its dictionary tone is fourth; it is often neutral in phrases such as 一个 (yí ge).",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我有三个朋友。",
+            "pinyin": "Wǒ yǒu sān ge péngyou.",
+            "en": "I have three friends.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我有两个孩子。",
+            "pinyin": "Wǒ yǒu liǎng ge háizi.",
+            "en": "I have two children.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "個 个 [ge4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "两": {
+    "title": "两 (liǎng)",
+    "summary": "Normally used before classifiers: 两个人 means two people. Use 二 for counting one, two, three and for most digit-by-digit numbers.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我有两个孩子。",
+            "pinyin": "Wǒ yǒu liǎng ge háizi.",
+            "en": "I have two children.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "兩 两 [liang3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "有": {
+    "title": "有 (yǒu)",
+    "summary": "Expresses possession or existence. 我有书 means I have a book or books. Its usual negative is 没有, not 不有.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我有三个朋友。",
+            "pinyin": "Wǒ yǒu sān ge péngyou.",
+            "en": "I have three friends.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我有两个孩子。",
+            "pinyin": "Wǒ yǒu liǎng ge háizi.",
+            "en": "I have two children.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "有 有 [you3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "哥哥": {
+    "title": "哥哥 (gēge)",
+    "summary": "Refers to an older brother. Chinese distinguishes older and younger siblings; the second syllable is neutral.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我有一个哥哥。",
+            "pinyin": "Wǒ yǒu yī ge gēge.",
+            "en": "I have an older brother.",
+            "audio": false,
+            "note": "Spoken: yí ge. 一 changes to yí before 个.",
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "哥哥 哥哥 [ge1 ge5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "孩子": {
+    "title": "孩子 (háizi)",
+    "summary": "The usual everyday word for a child or children. The second syllable is neutral; 子 alone is not the ordinary conversational substitute.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我有两个孩子。",
+            "pinyin": "Wǒ yǒu liǎng ge háizi.",
+            "en": "I have two children.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "孩子 孩子 [hai2 zi5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "想": {
+    "title": "想 (xiǎng)",
+    "summary": "Before an action, 想 can express wanting to do it. 想喝茶 means want to drink tea. It can also mean think or miss someone.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我想喝水。",
+            "pinyin": "Wǒ xiǎng hē shuǐ.",
+            "en": "I want to drink water.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "想 想 [xiang3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "喝": {
+    "title": "喝 (hē)",
+    "summary": "Use with drinks: 喝水 means drink water. The reading taught here is hē; 喝 has another reading in other uses.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我想喝水。",
+            "pinyin": "Wǒ xiǎng hē shuǐ.",
+            "en": "I want to drink water.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "我喜欢喝茶。",
+            "pinyin": "Wǒ xǐhuan hē chá.",
+            "en": "I like drinking tea.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "喝 喝 [he1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "茶": {
+    "title": "茶 (chá)",
+    "summary": "喝茶 means drink tea. 茶 has a rising second tone.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我喜欢喝茶。",
+            "pinyin": "Wǒ xǐhuan hē chá.",
+            "en": "I like drinking tea.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "茶 茶 [cha2]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "去": {
+    "title": "去 (qù)",
+    "summary": "Use before a destination: 去学校 means go to school. Compare 来, come.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我明天去学校。",
+            "pinyin": "Wǒ míngtiān qù xuéxiào.",
+            "en": "I am going to school tomorrow.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "去 去 [qu4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "回": {
+    "title": "回 (huí)",
+    "summary": "回家 means return home. 回 can also mean reply in other contexts.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "你什么时候回家？",
+            "pinyin": "Nǐ shénme shíhou huí jiā?",
+            "en": "When are you going home?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "回 回 [Hui2]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "在": {
+    "title": "在 (zài)",
+    "summary": "Use to give a location: 我在家 means I am at home. Before an action, 在 can also mark that it is in progress.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我妈妈在家。",
+            "pinyin": "Wǒ māma zài jiā.",
+            "en": "My mom is at home.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "在 在 [zai4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "明天": {
+    "title": "明天 (míngtiān)",
+    "summary": "The day after today. 明 has second tone and 天 has first tone.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我明天去学校。",
+            "pinyin": "Wǒ míngtiān qù xuéxiào.",
+            "en": "I am going to school tomorrow.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "明天 明天 [ming2 tian1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "现在": {
+    "title": "现在 (xiànzài)",
+    "summary": "Refers to the present time. Both syllables have fourth tone.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "现在是八点。",
+            "pinyin": "Xiànzài shì bā diǎn.",
+            "en": "It is eight o’clock now.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "現在 现在 [xian4 zai4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "时候": {
+    "title": "时候 (shíhou)",
+    "summary": "Used in 什么时候 (shénme shíhou), meaning when. It is not the word for an hour; hou is neutral.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "你什么时候回家？",
+            "pinyin": "Nǐ shénme shíhou huí jiā?",
+            "en": "When are you going home?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "時候 时候 [shi2 hou5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "星期": {
+    "title": "星期 (xīngqī)",
+    "summary": "星期一 through 星期六 name Monday through Saturday. Sunday is 星期日 or 星期天.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "今天是星期五。",
+            "pinyin": "Jīntiān shì xīngqīwǔ.",
+            "en": "Today is Friday.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "星期 星期 [xing1 qi1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "点": {
+    "title": "点 (diǎn)",
+    "summary": "After a number, 点 gives the hour: 三点 means three o'clock. It has several other meanings, including point or dot.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "现在是八点。",
+            "pinyin": "Xiànzài shì bā diǎn.",
+            "en": "It is eight o’clock now.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "點 点 [dian3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "忙": {
+    "title": "忙 (máng)",
+    "summary": "我很忙 means I am busy. 很 can make a simple description natural without strongly emphasizing very.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我今天很忙。",
+            "pinyin": "Wǒ jīntiān hěn máng.",
+            "en": "I am busy today.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "忙 忙 [mang2]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "学生": {
+    "title": "学生 (xuésheng)",
+    "summary": "Student. CC-CEDICT records xuésheng with neutral sheng; the official 2025 HSK syllabus gives xuéshēng. Both are accepted here. Do not confuse 学生 with 老师 (teacher).",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "你是学生吗？",
+            "pinyin": "Nǐ shì xuésheng ma?",
+            "en": "Are you a student?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "學生 学生 [xue2 sheng5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      },
+      {
+        "name": "HSK-2025",
+        "ref": "Vocabulary entry 248, 学生 xuéshēng; printed page 83 (PDF page 86)",
+        "retrieved": "2026-11-01",
+        "note": "Full first tone on the second syllable is an accepted syllabus pronunciation."
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "学习": {
+    "title": "学习 (xuéxí)",
+    "summary": "Used for learning or studying. 学习汉语 means study Chinese.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我学习汉语。",
+            "pinyin": "Wǒ xuéxí Hànyǔ.",
+            "en": "I study Chinese.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "學習 学习 [xue2 xi2]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "汉语": {
+    "title": "汉语 (hànyǔ)",
+    "summary": "Refers to the Chinese language. In this course the spoken variety taught is standard Mandarin; 中文 is another common term for Chinese.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我学习汉语。",
+            "pinyin": "Wǒ xuéxí Hànyǔ.",
+            "en": "I study Chinese.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "漢語 汉语 [Han4 yu3]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "书": {
+    "title": "书 (shū)",
+    "summary": "An everyday word for book. 看书 means read a book; use 本 as the classifier when counting books.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "我喜欢看书。",
+            "pinyin": "Wǒ xǐhuan kàn shū.",
+            "en": "I like reading.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          },
+          {
+            "zh": "这是我的书。",
+            "pinyin": "Zhè shì wǒ de shū.",
+            "en": "This is my book.",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "書 书 [Shu1]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "这": {
+    "title": "这 (zhè)",
+    "summary": "Points to something nearby or being discussed. Compare 那, that. Before classifiers you may also hear zhèi.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
         "items": [
           {
             "zh": "这是我的书。",
             "pinyin": "Zhè shì wǒ de shū.",
             "en": "This is my book.",
+            "audio": false,
             "source": [
               {
-                "name": "ai-draft"
+                "name": "HH-editorial-2026"
               }
             ],
             "review": {
-              "status": "ai-draft"
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
             }
           },
           {
-            "zh": "他的朋友很好。",
-            "pinyin": "Tā de péngyou hěn hǎo.",
-            "en": "His friend is very nice.",
+            "zh": "这本书多少钱？",
+            "pinyin": "Zhè běn shū duōshao qián?",
+            "en": "How much is this book?",
+            "audio": false,
             "source": [
               {
-                "name": "ai-draft"
+                "name": "HH-editorial-2026"
               }
             ],
             "review": {
-              "status": "ai-draft"
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
             }
           }
         ]
@@ -1361,55 +2751,41 @@
     ],
     "source": [
       {
-        "name": "ai-draft"
-      }
-    ],
-    "review": {
-      "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    },
-    "related": [
-      "吗",
-      "了"
-    ]
-  },
-  "了": {
-    "title": "了 (finished action or new situation)",
-    "summary": "了 has no single English word. After a verb it often shows that the action is done; at the end of a sentence it can show a change. Here it is read le (neutral tone).",
-    "sections": [
-      {
-        "type": "text",
-        "heading": "Another reading",
-        "body": "The same character is also read liǎo in other words. In this entry it is always the particle le."
+        "name": "CC-CEDICT",
+        "ref": "這 这 [zhe4]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
       },
       {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "钱": {
+    "title": "钱 (qián)",
+    "summary": "An everyday word for money. 多少钱 means how much money or how much does it cost.",
+    "sections": [
+      {
         "type": "examples",
-        "heading": "In a sentence",
+        "heading": "Example",
         "items": [
           {
-            "zh": "我看了电视。",
-            "pinyin": "Wǒ kàn le diànshì.",
-            "en": "I watched TV.",
+            "zh": "这本书多少钱？",
+            "pinyin": "Zhè běn shū duōshao qián?",
+            "en": "How much is this book?",
+            "audio": false,
             "source": [
               {
-                "name": "ai-draft"
+                "name": "HH-editorial-2026"
               }
             ],
             "review": {
-              "status": "ai-draft"
-            }
-          },
-          {
-            "zh": "他来了。",
-            "pinyin": "Tā lái le.",
-            "en": "He has come. / He is here now.",
-            "source": [
-              {
-                "name": "ai-draft"
-              }
-            ],
-            "review": {
-              "status": "ai-draft"
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
             }
           }
         ]
@@ -1417,16 +2793,60 @@
     ],
     "source": [
       {
-        "name": "ai-draft"
+        "name": "CC-CEDICT",
+        "ref": "錢 钱 [Qian2]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
       }
     ],
     "review": {
       "status": "ai-draft",
-      "note": "Drafted by the project's AI assistant; not reviewed by a person."
-    },
-    "related": [
-      "吗",
-      "的"
-    ]
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
+  },
+  "多少": {
+    "title": "多少 (duōshao)",
+    "summary": "Asks about an amount or number. 多少钱 asks the price. The second syllable, shao, is neutral in this question word as taught here.",
+    "sections": [
+      {
+        "type": "examples",
+        "heading": "Example",
+        "items": [
+          {
+            "zh": "这本书多少钱？",
+            "pinyin": "Zhè běn shū duōshao qián?",
+            "en": "How much is this book?",
+            "audio": false,
+            "source": [
+              {
+                "name": "HH-editorial-2026"
+              }
+            ],
+            "review": {
+              "status": "ai-draft",
+              "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+            }
+          }
+        ]
+      }
+    ],
+    "source": [
+      {
+        "name": "CC-CEDICT",
+        "ref": "多少 多少 [duo1 shao5]",
+        "retrieved": "2026-11-01",
+        "note": "Reading and selected sense checked; shortened English gloss and usage note are editorial adaptations."
+      },
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Reading and selected dictionary sense checked against the cited CC-CEDICT snapshot; teaching note edited by AI. Not reviewed by a human Mandarin teacher."
+    }
   }
 }

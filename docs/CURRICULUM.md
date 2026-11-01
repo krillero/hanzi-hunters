@@ -102,7 +102,7 @@ The sentence is only **assessed** once every listed entry is ready (the same `en
 see §3; membership of a completed lesson does not count) and every listed lesson is completed (lessons of any curriculum). Otherwise another eligible question kind is asked. List the words and constructions the
 sentence relies on yourself; the game never derives them from the characters. Sentences without these fields are always eligible
 (as before). Example sentences in `explanations.json` are **optional reading**, never assessed: they may contain unfamiliar words
-as long as pinyin and translation are given. The introduction card labels them "Examples (not tested)".
+as long as pinyin and translation are given. The introduction card labels them "Examples" (they are never turned into questions).
 
 ---
 
@@ -119,8 +119,9 @@ as long as pinyin and translation are given. The introduction card labels them "
 5. Entries already introduced are skipped, so an entry moved to another lesson is never introduced twice, and an entry added to a
    completed lesson is still introduced. Entries outside the curriculum are never introduced.
 
-Introductions are shown on the existing introduction card between fights. The card shows a simple line such as
-**"Greetings · Lesson 1 · 2 of 5 introduced"**; camp shows the current lesson the same way. No ids or source names appear in gameplay.
+Introductions are shown on the existing introduction card between fights. The card's header shows a short lesson label under
+"New word · 2 of 3", such as **"Lesson 1 · Greetings"** (lesson numbers count across the whole course, then the unit title);
+camp adds progress: **"Lesson 1 · Greetings · 2 of 5 introduced"**. No ids or source names appear in gameplay.
 
 **Review / practice** (`selectReview`): a weighted random pick among entries the learner has **already been introduced to**
 (also entries known from another curriculum or an older save). It never returns an unseen entry. Weak entries are asked more

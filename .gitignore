@@ -1,3 +1,7 @@
 node_modules/
 dist/
 *.tsbuildinfo
+
+# CC-CEDICT snapshot for vocabulary research (fetch with docs/vocabulary-toolkit/tools/fetch-cedict.sh)
+docs/vocabulary-toolkit/reference/cedict.gz
+docs/vocabulary-toolkit/reference/cedict.gz.part

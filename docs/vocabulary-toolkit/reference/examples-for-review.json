@@ -1,0 +1,322 @@
+[
+  {
+    "zh": "我的学校很大。",
+    "pinyin": "Wǒ de xuéxiào hěn dà.",
+    "en": "My school is big.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我有一个哥哥。",
+    "pinyin": "Wǒ yǒu yī ge gēge.",
+    "en": "I have an older brother.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我有三个朋友。",
+    "pinyin": "Wǒ yǒu sān ge péngyou.",
+    "en": "I have three friends.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我想喝水。",
+    "pinyin": "Wǒ xiǎng hē shuǐ.",
+    "en": "I want to drink water.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "她是我的朋友。",
+    "pinyin": "Tā shì wǒ de péngyou.",
+    "en": "She is my friend.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "谢谢你！",
+    "pinyin": "Xièxie nǐ!",
+    "en": "Thank you!",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "你是学生吗？",
+    "pinyin": "Nǐ shì xuésheng ma?",
+    "en": "Are you a student?",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "今天是星期五。",
+    "pinyin": "Jīntiān shì xīngqīwǔ.",
+    "en": "Today is Friday.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "现在是八点。",
+    "pinyin": "Xiànzài shì bā diǎn.",
+    "en": "It is eight o’clock now.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我妈妈在家。",
+    "pinyin": "Wǒ māma zài jiā.",
+    "en": "My mom is at home.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "你什么时候回家？",
+    "pinyin": "Nǐ shénme shíhou huí jiā?",
+    "en": "When are you going home?",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我今天很忙。",
+    "pinyin": "Wǒ jīntiān hěn máng.",
+    "en": "I am busy today.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我明天去学校。",
+    "pinyin": "Wǒ míngtiān qù xuéxiào.",
+    "en": "I am going to school tomorrow.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我喜欢喝茶。",
+    "pinyin": "Wǒ xǐhuan hē chá.",
+    "en": "I like drinking tea.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我喜欢看书。",
+    "pinyin": "Wǒ xǐhuan kàn shū.",
+    "en": "I like reading.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "你叫什么名字？",
+    "pinyin": "Nǐ jiào shénme míngzi?",
+    "en": "What is your name?",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我有两个孩子。",
+    "pinyin": "Wǒ yǒu liǎng ge háizi.",
+    "en": "I have two children.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "我学习汉语。",
+    "pinyin": "Wǒ xuéxí Hànyǔ.",
+    "en": "I study Chinese.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "这是我的书。",
+    "pinyin": "Zhè shì wǒ de shū.",
+    "en": "This is my book.",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  },
+  {
+    "zh": "这本书多少钱？",
+    "pinyin": "Zhè běn shū duōshao qián?",
+    "en": "How much is this book?",
+    "audio": false,
+    "note": "Optional example; unfamiliar words may appear. Pinyin uses dictionary tones, including yī in 一个; the spoken form there is yí ge.",
+    "source": [
+      {
+        "name": "HH-editorial-2026"
+      }
+    ],
+    "review": {
+      "status": "ai-draft",
+      "note": "Original short teaching example checked by AI for consistency; not copied from a corpus and not human-reviewed. Pinyin uses dictionary tones; connected-speech changes are explained separately."
+    }
+  }
+]

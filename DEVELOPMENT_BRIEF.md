@@ -123,7 +123,7 @@ A polished, cohesive 16-bit/pixel-art fantasy RPG: deep navy/charcoal dungeon ba
 - Portrait layout should be the primary experience.
 - Core answer options must be comfortably tappable (target roughly 44 CSS px minimum height where practical).
 - Keep Hanzi prominent and pinyin/meaning readable; do not shrink Chinese text to fit a cramped panel.
-- Avoid horizontal scrolling at 320–390 CSS px widths.
+- Avoid horizontal scrolling at 360–430 CSS px widths (360 px is the narrowest supported width).
 - Respect mobile browser safe areas and viewport changes.
 - Ensure scrollable drawers/panels remain reachable when the on-screen keyboard or browser chrome changes viewport height.
 - Use semantic buttons, visible focus states and accessible labels.
@@ -217,7 +217,7 @@ Run these after baseline build and after relevant changes:
 10. Corrupt/remove the local save and reload; verify safe fallback instead of a crash.
 11. Reach defeat and restart; verify intended permanent progression persists and transient battle state resets.
 12. Test speech playback on supported browsers and confirm graceful failure when unavailable.
-13. Test widths around 320, 375, 390 and 430 CSS px; inspect horizontal overflow and tap targets.
+13. Test widths around 360, 375, 390 and 430 CSS px (nothing narrower than 360); inspect horizontal overflow and tap targets.
 14. Test desktop layout and browser console.
 15. Run `npm run build` after code changes.
 

@@ -13,11 +13,11 @@
     "usage": "Guide for dictionary meanings and readings. Dictionary glosses are not automatically good answer buttons or classroom-ready: check sense, register and natural English before use."
   },
   "HSK": {
-    "title": "Official HSK materials (name the edition and level in the ref, e.g. \"HSK 3.0 (2021) level 1\")",
+    "title": "Official HSK materials (specify the exact syllabus edition)",
     "url": "https://www.chinesetest.cn",
     "license": "Not redistributed here",
     "attribution": "Used only as a guide to which beginner words to teach. Word lists are not copied.",
-    "usage": "Always state the edition (HSK 2.0 and 3.0 differ)."
+    "usage": "Distinguish the 2021 proficiency standards from the HSK syllabus published in 2025; do not infer levels."
   },
   "Tatoeba": {
     "title": "Tatoeba, a collection of sentences and translations",
@@ -25,5 +25,18 @@
     "license": "CC BY 2.0 FR (some sentences CC0: check each sentence)",
     "attribution": "Sentence author and Tatoeba sentence number, e.g. \"sentence 1234567 by <author>\".",
     "usage": "Community sentences: each one must be reviewed individually for correctness, naturalness and level before use."
+  },
+  "HH-editorial-2026": {
+    "title": "Hanzi Hunters beginner-100 editorial draft, 2026-11-01",
+    "license": "CC BY-SA 4.0",
+    "attribution": "AI-assisted editorial adaptation prepared for Hanzi Hunters. Dictionary senses and readings checked against CC-CEDICT. Original examples and sequence are not human-reviewed.",
+    "usage": "Do not describe the material as teacher-approved. Retain source references and identify modifications."
+  },
+  "HSK-2025": {
+    "title": "Official HSK syllabus, published November 2025, effective July 2026",
+    "url": "https://hsk.cn-bj.ufileos.com/3.0/%E6%96%B0%E7%89%88HSK%E8%80%83%E8%AF%95%E5%A4%A7%E7%BA%B21219.pdf",
+    "license": "Official reference; full syllabus not redistributed",
+    "attribution": "Center for Language Education and Cooperation; official syllabus linked by Chinese Testing International.",
+    "usage": "Individual factual level/page references only. Distinct from the 2021 proficiency standards and older HSK editions."
   }
 }

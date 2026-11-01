@@ -1,5 +1,31 @@
 # Changelog / test log
 
+## 2026-11-01 — Details popup: no repeated text or disclaimers; 360 px minimum width (branch ccr-2aecd5ae-3v8bz2)
+
+- **Popup header** shows hanzi, pinyin and meaning once (was "谢谢 (xièxie)" plus "xièxie · thank you"). Unreviewed entries get a small **draft** tag next to the meaning instead of the "About this entry" block (kind, review status, sources, licenses), the per-example "AI draft · not reviewed by a person · Source: …" line and the text-to-speech disclaimer under every example. Sources, licenses and review counts stay in the data and in Settings → Credits & content review. "Dictionary pinyin: …" is gone; the neutral-tone line only appears when the note does not already explain it.
+- **Content:** every explanation repeated its `summary` (= the entry's note) in a "Meaning in this course" section; removed. 66 explanations had nothing else and were deleted (the Wordbook still opens the automatic popup). Four "Dictionary spelling and speech" sections repeated the automatic `speech` notes; removed. The boilerplate example note "Optional example; unfamiliar words may appear…" is gone (the 一个 examples keep "Spoken: yí ge"); "Optional example" headings are now "Example". Review status is still recorded in each `review` field. 127 entries, 60 explanations.
+- **360 CSS px is the narrowest supported width** (AGENTS.md rule 6, DEVELOPMENT_BRIEF, CONTENT_GUIDE). Removed the styles that only targeted narrower screens (`max-width:340px`, `max-width:350px`), `body` min-width 320 → 360, and `tools/layout-check.mjs` no longer tests 320×568.
+- CONTENT_GUIDE: popup contents updated; new rule "do not repeat what is already shown" (no sections restating the summary, no disclaimer notes).
+- `npm run validate:content` 0 errors / 7 warnings, `npm test` 155 pass, `npm run build` pass, `node tools/layout-check.mjs` ok at 411/390/360 px; popup checked at 360 and 412 px.
+
+## 2026-11-01 — New-word card: less clutter (branch ccr-2aecd5ae-3v8bz2)
+
+- The large monospace line "Polite everyday expressions · Lesson 1 · 2 of 5 introduced" above the word is gone. The header now reads "New word · 2 of 3" with a small "Lesson 1 · Polite everyday expressions" under it (it replaces the "Word" label; the heading says "New character" / "New grammar word" for those kinds). The second "x of 5 introduced" counter was dropped from the card; camp still shows lesson progress.
+- **Lesson numbers count across the whole course.** They were counted within each unit, so with one lesson per unit (`beginner-mandarin-100`) every lesson was "Lesson 1". `LessonRef.number` (1-based, course-wide), `lessonLabel()`; camp line is now "Lesson 5 · Having, negating, and belonging · 2 of 5 introduced".
+- "Examples (not tested)" is now "Examples". It was fixed UI text meaning "not turned into questions", not a review flag, and read as "unchecked".
+- `npm test` 155 pass, `npm run build` pass; card checked in Chromium at 412 px and 320 px (no horizontal scroll, no console errors).
+
+## 2026-11-01 — Vocabulary toolkit (branch ccr-2aecd5ae-3v8bz2)
+
+- **`docs/vocabulary-toolkit/`:** workflow, sources and evidence used to pick the first 100 words, so the next batch can start from it (`README.md`, `NEXT-BATCH-PROMPT.md` for an in-repo agent or an outside assistant). The 4 MB CC-CEDICT snapshot is not committed: `tools/fetch-cedict.sh` downloads a fresh one (git-ignored). The nested first-100 ZIP is unpacked to its reports only (`first-100/`).
+- **`npm run vocab:candidates`** (`tools/vocab-candidates.ts`, replaces the toolkit's Python checker): for each candidate, existing entries with that written form, whether they are in the active curriculum or only supplemental, HSK level(s) and CC-CEDICT readings.
+- **Errors found and fixed:** `hsk-map.json` still listed 好 as level 2 (printed `1(2)(4)`, level 1). 像 and 头 have levels that do not fit their entry numbers: marked unverified (PDF not reachable here). Outdated toolkit statements (build failing, readiness bug, 149 tests) are corrected in the README. 62 example notes claimed "including yī in 一个" on sentences without 一; now only the two 一个 sentences say it.
+- `npm run validate:content` 0 errors / 23 warnings, `npm test` 155 pass, `npm run build` pass.
+
+## 2026-11-01 — Content: first 100 everyday words (branch ccr-2aecd5ae-3v8bz2)
+
+- New active curriculum `beginner-mandarin-100`: 100 entries in 20 lessons (36 retained + 64 new entries); `starter-compat` kept for saved lesson ids; all 63 original ids kept (127 entries). Tightened meanings and notes, per-entry question allow-lists, audio off for dictionary polyphones, sentence-question prerequisites, sources `HH-editorial-2026` and `HSK-2025`. All `ai-draft`, needs teacher review.
+
 ## 2026-10-31 — Fix: lesson completion no longer grants entry readiness (branch ccr-8843666c-wh7qyo)
 
 - **Bug:** `entrySatisfied()` treated any entry of a completed lesson as a satisfied prerequisite, so a word added to that lesson by a curriculum update (never seen) unlocked sentence questions and introductions that require it.
