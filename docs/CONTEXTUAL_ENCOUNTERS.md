@@ -175,6 +175,45 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   20-seed comparisons in its section, not by these medians. Use the 20-seed
   comparisons above, not these 5-seed medians, to judge a trial.
 
+## Repeat protection
+Saved.recentEvents keeps the last 12 encounters and boss trials offered
+("scene:<id>", "trial:<id>", newest first; src/game/recent.ts). Offers skip
+anything in it while something else is available, and fall back to the full
+pool only when everything is recent. An offered scene counts even if skipped.
+
+## Generated trials
+src/game/trialgen.ts builds Golem and Scribe trials from the words the player has
+met, so they rarely repeat. Authored and generated trials are drawn half and
+half for those bosses (when both exist), then recent ones are skipped. A
+generated trial is stored whole in Run.trial.data (so a reload shows the same
+one) and re-validated on load; ids start with "gen-" (reserved: trials.json
+may not use it). Every generated trial passes the same validator as authored
+ones, and tests generate every trial from the whole course with several seeds
+and check the rules below.
+
+- Golem tone trials: any known word (not particles) or any example sentence
+  from explanations.json whose characters are all known (20 sentences today).
+  Two wrong options, each changing ONE syllable's tone mark: never a written
+  third tone into a second tone (sandhi), never the syllable of 一 or 不, never
+  a toneless syllable, never into an accepted variant, a connected-speech
+  reading, or the reading of another entry written the same way (看 kàn/kān).
+  The note names the tones of the changed syllables.
+- Scribe torn notes: one character of a known multi-character word is blanked
+  (never a character that appears twice, like 谢谢). Wrong options are known
+  single-character words, same-sound or look-alike first; a wrong option may
+  not turn the word into another real word (这里 + 那 would be 那里). The
+  English meaning is shown as for authored notes. Sentences are not used:
+  a wrong character can silently make another valid sentence (很大 → 很好).
+- Coverage (default course): after 5 words about 6 tone trials, after 40 words
+  40 tone trials and 9 notes, after 100 words 115 tone trials and 33 notes.
+- The Wraith and Trickster trials stay authored (replies and true statements
+  need a person). Planned: a tagged reply bank and picture/measure-word fields
+  in words.json for templated scenes and statements.
+- Balance (20 seeds, before → after): wins 0.60 4.1% → 4.9%, 0.75 58.8% →
+  58.6%, 0.85 97.4% → 97.0%; hearts lost/run 10.25 → 10.32, 10.33 → 10.32,
+  3.33 → 3.03; trials per run about the same (the authored pool already
+  covered most fights): the change is variety, not frequency.
+
 ## Preview link
 `/?encounter=<scene id>[&stage=0|1|2]` opens a scene on its own, without a run or the
 prerequisite words. It never changes the save; Close preview removes the parameter.

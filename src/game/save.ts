@@ -1,6 +1,7 @@
 // Save format v1 under SAVE_KEY (restarted with expeditions). Saves from before (other keys) are deleted on start and never read. Never throws.
 import { cleanEncounter, cleanHistory } from './encounters.ts'
 import { cleanTrial } from './trials.ts'
+import { cleanRecent } from './recent.ts'
 import { sanitizeHabit } from './habit.ts'
 import { CURRICULA, ENEMIES, GEAR, WORDS, type GearSlot, type Word } from '../data.ts'
 import type { Curriculum } from '../content/types.ts'
@@ -163,6 +164,7 @@ export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Cur
     version: SAVE_VERSION, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
     peak: peaks.peak, legacyPeak: peaks.legacy,
     encounterHistory: cleanHistory(r.encounterHistory),
+    recentEvents: cleanRecent(r.recentEvents),
     practiced: sanitizePracticed(r.practiced, words),
     courses: sanitizeCourses(r.courses, migrated.mastery, curricula, words, peaks.peak)
   }

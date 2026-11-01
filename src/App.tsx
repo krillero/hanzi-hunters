@@ -3,7 +3,8 @@ import Phaser from 'phaser'
 import { PixelScene, type EnemySprite } from './game/PixelScene'
 import EncounterScreen from './EncounterScreen'
 import TrialScreen from './TrialScreen'
-import { closeTrial, offerTrial, optionKeys, resolveTrial, trialById, type TrialState } from './game/trials'
+import { noteRecent } from './game/recent'
+import { closeTrial, offerTrial, optionKeys, resolveTrial, trialById, trialFor, trialKey, type TrialState } from './game/trials'
 import { offer, complete, localDate, previewEncounter, type EncounterState } from './game/encounters'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
@@ -425,8 +426,10 @@ export default function App() {
     // The protected first practice is used up by the first non-intro answer (right or wrong), and remembered in the save.
     // The answer may bring a boss to its trial moment (Golem: first shield segment broken; Wraith: below its echo threshold).
     // Decided once, here, so a re-render cannot reroll it.
-    const runAfter = offerTrial(r.run, mastery, ENEMIES)
-    patch(s => ({ ...s, run: runAfter, mastery, habit, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
+    // Recently seen trials are skipped while others exist; a new offer joins the recent list.
+    const runAfter = offerTrial(r.run, mastery, ENEMIES, Math.random, save.recentEvents)
+    const offered = runAfter.trial && runAfter.trial !== r.run.trial ? trialKey(runAfter.trial.id) : null
+    patch(s => ({ ...s, run: runAfter, mastery, habit, recentEvents: offered ? noteRecent(s.recentEvents, offered) : s.recentEvents, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
 
     // Learning summary for the floor-clear / defeat cards
     const rec = { id: word.id, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
@@ -501,9 +504,9 @@ export default function App() {
     if (!res) return
     trialLock.current = true
     patch(s => ({ ...s, run: res.run }))
-    if (res.correct && trialById(run.trial?.id)?.boss === 'wraith') { setCaption({ side: 'hero', kind: 'block', text: '👻 Wraith calmed · next mistake free' }); feel('combo', { streak: 7 }) }
-    else if (res.correct && trialById(run.trial?.id)?.boss === 'trickster') { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '🪞 TRUE STRIKE' }); feel('combo', { streak: 9 }) }
-    else if (res.correct && trialById(run.trial?.id)?.boss === 'scribe') { setCaption({ side: 'monster', kind: 'shield', text: '💥 SEALS BROKEN' }); feel('combo', { streak: 9 }) }
+    if (res.correct && trialFor(run.trial)?.boss === 'wraith') { setCaption({ side: 'hero', kind: 'block', text: '👻 Wraith calmed · next mistake free' }); feel('combo', { streak: 7 }) }
+    else if (res.correct && trialFor(run.trial)?.boss === 'trickster') { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '🪞 TRUE STRIKE' }); feel('combo', { streak: 9 }) }
+    else if (res.correct && trialFor(run.trial)?.boss === 'scribe') { setCaption({ side: 'monster', kind: 'shield', text: '💥 SEALS BROKEN' }); feel('combo', { streak: 9 }) }
     else if (res.correct) { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '💥 SHIELD SHATTERED' }); feel('combo', { streak: 9 }) }
     else if (res.outcome === 'defeat') { sceneRef.current?.playHit('hero'); sceneRef.current?.showDefeat(true); feel('defeat') }
     else {
@@ -922,7 +925,7 @@ export default function App() {
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
-        {trialOpen && trialState && (() => { const t = trialById(trialState.id); return t ? <TrialScreen trial={t} state={trialState} onAnswer={answerTrial} onSkip={leaveTrial} onClose={leaveTrial} /> : null })()}
+        {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen trial={t} state={trialState} onAnswer={answerTrial} onSkip={leaveTrial} onClose={leaveTrial} /> : null })()}
         {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onComplete={() => patch(s => complete(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}

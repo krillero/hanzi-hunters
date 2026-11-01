@@ -70,4 +70,6 @@ export type Saved = {
   practiced: string[]
   /** Local dates (YYYY-MM-DD, up to 30) on which each contextual encounter was completed; drives its support stage. */
   encounterHistory?: import('./encounters').History
+  /** The last encounters and boss trials shown ("scene:<id>" / "trial:<id>", newest first): offers skip them while they can. */
+  recentEvents?: string[]
 }

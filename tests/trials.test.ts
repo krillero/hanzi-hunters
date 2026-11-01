@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import trialsJson from '../src/content/trials.json' with { type: 'json' }
-import { TRIALS, validateTrials, offerTrial, resolveTrial, closeTrial, cleanTrial, trialById, optionKeys } from '../src/game/trials.ts'
+import { TRIALS, validateTrials, validateTrialsFile, offerTrial, resolveTrial, closeTrial, cleanTrial, trialById, trialFor, optionKeys } from '../src/game/trials.ts'
 import { WRAITH_ECHO_AT, enemyStats, newRun, resolveAnswer, shieldFor, startFight } from '../src/game/rules.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import { NO_BONUSES } from '../src/game/upgrades.ts'
@@ -19,7 +19,8 @@ const golem = (over: Partial<Run> = {}): Run => {
 const io = (run: Run, chosen: string) => ({ run, bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, roll: { drop: 0.99, item: 0.5 }, chosen })
 
 test('trials.json is valid, loads completely and only uses early course words', () => {
-  assert.deepEqual(validateTrials(trialsJson, wordIds), [])
+  assert.deepEqual(validateTrialsFile(trialsJson, wordIds), [])
+  assert.match(validateTrialsFile({ trials: [{ ...trialsJson.trials[0], id: 'gen-hello' }] }, wordIds).join(), /reserved/)
   assert.equal(TRIALS.length, trialsJson.trials.length)
 })
 
@@ -42,7 +43,7 @@ test('offered once per Golem fight, after the first shield segment breaks, with 
 })
 
 test('a right answer shatters the shield and staggers the Golem without killing it; answering twice does nothing', () => {
-  const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const res = resolveTrial(io(run, t.answer))!
   assert.ok(res.correct); assert.equal(res.run.shield, 0); assert.equal(res.run.hearts, run.hearts)
   assert.ok(res.hit > 0 && res.run.enemyHp === run.enemyHp - res.hit && res.run.enemyHp >= 1)
@@ -52,7 +53,7 @@ test('a right answer shatters the shield and staggers the Golem without killing 
 })
 
 test('a wrong answer is an ordinary wrong answer: a heart (or a second chance), the shield holds, defeat at zero', () => {
-  const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const wrong = t.options.find(o => o !== t.answer)!
   const res = resolveTrial(io({ ...run, secondLeft: 0 }, wrong))!
   assert.equal(res.correct, false); assert.equal(res.run.hearts, run.hearts - 1); assert.equal(res.run.shield, run.shield); assert.equal(res.run.trial?.status, 'answered')
@@ -82,7 +83,7 @@ const wraith = (share: number, over: Partial<Run> = {}): Run => {
 test('the Wraith offers its trial once it drops below its echo threshold, never above it', () => {
   assert.equal(offerTrial(wraith(0.9), known, ENEMIES).trial, undefined)
   const t = offerTrial(wraith(WRAITH_ECHO_AT - 0.05), known, ENEMIES, () => 0).trial!
-  assert.equal(trialById(t.id)!.boss, 'wraith'); assert.equal(t.floor, 2); assert.equal(t.status, 'pending')
+  assert.equal(trialFor(t)!.boss, 'wraith'); assert.equal(t.floor, 2); assert.equal(t.status, 'pending')
 })
 
 test('the validator checks reply trials: every shown character known, options complete', () => {
@@ -94,7 +95,7 @@ test('the validator checks reply trials: every shown character known, options co
 })
 
 test('a right reply calms the Wraith: the next wrong answer costs no heart, then hearts count again', () => {
-  const run = offerTrial(wraith(0.5), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(wraith(0.5), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const calmed = resolveTrial(io({ ...run, secondLeft: 0 }, t.answer))!
   assert.ok(calmed.correct); assert.equal(calmed.run.calm, 1); assert.equal(calmed.run.enemyHp, run.enemyHp); assert.equal(calmed.run.hearts, run.hearts)
   const wrong1 = resolveAnswer({ run: closeTrial(calmed.run), bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, lv: 1, isCorrect: false, roll: { drop: 0.99, item: 0.5 } })
@@ -130,7 +131,7 @@ test('the Scribe offers its torn note right after its first seal breaks, not bef
   assert.equal(offerTrial(scribe(max), known, ENEMIES).trial, undefined)
   assert.equal(offerTrial(scribe(max - 2), known, ENEMIES).trial, undefined)
   const t = offerTrial(scribe(max - 1), known, ENEMIES, () => 0).trial!
-  assert.equal(trialById(t.id)!.boss, 'scribe'); assert.equal(t.status, 'pending')
+  assert.equal(trialFor(t)!.boss, 'scribe'); assert.equal(t.status, 'pending')
 })
 
 test('the validator checks torn notes: one blank, Chinese options, known characters', () => {
@@ -143,7 +144,7 @@ test('the validator checks torn notes: one blank, Chinese options, known charact
 })
 
 test('a right character breaks every remaining seal without damage; a wrong one is an ordinary wrong answer', () => {
-  const run = offerTrial(scribe(shieldFor(3, 'scribe') - 1), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(scribe(shieldFor(3, 'scribe') - 1), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const res = resolveTrial(io(run, t.answer))!
   assert.ok(res.correct); assert.equal(res.run.shield, 0); assert.equal(res.run.enemyHp, run.enemyHp); assert.equal(res.run.hearts, run.hearts)
   const miss = resolveTrial(io({ ...run, secondLeft: 0 }, optionKeys(t).find(o => o !== t.answer)!))!
@@ -159,7 +160,7 @@ const trickster = (share: number, over: Partial<Run> = {}): Run => {
 test('the Trickster offers its mirrors once below half HP; the validator needs a picture and full statements', () => {
   assert.equal(offerTrial(trickster(0.8), known, ENEMIES).trial, undefined)
   const t = offerTrial(trickster(0.4), known, ENEMIES, () => 0).trial!
-  assert.equal(trialById(t.id)!.boss, 'trickster')
+  assert.equal(trialFor(t)!.boss, 'trickster')
   const her = trialsJson.trials.find(x => x.id === 'trickster-her')!
   const bad = (patch: object) => validateTrials({ trials: [{ ...her, ...patch }] }, wordIds).join()
   assert.match(bad({ picture: '' }), /picture is required/)
@@ -168,7 +169,7 @@ test('the Trickster offers its mirrors once below half HP; the validator needs a
 })
 
 test('the true statement lands a heavy blow that never kills; a false one is an ordinary wrong answer', () => {
-  const run = offerTrial(trickster(0.45), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(trickster(0.45), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const hp = enemyStats(ENEMIES, 4, 3, run.depth).hp
   const res = resolveTrial(io(run, t.answer))!
   assert.ok(res.correct); assert.equal(res.hit, Math.min(run.enemyHp - 1, Math.round(hp * 0.3))); assert.equal(res.run.hearts, run.hearts)

@@ -407,3 +407,8 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Mirror Trickster's Mirrors: the first time the Trickster drops below half HP, three statements about a picture (有/没有, numbers, 是/不是, 他/她); pick the true one. Right: a heavy blow (30 % max HP, never the killing blow). Wrong: an ordinary wrong answer. Small heart cost for strong players in the simulator (documented); skippable.
 - Leaving an encounter reuses the normal next-enemy path (keeps the FLOOR banner).
 - 178 tests passed, build passes, one 360 px browser check passed; see docs/CONTEXTUAL_ENCOUNTERS.md.
+
+## Varied encounters and generated trials (2026-11-01)
+- Repeat protection: the last 12 scenes/trials shown (`Saved.recentEvents`) are skipped while others are available.
+- Generated Golem tone trials (any known word or fully known example sentence) and Scribe torn notes (any known multi-character word), mixed half and half with the authored ones; stored in `run.trial.data` and re-validated on load. Safety rules (no sandhi or homograph readings as wrong options, no wrong option that makes a real word) are checked by exhaustive tests.
+- Balance unchanged within noise (20-seed simulator comparison in `docs/CONTEXTUAL_ENCOUNTERS.md`).

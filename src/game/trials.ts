@@ -15,6 +15,8 @@ import trialsJson from '../content/trials.json' with { type: 'json' }
 import { WORDS } from '../data.ts'
 import { TRICKSTER_LOW, TUNING, WRAITH_ECHO_AT, bossIdFor, enemyStats, isBoss, resolveAnswer, shieldFor, type AnswerInput } from './rules.ts'
 import type { Mastery, Run } from './types.ts'
+import { GEN_PREFIX, noteTrials, toneTrials } from './trialgen.ts'
+import { freshFirst } from './recent.ts'
 
 type TrialBase = { id: string; requires: string[]; zh: string; en: string; answer: string; note: string }
 /** Options are the same pinyin with different tone marks; `answer` is one of them. */
@@ -31,7 +33,9 @@ export const BLANK = '＿'
 export type TrialBoss = Trial['boss']
 const BOSSES: TrialBoss[] = ['golem', 'wraith', 'scribe', 'trickster']
 /** The trial of the current fight, saved in the run: the same line survives a reload and is answered at most once. */
-export type TrialState = { id: string; floor: number; order: string[]; status: 'pending' | 'answered' | 'done'; chosen?: string }
+export type TrialState = { id: string; floor: number; order: string[]; status: 'pending' | 'answered' | 'done'; chosen?: string; data?: Trial }
+/** Key of a trial in Saved.recentEvents. */
+export const trialKey = (id: string) => `trial:${id}`
 
 /** What identifies an option (and is stored in TrialState.order / chosen): the pinyin, or the reply's Chinese. */
 export const optionKeys = (t: Trial): string[] => (t.boss === 'wraith' || t.boss === 'trickster' ? t.options.map(o => o.zh) : t.options)
@@ -65,10 +69,17 @@ export function validateTrials(raw: unknown, wordIds: string[]): string[] {
   return errors
 }
 
+/** trials.json only: authored ids may not use the prefix reserved for generated trials. */
+export const validateTrialsFile = (raw: unknown, wordIds: string[]): string[] => [
+  ...validateTrials(raw, wordIds),
+  ...(((raw as { trials?: { id?: unknown }[] })?.trials ?? []).filter(t => typeof t?.id === 'string' && t.id.startsWith(GEN_PREFIX)).map(t => `trials.json ${t.id}: the "${GEN_PREFIX}" prefix is reserved for generated trials`)),
+]
+
 function trialErrors(t: Trial, wordIds: string[]): string[] {
   const out: string[] = []
   if (!t || typeof t !== 'object') return ['must be an object']
-  if (!isStr(t.id) || !/^[a-z][a-z0-9-]*$/.test(t.id)) out.push('id must be lower-case letters, digits or dashes')
+  // Authored ids are lower-case Latin; generated ones (gen-…) name their word or sentence.
+  if (!isStr(t.id) || !(/^[a-z][a-z0-9-]*$/.test(t.id) || t.id.startsWith(GEN_PREFIX))) out.push('id must be lower-case letters, digits or dashes')
   if (!BOSSES.includes(t.boss)) out.push(`boss must be one of ${BOSSES.join(', ')}`)
   for (const f of ['en', 'answer', 'note'] as const) if (!isStr(t[f])) out.push(`${f} is required`)
   if (t.boss === 'trickster') { if (!isStr(t.picture)) out.push('picture is required') }
@@ -106,8 +117,21 @@ function trialErrors(t: Trial, wordIds: string[]): string[] {
   return out
 }
 
-export const TRIALS: Trial[] = ((trialsJson as { trials?: Trial[] }).trials ?? []).filter(t => trialErrors(t, WORDS.map(w => w.id)).length === 0)
+export const TRIALS: Trial[] = ((trialsJson as { trials?: Trial[] }).trials ?? []).filter(t => !t.id?.startsWith(GEN_PREFIX) && trialErrors(t, WORDS.map(w => w.id)).length === 0)
 export const trialById = (id: string | undefined) => TRIALS.find(t => t.id === id)
+const WORD_IDS = WORDS.map(w => w.id)
+/** The trial a state refers to: an authored one by id, or the generated one stored in the state (re-validated). */
+export function trialFor(state: Pick<TrialState, 'id' | 'data'> | undefined): Trial | undefined {
+  if (!state) return undefined
+  const d = state.data
+  if (d && typeof d === 'object' && d.id === state.id && state.id.startsWith(GEN_PREFIX)) return trialErrors(d, WORD_IDS).length ? undefined : d
+  return trialById(state.id)
+}
+/** Generated trials for this boss from the player's words (golem: tones, scribe: torn notes), all passing the validator. */
+export function generatedTrials(boss: TrialBoss, mastery: Mastery, rng = Math.random): Trial[] {
+  const made: Trial[] = boss === 'golem' ? toneTrials(mastery, rng) : boss === 'scribe' ? noteTrials(mastery, rng) : []
+  return made.filter(t => trialErrors(t, WORD_IDS).length === 0)
+}
 
 const fightBoss = (run: Run) => (isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null)
 /** Has the fight just reached the moment this boss calls its trial? */
@@ -120,24 +144,33 @@ function trialMoment(run: Run, boss: TrialBoss, enemies: AnswerInput['enemies'])
 
 /**
  * After an answer: offer the boss's trial when the fight has reached its moment (once per fight, only with a line whose words
- * the player has met). Returns the run unchanged otherwise.
+ * the player has met). Authored and generated trials are drawn half and half (when both exist), and trials in `recent`
+ * (Saved.recentEvents) are skipped while others are available. Returns the run unchanged otherwise.
  */
-export function offerTrial(run: Run, mastery: Mastery, enemies: AnswerInput['enemies'], rng = Math.random): Run {
+export function offerTrial(run: Run, mastery: Mastery, enemies: AnswerInput['enemies'], rng = Math.random, recent: string[] = []): Run {
   const boss = fightBoss(run)
   if (!boss || !BOSSES.includes(boss as TrialBoss) || run.phase !== 'fighting' || run.trial?.floor === run.floor || !trialMoment(run, boss as TrialBoss, enemies)) return run
-  const pool = TRIALS.filter(t => t.boss === boss && t.requires.every(id => Object.prototype.hasOwnProperty.call(mastery, id)))
-  if (!pool.length) return run
+  const authored = TRIALS.filter(t => t.boss === boss && t.requires.every(id => Object.prototype.hasOwnProperty.call(mastery, id)))
+  const generated = generatedTrials(boss as TrialBoss, mastery, rng)
+  const isNew = (t: Trial) => !recent.includes(trialKey(t.id))
+  // Prefer a source that still has something new; with both, a coin flip keeps the authored lines in the mix.
+  const sources = [authored, generated].filter(s => s.length)
+  const withNew = sources.filter(s => s.some(isNew))
+  const from = withNew.length ? withNew : sources
+  if (!from.length) return run
+  const source = from[Math.min(from.length - 1, Math.floor(rng() * from.length))]
+  const pool = freshFirst(source, t => trialKey(t.id), recent)
   const t = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]
   const order = optionKeys(t)
   for (let i = order.length - 1; i > 0; i--) { const j = Math.min(i, Math.floor(rng() * (i + 1))); [order[i], order[j]] = [order[j], order[i]] }
-  return { ...run, trial: { id: t.id, floor: run.floor, order, status: 'pending' } }
+  return { ...run, trial: { id: t.id, floor: run.floor, order, status: 'pending', ...(t.id.startsWith(GEN_PREFIX) ? { data: t } : {}) } }
 }
 
 export type TrialResult = { run: Run; correct: boolean; hit: number; heartsLost: number; savedBySecondChance: boolean; outcome: 'continue' | 'defeat' }
 
 /** Answer the pending trial (one submission). Anything but a pending trial in a live fight is a no-op (returns null). */
 export function resolveTrial(i: Omit<AnswerInput, 'lv' | 'isCorrect' | 'practice' | 'sealQuestion'> & { chosen: string }): TrialResult | null {
-  const { run } = i, state = run.trial, trial = trialById(state?.id)
+  const { run } = i, state = run.trial, trial = trialFor(state)
   if (!state || !trial || state.status !== 'pending' || run.phase !== 'fighting' || !optionKeys(trial).includes(i.chosen)) return null
   const answered: TrialState = { ...state, status: 'answered', chosen: i.chosen }
   if (i.chosen === trial.answer) {
@@ -159,12 +192,12 @@ export const closeTrial = (run: Run): Run => (run.trial ? { ...run, trial: { ...
 
 export function cleanTrial(raw: unknown): TrialState | undefined {
   if (!raw || typeof raw !== 'object') return undefined
-  const t = raw as TrialState, trial = trialById(t.id)
+  const t = raw as TrialState, trial = trialFor(t)
   const floor = Number.isInteger(t.floor) && t.floor > 0 ? t.floor : 0
   if (!trial || !floor) return floor ? { id: String(t.id ?? ''), floor, order: [], status: 'done' } : undefined
   const keys = optionKeys(trial)
   const order = Array.isArray(t.order) && t.order.length === keys.length && keys.every(o => t.order.includes(o)) ? t.order : [...keys]
   const status = t.status === 'pending' || t.status === 'answered' ? t.status : 'done'
   const chosen = status === 'answered' && keys.includes(t.chosen ?? '') ? t.chosen : undefined
-  return { id: trial.id, floor, order, status: status === 'answered' && !chosen ? 'done' : status, ...(chosen ? { chosen } : {}) }
+  return { id: trial.id, floor, order, status: status === 'answered' && !chosen ? 'done' : status, ...(chosen ? { chosen } : {}), ...(trial.id.startsWith(GEN_PREFIX) ? { data: trial } : {}) }
 }

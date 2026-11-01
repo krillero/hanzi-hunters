@@ -1,7 +1,8 @@
 // Balance simulator for expeditions: node tools/simulate.ts [accuracy] [expeditions]   (needs Node 22.18+)
 // Also: node tools/simulate.ts --report   compares new and upgraded players at several accuracies.
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS } from '../src/data.ts'
-import { closeTrial, offerTrial, optionKeys, resolveTrial, trialById } from '../src/game/trials.ts'
+import { closeTrial, offerTrial, optionKeys, resolveTrial, trialFor, trialKey } from '../src/game/trials.ts'
+import { noteRecent } from '../src/game/recent.ts'
 import { MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { updateMastery } from '../src/game/mastery.ts'
@@ -41,6 +42,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   let course: CourseProgress = emptyCourse()
   let peak: PeakLevels = {}
   const practiced = new Set<string>()
+  let recent: string[] = []   // Saved.recentEvents: trials shown lately
   const byId = wordMap(WORDS)
   // Like the game: introduction cards (curriculum order) at the start of each fight, then questions about known entries only.
   // The intro question shows the meaning, so it is always answered right; the next question about the word is its protected practice.
@@ -78,8 +80,9 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       // Boss trials: the bot takes them with more than 2 hearts left. The Golem's is a tone question (as hard as its seal
       // questions), the Scribe's a character question (as hard as its seal questions), the Trickster's as hard as its trick questions; the Wraith's is a reply (plain accuracy).
       {
-        run = offerTrial(run, mastery, ENEMIES, rng)
-        const t = run.trial?.status === 'pending' ? trialById(run.trial.id) : undefined
+        run = offerTrial(run, mastery, ENEMIES, rng, recent)
+        if (run.trial?.status === 'pending' && run.trial.floor === run.floor) recent = noteRecent(recent, trialKey(run.trial.id))
+        const t = run.trial?.status === 'pending' ? trialFor(run.trial) : undefined
         if (t && run.hearts <= 2) run = closeTrial(run)   // a careful player says "Not now" when a heart matters
         else if (t) {
           const right = rng() < (accuracy >= 1 ? 1 : Math.min(0.98, accuracy - (t.boss === 'golem' ? 0.06 : t.boss === 'scribe' ? 0.04 : t.boss === 'trickster' ? 0.08 : 0)))
