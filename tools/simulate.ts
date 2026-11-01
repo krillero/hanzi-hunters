@@ -1,7 +1,7 @@
 // Balance simulator for expeditions: node tools/simulate.ts [accuracy] [expeditions]   (needs Node 22.18+)
 // Also: node tools/simulate.ts --report   compares new and upgraded players at several accuracies.
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS } from '../src/data.ts'
-import { TUNING, advance, bankRun, bossIdFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk } from '../src/game/rules.ts'
+import { MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { updateMastery } from '../src/game/mastery.ts'
 import { emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
@@ -11,7 +11,9 @@ import type { Mastery, Meta } from '../src/game/types.ts'
 export const ANSWER_CAP = 1000
 
 export type RunLog = {
-  run: number; floor: number; gold: number; mastered: number; upgrades: number
+  run: number; depth: number; floor: number; gold: number; mastered: number; upgrades: number
+  /** Deepest depth cleared after this expedition. */
+  depthCleared: number
   /** Answers given in the run (its length). */
   answers: number
   /** How the expedition ended: won (final boss beaten) or out of hearts ('returned' only at the safety stop). */
@@ -31,7 +33,7 @@ export type SimOptions = {
 export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: SimOptions = {}): RunLog[] {
   let s = seed
   const rng = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296)
-  let meta: Meta = { gold: 0, upgrades: opts.maxed ? UPGRADES.map(u => u.id) : [], bestFloor: 1, runs: 0 }
+  let meta: Meta = { gold: 0, upgrades: opts.maxed ? UPGRADES.map(u => u.id) : [], bestFloor: 1, runs: 0, wins: 0, depthCleared: 0 }
   let mastery: Mastery = {}
   let course: CourseProgress = emptyCourse()
   let peak: PeakLevels = {}
@@ -47,7 +49,8 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   for (let n = 1; n <= runsToPlay; n++) {
     const b = computeBonuses(meta.upgrades)
     introduce()
-    let run = newRun(b, GEAR, ENEMIES), word = pick(null), answers = 0
+    // the bot always plays the deepest depth it has unlocked
+    let run = newRun(b, GEAR, ENEMIES, unlockedDepth(meta.depthCleared)), word = pick(null), answers = 0
     const startHearts = run.hearts, potionHearts = playerStats(run, b, GEAR).potionHearts
     const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0 }
     let fightAnswers = 0, longestFight = 0
@@ -61,7 +64,9 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       const boss = isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null
       const sealed = run.shield > 0
       const harder = sealed ? (sealAsk(boss!, run.shield) === 'pinyin' ? 0.06 : 0.04) : boss === 'trickster' ? 0.08 : 0
-      const p = accuracy >= 1 ? 1 : Math.min(0.98, accuracy + 0.04 * (entry?.lv ?? 0) - harder)
+      // Model assumption: a recall-heavy mix (deeper depths) is a little harder, up to -6 points at full challenge.
+      const recall = entry && !(entry.lv === 0 && entry.ok === 0) ? 0.06 * challengeFor(run.depth, run.floor) : 0
+      const p = accuracy >= 1 ? 1 : Math.min(0.98, accuracy + 0.04 * (entry?.lv ?? 0) - harder - recall)
       const ok = rng() < p
       const r = resolveAnswer({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect: ok, practice, sealQuestion: sealed, roll: { drop: rng(), item: rng() } })
       practiced.add(word.id); answers++; fightAnswers++; longestFight = Math.max(longestFight, fightAnswers)
@@ -76,7 +81,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       if (!next) break
       meta = buyUpgrade(meta, next.id)!
     }
-    log.push({ run: n, floor: run.floor, gold: banked.summary.goldBanked, mastered: Object.values(mastery).filter(e => e.lv >= 4).length, upgrades: meta.upgrades.length, answers, end, longestFight, ...stat, startHearts, endHearts: run.hearts, potionHearts })
+    log.push({ run: n, depth: run.depth, depthCleared: meta.depthCleared, floor: run.floor, gold: banked.summary.goldBanked, mastered: Object.values(mastery).filter(e => e.lv >= 4).length, upgrades: meta.upgrades.length, answers, end, longestFight, ...stat, startHearts, endHearts: run.hearts, potionHearts })
   }
   return log
 }
@@ -90,15 +95,16 @@ export const firstWin = (log: RunLog[]) => { const i = log.findIndex(l => l.end 
 export function report(accuracies = [0.6, 0.75, 0.85, 0.9, 1], seeds = [1, 2, 3, 4, 5]) {
   const rows: string[] = []
   const f = (x: number, d = 1) => (Number.isFinite(x) ? x.toFixed(d) : 'never').padStart(6)
-  rows.push(`tuning ${JSON.stringify(TUNING)}`)
-  rows.push('   acc | first win (median, no-upgrade wins) | win% 1-5  6-15 16-30 | answers avg max | longest fight | maxed win%')
+  const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]
+  const clearedAt = (log: RunLog[], d: number) => { const i = log.findIndex(l => l.depthCleared >= d); return i === -1 ? Infinity : i + 1 }
+  rows.push(`tuning ${JSON.stringify(TUNING)} · 40 expeditions per player, ${seeds.length} seeds; the bot plays the deepest unlocked depth`)
+  rows.push('   acc | expeditions to clear depth 1 / 2 / 3 / 4 / 5 (median) | win% | answers avg max | longest fight | maxed: depth cleared after 10')
   for (const acc of accuracies) {
-    const logs = seeds.map(sd => simulate(acc, 30, sd))
+    const logs = seeds.map(sd => simulate(acc, 40, sd))
     const all = logs.flat()
-    const firsts = logs.map(firstWin).sort((a, b) => a - b)
-    const noUpgradeWin = logs.filter(l => l.findIndex(x => x.end === 'won') === 0).length
-    const maxed = seeds.flatMap(sd => simulate(acc, 10, sd + 100, { maxed: true }))
-    rows.push(`  ${acc.toFixed(2)} | ${f(firsts[Math.floor(firsts.length / 2)], 0)} (${noUpgradeWin}/${seeds.length} won the 1st)            | ${f(winRate(all.filter(l => l.run <= 5)) * 100, 0)} ${f(winRate(all.filter(l => l.run > 5 && l.run <= 15)) * 100, 0)} ${f(winRate(all.filter(l => l.run > 15)) * 100, 0)} | ${f(avg(all.map(l => l.answers)), 0)} ${f(Math.max(...all.map(l => l.answers)), 0)} | ${f(Math.max(...all.map(l => l.longestFight)), 0)}        | ${f(winRate(maxed) * 100, 0)}`)
+    const cleared = Array.from({ length: MAX_DEPTH }, (_, d) => f(med(logs.map(l => clearedAt(l, d + 1))), 0)).join(' ')
+    const maxed = seeds.map(sd => simulate(acc, 10, sd + 100, { maxed: true }))
+    rows.push(`  ${acc.toFixed(2)} | ${cleared}             | ${f(winRate(all) * 100, 0)} | ${f(avg(all.map(l => l.answers)), 0)} ${f(Math.max(...all.map(l => l.answers)), 0)} | ${f(Math.max(...all.map(l => l.longestFight)), 0)}        | ${f(med(maxed.map(l => l[l.length - 1].depthCleared)), 0)}`)
   }
   return rows.join('\n')
 }

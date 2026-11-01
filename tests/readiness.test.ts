@@ -94,7 +94,7 @@ test('9: saves without peak history keep progress and grant no readiness to unse
   const s = sanitizeSave(v3, WORDS, [V2])
   assert.equal(s.version, 1)
   assert.deepEqual(s.mastery, v3.mastery); assert.deepEqual(s.legacyMastery, v3.legacyMastery)
-  assert.deepEqual(s.meta, { ...v3.meta, wins: 0 }); assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 9); assert.equal(s.habit.correct, 40)
+  assert.deepEqual(s.meta, { ...v3.meta, wins: 0, depthCleared: 0 }); assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 9); assert.equal(s.habit.correct, 40)
   assert.deepEqual(s.courses.gone, { version: 2, completed: ['x'] }, 'recoverable progress for unknown curricula is kept')
   assert.ok(s.courses.course.completed.includes('a'), 'completed lessons are preserved: the course is not relocked')
   assert.deepEqual(s.peak, { 他: 2, 大: 1 }, 'peaks derived from the current levels only (no history in old saves; level 0 needs no entry)')

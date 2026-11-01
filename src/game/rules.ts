@@ -18,6 +18,31 @@ import { gearVerdict } from './rarity.ts'
 export const ENEMIES_PER_FLOOR = 4
 /** Floors per expedition; the last one ends with the final boss. */
 export const EXPEDITION_FLOORS = 5
+
+/**
+ * Depths: winning an expedition at depth d unlocks depth d+1 (cleared depths can be replayed). A deeper expedition asks harder kinds
+ * of questions (see `challengeFor`; only kinds each word is already eligible for), pays more gold and a bigger victory bonus,
+ * and its final boss is tougher. Names only for now (placeholder art).
+ */
+export const DEPTHS = [
+  { name: 'Mosslight Cavern', note: 'Recognise your words' },
+  { name: 'Ember Halls', note: 'More recall questions' },
+  { name: 'Frost Archive', note: 'Pinyin and listening come often' },
+  { name: 'Sunken Library', note: 'Mostly recall' },
+  { name: 'Jade Throne', note: 'The hardest mix' }
+]
+export const MAX_DEPTH = DEPTHS.length
+export const depthName = (depth: number) => DEPTHS[Math.min(MAX_DEPTH, Math.max(1, depth)) - 1].name
+/** Depths you may start: every cleared one and the next. */
+export const unlockedDepth = (depthCleared: number) => Math.min(MAX_DEPTH, depthCleared + 1)
+/** 0..1: how far the question mix leans toward recall kinds. Rises with depth and, a little, with the floor. */
+export const challengeFor = (depth: number, floor: number) => Math.min(1, Math.max(0, ((depth - 1) + (floor - 1) / 4) / MAX_DEPTH))
+/** Gold and XP from enemies: +25 % per depth below the first. */
+export const depthRewardMult = (depth: number) => 1 + 0.25 * (Math.max(1, depth) - 1)
+/** The final boss gets +15 % HP per depth below the first. */
+export const depthBossHpMult = (depth: number) => 1 + 0.15 * (Math.max(1, depth) - 1)
+/** Gold added when an expedition is won. */
+export const victoryBonus = (depth: number) => 40 * Math.max(1, depth)
 export const BASE_ATTACK = 5
 export const ATTACK_PER_LEVEL = 1
 export const xpForLevel = (level: number) => level * 30
@@ -37,7 +62,7 @@ export const SECOND_CHANCE_CAP = 3
  * so fights keep a similar, bounded length. Chosen with tools/simulate.ts (see docs/GAME_DESIGN.md "Balance").
  * Mutable only so the simulator can compare settings; the game never changes it.
  */
-export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1 }
+export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1, depthEnemyHp: 0.3 }
 
 export const SHIELD_SEGMENTS = 3   // the most a shield ever has
 /** Boss multipliers over the base enemy stats (before the per-floor scaling). Early floors get a gentler boss: they ramp up to the full values. */
@@ -77,15 +102,16 @@ const gearSum = (gear: GearItem[], key: 'attack' | 'maxHearts' | 'hints' | 'xpPc
 
 export type EnemyStats = { enemy: Enemy; hp: number; xp: number; gold: number; boss: BossId | null }
 /** Per floor (compounding): enemy HP x TUNING.enemyHpGrowth, rewards +8 %; the last enemy of a floor is a boss. */
-export function enemyStats(enemies: Enemy[], floor: number, kill: number): EnemyStats {
+export function enemyStats(enemies: Enemy[], floor: number, kill: number, depth = 1): EnemyStats {
   const boss = isBoss(floor, kill) ? bossIdFor(floor) : null
+  const reward = depthRewardMult(depth)
   const enemy = boss ? BOSSES[boss] : enemies[(((floor - 1) * ENEMIES_PER_FLOOR) + kill) % enemies.length]
   const f = floor - 1
   return {
     enemy, boss,
-    hp: Math.round(enemy.hp * TUNING.enemyHpScale * TUNING.enemyHpGrowth ** f * (boss ? bossHpMult(floor) : 1)),
-    xp: Math.round(enemy.xp * 1.08 ** f * (boss ? BOSS_REWARD : 1)),
-    gold: Math.round(enemy.gold * 1.08 ** f * (boss ? BOSS_REWARD : 1))
+    hp: Math.round(enemy.hp * TUNING.enemyHpScale * TUNING.enemyHpGrowth ** f * (boss ? bossHpMult(floor) : 1) * (boss === FINAL_BOSS ? depthBossHpMult(depth) : 1) * (1 + TUNING.depthEnemyHp * (Math.max(1, depth) - 1))),
+    xp: Math.round(enemy.xp * 1.08 ** f * (boss ? BOSS_REWARD : 1) * reward),
+    gold: Math.round(enemy.gold * 1.08 ** f * (boss ? BOSS_REWARD : 1) * reward)
   }
 }
 
@@ -125,17 +151,17 @@ export function startFight(run: Run, b: Bonuses, enemies: Enemy[], allGear: Gear
   const s = playerStats(run, b, allGear)
   const boss = isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null
   return {
-    ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: s.hints, secondLeft: Math.min(run.secondLeft, s.secondChances),
+    ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill, run.depth).hp, hintsLeft: s.hints, secondLeft: Math.min(run.secondLeft, s.secondChances),
     reward: noReward, pendingXp: 0,
     shield: boss && hasShield(boss) ? shieldFor(run.floor, boss) : 0
   }
 }
 
-/** A new run: full hearts at the final equipped maximum (starting gear included), START_POTIONS (+ Spare Vial). */
-export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[]): Run {
+/** A new expedition at `depth`: full hearts at the final equipped maximum (starting gear included), START_POTIONS (+ Spare Vial). */
+export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[], depth = 1): Run {
   const start = allGear.filter(g => b.startGear.includes(g.name))
   const base: Run = {
-    floor: 1, kill: 0, kills: 0, level: 1, xp: 0, hearts: 0, enemyHp: 0, gold: 0, potions: START_POTIONS + b.startPotions,
+    depth: Math.min(MAX_DEPTH, Math.max(1, depth)), floor: 1, kill: 0, kills: 0, level: 1, xp: 0, hearts: 0, enemyHp: 0, gold: 0, potions: START_POTIONS + b.startPotions,
     gear: start.map(g => g.name), loadout: Object.fromEntries(start.map(g => [g.slot, g.name])) as Partial<Record<GearSlot, string>>, streak: 0, hintsLeft: 0, secondLeft: 0,
     recoveredFloor: 0, phase: 'fighting', reward: noReward, pendingXp: 0, shield: 0
   }
@@ -182,7 +208,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   const { run, bonuses: b, isCorrect } = i
   const gear = equippedGear(i.allGear, run.loadout)
   const stats = playerStats(run, b, i.allGear)
-  const foe = enemyStats(i.enemies, run.floor, run.kill)
+  const foe = enemyStats(i.enemies, run.floor, run.kill, run.depth)
 
   // A correct answer attacks; a wrong answer never damages the enemy.
   let damage = 0, comboHit = false
@@ -273,12 +299,16 @@ export function drinkPotion(run: Run, b: Bonuses, allGear: GearItem[]): Run | nu
 export type RunResult = 'won' | 'defeat' | 'returned'
 /**
  * End an expedition and bank every gold coin earned in it; level, gear and potions are lost with the run.
- * `won`: the final boss was beaten; `returned`: "Return to camp" (not a defeat). Learning progress is never touched here.
+ * `won`: the final boss was beaten (adds the victory bonus and clears the depth); `returned`: "Return to camp" (not a defeat).
+ * Learning progress is never touched here.
  */
 export function bankRun(meta: Meta, run: Run, result: RunResult): { meta: Meta; summary: RunSummary } {
+  const won = result === 'won'
+  const bonus = won ? victoryBonus(run.depth) : 0
+  const depthCleared = won ? Math.max(meta.depthCleared, run.depth) : meta.depthCleared
   return {
-    meta: { ...meta, gold: meta.gold + run.gold, bestFloor: Math.max(meta.bestFloor, run.floor), runs: meta.runs + 1, wins: meta.wins + (result === 'won' ? 1 : 0) },
-    summary: { floor: run.floor, kills: run.kills, level: run.level, goldBanked: run.gold, result }
+    meta: { ...meta, gold: meta.gold + run.gold + bonus, bestFloor: Math.max(meta.bestFloor, run.floor), runs: meta.runs + 1, wins: meta.wins + (won ? 1 : 0), depthCleared },
+    summary: { floor: run.floor, kills: run.kills, level: run.level, goldBanked: run.gold + bonus, bonus, result, depth: run.depth, unlocked: won && run.depth > meta.depthCleared && run.depth < MAX_DEPTH ? run.depth + 1 : 0 }
   }
 }
 
