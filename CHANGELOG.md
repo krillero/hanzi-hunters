@@ -398,5 +398,6 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Optional tea and meal scenes after eligible floor clears, one per expedition.
 - Chinese-first presentation develops with current mastery and distinct practice days.
 - Saved selections/help/results and idempotent +3 run-gold completion.
+- Title and button are the same for every scene ("A traveler’s request" / Prepare) so they never name the answer; item pictures are hidden at the Chinese-first stage unless help is open.
 - Leaving an encounter reuses the normal next-enemy path (keeps the FLOOR banner).
 - 178 tests passed, build passes, one 360 px browser check passed; see docs/CONTEXTUAL_ENCOUNTERS.md.

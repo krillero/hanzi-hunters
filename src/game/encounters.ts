@@ -1,7 +1,9 @@
 import type { Saved, Mastery } from './types.ts'
+/** Shared by every scene: the title and button must not name the dish, or they would give away the answer. */
+export const ENCOUNTER_TITLE = 'A traveler’s request', ENCOUNTER_ACTION = 'Prepare'
 export const SCENES = [
- { id: 'tea', title: 'Tea for a traveler', zh: '我要茶。', py: 'Wǒ yào chá.', en: 'I would like tea.', ingredients: ['茶','水'], action: 'Prepare tea', result: 'You prepare tea with the leaves and water.', note: '茶 names tea leaves here. Water and tea leaves make the drink.' },
- { id: 'meal', title: 'A meal for a traveler', zh: '我要米饭。我要菜。', py: 'Wǒ yào mǐfàn. Wǒ yào cài.', en: 'I would like rice. I would like some dishes.', ingredients: ['米饭','菜'], action: 'Serve meal', result: 'You serve the cooked rice and vegetable side dish.', note: '米饭 is cooked rice. 菜 here means prepared dishes; our tray contains vegetables.' }
+ { id: 'tea', zh: '我要茶。', py: 'Wǒ yào chá.', en: 'I would like tea.', ingredients: ['茶','水'], result: 'You prepare tea with the leaves and water.', note: '茶 names tea leaves here. Water and tea leaves make the drink.' },
+ { id: 'meal', zh: '我要米饭。我要菜。', py: 'Wǒ yào mǐfàn. Wǒ yào cài.', en: 'I would like rice. I would like some dishes.', ingredients: ['米饭','菜'], result: 'You serve the cooked rice and vegetable side dish.', note: '米饭 is cooked rice. 菜 here means prepared dishes; our tray contains vegetables.' }
 ] as const
 export const ITEMS = [
  { id:'茶', py:'chá', en:'tea leaves', icon:'🍃' }, { id:'水', py:'shuǐ', en:'water', icon:'💧' },

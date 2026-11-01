@@ -13,9 +13,12 @@ First completion or weak prerequisites: Chinese, pinyin, translation and grammar
 explanation. After completion with all prerequisite levels >=1: Chinese/pinyin,
 English on request. After completion on two distinct local dates and all levels
 >=2: Chinese first, pinyin/translation on request. Stage is frozen per attempt.
-Images remain visible; item order is shuffled once and persisted. Help is free.
+At the Chinese-first stage the item pictures are hidden as well (they would give
+the answer away); asking for help shows them with pinyin and English. Item order
+is shuffled once and persisted. Help is free.
 
-Select the exact ingredients and Prepare/Serve. Wrong combinations explain the
+Select the exact ingredients and tap Prepare. The title ("A traveler’s request"),
+instruction and button are the same for every scene so they never name the answer. Wrong combinations explain the
 recipe and allow editing. Completed scenes show food and the companion's thanks.
 These are short visual state changes, not a fully animated crafting simulation.
 Completion gives exactly 3 run gold; no hearts, XP, mastery credit, or protection
