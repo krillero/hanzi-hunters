@@ -1,7 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import encountersJson from '../src/content/encounters.json' with { type: 'json' }
-import { offer, complete, choose, cleanEncounter, stageFor, previewEncounter, validateEncounters, sceneById, SCENES } from '../src/game/encounters.ts'
+import { offer, complete, choose, cleanEncounter, previewEncounter, validateEncounters, sceneById, SCENES } from '../src/game/encounters.ts'
+import { pinyinFor, showPinyin, wordsIn, fixedLevel, levelOf } from '../src/game/support.ts'
+import { blankedPinyin } from '../src/game/trialgen.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import { newRun, bankRun } from '../src/game/rules.ts'
 import { NO_BONUSES } from '../src/game/upgrades.ts'
@@ -53,9 +55,9 @@ test('the scene completed on the fewest days is offered first; file order breaks
 
 test('a reply scene keeps one choice; a gather scene several', () => {
   const reply = sceneById('hello')!, gather = sceneById('tea')!
-  const base = previewEncounter('hello', '0')!
+  const base = previewEncounter('hello')!
   assert.deepEqual(choose(choose(base, reply, '你好'), reply, '再见').selected, ['再见'])
-  const g = previewEncounter('tea', '0')!
+  const g = previewEncounter('tea')!
   assert.deepEqual(choose(choose(g, gather, '茶'), gather, '水').selected, ['茶', '水'])
   assert.deepEqual(cleanEncounter({ ...base, selected: ['你好', '再见'] })!.selected, ['你好'])
 })
@@ -83,23 +85,35 @@ test('old saves default safely; a pending encounter survives a reload; a removed
   assert.deepEqual(loaded.run!.encounter, s.run!.encounter)
   // A tea scene saved before the scenes moved to encounters.json keeps its order of four items.
   const legacy = { id: 'tea', stage: 1, status: 'active', selected: ['茶'], order: ['菜', '米饭', '茶', '水'], help: false }
-  assert.deepEqual(cleanEncounter(legacy), legacy)
+  const { stage: _old, ...current } = legacy   // the old day-based support stage is dropped on load
+  assert.deepEqual(cleanEncounter(legacy), current)
   assert.equal(cleanEncounter({ id: 'removed' })!.status, 'closed')
 })
 
-test('stages require distinct completion days and current mastery of the scene’s own words', () => {
-  const req = sceneById('hello')!.requires
-  const m = ready(req).mastery
-  assert.equal(stageFor(m, [], req), 0)
-  assert.equal(stageFor(m, ['2026-11-01', '2026-11-01'], req), 1)
-  assert.equal(stageFor(m, ['2026-11-01', '2026-11-02'], req), 2)
-  m['你好'].lv = 0; assert.equal(stageFor(m, ['2026-11-01', '2026-11-02'], req), 0)
+test('an event needs every word at Familiar or higher; help follows each word: pinyin up to Familiar, English never by default', () => {
+  const hello = sceneById('hello')!
+  const at = (lv: number) => Object.fromEntries(hello.requires.map(id => [id, { lv, ok: 0 }]))
+  const run = (lv: number) => { const s = ready(hello.requires); s.mastery = at(lv); return offer(s).run!.encounter }
+  assert.equal(run(1), undefined, 'Learning words: not offered yet')
+  assert.ok(run(2), 'Familiar: offered')
+  assert.equal(showPinyin(2), true); assert.equal(showPinyin(3), false)
+  assert.deepEqual(wordsIn('我是你朋友。', ['我', '是', '朋友', '茶']), ['我', '是', '朋友'])
+  const m = { 我: { lv: 3, ok: 0 }, 是: { lv: 4, ok: 0 }, 朋友: { lv: 2, ok: 0 } }
+  assert.equal(pinyinFor('我是你朋友。', ['我', '是', '朋友'], levelOf(m)), true, 'the weakest word (朋友, Familiar) still needs pinyin')
+  assert.equal(pinyinFor('我是', ['我', '是', '朋友'], levelOf(m)), false, 'all Remembered or higher: characters only')
+  assert.equal(pinyinFor('…', ['我'], fixedLevel(5)), true, 'no known word found in the text: pinyin shown')
+  for (const sc of SCENES) for (const o of sc.options) assert.equal(o.icon !== undefined, o.picture === true, `${sc.id}/${o.id}: only picture options have an icon`)
 })
 
-test('preview link builds a playable scene only for known ids and clamps the stage', () => {
-  assert.equal(previewEncounter('nope', '1'), null); assert.equal(previewEncounter(null, null), null)
-  const p = previewEncounter('meal', '2')!; assert.equal(p.status, 'active'); assert.equal(p.stage, 2)
-  assert.equal(previewEncounter('hello', '9')!.stage, 0)
+test('a torn note can show its pinyin with the missing syllable blanked too', () => {
+  assert.equal(blankedPinyin('我是你朋＿。', 'Wǒ shì nǐ péngyou.'), 'Wǒ shì nǐ péng＿.')
+  assert.equal(blankedPinyin('对＿起！', 'Duìbuqǐ!'), 'Duì＿qǐ!')
+  assert.equal(blankedPinyin('你＿！', 'Nǐ hǎo ma?'), null, 'syllables do not match the characters: no pinyin')
+})
+
+test('preview link builds a playable scene only for known ids', () => {
+  assert.equal(previewEncounter('nope'), null); assert.equal(previewEncounter(null), null)
+  const p = previewEncounter('meal')!; assert.equal(p.status, 'active'); assert.deepEqual(p.selected, [])
 })
 
 test('scenes unlock early in the default course: greetings by word 5, who-is-it by 20, counting by 35', () => {
@@ -118,7 +132,7 @@ test('point scenes: picture options only, one answer, and the pictures stay out 
   assert.match(bad({ options: [...he.options, { id: '朋友', en: 'friend', icon: '🧑' }] }), /picture options only/)
   const hello = encountersJson.scenes.find(s => s.id === 'hello')!
   assert.match(validateEncounters({ scenes: [{ ...hello, options: [...hello.options, { id: 'x', en: 'x', icon: '❓', picture: true }] }] }, wordIds).join(), /only for point scenes/)
-  const scene = sceneById('friend-he')!, p = previewEncounter('friend-he', '1')!
+  const scene = sceneById('friend-he')!, p = previewEncounter('friend-he')!
   assert.deepEqual(choose(choose(p, scene, 'man'), scene, 'woman').selected, ['woman'])
 })
 

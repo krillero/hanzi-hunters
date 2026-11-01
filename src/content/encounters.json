@@ -17,18 +17,15 @@
       "options": [
         {
           "id": "你好",
-          "en": "hello",
-          "icon": "👋"
+          "en": "hello"
         },
         {
           "id": "再见",
-          "en": "goodbye",
-          "icon": "🚶"
+          "en": "goodbye"
         },
         {
           "id": "谢谢",
-          "en": "thank you",
-          "icon": "🙏"
+          "en": "thank you"
         }
       ],
       "answer": [
@@ -55,18 +52,15 @@
       "options": [
         {
           "id": "你好",
-          "en": "hello",
-          "icon": "👋"
+          "en": "hello"
         },
         {
           "id": "再见",
-          "en": "goodbye",
-          "icon": "🚶"
+          "en": "goodbye"
         },
         {
           "id": "谢谢",
-          "en": "thank you",
-          "icon": "🙏"
+          "en": "thank you"
         }
       ],
       "answer": [
@@ -89,18 +83,15 @@
       "options": [
         {
           "id": "对不起",
-          "en": "sorry",
-          "icon": "🙇"
+          "en": "sorry"
         },
         {
           "id": "谢谢",
-          "en": "thank you",
-          "icon": "🙏"
+          "en": "thank you"
         },
         {
           "id": "你好",
-          "en": "hello",
-          "icon": "👋"
+          "en": "hello"
         }
       ],
       "answer": [
@@ -339,23 +330,19 @@
       "options": [
         {
           "id": "茶",
-          "en": "tea leaves",
-          "icon": "🍃"
+          "en": "tea leaves"
         },
         {
           "id": "水",
-          "en": "water",
-          "icon": "💧"
+          "en": "water"
         },
         {
           "id": "米饭",
-          "en": "cooked rice",
-          "icon": "🍚"
+          "en": "cooked rice"
         },
         {
           "id": "菜",
-          "en": "vegetable dish",
-          "icon": "🥬"
+          "en": "vegetable dish"
         }
       ],
       "answer": [
@@ -391,23 +378,19 @@
       "options": [
         {
           "id": "茶",
-          "en": "tea leaves",
-          "icon": "🍃"
+          "en": "tea leaves"
         },
         {
           "id": "水",
-          "en": "water",
-          "icon": "💧"
+          "en": "water"
         },
         {
           "id": "米饭",
-          "en": "cooked rice",
-          "icon": "🍚"
+          "en": "cooked rice"
         },
         {
           "id": "菜",
-          "en": "vegetable dish",
-          "icon": "🥬"
+          "en": "vegetable dish"
         }
       ],
       "answer": [

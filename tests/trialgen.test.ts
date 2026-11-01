@@ -107,7 +107,7 @@ test('a generated trial survives a reload; tampered data is dropped (the trial c
 test('encounter offers skip recently offered scenes and remember the new one', () => {
   const s = sanitizeSave(null)
   s.run = { ...newRun(NO_BONUSES, GEAR, ENEMIES), phase: 'victory' as const, kill: 3, enemyHp: 0 }
-  s.mastery = knowing(['你好', '再见', '谢谢', '对不起'])
+  s.mastery = Object.fromEntries(['你好', '再见', '谢谢', '对不起'].map(id => [id, { lv: 2, ok: 0 }]))   // events need Familiar words
   const first = offer(s, seeded(1))
   const id = first.run!.encounter!.id
   assert.equal(first.recentEvents![0], sceneKey(id))

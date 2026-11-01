@@ -6,6 +6,7 @@ import TrialScreen from './TrialScreen'
 import { noteRecent } from './game/recent'
 import { TRIALS, closeTrial, offerTrial, optionKeys, resolveTrial, trialById, trialFor, trialKey, type TrialState } from './game/trials'
 import { offer, complete, localDate, previewEncounter, type EncounterState } from './game/encounters'
+import { fixedLevel, levelOf } from './game/support'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
@@ -127,7 +128,9 @@ export default function App() {
   const forcedKind = useRef(new URLSearchParams(window.location.search).get('kind') as QKind | null)   // preview aid: /?word=木&kind=homophone
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
   // Preview aid: /?encounter=tea|meal[&stage=0|1|2] opens that scene on its own. It never touches the save (no gold, no history).
-  const [encounterPreview, setEncounterPreview] = useState<EncounterState | null>(() => { const q = new URLSearchParams(window.location.search); return previewEncounter(q.get('encounter'), q.get('stage')) })
+  const [encounterPreview, setEncounterPreview] = useState<EncounterState | null>(() => { const q = new URLSearchParams(window.location.search); return previewEncounter(q.get('encounter')) })
+  // Preview links show events and trials as if every word were at this level (&level=0..5, default 2 = Familiar).
+  const previewLevel = fixedLevel(Math.min(MAX_LV, Math.max(0, Math.floor(Number(new URLSearchParams(window.location.search).get('level') ?? 2)) || 0)))
   // Preview aid: /?trial=<id> opens that boss trial on its own (no fight, nothing saved); /?trial=warden plays a sample
   // Cavern Warden gauntlet (a tone step, then a note step).
   const [trialPreview, setTrialPreview] = useState<TrialState | null>(() => {
@@ -694,7 +697,7 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        <TrialScreen key={`${trialPreview.id}:${trialPreview.step ?? 1}`} warden={wardenPreview} trial={t} state={trialPreview} onAnswer={o => setTrialPreview(p => p && p.status === 'pending' ? { ...p, status: 'answered', chosen: o } : p)} onClose={trialPreview.next ? nextPreview : closePreview} onExit={closePreview} />
+        <TrialScreen key={`${trialPreview.id}:${trialPreview.step ?? 1}`} warden={wardenPreview} level={previewLevel} trial={t} state={trialPreview} onAnswer={o => setTrialPreview(p => p && p.status === 'pending' ? { ...p, status: 'answered', chosen: o } : p)} onClose={trialPreview.next ? nextPreview : closePreview} onExit={closePreview} />
       </main>
     )
   }
@@ -703,7 +706,7 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        <EncounterScreen state={encounterPreview} onChange={setEncounterPreview} onComplete={() => setEncounterPreview(e => e && { ...e, status: 'complete' })} onLeave={closePreview} preview />
+        <EncounterScreen state={encounterPreview} level={previewLevel} onChange={setEncounterPreview} onComplete={() => setEncounterPreview(e => e && { ...e, status: 'complete' })} onLeave={closePreview} preview />
       </main>
     )
   }
@@ -981,8 +984,8 @@ export default function App() {
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
-        {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen key={`${trialState.id}:${trialState.step ?? 1}`} warden={foe?.boss === 'warden'} trial={t} state={trialState} onAnswer={answerTrial} onClose={leaveTrial} /> : null })()}
-        {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onComplete={() => patch(s => complete(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
+        {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen key={`${trialState.id}:${trialState.step ?? 1}`} warden={foe?.boss === 'warden'} level={levelOf(save.mastery)} trial={t} state={trialState} onAnswer={answerTrial} onClose={leaveTrial} /> : null })()}
+        {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} level={levelOf(save.mastery)} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onComplete={() => patch(s => complete(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} sigil={run.depth > save.meta.depthCleared ? { level: run.depth, text: sigilText(run.depth) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}

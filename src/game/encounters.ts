@@ -1,10 +1,11 @@
 // Contextual encounters: short optional scenes offered after a floor boss (see docs/CONTEXTUAL_ENCOUNTERS.md).
 // The scenes are content in src/content/encounters.json; this file holds the rules: who may see which scene, the support
-// stage, offer/completion transitions and save sanitizers. Pure functions, no React.
+// offer/completion transitions and save sanitizers (how much help is shown: game/support.ts). Pure functions, no React.
 import type { Saved, Mastery } from './types.ts'
 import encountersJson from '../content/encounters.json' with { type: 'json' }
 import { WORDS } from '../data.ts'
 import { freshFirst, noteRecent } from './recent.ts'
+import { SESSION_LV } from './mastery.ts'
 
 /**
  * gather: pick every item the traveler asked for (several). reply: pick the one right thing to say.
@@ -12,22 +13,23 @@ import { freshFirst, noteRecent } from './recent.ts'
  */
 export type EncounterKind = 'gather' | 'reply' | 'point'
 /** A word option's id is its word id; a picture option (`picture: true`) has a free id and no Chinese label. */
-export type EncounterOption = { id: string; en: string; icon: string; picture?: boolean }
+/** `icon`: picture options only (a word option never shows a picture: it would give the answer away). */
+export type EncounterOption = { id: string; en: string; icon?: string; picture?: boolean }
 export type Line = { zh: string; py: string; en: string }
 export type Scene = {
   id: string; kind: EncounterKind
   /** Word ids the player must have been introduced to: every option and every character of the Chinese lines. */
   requires: string[]
   speaker: string
-  /** English context shown at every stage (what is happening). It sets the scene; it must not translate the answer. */
+  /** English context, always shown (what is happening). It sets the scene; it must not translate the answer. */
   situation?: string
-  /** The traveler's line; pinyin/English follow the support stage. */
+  /** The traveler's line: pinyin while its words need it, English only with help or after answering (game/support.ts). */
   zh?: string; py?: string; en?: string
-  /** Extra explanation at the first stage only. */
+  /** Extra explanation, shown after answering (it would give the meaning away). */
   grammar?: string
   options: EncounterOption[]
   answer: string[]
-  /** Explanation after a wrong choice (also shown at the first stage and with help). */
+  /** Explanation after a wrong choice (a gather scene's recipe hint also appears with help). */
   note: string
   result: string; resultIcon: string
   /** What the traveler says when the scene is done. */
@@ -78,7 +80,9 @@ function sceneErrors(s: Scene, wordIds: string[]): string[] {
   for (const o of options) {
     if (o?.picture === true) { if (!isStr(o.id) || HANZI.test(o.id)) out.push(`picture option "${o?.id}" needs a plain id without Chinese`) }
     else if (!isStr(o?.id) || !requires.includes(o.id)) out.push(`option "${o?.id}" must be listed in requires (the player must know it)`)
-    if (!isStr(o?.en) || !isStr(o?.icon)) out.push(`option "${o?.id}" needs en and icon`)
+    if (!isStr(o?.en)) out.push(`option "${o?.id}" needs en`)
+    if (o?.picture === true && !isStr(o.icon)) out.push(`picture option "${o?.id}" needs an icon`)
+    if (o?.picture !== true && o?.icon !== undefined) out.push(`word option "${o?.id}" must not have an icon (it would give the answer away)`)
   }
   // A point scene shows pictures only; the other kinds show words (the Chinese is what is being practised).
   if (s.kind === 'point' && (options.some(o => o?.picture !== true) || !isStr(s.zh))) out.push('a point scene needs a Chinese line and picture options only')
@@ -103,19 +107,14 @@ export const optionPinyin = (id: string) => WORDS.find(w => w.id === id)?.pinyin
 export const isCorrect = (scene: Scene, selected: string[]) => selected.length === scene.answer.length && scene.answer.every(a => selected.includes(a))
 
 export type History = Record<string, { dates: string[] }>
-export type EncounterState = { id: string; stage: number; status: 'active' | 'complete' | 'closed'; selected: string[]; order: string[]; help: boolean }
+/** How much help is shown follows the player's word levels (game/support.ts), not anything stored here. */
+export type EncounterState = { id: string; status: 'active' | 'complete' | 'closed'; selected: string[]; order: string[]; help: boolean }
 /** Key of a scene in Saved.recentEvents. */
 export const sceneKey = (id: string) => `scene:${id}`
 export const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
-const introduced = (m: Mastery, id: string) => Object.prototype.hasOwnProperty.call(m, id)
-export const eligible = (m: Mastery, scene: Scene) => scene.requires.every(id => introduced(m, id))
-
-/** 0: Chinese, pinyin, English and grammar. 1: Chinese and pinyin. 2: Chinese only. Later stages need completions on distinct days. */
-export function stageFor(m: Mastery, dates: string[], requires: string[]) {
-  if (!dates.length || requires.some(id => (m[id]?.lv ?? 0) < 1)) return 0
-  return new Set(dates).size >= 2 && requires.every(id => m[id]?.lv >= 2) ? 2 : 1
-}
+/** A scene is offered once every word it uses is at least Familiar: it can then be shown without English (game/support.ts). */
+export const eligible = (m: Mastery, scene: Scene) => scene.requires.every(id => (m[id]?.lv ?? -1) >= SESSION_LV)
 
 /** After a non-final floor boss, once per expedition: the eligible scene completed on the fewest days (file order breaks ties). */
 export function offer(s: Saved, random = Math.random): Saved {
@@ -127,8 +126,7 @@ export function offer(s: Saved, random = Math.random): Saved {
   if (!scene) return s
   const order = scene.options.map(x => x.id)
   for (let i = order.length - 1; i > 0; i--) { const j = Math.max(0, Math.min(i, Math.floor(random() * (i + 1)))); [order[i], order[j]] = [order[j], order[i]] }
-  const stage = stageFor(s.mastery, s.encounterHistory?.[scene.id]?.dates ?? [], scene.requires)
-  return { ...s, recentEvents: noteRecent(s.recentEvents, sceneKey(scene.id)), run: { ...r, encounter: { id: scene.id, stage, status: 'active', selected: [], order, help: false } } }
+  return { ...s, recentEvents: noteRecent(s.recentEvents, sceneKey(scene.id)), run: { ...r, encounter: { id: scene.id, status: 'active', selected: [], order, help: false } } }
 }
 
 /** A right choice: +ENCOUNTER_GOLD run gold and today's date in the history. Anything else (or a repeat) is a no-op. */
@@ -160,19 +158,18 @@ export function cleanEncounter(raw: unknown): EncounterState | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const e = raw as EncounterState, scene = sceneById(e.id)
   // A scene that no longer exists: keep the expedition's encounter used up, but never show it.
-  if (!scene) return { id: typeof e.id === 'string' ? e.id : '', stage: 0, status: 'closed', selected: [], order: [], help: false }
+  if (!scene) return { id: typeof e.id === 'string' ? e.id : '', status: 'closed', selected: [], order: [], help: false }
   const ids = scene.options.map(x => x.id)
   const selected = Array.isArray(e.selected) ? [...new Set(e.selected.filter(x => ids.includes(x)))] : []
   const order = Array.isArray(e.order) && e.order.length === ids.length && new Set(e.order).size === ids.length && e.order.every(x => ids.includes(x)) ? e.order : ids
   // 'offer' (an intro step, removed once encounters became mandatory) opens straight into the scene.
   const status = (e.status as string) === 'offer' ? 'active' : ['active', 'complete', 'closed'].includes(e.status) ? e.status : 'closed'
-  return { id: e.id, stage: [0, 1, 2].includes(e.stage) ? e.stage : 0, status, selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
+  return { id: e.id, status, selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
 }
 
-/** Preview aid for /?encounter=<scene id>&stage=<0|1|2>: a ready-to-play scene, or null when the id is not a scene. */
-export function previewEncounter(id: string | null, stage: string | null): EncounterState | null {
+/** Preview aid for /?encounter=<scene id> (the word level to show it at comes from &level=, see App): a ready-to-play scene. */
+export function previewEncounter(id: string | null): EncounterState | null {
   const scene = sceneById(id ?? undefined)
   if (!scene) return null
-  const n = Number(stage)
-  return { id: scene.id, stage: [0, 1, 2].includes(n) ? n : 0, status: 'active', selected: [], order: scene.options.map(x => x.id), help: false }
+  return { id: scene.id, status: 'active', selected: [], order: scene.options.map(x => x.id), help: false }
 }

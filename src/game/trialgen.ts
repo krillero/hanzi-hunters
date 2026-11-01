@@ -158,3 +158,15 @@ export function noteTrials(mastery: Mastery, rng = Math.random): NoteTrial[] {
   }
   return out
 }
+
+/**
+ * The pinyin of a torn note with the missing character's syllable blanked too ("Wǒ shì nǐ péng＿."), so pinyin can be shown before
+ * answering without giving the answer away. Null when the syllables cannot be matched one-to-one with the characters.
+ */
+export function blankedPinyin(zh: string, py: string): string | null {
+  const slots = [...zh].filter(ch => HANZI.test(ch) || ch === BLANK)
+  const i = slots.indexOf(BLANK), spans = syllableSpans(py)
+  if (i < 0 || !spans || spans.length !== slots.length) return null
+  const p = py.normalize('NFC')
+  return p.slice(0, spans[i].start) + BLANK + p.slice(spans[i].end)
+}

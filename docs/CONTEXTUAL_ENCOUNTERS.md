@@ -24,20 +24,32 @@ completed on the fewest distinct days is offered; file order breaks ties.
 Kinds: **reply** = choose the one right thing to say (single choice, button
 "Say it"); **gather** = choose every item asked for (button "Prepare");
 **point** = choose the picture the traveler's Chinese line describes (single
-choice, button "Point"; the options are pictures, so they stay visible at every
-stage and only their English captions follow the stage). The
-title, instruction and button are shared by every scene of a kind, so they never
-name the answer. A reply scene's explanation names the answer, so it only
-appears after a wrong choice (same for point scenes); a gather scene's recipe hint is also shown at the
-first stage and with help.
+choice, button "Point"; the options are pictures, so they always stay visible).
+The title, instruction and button are shared by every scene of a kind, so they
+never name the answer.
 
-First completion or weak prerequisites: Chinese, pinyin, translation and grammar
-explanation. After completion with all prerequisite levels >=1: Chinese/pinyin,
-English on request. After completion on two distinct local dates and all levels
->=2: Chinese first, pinyin/translation on request. Stage is frozen per attempt.
-At the Chinese-first stage the item pictures are hidden as well (they would give
-the answer away); asking for help shows them with pinyin and English. Item order
-is shuffled once and persisted. Help is free.
+### How much help is shown (src/game/support.ts)
+Help follows the player's own word levels, per word (the old day-based stages
+are gone):
+- A scene is only offered once **every word it uses is at least Familiar**
+  (level 2), so it never needs English.
+- **Pinyin** is shown for a word while it is at most Familiar; from Remembered
+  (level 3) on, only its characters. The traveler's line shows pinyin while any
+  of its words still needs it.
+- **English** (line translation, option meanings, picture captions) is never
+  shown before answering, only with the free "Pinyin & translation" help.
+- **No pictures on word options** (they would give the answer away). Picture
+  options (counting, 他/她) keep their picture: it is the choice itself.
+- **After answering**: the line with pinyin and English, and the grammar note.
+  A reply/point explanation names the answer, so it only appears after a wrong
+  choice; a gather scene's recipe hint also appears with help.
+- Boss trials follow the same rule: Wraith and Trickster options and the
+  Wraith's line show pinyin while their words need it, English after answering;
+  the Scribe's note shows no English before answering and, while its words need
+  it, its pinyin with the missing syllable blanked too ("péng＿"). Golem trials
+  are about pinyin, so their options are always pinyin.
+
+Item order is shuffled once and persisted. Help is free.
 
 Wrong choices explain and allow editing. Completed scenes show the result and,
 if the scene has one, the traveler's closing line (谢谢！ for tea/meal).
@@ -50,7 +62,7 @@ does the same); there is no skip or leave button. No farmable heal.
 ## Architecture and persistence
 src/content/encounters.json: the scenes (content; format below).
 src/game/encounters.ts: scene validation (also run by validate:content),
-eligibility, presentation stage, offer/completion transitions, sanitizers.
+eligibility, offer/completion transitions, sanitizers (help shown: src/game/support.ts).
 Option pinyin is read from words.json, the single source of tone marks.
 Mandarin is an original AI-assisted draft requiring teacher review; scenes are
 not part of the vocabulary review totals. Source inspiration: Hito's World
@@ -61,17 +73,17 @@ https://www.learnjapaneserpg.com/ (adaptive dialogue concept).
 - `id` (lower-case), `kind` (`reply` | `gather`), `speaker` (emoji).
 - `requires`: word ids from words.json the player must have been introduced to.
   Must include every option and every character used in `zh` / `closing.zh`.
-- `situation` (optional English context, shown at every stage; must not
+- `situation` (optional English context, always shown; must not
   translate the answer) and/or `zh` + `py` + `en` (the traveler's line).
-- `grammar` (optional, first stage only), `note` (explanation of the answer).
-- `options`: 2-6 of `{ id, en, icon }`. In `reply`/`gather` scenes `id` is a
-  word id; in `point` scenes every option is a picture: `{ id, en, icon,
+- `grammar` (optional, shown after answering), `note` (explanation of the answer).
+- `options`: 2-6 of `{ id, en }`. In `reply`/`gather` scenes `id` is a
+  word id (no `icon`: a picture would give the answer away); in `point` scenes every option is a picture: `{ id, en, icon,
   "picture": true }` with a plain id such as `woman` (no Chinese label).
 - `answer`: option ids (exactly one for `reply` and `point`; at least one
   option must be wrong).
 - `result`, `resultIcon`, optional `closing` `{ zh, py, en }`.
 Broken scenes are reported by `npm run validate:content` and skipped by the game.
-Preview any scene with `/?encounter=<id>&stage=0|1|2`.
+Preview any scene with `/?encounter=<id>&level=2` (every word Familiar: pinyin) or `&level=3` (characters only).
 
 src/EncounterScreen.tsx: reusable accessible dialog with focus containment,
 Escape/Leave, pressed option states, result feedback, help and scrollable
@@ -260,7 +272,7 @@ and check the rules below.
   covered most fights): the change is variety, not frequency.
 
 ## Preview link
-`/?encounter=<scene id>[&stage=0|1|2]` opens a scene on its own, without a run or the
+`/?encounter=<scene id>[&level=0-5]` opens a scene on its own (words at that level, default 2), without a run or the
 prerequisite words. It never changes the save; Close preview removes the parameter.
 
 ## Validation and review handoff
