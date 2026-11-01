@@ -14,7 +14,8 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave, 
   const py = state.stage < 2 || state.help, english = state.stage === 0 || state.help, pictures = py
   const onKey = (e: KeyboardEvent) => {
     e.stopPropagation()
-    if (e.key === 'Escape') { e.preventDefault(); onLeave() }
+    // Encounters cannot be skipped: Escape only continues once the scene is complete (or closes a preview).
+    if (e.key === 'Escape') { e.preventDefault(); if (preview || state.status === 'complete') onLeave() }
     if (e.key === 'Tab') {
       const buttons = Array.from(box.current!.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'))
       const first = buttons[0], last = buttons[buttons.length - 1]
@@ -58,9 +59,9 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave, 
         <button className="bar-btn main" onClick={submit}>{text.action}</button>
       </>}
     </div>
-    <div className="enc-footer">
+    {(preview || state.status !== 'active') && <div className="enc-footer">
       {state.status === 'offer' && <button className="bar-btn main" onClick={() => onChange({ ...state, status: 'active' })}>Help the traveler</button>}
-      <button className="bar-btn ghost" onClick={onLeave}>{preview ? 'Close preview' : state.status === 'complete' ? 'Continue to next floor' : state.status === 'offer' ? 'Skip and continue' : 'Leave and continue'}</button>
-    </div>
+      {(preview || state.status === 'complete') && <button className={`bar-btn ${state.status === 'complete' ? 'main' : 'ghost'}`} onClick={onLeave}>{preview ? 'Close preview' : 'Continue to next floor'}</button>}
+    </div>}
   </div></div>
 }

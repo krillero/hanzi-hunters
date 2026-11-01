@@ -63,10 +63,11 @@ test('a wrong answer is an ordinary wrong answer: a heart (or a second chance), 
   assert.equal(last.outcome, 'defeat'); assert.equal(last.run.phase, 'defeat')
 })
 
-test('skipping changes nothing but the trial status; a pending trial survives a reload; junk is dropped', () => {
+test('a pending trial cannot be closed unanswered and survives a reload; an answered one closes; junk is dropped', () => {
   const run = offerTrial(golem(), known, ENEMIES, () => 0.7)
-  const skipped = closeTrial(run)
-  assert.deepEqual({ ...skipped, trial: undefined }, { ...run, trial: undefined }); assert.equal(skipped.trial?.status, 'done')
+  assert.equal(closeTrial(run), run)
+  const answered = resolveTrial(io(run, trialFor(run.trial)!.answer))!.run
+  assert.equal(closeTrial(answered).trial?.status, 'done')
   const s = sanitizeSave(null); s.run = run; s.mastery = known
   assert.deepEqual(sanitizeSave(JSON.parse(JSON.stringify(s))).run!.trial, run.trial)
   assert.equal(cleanTrial('junk'), undefined)
@@ -172,7 +173,7 @@ test('the true statement lands a heavy blow that never kills; a false one is an 
   const run = offerTrial(trickster(0.45), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const hp = enemyStats(ENEMIES, 4, 3, run.depth).hp
   const res = resolveTrial(io(run, t.answer))!
-  assert.ok(res.correct); assert.equal(res.hit, Math.min(run.enemyHp - 1, Math.round(hp * 0.3))); assert.equal(res.run.hearts, run.hearts)
+  assert.ok(res.correct); assert.equal(res.hit, Math.min(run.enemyHp - 1, Math.round(hp * 0.3))); assert.equal(res.run.hearts, run.hearts); assert.equal(res.run.calm, 1)
   assert.equal(resolveTrial(io({ ...run, enemyHp: 2 }, t.answer))!.run.enemyHp, 1)
   const miss = resolveTrial(io({ ...run, secondLeft: 0 }, optionKeys(t).find(o => o !== t.answer)!))!
   assert.equal(miss.run.hearts, run.hearts - 1); assert.equal(miss.run.enemyHp, run.enemyHp)

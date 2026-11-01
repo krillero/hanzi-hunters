@@ -8,8 +8,9 @@
 // Ink Scribe's Torn Note — offered right after its first ink seal breaks: a note of known words with one character missing (the
 //   English meaning is shown); the player picks the character that completes it. Right: every remaining seal breaks.
 // Mirror Trickster's Mirrors — offered once it drops below TRICKSTER_LOW of its HP: a picture and three statements about it from its
-//   mirror images; the player picks the true one. Right: a heavy blow (never the killing blow).
-// Either way a wrong answer is an ordinary wrong answer (resolveAnswer decides hearts / second chance / defeat); skipping is free;
+//   mirror images; the player picks the true one. Right: a heavy blow (never the killing blow) and a calm charge (Run.calm).
+// Either way a wrong answer is an ordinary wrong answer (resolveAnswer decides hearts / second chance / defeat); trials cannot be
+// skipped (a pending trial stays open until answered, also across reloads);
 // mastery never changes; once per fight. Pure functions; the content is src/content/trials.json.
 import trialsJson from '../content/trials.json' with { type: 'json' }
 import { WORDS } from '../data.ts'
@@ -180,15 +181,17 @@ export function resolveTrial(i: Omit<AnswerInput, 'lv' | 'isCorrect' | 'practice
     const foe = enemyStats(i.enemies, run.floor, run.kill, run.depth)
     const share = trial.boss === 'trickster' ? TUNING.tricksterTrialHit : TUNING.golemTrialHit
     const hit = Math.max(0, Math.min(run.enemyHp - 1, Math.round(foe.hp * share)))
-    return { ...ok, run: { ...run, shield: trial.boss === 'golem' ? 0 : run.shield, enemyHp: run.enemyHp - hit, streak: run.streak + 1, trial: answered }, hit }
+    // The Trickster's true reflection also wards the player (Run.calm): forced trials cost it more than the others otherwise.
+    const calm = trial.boss === 'trickster' ? 1 : run.calm
+    return { ...ok, run: { ...run, shield: trial.boss === 'golem' ? 0 : run.shield, enemyHp: run.enemyHp - hit, streak: run.streak + 1, calm, trial: answered }, hit }
   }
   // A wrong trial answer is an ordinary wrong answer: same heart / calm / second-chance / defeat rules, never a practice save.
   const r = resolveAnswer({ ...i, lv: 0, isCorrect: false, practice: false, sealQuestion: false })
   return { run: { ...r.run, trial: answered }, correct: false, hit: 0, heartsLost: r.heartsLost, savedBySecondChance: r.savedBySecondChance, outcome: r.outcome === 'defeat' ? 'defeat' : 'continue' }
 }
 
-/** Close the trial: after reading the result, or to skip it unanswered (no effect at all). */
-export const closeTrial = (run: Run): Run => (run.trial ? { ...run, trial: { ...run.trial, status: 'done' } } : run)
+/** Close the trial after the player has read the result (trials cannot be skipped; a pending trial stays open). */
+export const closeTrial = (run: Run): Run => (run.trial?.status === 'answered' ? { ...run, trial: { ...run.trial, status: 'done' } } : run)
 
 export function cleanTrial(raw: unknown): TrialState | undefined {
   if (!raw || typeof raw !== 'object') return undefined

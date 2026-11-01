@@ -77,14 +77,13 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       practiced.add(word.id); answers++; fightAnswers++; longestFight = Math.max(longestFight, fightAnswers)
       stat.heartsLost += r.heartsLost; stat.practiceSaves += r.practiceSaved ? 1 : 0; stat.secondChanceSaves += r.savedBySecondChance ? 1 : 0; stat.calmSaves += r.savedByCalm ? 1 : 0; stat.heartsRestored += r.heartsRestored
       run = r.run
-      // Boss trials: the bot takes them with more than 2 hearts left. The Golem's is a tone question (as hard as its seal
+      // Boss trials cannot be skipped. The Golem's is a tone question (as hard as its seal
       // questions), the Scribe's a character question (as hard as its seal questions), the Trickster's as hard as its trick questions; the Wraith's is a reply (plain accuracy).
       {
         run = offerTrial(run, mastery, ENEMIES, rng, recent)
         if (run.trial?.status === 'pending' && run.trial.floor === run.floor) recent = noteRecent(recent, trialKey(run.trial.id))
         const t = run.trial?.status === 'pending' ? trialFor(run.trial) : undefined
-        if (t && run.hearts <= 2) run = closeTrial(run)   // a careful player says "Not now" when a heart matters
-        else if (t) {
+        if (t) {
           const right = rng() < (accuracy >= 1 ? 1 : Math.min(0.98, accuracy - (t.boss === 'golem' ? 0.06 : t.boss === 'scribe' ? 0.04 : t.boss === 'trickster' ? 0.08 : 0)))
           const tr = resolveTrial({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, roll: { drop: rng(), item: rng() }, chosen: right ? t.answer : optionKeys(t).find(o => o !== t.answer)! })
           if (tr) { run = closeTrial(tr.run); answers++; stat.trials++; stat.trialsRight += tr.correct ? 1 : 0; stat.heartsLost += tr.heartsLost; stat.secondChanceSaves += tr.savedBySecondChance ? 1 : 0 }

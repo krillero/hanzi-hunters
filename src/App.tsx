@@ -505,7 +505,7 @@ export default function App() {
     trialLock.current = true
     patch(s => ({ ...s, run: res.run }))
     if (res.correct && trialFor(run.trial)?.boss === 'wraith') { setCaption({ side: 'hero', kind: 'block', text: '👻 Wraith calmed · next mistake free' }); feel('combo', { streak: 7 }) }
-    else if (res.correct && trialFor(run.trial)?.boss === 'trickster') { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '🪞 TRUE STRIKE' }); feel('combo', { streak: 9 }) }
+    else if (res.correct && trialFor(run.trial)?.boss === 'trickster') { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '🪞 TRUE STRIKE · next mistake free' }); feel('combo', { streak: 9 }) }
     else if (res.correct && trialFor(run.trial)?.boss === 'scribe') { setCaption({ side: 'monster', kind: 'shield', text: '💥 SEALS BROKEN' }); feel('combo', { streak: 9 }) }
     else if (res.correct) { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '💥 SHIELD SHATTERED' }); feel('combo', { streak: 9 }) }
     else if (res.outcome === 'defeat') { sceneRef.current?.playHit('hero'); sceneRef.current?.showDefeat(true); feel('defeat') }
@@ -651,7 +651,7 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        <TrialScreen trial={t} state={trialPreview} onAnswer={o => setTrialPreview(p => p && p.status === 'pending' ? { ...p, status: 'answered', chosen: o } : p)} onSkip={closePreview} onClose={closePreview} />
+        <TrialScreen trial={t} state={trialPreview} onAnswer={o => setTrialPreview(p => p && p.status === 'pending' ? { ...p, status: 'answered', chosen: o } : p)} onClose={closePreview} onExit={closePreview} />
       </main>
     )
   }
@@ -925,7 +925,7 @@ export default function App() {
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
-        {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen trial={t} state={trialState} onAnswer={answerTrial} onSkip={leaveTrial} onClose={leaveTrial} /> : null })()}
+        {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen trial={t} state={trialState} onAnswer={answerTrial} onClose={leaveTrial} /> : null })()}
         {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onComplete={() => patch(s => complete(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}

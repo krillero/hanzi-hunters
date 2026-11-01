@@ -6,38 +6,38 @@ const FRAME = {
   golem: {
     title: 'The Golem’s Tone Trial', icon: '🗿',
     situation: 'The Golem carves words into its cracked shield and waits. Read them with the right tones.',
-    stakes: 'Right: the shield shatters and the Golem staggers. Wrong: like any wrong answer, it can cost a heart. You can also leave it.',
+    stakes: 'Right: the shield shatters and the Golem staggers. Wrong: like any wrong answer, it can cost a heart.',
     good: '💥 The shield shatters! The Golem staggers.', bad: '↻ Not quite. The shield holds.',
   },
   wraith: {
     title: 'The Wraith’s Wail', icon: '👻',
     situation: 'The Wraith stops its echo and speaks to you. Answer it, and it may calm down.',
-    stakes: 'Right: the Wraith calms, and your next mistake this expedition costs no heart. Wrong: like any wrong answer, it can cost a heart. You can also leave it.',
+    stakes: 'Right: the Wraith calms, and your next mistake this expedition costs no heart. Wrong: like any wrong answer, it can cost a heart.',
     good: '👻 The Wraith calms down. Your next mistake this expedition costs no heart.', bad: '↻ Not quite. The Wraith keeps wailing.',
   },
   scribe: {
     title: 'The Scribe’s Torn Note', icon: '📜',
     situation: 'The Ink Scribe holds up a torn note. One character is missing. Which one completes it?',
-    stakes: 'Right: every remaining ink seal breaks. Wrong: like any wrong answer, it can cost a heart. You can also leave it.',
+    stakes: 'Right: every remaining ink seal breaks. Wrong: like any wrong answer, it can cost a heart.',
     good: '🖋️ The ink seals break!', bad: '↻ Not quite. The seals hold.',
   },
   trickster: {
     title: 'The Trickster’s Mirrors', icon: '🪞',
     situation: 'Three mirror images of the Trickster point at the scene. Only one of them tells the truth. Which one?',
-    stakes: 'Right: you find the real Trickster and land a heavy blow. Wrong: like any wrong answer, it can cost a heart. You can also leave it.',
-    good: '🪞 You found the true reflection! A heavy blow lands.', bad: '↻ Not quite. That reflection was lying.',
+    stakes: 'Right: you find the real Trickster, land a heavy blow, and your next mistake this expedition costs no heart. Wrong: like any wrong answer, it can cost a heart.',
+    good: '🪞 You found the true reflection! A heavy blow lands, and your next mistake costs no heart.', bad: '↻ Not quite. That reflection was lying.',
   },
 } as const
 
-/** A boss trial: one choice inside the boss fight. Answering is final; skipping is free. */
-export default function TrialScreen({ trial, state, onAnswer, onSkip, onClose }: { trial: Trial; state: TrialState; onAnswer: (option: string) => void; onSkip: () => void; onClose: () => void }) {
+/** A boss trial: one choice inside the boss fight. It cannot be skipped and answering is final. `onExit`: preview links only. */
+export default function TrialScreen({ trial, state, onAnswer, onClose, onExit }: { trial: Trial; state: TrialState; onAnswer: (option: string) => void; onClose: () => void; onExit?: () => void }) {
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => { box.current?.focus() }, [])
   const frame = FRAME[trial.boss]
   const answered = state.status === 'answered', correct = answered && state.chosen === trial.answer
   const onKey = (e: KeyboardEvent) => {
     e.stopPropagation()
-    if (e.key === 'Escape') { e.preventDefault(); if (answered) onClose(); else onSkip() }
+    if (e.key === 'Escape') { e.preventDefault(); if (answered) onClose(); else onExit?.() }
     if (e.key === 'Tab') {
       const buttons = Array.from(box.current!.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'))
       const first = buttons[0], last = buttons[buttons.length - 1]
@@ -72,7 +72,7 @@ export default function TrialScreen({ trial, state, onAnswer, onSkip, onClose }:
       </div>}
     </div>
     <div className="enc-footer">
-      {answered ? <button className="bar-btn main" onClick={onClose}>Continue the fight</button> : <button className="bar-btn ghost" onClick={onSkip}>Not now</button>}
+      {answered ? <button className="bar-btn main" onClick={onClose}>Continue the fight</button> : onExit && <button className="bar-btn ghost" onClick={onExit}>Close preview</button>}
     </div>
   </div></div>
 }

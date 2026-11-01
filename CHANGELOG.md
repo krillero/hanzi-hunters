@@ -412,3 +412,4 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Repeat protection: the last 12 scenes/trials shown (`Saved.recentEvents`) are skipped while others are available.
 - Generated Golem tone trials (any known word or fully known example sentence) and Scribe torn notes (any known multi-character word), mixed half and half with the authored ones; stored in `run.trial.data` and re-validated on load. Safety rules (no sandhi or homograph readings as wrong options, no wrong option that makes a real word) are checked by exhaustive tests.
 - Balance unchanged within noise (20-seed simulator comparison in `docs/CONTEXTUAL_ENCOUNTERS.md`).
+- Encounters and boss trials can no longer be skipped (no Skip/Leave/"Not now"; Escape only continues after completion). A right Trickster answer now also gives a calm charge, because the forced trial otherwise cost 0.75-accuracy players wins (simulator, `docs/CONTEXTUAL_ENCOUNTERS.md`).
