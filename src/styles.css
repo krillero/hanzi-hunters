@@ -1677,6 +1677,7 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .trial-carving p[lang=zh]{font-size:30px;letter-spacing:2px}
 .trial-blank{display:inline-block;min-width:1.2em;border-bottom:3px dashed #f1ce80;color:#f1ce80;margin:0 2px}
 .trial.scribe-note .answer-btn{font-size:24px}
+.trial-picture{font-size:30px;letter-spacing:-1px;margin:4px 0}
 .trial-stakes{font-size:14px;color:#b9c8d6}
 .trial-options{display:grid;gap:8px;margin:8px 0}
 .trial-options .answer-btn{width:100%}

@@ -130,6 +130,27 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   5% → 4%; 0.75 accuracy 5 → 6, wins 61% → 60%; hearts lost/run ≈10.2 both.
   Neutral within noise: its value is the shortcut through the seals.
 
+### Mirror Trickster's Mirrors
+- Offered once per Trickster fight, the first time it drops below half HP
+  (TRICKSTER_LOW), with statements made of known words.
+- A picture (emoji: people by the fire, an empty campfire, a man, a woman) and
+  three statements (Chinese + pinyin; English after answering); exactly one is
+  true. The tricks are the Trickster's own: 有 / 没有, numbers, 是 / 不是, and
+  他 / 她 (same pinyin, so only the character tells them apart). The picture's
+  aria-label is its English description (sighted players see the same thing).
+- Right: a heavy blow, 30% of its max HP (TUNING.tricksterTrialHit), never the
+  killing blow. Wrong: an ordinary wrong answer. "Not now": no effect.
+- Balance (20 seeds, tricksterTrial on vs off): wins unchanged within noise
+  (0.75: 60% → 59%; 0.85: 97% → 97%), hearts lost/run slightly up (0.75:
+  10.18 → 10.33; 0.85: 3.01 → 3.33); 0.60 players rarely reach floor 4
+  (unchanged). The hit size barely matters (0.3, 0.4 and 0.5 gave identical
+  runs): below half HP the Trickster usually falls to the next right answer
+  either way, so the trial saves about one answer while being as hard as a
+  trick question (the bot gets 66% right). Players can skip it; revisit after
+  playtests if it feels like a trap.
+- Statements cannot be checked automatically for truth: reviewers must check
+  that exactly one statement matches the picture.
+
 ### Shared rules
 - Run.trial saves { id, floor, order, status, chosen }: a reload shows the same
   line, an answered trial shows its result, and it is never offered twice in a
@@ -142,13 +163,16 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   ambiguous). wraith: also py (the line's pinyin); options are { zh, py, en }
   and answer is the right option's zh. scribe: zh has exactly one blank (＿),
   py is the completed note's pinyin, options are Chinese characters only.
+  trickster: no zh; picture (emoji) and en (describes it); options are
+  { zh, py, en } statements, exactly one true; answer is its zh.
   Preview: /?trial=<id>.
 - Balance (bot takes the trial with more than 2 hearts, 20 seeds, depth-1 clear
   median / win rate): 0.60 accuracy 29 → 29 expeditions, 5% → 5%; 0.75 accuracy
   7 → 7, 58% → 61%. Hearts lost per run unchanged (≈10.3).
-- Full report with all three trials on (node tools/simulate.ts --report, 5
-  seeds, noisy): win rates at .60/.75/.85/.90/1.00 = 6/60/99/100/100%; with
-  every trial off they were 5/61/98/100/100%. Use the 20-seed
+- Full report with all four trials on (node tools/simulate.ts --report, 5
+  seeds, noisy): win rates at .60/.75/.85/.90/1.00 = 6/56/99/100/100%; with
+  every trial off they were 5/61/98/100/100%. Judge a single trial by the
+  20-seed comparisons in its section, not by these medians. Use the 20-seed
   comparisons above, not these 5-seed medians, to judge a trial.
 
 ## Preview link

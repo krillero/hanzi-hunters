@@ -21,6 +21,12 @@ const FRAME = {
     stakes: 'Right: every remaining ink seal breaks. Wrong: like any wrong answer, it can cost a heart. You can also leave it.',
     good: '🖋️ The ink seals break!', bad: '↻ Not quite. The seals hold.',
   },
+  trickster: {
+    title: 'The Trickster’s Mirrors', icon: '🪞',
+    situation: 'Three mirror images of the Trickster point at the scene. Only one of them tells the truth. Which one?',
+    stakes: 'Right: you find the real Trickster and land a heavy blow. Wrong: like any wrong answer, it can cost a heart. You can also leave it.',
+    good: '🪞 You found the true reflection! A heavy blow lands.', bad: '↻ Not quite. That reflection was lying.',
+  },
 } as const
 
 /** A boss trial: one choice inside the boss fight. Answering is final; skipping is free. */
@@ -41,7 +47,7 @@ export default function TrialScreen({ trial, state, onAnswer, onSkip, onClose }:
   }
   /** A reply option shows its Chinese and pinyin before the answer (the meaning is what is tested) and its English after. */
   const label = (key: string) => {
-    if (trial.boss !== 'wraith') return <>{key}</>
+    if (trial.boss !== 'wraith' && trial.boss !== 'trickster') return <>{key}</>
     const o = trial.options.find(x => x.zh === key)!
     return <span className="trial-reply"><b lang="zh">{o.zh}</b><small>{o.py}</small>{answered && <small>{o.en}</small>}</span>
   }
@@ -50,7 +56,9 @@ export default function TrialScreen({ trial, state, onAnswer, onSkip, onClose }:
     <div className="enc-body">
       <div className="enc-person" aria-hidden="true">{frame.icon}</div>
       <p className="enc-situation">{frame.situation}</p>
-      {trial.boss === 'scribe'
+      {trial.boss === 'trickster'
+        ? <div className="enc-request trial-carving"><p className="trial-picture" role="img" aria-label={trial.en}>{trial.picture}</p>{answered && <p>{trial.en}</p>}</div>
+        : trial.boss === 'scribe'
         ? <div className="enc-request trial-carving"><p lang="zh">{answered ? filledNote(trial) : trial.zh.split(BLANK).flatMap((part, i) => i ? [<span key={i} className="trial-blank" aria-label="missing character">？</span>, part] : [part])}</p>{answered && <p>{trial.py}</p>}<p>{trial.en}</p></div>
         : <div className="enc-request trial-carving"><p lang="zh">{trial.zh}</p>{trial.boss === 'wraith' && <p>{trial.py}</p>}{answered && <p>{trial.en}</p>}</div>}
       {!answered && <p className="trial-stakes">{frame.stakes}</p>}

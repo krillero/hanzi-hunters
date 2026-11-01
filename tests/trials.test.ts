@@ -149,3 +149,30 @@ test('a right character breaks every remaining seal without damage; a wrong one 
   const miss = resolveTrial(io({ ...run, secondLeft: 0 }, optionKeys(t).find(o => o !== t.answer)!))!
   assert.equal(miss.run.hearts, run.hearts - 1); assert.equal(miss.run.shield, run.shield)
 })
+
+/** The floor-4 Trickster fight at the given share of its HP. */
+const trickster = (share: number, over: Partial<Run> = {}): Run => {
+  const r = newRun(NO_BONUSES, GEAR, ENEMIES), hp = enemyStats(ENEMIES, 4, 3, r.depth).hp
+  return { ...r, floor: 4, kill: 3, phase: 'fighting', enemyHp: Math.round(hp * share), shield: 0, ...over }
+}
+
+test('the Trickster offers its mirrors once below half HP; the validator needs a picture and full statements', () => {
+  assert.equal(offerTrial(trickster(0.8), known, ENEMIES).trial, undefined)
+  const t = offerTrial(trickster(0.4), known, ENEMIES, () => 0).trial!
+  assert.equal(trialById(t.id)!.boss, 'trickster')
+  const her = trialsJson.trials.find(x => x.id === 'trickster-her')!
+  const bad = (patch: object) => validateTrials({ trials: [{ ...her, ...patch }] }, wordIds).join()
+  assert.match(bad({ picture: '' }), /picture is required/)
+  assert.match(bad({ options: [her.options[0], her.options[1], { zh: '这是你。' }] }), /needs zh, py and en/)
+  assert.match(bad({ options: [her.options[0], her.options[1], { zh: '这是猫。', py: 'Zhè shì māo.', en: 'This is a cat.' }] }), /"猫" is shown/)
+})
+
+test('the true statement lands a heavy blow that never kills; a false one is an ordinary wrong answer', () => {
+  const run = offerTrial(trickster(0.45), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const hp = enemyStats(ENEMIES, 4, 3, run.depth).hp
+  const res = resolveTrial(io(run, t.answer))!
+  assert.ok(res.correct); assert.equal(res.hit, Math.min(run.enemyHp - 1, Math.round(hp * 0.3))); assert.equal(res.run.hearts, run.hearts)
+  assert.equal(resolveTrial(io({ ...run, enemyHp: 2 }, t.answer))!.run.enemyHp, 1)
+  const miss = resolveTrial(io({ ...run, secondLeft: 0 }, optionKeys(t).find(o => o !== t.answer)!))!
+  assert.equal(miss.run.hearts, run.hearts - 1); assert.equal(miss.run.enemyHp, run.enemyHp)
+})

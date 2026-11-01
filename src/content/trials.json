@@ -395,6 +395,176 @@
       ],
       "answer": "有",
       "note": "有 means “there is / have”. 友 sounds the same but appears in words like 朋友; 也 means also."
+    },
+    {
+      "id": "trickster-three",
+      "boss": "trickster",
+      "requires": [
+        "这里",
+        "有",
+        "没有",
+        "三",
+        "四",
+        "个",
+        "人"
+      ],
+      "picture": "🧑🧑🧑",
+      "en": "Three people sit by the fire.",
+      "options": [
+        {
+          "zh": "这里有三个人。",
+          "py": "Zhèlǐ yǒu sān ge rén.",
+          "en": "There are three people here."
+        },
+        {
+          "zh": "这里有四个人。",
+          "py": "Zhèlǐ yǒu sì ge rén.",
+          "en": "There are four people here."
+        },
+        {
+          "zh": "这里没有人。",
+          "py": "Zhèlǐ méiyǒu rén.",
+          "en": "There is nobody here."
+        }
+      ],
+      "answer": "这里有三个人。",
+      "note": "三 is three and 四 is four. 没有 negates 有: 这里没有人 means nobody is here."
+    },
+    {
+      "id": "trickster-five",
+      "boss": "trickster",
+      "requires": [
+        "这里",
+        "有",
+        "三",
+        "四",
+        "五",
+        "个",
+        "人"
+      ],
+      "picture": "🧑🧑🧑🧑🧑",
+      "en": "Five people sit by the fire.",
+      "options": [
+        {
+          "zh": "这里有五个人。",
+          "py": "Zhèlǐ yǒu wǔ ge rén.",
+          "en": "There are five people here."
+        },
+        {
+          "zh": "这里有四个人。",
+          "py": "Zhèlǐ yǒu sì ge rén.",
+          "en": "There are four people here."
+        },
+        {
+          "zh": "这里有三个人。",
+          "py": "Zhèlǐ yǒu sān ge rén.",
+          "en": "There are three people here."
+        }
+      ],
+      "answer": "这里有五个人。",
+      "note": "五 is five; 四 is four and 三 is three."
+    },
+    {
+      "id": "trickster-nobody",
+      "boss": "trickster",
+      "requires": [
+        "这里",
+        "有",
+        "没有",
+        "三",
+        "五",
+        "个",
+        "人"
+      ],
+      "picture": "🔥",
+      "en": "An empty campfire: nobody is there.",
+      "options": [
+        {
+          "zh": "这里没有人。",
+          "py": "Zhèlǐ méiyǒu rén.",
+          "en": "There is nobody here."
+        },
+        {
+          "zh": "这里有三个人。",
+          "py": "Zhèlǐ yǒu sān ge rén.",
+          "en": "There are three people here."
+        },
+        {
+          "zh": "这里有五个人。",
+          "py": "Zhèlǐ yǒu wǔ ge rén.",
+          "en": "There are five people here."
+        }
+      ],
+      "answer": "这里没有人。",
+      "note": "没有 (méiyǒu) negates 有: 这里没有人 means there is nobody here."
+    },
+    {
+      "id": "trickster-her",
+      "boss": "trickster",
+      "requires": [
+        "这",
+        "是",
+        "她",
+        "他",
+        "这里",
+        "没有",
+        "人"
+      ],
+      "picture": "👩",
+      "en": "A woman stands by the fire.",
+      "options": [
+        {
+          "zh": "这是她。",
+          "py": "Zhè shì tā.",
+          "en": "This is her."
+        },
+        {
+          "zh": "这是他。",
+          "py": "Zhè shì tā.",
+          "en": "This is him."
+        },
+        {
+          "zh": "这里没有人。",
+          "py": "Zhèlǐ méiyǒu rén.",
+          "en": "There is nobody here."
+        }
+      ],
+      "answer": "这是她。",
+      "note": "她 (with 女, woman) is she/her; 他 is he/him. Both are said tā, so only the character tells you."
+    },
+    {
+      "id": "trickster-not-her",
+      "boss": "trickster",
+      "requires": [
+        "这",
+        "不",
+        "是",
+        "她",
+        "这里",
+        "没有",
+        "人"
+      ],
+      "picture": "👨",
+      "en": "A man stands by the fire.",
+      "options": [
+        {
+          "zh": "这不是她。",
+          "py": "Zhè bú shì tā.",
+          "en": "This is not her."
+        },
+        {
+          "zh": "这是她。",
+          "py": "Zhè shì tā.",
+          "en": "This is her."
+        },
+        {
+          "zh": "这里没有人。",
+          "py": "Zhèlǐ méiyǒu rén.",
+          "en": "There is nobody here."
+        }
+      ],
+      "answer": "这不是她。",
+      "note": "The picture shows a man, so 这不是她 (this is not her) is true. 不 before a fourth tone is said bú: bú shì."
     }
   ]
 }
