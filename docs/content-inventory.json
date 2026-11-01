@@ -11,9 +11,9 @@
   "guide": "docs/CONTENT_GUIDE.md",
   "stats": {
     "entries": 127,
-    "explanations": 126,
+    "explanations": 60,
     "sentenceQuestions": 3,
-    "entriesWithoutExplanation": 1,
+    "entriesWithoutExplanation": 67,
     "notReviewedByAPerson": {
       "entries": 127,
       "exampleSentences": 64,
@@ -21,7 +21,7 @@
       "curricula": 2
     },
     "validatorErrors": 0,
-    "validatorWarnings": 23
+    "validatorWarnings": 7
   },
   "_teachingOrder": "words.json order does not matter. The teaching order is in curricula below (curricula[].order).",
   "curricula": {
@@ -4853,7 +4853,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "一",
@@ -5030,7 +5030,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "山",
@@ -5052,7 +5052,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "木",
@@ -5099,7 +5099,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "天",
@@ -5146,7 +5146,7 @@
         "喜欢"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "我",
@@ -5259,7 +5259,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "子",
@@ -5280,7 +5280,7 @@
         "孩子"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "中",
@@ -5301,7 +5301,7 @@
         "国"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "国",
@@ -5324,7 +5324,7 @@
         "中"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "是",
@@ -5367,7 +5367,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "四",
@@ -5389,7 +5389,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "五",
@@ -5429,7 +5429,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "八",
@@ -5520,7 +5520,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "上",
@@ -5588,7 +5588,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "目",
@@ -5635,7 +5635,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "石",
@@ -5678,7 +5678,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "车",
@@ -5696,7 +5696,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "马",
@@ -5718,7 +5718,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "鸟",
@@ -5736,7 +5736,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "鱼",
@@ -5758,7 +5758,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "米",
@@ -5781,7 +5781,7 @@
         "米饭"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "父",
@@ -5804,7 +5804,7 @@
         "爸爸"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "母",
@@ -5827,7 +5827,7 @@
         "妈妈"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "家",
@@ -5872,7 +5872,7 @@
         "学习"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "生",
@@ -5894,7 +5894,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "年",
@@ -5916,7 +5916,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "你好",
@@ -5937,7 +5937,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "谢谢",
@@ -6098,7 +6098,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "看-look",
@@ -6137,7 +6137,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "吗",
@@ -6191,7 +6191,7 @@
         "particle"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "再见",
@@ -6211,7 +6211,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "请",
@@ -6233,7 +6233,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "对不起",
@@ -6256,7 +6256,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "您",
@@ -6279,7 +6279,7 @@
         "你"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "也",
@@ -6301,7 +6301,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "很",
@@ -6412,7 +6412,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "零",
@@ -6434,7 +6434,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "个",
@@ -6519,7 +6519,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "爸爸",
@@ -6545,7 +6545,7 @@
         "父"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "哥哥",
@@ -6591,7 +6591,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "弟弟",
@@ -6614,7 +6614,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "妹妹",
@@ -6637,7 +6637,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "孩子",
@@ -6707,7 +6707,7 @@
         "想"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "吃",
@@ -6729,7 +6729,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "喝",
@@ -6789,7 +6789,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "米饭",
@@ -6812,7 +6812,7 @@
         "米"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "菜",
@@ -6834,7 +6834,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "来",
@@ -6856,7 +6856,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "去",
@@ -6946,7 +6946,7 @@
         "这"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "明天",
@@ -6986,7 +6986,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "现在",
@@ -7093,7 +7093,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "少",
@@ -7111,7 +7111,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "热",
@@ -7133,7 +7133,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "冷",
@@ -7155,7 +7155,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "忙",
@@ -7195,7 +7195,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "高兴",
@@ -7215,7 +7215,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "学生",
@@ -7261,7 +7261,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "学习",
@@ -7322,7 +7322,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "说",
@@ -7340,7 +7340,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "读",
@@ -7361,7 +7361,7 @@
         "看-look"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "写",
@@ -7379,7 +7379,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "书",
@@ -7423,7 +7423,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "这",
@@ -7468,7 +7468,7 @@
         "lookalike"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "钱",
@@ -7512,7 +7512,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "多少",
@@ -7554,7 +7554,7 @@
         "listen2meaning"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     },
     {
       "id": "块",
@@ -7576,7 +7576,7 @@
         "listen2pinyin"
       ],
       "review": "ai-draft",
-      "hasExplanation": true
+      "hasExplanation": false
     }
   ],
   "explanations": [
@@ -7585,7 +7585,6 @@
       "title": "人 (rén)",
       "summary": "Can refer to a person or to people; the character itself does not mark singular or plural. 三个人 means three people.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7597,7 +7596,6 @@
       "title": "大 (dà)",
       "summary": "Describes something big or large. In a simple description say 很大, rather than inserting 是 before 大.",
       "sectionTypes": [
-        "text",
         "compare",
         "examples"
       ],
@@ -7607,22 +7605,11 @@
       ]
     },
     {
-      "id": "小",
-      "title": "小 (xiǎo)",
-      "summary": "Describes something small. Compare 大, big. 小 can also relate to being young in other contexts.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
       "id": "一",
       "title": "一 (yī)",
       "summary": "Yī is the dictionary reading and is used in counting. Before a fourth tone it normally becomes yí; before a first, second, or third tone it normally becomes yì.",
       "sectionTypes": [
-        "text",
         "compare",
-        "tips",
         "examples"
       ],
       "related": [
@@ -7635,7 +7622,6 @@
       "title": "二 (èr)",
       "summary": "Use 二 when counting or reading digits. Before most classifiers, 两 is normally used instead: 两个人 means two people.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7648,7 +7634,6 @@
       "title": "三 (sān)",
       "summary": "First tone: high and level. 三个人 means three people.",
       "sectionTypes": [
-        "text",
         "compare",
         "examples"
       ],
@@ -7662,7 +7647,6 @@
       "title": "日 (rì)",
       "summary": "A character used for sun or day, especially in compounds and written dates. For the sun in ordinary conversation, 太阳 is usual; 天 is common when counting days.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7675,7 +7659,6 @@
       "title": "月 (yuè)",
       "summary": "In dates, a number plus 月 names the month: 三月 is March. 月 also means moon; everyday speech often uses 月亮 for the moon.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7687,26 +7670,7 @@
       "title": "水 (shuǐ)",
       "summary": "喝水 means drink water. The final ui is written with the tone mark on i: shuǐ.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "火",
-      "title": "火 (huǒ)",
-      "summary": "Means fire and appears in many compounds. Its third tone is often low in connected speech.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "山",
-      "title": "山 (shān)",
-      "summary": "An everyday noun meaning mountain. The first tone stays high and level.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -7715,7 +7679,6 @@
       "title": "木 (mù)",
       "summary": "A character meaning wood or tree, often used inside compounds. 树 is the usual everyday word for a tree.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7723,20 +7686,10 @@
       ]
     },
     {
-      "id": "口",
-      "title": "口 (kǒu)",
-      "summary": "Can mean mouth or an opening. 嘴 is also common for mouth in conversation; 口 occurs in many compounds and counting expressions.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
       "id": "天",
       "title": "天 (tiān)",
       "summary": "Can mean day or sky. 三天 means three days; 今天 means today.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7744,20 +7697,10 @@
       ]
     },
     {
-      "id": "好",
-      "title": "好 (hǎo)",
-      "summary": "Use hǎo for good or well. 好 also has the reading hào in other words, so its pronunciation depends on meaning.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
       "id": "我",
       "title": "我 (wǒ)",
       "summary": "Use 我 for yourself. Chinese pronouns do not change form between I and me.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -7767,7 +7710,6 @@
       "title": "你 (nǐ)",
       "summary": "The usual singular you. 您 (nín) is a more respectful form.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -7777,7 +7719,6 @@
       "title": "他 (tā)",
       "summary": "Written 他 refers to he or him. It sounds exactly like 她 (she/her), so speech needs context.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7789,7 +7730,6 @@
       "title": "她 (tā)",
       "summary": "Written 她 refers to she or her. It sounds exactly like 他 (he/him); the 女 component helps distinguish the writing.",
       "sectionTypes": [
-        "text",
         "compare",
         "examples"
       ],
@@ -7798,67 +7738,11 @@
       ]
     },
     {
-      "id": "女",
-      "title": "女 (nǚ)",
-      "summary": "A character meaning female or woman. 女人 and 女性 are fuller words; 女 also appears as a component in other characters.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "子",
-      "title": "子 (zǐ)",
-      "summary": "A character meaning child or son in some words. Everyday child is usually 孩子. 子 has the dictionary reading zǐ, but is neutral in common words such as 孩子 and 名字.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "中",
-      "title": "中 (zhōng)",
-      "summary": "Zhōng means middle or center and appears in 中国 (China). China is not the meaning of 中 in every context. The character also has the reading zhòng in other uses.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "国",
-      "title": "国 (guó)",
-      "summary": "Means country or state, usually inside a compound such as 中国 or 国家. Do not replace the full country name 中国 with 国 alone.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
       "id": "是",
       "title": "是 (shì)",
       "summary": "Links a person or thing to an identity or category: 我是学生 means I am a student. It is not a general equivalent of English yes or the is before an adjective.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "不",
-      "title": "不 (bù)",
-      "summary": "Usually negates present or habitual actions and descriptions. Before a fourth-tone syllable it is normally pronounced bú. Negate 有 with 没有 instead.",
-      "sectionTypes": [
-        "text",
-        "tips"
-      ],
-      "related": []
-    },
-    {
-      "id": "四",
-      "title": "四 (sì)",
-      "summary": "Fourth tone: a clear fall. 四 (sì) and 十 (shí, ten) have different initials and tones.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -7867,17 +7751,7 @@
       "title": "五 (wǔ)",
       "summary": "Third tone. In ordinary speech a third tone is often low rather than a full dip and rise.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "六",
-      "title": "六 (liù)",
-      "summary": "Fourth tone. 六个人 means six people.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -7886,7 +7760,6 @@
       "title": "八 (bā)",
       "summary": "First tone. 八个人 means eight people.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -7896,7 +7769,6 @@
       "title": "十 (shí)",
       "summary": "十一 means eleven and 二十 means twenty. 十 and 石 (stone) are pronounced alike.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7904,20 +7776,10 @@
       ]
     },
     {
-      "id": "九",
-      "title": "九 (jiǔ)",
-      "summary": "Third tone. 九 comes between 八 (eight) and 十 (ten) when counting.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
       "id": "上",
       "title": "上 (shàng)",
       "summary": "Can mean above or up. It also has other uses in phrases such as 上学, go to school.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7929,7 +7791,6 @@
       "title": "下 (xià)",
       "summary": "Can mean below or down. It also has other uses, so the whole phrase determines the meaning.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7937,20 +7798,10 @@
       ]
     },
     {
-      "id": "手",
-      "title": "手 (shǒu)",
-      "summary": "Means hand. It also appears in 手机 (mobile phone), where translating each character separately does not give the whole word's meaning.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
       "id": "目",
       "title": "目 (mù)",
       "summary": "A character meaning eye, mostly used in compounds. The ordinary conversational word for eye is 眼睛 (yǎnjing). 目 and 木 sound alike.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7958,20 +7809,10 @@
       ]
     },
     {
-      "id": "田",
-      "title": "田 (tián)",
-      "summary": "Usually refers to cultivated land, especially in compounds. It is useful character knowledge but not a priority for the first conversational lessons.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
       "id": "石",
       "title": "石 (shí)",
       "summary": "A character meaning stone, commonly used in compounds. 石头 (shítou) is an everyday word for a stone. 石 also has another reading in a traditional unit of measure.",
       "sectionTypes": [
-        "text",
         "compare"
       ],
       "related": [
@@ -7979,121 +7820,11 @@
       ]
     },
     {
-      "id": "门",
-      "title": "门 (mén)",
-      "summary": "An everyday noun meaning door or gate. It has a rising second tone.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "车",
-      "title": "车 (chē)",
-      "summary": "An everyday word for a vehicle or car. The character has the reading jū in some specialized contexts, such as Chinese chess.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "马",
-      "title": "马 (mǎ)",
-      "summary": "An everyday noun meaning horse. Its third tone is different from the neutral tone of the question particle 吗.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "鸟",
-      "title": "鸟 (niǎo)",
-      "summary": "An everyday noun meaning bird. Its third tone is often low in connected speech.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "鱼",
-      "title": "鱼 (yú)",
-      "summary": "An everyday noun meaning fish, including fish as food. It has a rising second tone.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "米",
-      "title": "米 (mǐ)",
-      "summary": "Commonly means uncooked rice or rice grain. 米饭 is the ordinary word for cooked rice; 米 can also mean meter as a unit of length.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "父",
-      "title": "父 (fù)",
-      "summary": "A character meaning father, usually in compounds such as 父亲. 爸爸 is the everyday beginner word for dad.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "母",
-      "title": "母 (mǔ)",
-      "summary": "A character meaning mother, usually in compounds such as 母亲. 妈妈 is the everyday beginner word for mom.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
       "id": "家",
       "title": "家 (jiā)",
       "summary": "Can mean home or family. 回家 means return home; 家 does not only refer to the physical building.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "学",
-      "title": "学 (xué)",
-      "summary": "Can mean to learn or study. 学习 is a common fuller word; 学 also appears in 学生 and 学校.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "生",
-      "title": "生 (shēng)",
-      "summary": "A character with several meanings, including life, being born, and raw. Learn its meaning in complete words; 学生 means student, not study-life.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "年",
-      "title": "年 (nián)",
-      "summary": "Use 年 for years and dates. For a person's age in years, use 岁 instead.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "你好",
-      "title": "你好 (nǐ hǎo)",
-      "summary": "A common greeting. Both syllables are written with third tones; in ordinary speech the first changes to a rising tone: ní hǎo.",
-      "sectionTypes": [
-        "text",
-        "tips"
       ],
       "related": []
     },
@@ -8102,7 +7833,6 @@
       "title": "谢谢 (xièxie)",
       "summary": "Use to thank someone. The second syllable is neutral and usually shorter and lighter than the first.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8112,7 +7842,6 @@
       "title": "朋友 (péngyou)",
       "summary": "An everyday word for friend. The second syllable, you, is neutral: péngyou.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8122,7 +7851,6 @@
       "title": "今天 (jīntiān)",
       "summary": "Both syllables have first tone. 今天 is today, 昨天 yesterday, and 明天 tomorrow.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8132,7 +7860,6 @@
       "title": "学校 (xuéxiào)",
       "summary": "A place of education. The tones are second then fourth.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8142,7 +7869,6 @@
       "title": "喜欢 (xǐhuan)",
       "summary": "Can be followed by a noun or an activity: 喜欢茶 means like tea; 喜欢看书 means like reading. The second syllable, huan, is neutral.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8152,17 +7878,7 @@
       "title": "妈妈 (māma)",
       "summary": "An everyday word for mother. The first syllable has first tone and the second is neutral.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "谁",
-      "title": "谁 (shéi)",
-      "summary": "Asks which person is meant. Shéi and shuí are both accepted pronunciations of this word.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8171,17 +7887,7 @@
       "title": "看 (kàn)",
       "summary": "Use kàn for looking, watching, or reading. 看书 means read a book. 看 also has the reading kān for guarding or looking after.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "看-guard",
-      "title": "看 (kān)",
-      "summary": "Use kān for guarding or looking after, as in 看门 (kān mén). This is a different reading of the same character as kàn, look/watch/read.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8190,7 +7896,6 @@
       "title": "吗 (ma)",
       "summary": "At the end of a statement, 吗 makes a yes/no question. This particle is neutral tone; do not add it automatically to questions already containing 什么 or 谁.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8200,62 +7905,7 @@
       "title": "的 (de)",
       "summary": "Links an owner or description to a noun: 我的书 means my book. This grammatical use is neutral de; the character has other readings in other words.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "了",
-      "title": "了 (le)",
-      "summary": "Neutral le is used after verbs for completed events or at sentence end for a new situation. It is not a general past-tense ending; other words use the reading liǎo.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "再见",
-      "title": "再见 (zàijiàn)",
-      "summary": "A common way to say goodbye. Both syllables have fourth tones.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "请",
-      "title": "请 (qǐng)",
-      "summary": "Before an action, 请 makes a polite request. 请坐 (qǐng zuò) means please sit down.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "对不起",
-      "title": "对不起 (duìbuqǐ)",
-      "summary": "Use to apologize or politely get someone's attention. In this expression, bu is neutral; it is not the ordinary isolated reading bù.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "您",
-      "title": "您 (nín)",
-      "summary": "A respectful singular form of you, often used with elders, customers, or someone you wish to address politely.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "也",
-      "title": "也 (yě)",
-      "summary": "Usually comes before the verb or adjective phrase. 我也去 means I am going too.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8264,7 +7914,6 @@
       "title": "很 (hěn)",
       "summary": "Often comes before an adjective. In an ordinary description it may simply make the sentence natural, without strongly emphasizing very.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8274,7 +7923,6 @@
       "title": "叫 (jiào)",
       "summary": "Use 我叫... to give your name. 叫 also means to call or shout in other contexts.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8284,7 +7932,6 @@
       "title": "名字 (míngzi)",
       "summary": "Means a person's or thing's name. The second syllable, zi, is neutral.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8294,26 +7941,7 @@
       "title": "什么 (shénme)",
       "summary": "Use to ask what something is or what someone does or wants. The second syllable, me, is neutral. 什么 stays where the answer would go in the sentence.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "哪",
-      "title": "哪 (nǎ)",
-      "summary": "Asks which one. 哪个 (nǎ ge) means which one; 哪 is different from 那 (nà, that).",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "零",
-      "title": "零 (líng)",
-      "summary": "Use 零 for zero, including when reading digits in a phone number. It has a second tone.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8322,8 +7950,6 @@
       "title": "个 (gè)",
       "summary": "A common counting word between a number and a noun: 三个人 means three people. Its dictionary tone is fourth; it is often neutral in phrases such as 一个 (yí ge).",
       "sectionTypes": [
-        "text",
-        "tips",
         "examples"
       ],
       "related": []
@@ -8333,7 +7959,6 @@
       "title": "两 (liǎng)",
       "summary": "Normally used before classifiers: 两个人 means two people. Use 二 for counting one, two, three and for most digit-by-digit numbers.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8343,26 +7968,7 @@
       "title": "有 (yǒu)",
       "summary": "Expresses possession or existence. 我有书 means I have a book or books. Its usual negative is 没有, not 不有.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "没有",
-      "title": "没有 (méiyǒu)",
-      "summary": "Negates 有: 我没有书 means I do not have a book. It can also negate an action that has not happened; start with possession here.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "爸爸",
-      "title": "爸爸 (bàba)",
-      "summary": "An everyday word for father. The first syllable has fourth tone and the second is neutral.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8371,35 +7977,7 @@
       "title": "哥哥 (gēge)",
       "summary": "Refers to an older brother. Chinese distinguishes older and younger siblings; the second syllable is neutral.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "姐姐",
-      "title": "姐姐 (jiějie)",
-      "summary": "Refers to an older sister. The second syllable is neutral.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "弟弟",
-      "title": "弟弟 (dìdi)",
-      "summary": "Refers to a younger brother. Compare 哥哥, older brother. The second syllable is neutral.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "妹妹",
-      "title": "妹妹 (mèimei)",
-      "summary": "Refers to a younger sister. Compare 姐姐, older sister. The second syllable is neutral.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8408,7 +7986,6 @@
       "title": "孩子 (háizi)",
       "summary": "The usual everyday word for a child or children. The second syllable is neutral; 子 alone is not the ordinary conversational substitute.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8418,26 +7995,7 @@
       "title": "想 (xiǎng)",
       "summary": "Before an action, 想 can express wanting to do it. 想喝茶 means want to drink tea. It can also mean think or miss someone.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "要",
-      "title": "要 (yào)",
-      "summary": "Expresses wanting or needing something. 我要茶 means I want tea; 想 often sounds softer when expressing a wish to do something.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "吃",
-      "title": "吃 (chī)",
-      "summary": "Use for eating. 吃饭 (chīfàn) means to eat or have a meal; it does not require the meal to contain rice.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8446,7 +8004,6 @@
       "title": "喝 (hē)",
       "summary": "Use with drinks: 喝水 means drink water. The reading taught here is hē; 喝 has another reading in other uses.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8456,44 +8013,7 @@
       "title": "茶 (chá)",
       "summary": "喝茶 means drink tea. 茶 has a rising second tone.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "咖啡",
-      "title": "咖啡 (kāfēi)",
-      "summary": "Both syllables have first tone. 喝咖啡 means drink coffee.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "米饭",
-      "title": "米饭 (mǐfàn)",
-      "summary": "The ordinary word for cooked rice as food. Compare 米, which commonly refers to uncooked rice.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "菜",
-      "title": "菜 (cài)",
-      "summary": "Can mean vegetables or a prepared dish. A 菜 can contain meat; it does not always mean a vegetable dish.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "来",
-      "title": "来 (lái)",
-      "summary": "Often describes movement toward the speaker or the relevant place. Compare 去, go.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8502,7 +8022,6 @@
       "title": "去 (qù)",
       "summary": "Use before a destination: 去学校 means go to school. Compare 来, come.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8512,7 +8031,6 @@
       "title": "回 (huí)",
       "summary": "回家 means return home. 回 can also mean reply in other contexts.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8522,17 +8040,7 @@
       "title": "在 (zài)",
       "summary": "Use to give a location: 我在家 means I am at home. Before an action, 在 can also mark that it is in progress.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "这里",
-      "title": "这里 (zhèlǐ)",
-      "summary": "Refers to this place. 我在这里 means I am here. 这儿 is another common form, not included as a separate entry in this course.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8541,17 +8049,7 @@
       "title": "明天 (míngtiān)",
       "summary": "The day after today. 明 has second tone and 天 has first tone.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "昨天",
-      "title": "昨天 (zuótiān)",
-      "summary": "The day before today. 昨 has second tone and 天 has first tone.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8560,7 +8058,6 @@
       "title": "现在 (xiànzài)",
       "summary": "Refers to the present time. Both syllables have fourth tone.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8570,7 +8067,6 @@
       "title": "时候 (shíhou)",
       "summary": "Used in 什么时候 (shénme shíhou), meaning when. It is not the word for an hour; hou is neutral.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8580,7 +8076,6 @@
       "title": "星期 (xīngqī)",
       "summary": "星期一 through 星期六 name Monday through Saturday. Sunday is 星期日 or 星期天.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8590,44 +8085,7 @@
       "title": "点 (diǎn)",
       "summary": "After a number, 点 gives the hour: 三点 means three o'clock. It has several other meanings, including point or dot.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "多",
-      "title": "多 (duō)",
-      "summary": "Describes a large quantity. 很多 means many or a lot; compare 少, few or little.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "少",
-      "title": "少 (shǎo)",
-      "summary": "Describes a small quantity. This meaning is shǎo; shào belongs to other uses of the character.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "热",
-      "title": "热 (rè)",
-      "summary": "Can describe hot weather or feeling hot. Compare 冷, cold.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "冷",
-      "title": "冷 (lěng)",
-      "summary": "Can describe cold weather or feeling cold. Compare 热, hot.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8636,26 +8094,7 @@
       "title": "忙 (máng)",
       "summary": "我很忙 means I am busy. 很 can make a simple description natural without strongly emphasizing very.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "累",
-      "title": "累 (lèi)",
-      "summary": "Use lèi when describing tiredness. 累 has different readings in other words; learn this reading with its meaning.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "高兴",
-      "title": "高兴 (gāoxìng)",
-      "summary": "Expresses happiness or pleasure. The tones are first then fourth.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8664,17 +8103,7 @@
       "title": "学生 (xuésheng)",
       "summary": "Student. CC-CEDICT records xuésheng with neutral sheng; the official 2025 HSK syllabus gives xuéshēng. Both are accepted here. Do not confuse 学生 with 老师 (teacher).",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "老师",
-      "title": "老师 (lǎoshī)",
-      "summary": "An everyday word and form of address for a teacher. Do not pronounce the second syllable like the neutral sheng in 学生.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8683,7 +8112,6 @@
       "title": "学习 (xuéxí)",
       "summary": "Used for learning or studying. 学习汉语 means study Chinese.",
       "sectionTypes": [
-        "text",
         "examples"
       ],
       "related": []
@@ -8693,44 +8121,7 @@
       "title": "汉语 (hànyǔ)",
       "summary": "Refers to the Chinese language. In this course the spoken variety taught is standard Mandarin; 中文 is another common term for Chinese.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "听",
-      "title": "听 (tīng)",
-      "summary": "Use for listening or hearing. 听老师说 means listen to the teacher speak.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "说",
-      "title": "说 (shuō)",
-      "summary": "Use for speaking or saying something. 说汉语 means speak Chinese.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "读",
-      "title": "读 (dú)",
-      "summary": "Can mean reading silently or aloud. 看书 is also used for reading, so 看 and 读 are not always contrasting answers.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "写",
-      "title": "写 (xiě)",
-      "summary": "写字 means to write characters. The tone mark goes on e in xiě.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8739,17 +8130,7 @@
       "title": "书 (shū)",
       "summary": "An everyday word for book. 看书 means read a book; use 本 as the classifier when counting books.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "字",
-      "title": "字 (zì)",
-      "summary": "A written character, as in 汉字. A Chinese word may contain one character or several characters.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8758,17 +8139,7 @@
       "title": "这 (zhè)",
       "summary": "Points to something nearby or being discussed. Compare 那, that. Before classifiers you may also hear zhèi.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "那",
-      "title": "那 (nà)",
-      "summary": "Points to something farther away or already mentioned. Compare 这, this. Before classifiers you may also hear nèi.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8777,17 +8148,7 @@
       "title": "钱 (qián)",
       "summary": "An everyday word for money. 多少钱 means how much money or how much does it cost.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "买",
-      "title": "买 (mǎi)",
-      "summary": "Third tone. Do not confuse 买 (buy) with 卖 (mài, sell), which has a different tone and an extra part at the top.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     },
@@ -8796,26 +8157,7 @@
       "title": "多少 (duōshao)",
       "summary": "Asks about an amount or number. 多少钱 asks the price. The second syllable, shao, is neutral in this question word as taught here.",
       "sectionTypes": [
-        "text",
         "examples"
-      ],
-      "related": []
-    },
-    {
-      "id": "商店",
-      "title": "商店 (shāngdiàn)",
-      "summary": "A place where things are sold. The tones are first then fourth.",
-      "sectionTypes": [
-        "text"
-      ],
-      "related": []
-    },
-    {
-      "id": "块",
-      "title": "块 (kuài)",
-      "summary": "In everyday price expressions, 块 is the spoken unit for yuan: 三块钱 means three yuan. It also counts pieces or chunks of things.",
-      "sectionTypes": [
-        "text"
       ],
       "related": []
     }
@@ -8856,24 +8198,8 @@
     "errors": [],
     "warnings": [
       "words.json (孩子): the meaning \"child\" is also used by 子; the two can never be wrong answers for each other (add \"confusable\" or make the meanings distinct)",
-      "explanations.json[\"日\"]: uses characters outside the vocabulary (太 阳). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"月\"]: uses characters outside the vocabulary (亮). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"木\"]: uses characters outside the vocabulary (树). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"口\"]: uses characters outside the vocabulary (嘴). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"女\"]: uses characters outside the vocabulary (性). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"手\"]: uses characters outside the vocabulary (机). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"目\"]: uses characters outside the vocabulary (眼 睛). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"石\"]: uses characters outside the vocabulary (头). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"父\"]: uses characters outside the vocabulary (亲). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"母\"]: uses characters outside the vocabulary (亲). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"年\"]: uses characters outside the vocabulary (岁). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"请\"]: uses characters outside the vocabulary (坐). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"这里\"]: uses characters outside the vocabulary (儿). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"汉语\"]: uses characters outside the vocabulary (文). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"书\"]: uses characters outside the vocabulary (本). Fine for radicals/parts, but prefer vocabulary characters in examples",
       "explanations.json[\"这\"]: uses characters outside the vocabulary (本). Fine for radicals/parts, but prefer vocabulary characters in examples",
       "explanations.json[\"钱\"]: uses characters outside the vocabulary (本). Fine for radicals/parts, but prefer vocabulary characters in examples",
-      "explanations.json[\"买\"]: uses characters outside the vocabulary (卖). Fine for radicals/parts, but prefer vocabulary characters in examples",
       "explanations.json[\"多少\"]: uses characters outside the vocabulary (本). Fine for radicals/parts, but prefer vocabulary characters in examples",
       "cloze.json[0] (ma-student): not yet reviewed by a person (status \"ai-draft\"): a Mandarin teacher must check that only the answer fits and every wrong option really does not",
       "cloze.json[1] (de-book): not yet reviewed by a person (status \"ai-draft\"): a Mandarin teacher must check that only the answer fits and every wrong option really does not",

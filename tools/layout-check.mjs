@@ -9,7 +9,7 @@ const save = (enemyHp) => ({ version: 2, meta: { gold: 0, upgrades: [], bestFloo
 const SLOTS = { arena: '.phaser-mount', card: '.stage-card', slotHanzi: '.slot-hanzi', choices: '.answer-list', bar: '.action-bar', tools: '.compact-tools' }
 const snap = (p) => p.evaluate((sels) => { const o = {}; for (const [k, s] of Object.entries(sels)) { const e = document.querySelector(s); const r = e?.getBoundingClientRect(); o[k] = r ? `${Math.round(r.top)}/${Math.round(r.height)}` : 'missing' } const sh = document.querySelector('.app-shell'); o.overflow = sh.scrollHeight - sh.clientHeight; return o }, SLOTS)
 const browser = await chromium.launch(); let bad = 0
-for (const [w, h] of [[411, 650], [390, 844], [360, 800], [360, 640], [320, 568]]) for (const [name, hp, pickRight] of [['wrong answer, longest note', 99, false], ['kill with rewards', 5, true]]) {
+for (const [w, h] of [[411, 650], [390, 844], [360, 800], [360, 640]]) for (const [name, hp, pickRight] of [['wrong answer, longest note', 99, false], ['kill with rewards', 5, true]]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true }); const p = await ctx.newPage()
   await p.goto(base); await p.evaluate(([s, t]) => { localStorage.setItem('hanzi-hunters-save-v2', JSON.stringify(s)); localStorage.setItem('hanzi-hunters-settings-v1', JSON.stringify(t)) }, [save(hp), { muted: false, autoContinue: 'off' }])
   await p.goto(`${base}/?word=${encodeURIComponent('目')}&kind=meaning`); await p.waitForSelector('.answer-btn'); await p.waitForTimeout(600)

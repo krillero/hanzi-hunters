@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { WORDS } from './data'
-import { SOURCES, getExplanation, hasExplanation, type Example, type Part, type Section } from './content'
-import { audioReliable, entryLabel, homographsOf } from './content/entries'
-import { reviewLabel, sourceLine } from './content/provenance'
+import { getExplanation, hasExplanation, type Example, type Part, type Section } from './content'
+import { audioReliable, homographsOf } from './content/entries'
+import { isHumanReviewed } from './content/provenance'
 
 type Props = { id: string; hidden?: string; onClose: () => void; onOpen: (id: string) => void; onSpeak: (text: string) => void }
 
@@ -15,7 +15,7 @@ const PartCard = ({ p }: { p: Part }) => (
   </div>
 )
 
-/** One example sentence: Chinese, pinyin, English, an optional usage note, a speaker button, and where it comes from. */
+/** One example sentence: Chinese, pinyin, English, an optional usage note and a speaker button. (Source and review status stay in the data and in Settings → Credits.) */
 function ExampleItem({ e, onSpeak }: { e: Example; onSpeak: (text: string) => void }) {
   return (
     <li>
@@ -23,7 +23,6 @@ function ExampleItem({ e, onSpeak }: { e: Example; onSpeak: (text: string) => vo
       <span className="ex-py">{e.pinyin}</span>
       <span className="ex-en">{e.en}</span>
       {e.note && <span className="ex-note">{e.note}</span>}
-      <span className="ex-meta">{reviewLabel(e.review)}{e.source?.length ? ` · Source: ${e.source.map(r => sourceLine(r, SOURCES)).join('; ')}` : ''}</span>
       {e.audio !== false && <button className="ex-speak" onClick={() => onSpeak(e.zh)} aria-label={`Hear the sentence: ${e.en}`}>🔊</button>}
     </li>
   )
@@ -45,12 +44,12 @@ function renderSection(s: Section, i: number, onSpeak: (text: string) => void) {
     case 'examples': return (
       <section key={i}>{head}
         <ul className="ex-examples">{s.items.map((e, k) => <ExampleItem key={k} e={e} onSpeak={onSpeak} />)}</ul>
-        <p className="hint-text">🔊 reads the sentence with your device's text-to-speech voice, which can occasionally choose a wrong reading.</p>
       </section>)
   }
 }
 
-/** Popup with everything known about an entry: the explanation (if any), pronunciation notes, examples, and where the content comes from. */
+/** Popup with everything known about an entry: the note, pronunciation details the note does not already give, the explanation's sections and related entries.
+ *  Provenance is not repeated here: unreviewed entries get a small "draft" tag; sources and licenses are in Settings → Credits & content review. */
 export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak }: Props) {
   const word = WORDS.find(w => w.id === id)
   const ex = getExplanation(id)
@@ -67,21 +66,23 @@ export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak }: P
 
   if (!word) return null
   const siblings = homographsOf(word, WORDS)
-  const hasPron = word.neutral.length > 0 || word.variants.length > 0 || word.speech.length > 0 || siblings.length > 0
+  const summary = ex?.summary ?? word.note
+  const neutralLine = word.neutral.length > 0 && !/neutral/i.test(summary)   // skip when the note already explains it
+  const hasPron = neutralLine || word.variants.length > 0 || word.speech.length > 0 || siblings.length > 0
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="ex-title" onClick={e => e.stopPropagation()}>
         <div className="modal-head">
           <span className={`ex-hanzi ex-len${[...word.hanzi].length}`} lang="zh">{word.hanzi}</span>
-          <div className="ex-titles"><h2 id="ex-title">{ex?.title ?? `About ${word.hanzi}`}</h2><small>{word.pinyin} · {word.meaning}</small></div>
+          <div className="ex-titles"><h2 id="ex-title">{word.pinyin}</h2><small>{word.meaning}{!isHumanReviewed(word.review) && <span className="draft-tag" title="Not yet checked by a teacher">draft</span>}</small></div>
           {audioReliable(word, WORDS) && <button className="icon-btn" onClick={() => onSpeak(word.hanzi)} aria-label="Hear pronunciation">🔊</button>}
           <button className="icon-btn" ref={closeRef} onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="modal-body" ref={bodyRef}>
-          <p className="ex-summary">{ex?.summary ?? word.note}</p>
+          <p className="ex-summary">{summary}</p>
           {hasPron && (
             <section><h3>Pronunciation</h3>
-              <p><b>Dictionary pinyin:</b> {word.pinyin}{word.neutral.length > 0 && <> · {word.neutral.length === [...word.hanzi].length ? 'neutral tone (no tone mark)' : `syllable ${word.neutral.join(', ')} is neutral tone: light and short, no tone mark`}</>}</p>
+              {neutralLine && <p>{word.neutral.length === [...word.hanzi].length ? 'Neutral tone: light and short, no tone mark.' : `Syllable ${word.neutral.join(', ')} is neutral tone: light and short, no tone mark.`}</p>}
               {word.variants.length > 0 && <p><b>Also said:</b> {word.variants.join(', ')}. These are accepted pronunciations of the same word with the same meaning.</p>}
               {siblings.map(sb => <p key={sb.id}><b>Another reading of {sb.hanzi}:</b> {sb.pinyin} means “{sb.meaning}”. <button className="link-btn" onClick={() => onOpen(sb.id)}>Open</button></p>)}
               {word.speech.length > 0 && <>
@@ -99,10 +100,6 @@ export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak }: P
                 return <button key={h} className="ex-chip" disabled={!linked} onClick={() => onOpen(h)} aria-label={`${w.hanzi} ${w.pinyin} ${w.meaning}${hasExplanation(h) ? ', open explanation' : ''}`}><span>{w.hanzi}</span><small>{w.pinyin}</small></button>
               })}</div>
             </section>)}
-          <section className="ex-provenance"><h3>About this entry</h3>
-            <p><b>{entryLabel(word)}</b> · {reviewLabel(word.review)}</p>
-            {(word.source?.length || ex?.source?.length) ? <ul className="ex-tips">{[...(word.source ?? []), ...(ex?.source ?? [])].filter((r, i, a) => a.findIndex(x => x.name === r.name && x.ref === r.ref) === i).map((r, k) => <li key={k}>{sourceLine(r, SOURCES)}. {SOURCES[r.name]?.license ? `License: ${SOURCES[r.name].license}.` : ''} {SOURCES[r.name]?.attribution ?? ''}</li>)}</ul> : <p className="hint-text">No source is recorded for this entry.</p>}
-          </section>
         </div>
       </div>
     </div>
