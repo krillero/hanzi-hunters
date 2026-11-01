@@ -295,7 +295,7 @@ Every piece of content (entry, example, explanation, sentence question) may carr
 
 ## Copy-paste prompt for another agent
 
-A complete ready-to-use version lives in `docs/AGENT_PROMPT.md`; the current content is listed in `docs/content-inventory.json` (regenerate with `npm run inventory`). Short version:
+For choosing a whole new batch of vocabulary (sources, HSK levels, candidate checker, lessons from the first 100), see `docs/vocabulary-toolkit/README.md`. A complete ready-to-use version lives in `docs/AGENT_PROMPT.md`; the current content is listed in `docs/content-inventory.json` (regenerate with `npm run inventory`). Short version:
 
 > You are adding learning content to the Hanzi Hunters project. Read `docs/CONTENT_GUIDE.md` first and follow it exactly.
 > Edit only `src/content/*.json`; do not change code. Task: **<describe the task>**.

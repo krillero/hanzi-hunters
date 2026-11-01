@@ -1,5 +1,16 @@
 # Changelog / test log
 
+## 2026-11-01 — Vocabulary toolkit (branch ccr-2aecd5ae-3v8bz2)
+
+- **`docs/vocabulary-toolkit/`:** workflow, sources and evidence used to pick the first 100 words, so the next batch can start from it (`README.md`, `NEXT-BATCH-PROMPT.md` for an in-repo agent or an outside assistant). The 4 MB CC-CEDICT snapshot is not committed: `tools/fetch-cedict.sh` downloads a fresh one (git-ignored). The nested first-100 ZIP is unpacked to its reports only (`first-100/`).
+- **`npm run vocab:candidates`** (`tools/vocab-candidates.ts`, replaces the toolkit's Python checker): for each candidate, existing entries with that written form, whether they are in the active curriculum or only supplemental, HSK level(s) and CC-CEDICT readings.
+- **Errors found and fixed:** `hsk-map.json` still listed 好 as level 2 (printed `1(2)(4)`, level 1). 像 and 头 have levels that do not fit their entry numbers: marked unverified (PDF not reachable here). Outdated toolkit statements (build failing, readiness bug, 149 tests) are corrected in the README. 62 example notes claimed "including yī in 一个" on sentences without 一; now only the two 一个 sentences say it.
+- `npm run validate:content` 0 errors / 23 warnings, `npm test` 155 pass, `npm run build` pass.
+
+## 2026-11-01 — Content: first 100 everyday words (branch ccr-2aecd5ae-3v8bz2)
+
+- New active curriculum `beginner-mandarin-100`: 100 entries in 20 lessons (36 retained + 64 new entries); `starter-compat` kept for saved lesson ids; all 63 original ids kept (127 entries). Tightened meanings and notes, per-entry question allow-lists, audio off for dictionary polyphones, sentence-question prerequisites, sources `HH-editorial-2026` and `HSK-2025`. All `ai-draft`, needs teacher review.
+
 ## 2026-10-31 — Fix: lesson completion no longer grants entry readiness (branch ccr-8843666c-wh7qyo)
 
 - **Bug:** `entrySatisfied()` treated any entry of a completed lesson as a satisfied prerequisite, so a word added to that lesson by a curriculum update (never seen) unlocked sentence questions and introductions that require it.

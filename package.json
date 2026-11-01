@@ -11,7 +11,8 @@
     "typecheck": "tsc -b",
     "validate:content": "node tools/validate-content.ts",
     "inventory": "node tools/content-inventory.ts",
-    "curriculum": "node tools/curriculum-report.ts"
+    "curriculum": "node tools/curriculum-report.ts",
+    "vocab:candidates": "node tools/vocab-candidates.ts"
   },
   "dependencies": {
     "phaser": "^3.90.0",

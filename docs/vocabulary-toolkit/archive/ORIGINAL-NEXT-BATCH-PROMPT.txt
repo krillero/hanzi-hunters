@@ -1,0 +1,30 @@
+Prepare the next 100 beginner Mandarin vocabulary entries for Hanzi Hunters:
+https://github.com/krillero/hanzi-hunters/
+
+Use the attached vocabulary toolkit. Read README.txt and source notes first.
+Inspect the latest main and its content rules/schema; do not assume the archived
+baseline or code is current. Keep the accepted first 100 and stable IDs intact.
+Determine whether existing supplemental entries belong in the next 100 before
+adding duplicates. The goal is 100 additional curriculum entries, not necessarily
+100 newly created dictionary records.
+
+Use official HSK levels and CC-CEDICT as documented starting points. Verify fresh
+sources, versions, licensing, senses and pronunciations. Order entries by useful
+communication and prerequisites, explaining the pedagogical order rather than
+claiming HSK provides an official teaching rank. Support neutral tones, valid
+pronunciation variants and contextual tone changes within current engine limits.
+Do not reuse hardcoded first-batch generation scripts without adapting them.
+
+Audit all proposed entries and any existing descriptions you change. Supply short
+accurate teaching notes, safe question modes, fair distractors, and simple examples
+with explicit vocabulary prerequisites. Prefer trustworthy reusable examples if
+their license allows; otherwise label original examples honestly as drafts.
+Do not call AI-reviewed text human-reviewed or professionally verified.
+
+Run the repository's required validation/tests/build. Check curriculum migrations,
+existing saves and the completed-lesson readiness issue noted in the toolkit.
+Report actual results and limitations; avoid unrelated game-logic changes.
+
+Deliver a ready-to-download ZIP with repo-relative changed files, installation
+instructions, ordered 100-entry list, audit/source evidence, licenses, validation
+results, and an updated toolkit for the following batch. Do not push or publish.

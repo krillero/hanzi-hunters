@@ -1,0 +1,26 @@
+VALIDATION AND REMAINING LIMITATIONS
+Base: dbc1d29b8de0bdc9da637fb4a79c6361a8bc5c48
+
+Content validator: 0 errors, 23 warnings. Warnings include unreviewed material;
+they must not be silenced by falsely marking content human-reviewed.
+Full test suite was run against the replacement content with the included
+eligibility test-fixture correction. See package-tests.log for the exact result.
+The unchanged eligibility test assumes a shipped exercise is ungated; the new
+content correctly gives that exercise prerequisites. The correction uses an
+explicitly ungated fixture and preserves the tested assertion.
+
+127 dictionary forms/readings matched CC-CEDICT. The active course has 100
+distinct entries: 36 retained starter entries plus 64 additions. All 63 original
+IDs remain. Official syllabus references cover all 100: 98 level 1, two level 2.
+64 example attachments reuse 20 unique original sentences; these are editorial
+drafts, not quotations from an official textbook or professionally reviewed text.
+
+Production build: blocked at Workbox/Terser service-worker generation in this
+environment. The same failure was observed on the unmodified baseline. A clean
+production build is therefore NOT certified by this package.
+No browser rendering or device speech synthesis check was completed (browser
+runtime unavailable). Audio settings are conservative; example audio is disabled.
+
+Human Mandarin teaching review remains necessary before a verified release.
+The existing engine issue allowing newly inserted words to inherit completed
+lesson readiness remains outside this content package. See README-IMPORT.txt.
