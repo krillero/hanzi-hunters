@@ -10,6 +10,7 @@ import { updateMastery } from '../src/game/mastery.ts'
 import { sanitizeSave, withLearning } from '../src/game/save.ts'
 import { parseBackup, serializeBackup } from '../src/game/backup.ts'
 import type { Mastery, Saved } from '../src/game/types.ts'
+import { MAX_LV } from '../src/game/mastery.ts'
 
 const BY_ID = wordMap(WORDS)
 const ALL = { maxLearning: 99, minKnown: 0, perFight: 99, startingPool: 99 }
@@ -25,7 +26,7 @@ const V2 = curr('course', 2, [['a', ['我', '你']], ['b', ['他', { entryId: '�
 const SENTENCE = { prerequisiteEntries: ['你'] } as Pick<ClozeItem, 'prerequisiteEntries'>
 const stateOf = (s: Saved, c: Curriculum): CourseState => ({ curriculum: c, mastery: s.mastery, progress: s.courses[c.id] ?? emptyCourse(), words: BY_ID, peak: s.peak })
 /** A save after learning, as the app keeps it: every mastery change goes through withLearning. */
-const learn = (s: Saved, c: Curriculum, id: string, correct: boolean) => withLearning({ ...s, mastery: updateMastery(s.mastery, id, correct) }, c, BY_ID)
+const learn = (s: Saved, c: Curriculum, id: string, correct: boolean) => withLearning({ ...s, mastery: updateMastery(s.mastery, id, correct, '2026-11-01') }, c, BY_ID)
 const fresh = (): Saved => sanitizeSave(null, WORDS, [])
 
 /** Learner who completed lesson A of version 1 (我 at level 1), then the content updates to version 2. */
@@ -111,7 +112,7 @@ test('9: saves without peak history keep progress and grant no readiness to unse
   assert.deepEqual(v2.peak, { 我: 1 }); assert.equal(entrySatisfied(stateOf(v2, V2), '你'), false)
   // garbage peaks are cleaned, and a peak below the current level is raised
   const junk = sanitizeSave({ version: 1, meta: {}, mastery: { 我: lv(3) }, peak: { 我: 1, 他: 'x', 大: 99, 小: -2 } }, WORDS, [])
-  assert.deepEqual(junk.peak, { 我: 3, 大: 4, 小: 0 })
+  assert.deepEqual(junk.peak, { 我: 3, 大: MAX_LV, 小: 0 }, 'clamped to the top level')
 })
 
 test('10: thresholds are per curriculum: level-1 readiness does not satisfy a curriculum that requires level 2', () => {

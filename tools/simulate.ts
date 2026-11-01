@@ -5,7 +5,7 @@ import { closeTrial, offerTrial, optionKeys, resolveTrial, trialFor, trialKey } 
 import { noteRecent } from '../src/game/recent.ts'
 import { MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
-import { updateMastery } from '../src/game/mastery.ts'
+import { MAX_LV, updateMastery } from '../src/game/mastery.ts'
 import { emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
 
@@ -30,11 +30,19 @@ export type RunLog = {
 }
 
 export type SimOptions = {
+  /** Expeditions played per calendar day (time-gated mastery levels need real days). Default SIM_RUNS_PER_DAY. */
+  runsPerDay?: number
   /** Start with every upgrade bought (an "upgraded" player) instead of buying greedily after each run. */
   maxed?: boolean
 }
 
+/** Model assumption: a player plays about two expeditions a day (each about 6-8 minutes). */
+export const SIM_RUNS_PER_DAY = 2
+/** The simulated calendar: expedition n (1-based) is played on this local date. */
+export const simDay = (n: number, perDay = SIM_RUNS_PER_DAY) => new Date(Date.UTC(2026, 0, 1) + Math.floor((n - 1) / perDay) * 86_400_000).toISOString().slice(0, 10)
+
 export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: SimOptions = {}): RunLog[] {
+  let today = simDay(1, opts.runsPerDay)
   let s = seed
   const rng = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296)
   let meta: Meta = { gold: 0, upgrades: opts.maxed ? UPGRADES.map(u => u.id) : [], bestFloor: 1, runs: 0, wins: 0, depthCleared: 0 }
@@ -47,11 +55,12 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   // Like the game: introduction cards (curriculum order) at the start of each fight, then questions about known entries only.
   // The intro question shows the meaning, so it is always answered right; the next question about the word is its protected practice.
   const introduce = () => {
-    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) mastery = updateMastery(mastery, id, true)
+    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) mastery = updateMastery(mastery, id, true, today)
   }
-  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng })!
+  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, today })!
   const log: RunLog[] = []
   for (let n = 1; n <= runsToPlay; n++) {
+    today = simDay(n, opts.runsPerDay)
     const b = computeBonuses(meta.upgrades)
     introduce()
     // the bot always plays the deepest depth it has unlocked
@@ -91,7 +100,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
           if (run.trial?.status === 'pending') recent = noteRecent(recent, trialKey(run.trial.id))
         }
       }
-      mastery = updateMastery(mastery, word.id, ok); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
+      mastery = updateMastery(mastery, word.id, ok, today); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
     }
     const end: RunLog['end'] = isExpeditionWon(run) ? 'won' : run.phase === 'defeat' ? 'defeat' : 'returned'
     const banked = bankRun(meta, run, end); meta = banked.meta
@@ -101,7 +110,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       if (!next) break
       meta = buyUpgrade(meta, next.id)!
     }
-    log.push({ run: n, depth: run.depth, depthCleared: meta.depthCleared, floor: run.floor, gold: banked.summary.goldBanked, mastered: Object.values(mastery).filter(e => e.lv >= 4).length, upgrades: meta.upgrades.length, answers, end, longestFight, ...stat, startHearts, endHearts: run.hearts, potionHearts })
+    log.push({ run: n, depth: run.depth, depthCleared: meta.depthCleared, floor: run.floor, gold: banked.summary.goldBanked, mastered: Object.values(mastery).filter(e => e.lv >= MAX_LV).length, upgrades: meta.upgrades.length, answers, end, longestFight, ...stat, startHearts, endHearts: run.hearts, potionHearts })
   }
   return log
 }

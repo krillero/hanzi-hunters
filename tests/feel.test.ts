@@ -4,6 +4,7 @@ import { HAPTICS, sfxScore, totalDuration, type SfxName } from '../src/audio.ts'
 import { RARITY_BY_NAME, compareGear, gearScore, gearVerdict, isUpgrade, rarityOf } from '../src/game/rarity.ts'
 import { accuracyPct, emptyStats, recordAnswer } from '../src/game/runStats.ts'
 import { GEAR } from '../src/data.ts'
+import { MAX_LV } from '../src/game/mastery.ts'
 
 const NAMES: SfxName[] = ['tap', 'correct', 'combo', 'wrong', 'kill', 'levelup', 'loot', 'mastered', 'defeat']
 
@@ -46,7 +47,7 @@ test('run stats: new words, promotions, mastery, misses, streak and accuracy', (
   s = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 2, levelBefore: 0, levelAfter: 0, gold: 0 })
   s = recordAnswer(s, { id: '石', isCorrect: true, streakAfter: 3, levelBefore: 0, levelAfter: 1, gold: 7 })
   s = recordAnswer(s, { id: '目', isCorrect: false, streakAfter: 0, levelBefore: 2, levelAfter: 1, gold: 0 })
-  s = recordAnswer(s, { id: '好', isCorrect: true, streakAfter: 1, levelBefore: 3, levelAfter: 4, gold: 0 })
+  s = recordAnswer(s, { id: '好', isCorrect: true, streakAfter: 1, levelBefore: MAX_LV - 1, levelAfter: MAX_LV, gold: 0 })
   assert.deepEqual(s.newWords, ['石'])
   assert.deepEqual(s.leveled, ['石', '好'])
   assert.deepEqual(s.mastered, ['好'])

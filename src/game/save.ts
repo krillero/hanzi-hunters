@@ -34,7 +34,13 @@ function validUpgrades(raw: unknown): string[] {
   return out
 }
 
-const cleanEntry = (e: unknown) => (isObj(e) ? { lv: int(e.lv, 0, MAX_LV, 0), ok: int(e.ok, 0, 1, 0) } : null)
+// An entry from before time-gated levels (no `at`) keeps its level (at most 4, the old maximum) and is due at once, so levels 2-4
+// are re-checked by their next right answer instead of being wiped. Only an entry with a date can be at level 5.
+const cleanEntry = (e: unknown) => {
+  if (!isObj(e)) return null
+  const at = typeof e.at === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.at) ? e.at : undefined
+  return { lv: int(e.lv, 0, at ? MAX_LV : MAX_LV - 1, 0), ok: int(e.ok, 0, 1, 0), ...(at ? { at } : {}) }
+}
 const better = (a: { lv: number; ok: number }, b: { lv: number; ok: number }) => (b.lv > a.lv || (b.lv === a.lv && b.ok > a.ok) ? b : a)
 
 /**

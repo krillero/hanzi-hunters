@@ -416,3 +416,11 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Encounters open straight into the scene: the intro popup ("Help the traveler") is gone, since it only existed to offer a skip. Saves waiting on it load into the scene.
 - Cavern Warden's Gauntlet: right after its first tone ward breaks, a tone trial (right: the last ward breaks) and then a torn note (right: every remaining seal breaks), reusing the Golem/Scribe pools including generated ones. Preview `/?trial=warden`. Simulator: 0.75 wins 60.4% → 64.4%, longest fight 22 → 18 answers.
 - Warden Sigil is a relic kept forever instead of loot (the Warden ends the expedition, so an item vanished at once): the Warden drops nothing; the Sigil's level is the number of depths cleared (+1 hint per fight, +10 % mastery damage, +5 % per further level), fixed per expedition (`Run.sigil`). Shown at camp, in the bonus list and on the first-clear victory card. Simulator: 0.75 wins 64.4 % → 68.8 %, expeditions about 6–7 % shorter.
+
+## Spaced-repetition mastery (2026-11-01)
+- Word levels 0-5: New, Learning, Familiar (2 right in a row each, within a session), then Remembered / Retained / Mastered, each needing one right answer at least 1 / 3 / 7 local days after the previous step (`MasteryEntry.at`). A right answer before then is practice only; a long gap still promotes one level; a miss drops one level and restarts the wait.
+- Reviews favour due words (weight 6); Familiar and waiting words are asked less (repeating them cannot promote them today).
+- Camp shows "📖 N words ready for review today" (or when the next review is); the wordbook marks due words; feedback says when the next check is; level names replace "WORD LV n".
+- Old saves: entries without a date keep their level (max 4) and are due at once, so they are re-checked instead of wiped.
+- Milestone badges removed (logic, toast, Settings list); `habit.badges` stays in saves, unused.
+- Simulator plays two expeditions per day; balance essentially unchanged (20 seeds: wins within 3 points, same depth-clear medians); words mastered after 20 days drop sharply (0.85: 69 → 23), as intended.

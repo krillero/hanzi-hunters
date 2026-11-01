@@ -1,26 +1,57 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { MAX_LEARNING, MAX_LV, MIN_KNOWN, STARTING_POOL, masteredCount, updateMastery } from '../src/game/mastery.ts'
+import { LEVEL_NAMES, MAX_LEARNING, MAX_LV, MIN_KNOWN, RETENTION_DAYS, SESSION_LV, STARTING_POOL, daysBetween, daysUntilDue, dueCount, isDue, masteredCount, updateMastery } from '../src/game/mastery.ts'
 import { introCapacity } from '../src/game/course.ts'
 import type { Mastery } from '../src/game/types.ts'
 
-test('first exposure creates an entry without credit, even when answered correctly', () => {
-  assert.deepEqual(updateMastery({}, '人', true), { 人: { lv: 0, ok: 0 } })
-  assert.deepEqual(updateMastery({}, '人', false), { 人: { lv: 0, ok: 0 } })
+const D1 = '2026-11-01'
+const after = (n: number) => new Date(Date.UTC(2026, 10, 1) + n * 86_400_000).toISOString().slice(0, 10)
+
+test('first exposure creates an entry without credit, even when answered correctly, dated today', () => {
+  assert.deepEqual(updateMastery({}, '人', true, D1), { 人: { lv: 0, ok: 0, at: D1 } })
+  assert.deepEqual(updateMastery({}, '人', false, D1), { 人: { lv: 0, ok: 0, at: D1 } })
 })
 
-test('two correct in a row promote; a miss demotes one level and clears progress', () => {
-  let m = updateMastery({}, '人', true)
-  m = updateMastery(m, '人', true); assert.deepEqual(m['人'], { lv: 0, ok: 1 })
-  m = updateMastery(m, '人', true); assert.deepEqual(m['人'], { lv: 1, ok: 0 })
-  m = updateMastery(m, '人', true); m = updateMastery(m, '人', false); assert.deepEqual(m['人'], { lv: 0, ok: 0 })
-  m = updateMastery(m, '人', false); assert.equal(m['人'].lv, 0, 'never below 0')
+test('session levels: two correct in a row promote up to Familiar; a miss demotes one level and clears progress', () => {
+  let m = updateMastery({}, '人', true, D1)
+  m = updateMastery(m, '人', true, D1); assert.deepEqual(m['人'], { lv: 0, ok: 1, at: D1 })
+  m = updateMastery(m, '人', true, D1); assert.deepEqual(m['人'], { lv: 1, ok: 0, at: D1 })
+  m = updateMastery(m, '人', true, D1); m = updateMastery(m, '人', false, D1); assert.deepEqual(m['人'], { lv: 0, ok: 0, at: D1 })
+  m = updateMastery(m, '人', false, D1); assert.equal(m['人'].lv, 0, 'never below 0')
+  for (let i = 0; i < 20; i++) m = updateMastery(m, '人', true, D1)
+  assert.equal(m['人'].lv, SESSION_LV, 'a single day never gets past Familiar, however many right answers')
 })
 
-test('mastery caps at the mastered level and is counted', () => {
-  let m = { 人: { lv: MAX_LV - 1, ok: 1 } }
-  m = updateMastery(m, '人', true); assert.equal(m['人'].lv, MAX_LV); assert.equal(masteredCount(m), 1)
-  m = updateMastery(m, '人', true); m = updateMastery(m, '人', true); assert.equal(m['人'].lv, MAX_LV)
+test('time-gated levels: one right answer after 1, 3 and 7 days promotes; earlier right answers are practice only', () => {
+  let m: Mastery = { 人: { lv: SESSION_LV, ok: 0, at: D1 } }
+  assert.deepEqual(RETENTION_DAYS, [1, 3, 7])
+  assert.equal(isDue(m['人'], D1), false); assert.equal(daysUntilDue(m['人'], D1), 1)
+  m = updateMastery(m, '人', true, D1); assert.equal(m['人'].lv, 2, 'same day: no promotion')
+  m = updateMastery(m, '人', true, after(1)); assert.deepEqual(m['人'], { lv: 3, ok: 0, at: after(1) })
+  m = updateMastery(m, '人', true, after(3)); assert.equal(m['人'].lv, 3, 'only 2 days at Remembered')
+  m = updateMastery(m, '人', true, after(4)); assert.equal(m['人'].lv, 4)
+  assert.equal(daysUntilDue(m['人'], after(4)), 7)
+  m = updateMastery(m, '人', true, after(11)); assert.equal(m['人'].lv, MAX_LV); assert.equal(masteredCount(m), 1)
+  assert.equal(isDue(m['人'], after(400)), false, 'mastered words have no further step')
+  m = updateMastery(m, '人', true, after(400)); assert.equal(m['人'].lv, MAX_LV)
+})
+
+test('a long gap still promotes one level only; a miss drops one level and restarts its wait', () => {
+  let m: Mastery = { 人: { lv: 3, ok: 0, at: D1 } }
+  m = updateMastery(m, '人', true, after(60)); assert.equal(m['人'].lv, 4, 'one level, however overdue')
+  m = updateMastery(m, '人', false, after(61)); assert.deepEqual(m['人'], { lv: 3, ok: 0, at: after(61) })
+  assert.equal(daysUntilDue(m['人'], after(61)), 3, 'the wait for Retained starts again')
+  m = { 人: { lv: MAX_LV, ok: 0, at: D1 } }
+  m = updateMastery(m, '人', false, after(30)); assert.equal(m['人'].lv, MAX_LV - 1, 'even a mastered word drops only one level')
+})
+
+test('due words are counted; entries saved before time-gated levels (no date) count as due', () => {
+  const m: Mastery = { a: { lv: 2, ok: 0, at: D1 }, b: { lv: 3, ok: 0, at: D1 }, c: { lv: 4, ok: 0 }, d: { lv: 1, ok: 0, at: D1 }, e: { lv: 5, ok: 0, at: D1 } }
+  assert.equal(dueCount(m, D1), 1, 'only c (old entry, no date)')
+  assert.equal(dueCount(m, after(1)), 2, 'a (1 day) and c')
+  assert.equal(dueCount(m, after(3)), 3, 'b too after 3 days')
+  assert.equal(daysBetween(undefined, D1), Infinity); assert.equal(daysBetween('2026-10-31', D1), 1)
+  assert.equal(LEVEL_NAMES.length, MAX_LV + 1)
 })
 
 test('introduction capacity keeps the old limits: 3 to start, then one per fight, none while 4 are at level 0, pool cap', () => {
