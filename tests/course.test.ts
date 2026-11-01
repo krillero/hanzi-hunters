@@ -213,7 +213,7 @@ test('a save without course progress keeps mastery, gold, gear, runs; known entr
   }
   const s = sanitizeSave(v2, WORDS, [COMPAT])
   assert.equal(s.version, 1)
-  assert.deepEqual(s.meta, { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7, wins: 0 })
+  assert.deepEqual(s.meta, { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7, wins: 0, depthCleared: 0 })
   assert.deepEqual(s.mastery, v2.mastery)
   assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 40); assert.equal(s.habit.correct, 50)
   const p = s.courses.compat

@@ -5,7 +5,7 @@ import type { Curriculum } from '../content/types.ts'
 import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
 import { emptyCourse, recordPeaks, syncCourse, wordMap, type CourseProgress, type PeakLevels } from './course.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
-import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, bossIdFor, enemyStats, hasShield, isBoss, playerStats, shieldFor } from './rules.ts'
+import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, bossIdFor, enemyStats, hasShield, isBoss, playerStats, shieldFor } from './rules.ts'
 import { MAX_LV } from './mastery.ts'
 
 export const SAVE_KEY = 'hanzi-hunters-save'
@@ -19,7 +19,7 @@ const int = (v: unknown, min: number, max: number, fallback: number) =>
 const strs = (v: unknown, allowed: string[]) =>
   Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string' && allowed.includes(x)))] : []
 
-export const emptyMeta = (): Meta => ({ gold: 0, upgrades: [], bestFloor: 1, runs: 0, wins: 0 })
+export const emptyMeta = (): Meta => ({ gold: 0, upgrades: [], bestFloor: 1, runs: 0, wins: 0, depthCleared: 0 })
 
 /** Keep only upgrades whose previous tier is also owned. */
 function validUpgrades(raw: unknown): string[] {
@@ -94,7 +94,8 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   }
   const floor = int(raw.floor, 1, EXPEDITION_FLOORS, 1), kill = int(raw.kill, 0, ENEMIES_PER_FLOOR - 1, 0), level = int(raw.level, 1, 999, 1)
   const stats = playerStats({ level, loadout }, b, GEAR)
-  const foeHp = enemyStats(ENEMIES, floor, kill).hp
+  const depth = int(raw.depth, 1, MAX_DEPTH, 1)
+  const foeHp = enemyStats(ENEMIES, floor, kill, depth).hp
   let phase: Run['phase'] = raw.phase === 'victory' || raw.phase === 'defeat' ? raw.phase : 'fighting'
   let hearts = int(raw.hearts, 0, stats.maxHearts, stats.maxHearts)
   if (phase === 'defeat') hearts = 0
@@ -103,7 +104,7 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   const boss = isBoss(floor, kill) ? bossIdFor(floor) : null
   const rw = isObj(raw.reward) ? raw.reward : {}
   const run: Run = {
-    floor, kill, level, gear, loadout, phase, hearts, recoveredFloor,
+    depth, floor, kill, level, gear, loadout, phase, hearts, recoveredFloor,
     kills: int(raw.kills, 0, 1e9, 0), xp: int(raw.xp, 0, 1e9, 0), pendingXp: int(raw.pendingXp, 0, 1e9, 0),
     shield: boss && hasShield(boss) && phase === 'fighting' ? int(raw.shield, 0, shieldFor(floor, boss), shieldFor(floor, boss)) : 0, gold: int(raw.gold, 0, 1e9, 0),
     potions: int(raw.potions, 0, 999, 0), streak: int(raw.streak, 0, 999, 0),
@@ -150,10 +151,10 @@ export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Cur
   const peaks = migratePeaks(r.peak, r.legacyPeak, migrated.mastery, words)
   const m = isObj(r.meta) ? r.meta : {}
   const upgrades = validUpgrades(m.upgrades)
-  const meta: Meta = { gold: int(m.gold, 0, 1e9, 0), upgrades, bestFloor: int(m.bestFloor, 1, EXPEDITION_FLOORS, 1), runs: int(m.runs, 0, 1e9, 0), wins: int(m.wins, 0, 1e9, 0) }
+  const meta: Meta = { gold: int(m.gold, 0, 1e9, 0), upgrades, bestFloor: int(m.bestFloor, 1, EXPEDITION_FLOORS, 1), runs: int(m.runs, 0, 1e9, 0), wins: int(m.wins, 0, 1e9, 0), depthCleared: int(m.depthCleared, 0, MAX_DEPTH, 0) }
   const ls = isObj(r.lastRun) ? r.lastRun : null
   const result = ls && (ls.result === 'won' || ls.result === 'returned') ? ls.result : 'defeat'
-  const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, EXPEDITION_FLOORS, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0), result } : null
+  const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, EXPEDITION_FLOORS, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0), bonus: int(ls.bonus, 0, 1e9, 0), result, depth: int(ls.depth, 1, MAX_DEPTH, 1), unlocked: int(ls.unlocked, 0, MAX_DEPTH, 0) } : null
   return {
     version: SAVE_VERSION, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
     peak: peaks.peak, legacyPeak: peaks.legacy,

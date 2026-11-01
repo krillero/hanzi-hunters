@@ -27,7 +27,7 @@ import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
 import { gearVerdict, rarityOf as rarityOfItem } from './game/rarity'
 import {
-  ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, SHIELD_SEGMENTS, advance, hasShield, isExpeditionWon, sealAsk, shieldFor, bankRun, type RunResult, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
+  DEPTHS, ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, challengeFor, depthName, unlockedDepth, victoryBonus, SHIELD_SEGMENTS, advance, hasShield, isExpeditionWon, sealAsk, shieldFor, bankRun, type RunResult, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
 import { SAVE_KEY, clearOldSaves, loadSave, sanitizeSave, withLearning } from './game/save'
 import type { Mastery, Run, Saved } from './game/types'
@@ -161,7 +161,7 @@ export default function App() {
   const hasCard = !!card // the battle UI (and its Phaser mount point) only exists once a card does
   const bonuses = useMemo(() => computeBonuses(save.meta.upgrades), [save.meta.upgrades])
   const stats = run ? playerStats(run, bonuses, GEAR) : null
-  const foe = run ? enemyStats(ENEMIES, run.floor, run.kill) : null
+  const foe = run ? enemyStats(ENEMIES, run.floor, run.kill, run.depth) : null
   const equipped = run ? equippedGear(GEAR, run.loadout) : []
   const enemyKey = foe ? `${foe.enemy.sprite}:${foe.boss ?? ''}` : ''
   const enemyKeyRef = useRef(enemyKey)
@@ -195,8 +195,10 @@ export default function App() {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
     const forced = current === null && forcedWord.current ? (WORDS.find(w => w.id === forcedWord.current) ?? WORDS.find(w => w.hanzi === forcedWord.current)) : undefined
     const clozeEligible = sentenceCheck(mastery)
-    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind, cloze: CLOZE, clozeEligible })
-    const bossFoe = forRun && isBoss(forRun.floor, forRun.kill) ? enemyStats(ENEMIES, forRun.floor, forRun.kill) : null
+    // Deeper depths and floors lean the question mix toward recall kinds (only kinds each word is already eligible for).
+    const challenge = forRun ? challengeFor(forRun.depth, forRun.floor) : 0
+    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind, cloze: CLOZE, clozeEligible, challenge })
+    const bossFoe = forRun && isBoss(forRun.floor, forRun.kill) ? enemyStats(ENEMIES, forRun.floor, forRun.kill, forRun.depth) : null
     // Some bosses need a particular kind of question: tone questions break the Golem's shield, character questions the Scribe's seals,
     // and the Trickster only asks the easy-to-confuse kinds. They ask about words you already know.
     const boss = bossFoe?.boss ?? null
@@ -251,6 +253,8 @@ export default function App() {
   const [introQueue, setIntroQueue] = useState<string[]>([])
   const [introTotal, setIntroTotal] = useState(0)
   const introKey = useRef<string | null>(null)   // the fight we last checked; null = this run was resumed from a save
+  // Set in the same commit that queues new-word cards (before the speak effect below runs), so a prepared question stays silent.
+  const introPending = useRef(false)
   useEffect(() => {
     if (!run) { introKey.current = ''; return }
     if (run.phase !== 'fighting' || feedback || reveal || bossIntro || summary || lootReveal || introQueue.length) return
@@ -261,7 +265,7 @@ export default function App() {
     if (forcedWord.current || (resumed && seenCount(save.mastery) > 0)) return   // preview URLs and reloads mid-fight are left alone
     const plan = introPlanFor(save.mastery)
     if (import.meta.env.DEV) logCourse(plan)
-    if (plan.ids.length) { setIntroQueue(plan.ids); setIntroTotal(plan.ids.length) }
+    if (plan.ids.length) { introPending.current = true; setIntroQueue(plan.ids); setIntroTotal(plan.ids.length) }
   })
   const introGotIt = () => {
     const id = introQueue[0]
@@ -271,7 +275,7 @@ export default function App() {
     setFloorStats(s => recordIntro(s, id)); setRunStats(s => recordIntro(s, id))
     const rest = introQueue.slice(1)
     setIntroQueue(rest)
-    if (!rest.length) { setNextCard(makeCard(mastery, null)); setEliminated([]); answerLock.current = false }
+    if (!rest.length) { introPending.current = false; setNextCard(makeCard(mastery, null)); setEliminated([]); answerLock.current = false }
   }
 
   // ---- one-time setup -----------------------------------------------------------------
@@ -358,7 +362,16 @@ export default function App() {
   // The speaker button: when muted, tapping it turns sound back on (and plays the text).
   const pressSpeaker = (text: string) => { if (settings.muted) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
   // Words are only read aloud when the audio can be trusted to match the displayed word and reading (see audioReliable in content/entries.ts).
-  useEffect(() => { if (card?.question.audio && !feedback && !reveal && audioReliable(card.word, WORDS)) speak(card.word.hanzi) /* eslint-disable-next-line */ }, [card])
+  // Only once the question is actually visible: a card prepared behind the new-word card, the boss intro, a loot card or the floor
+  // summary stays silent (it is often replaced before it is shown), and each card is read at most once.
+  const spokenCard = useRef<Card | null>(null)
+  const questionCovered = introQueue.length > 0 || bossIntro !== null || lootReveal !== null || summary !== null
+  useEffect(() => {
+    if (!card || questionCovered || introPending.current || spokenCard.current === card) return
+    spokenCard.current = card
+    if (card.question.audio && !feedback && !reveal && audioReliable(card.word, WORDS)) speak(card.word.hanzi)
+    /* eslint-disable-next-line */
+  }, [card, questionCovered])
 
   // ---- actions --------------------------------------------------------------------------
   const answerQuestion = (option: string) => {
@@ -537,9 +550,9 @@ export default function App() {
     setSummary(null); setLevelUp(null); setLootReveal(null); setBossIntro(null)
   }
 
-  const startRun = () => {
+  const startRun = (depth: number) => {
     setReveal(null)
-    const fresh = newRun(bonuses, GEAR, ENEMIES)
+    const fresh = newRun(bonuses, GEAR, ENEMIES, Math.min(depth, unlockedDepth(save.meta.depthCleared)))
     patch(s => ({ ...s, run: fresh }))
     setFloorStats(emptyStats()); setRunStats(emptyStats()); setSummary(null)
     setNextCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); setRunMilestones([]); answerLock.current = false
@@ -650,7 +663,7 @@ export default function App() {
       {topbar}
 
       <section className="hero-strip">
-        <div><p className="eyebrow">FLOOR {run.floor}/{EXPEDITION_FLOORS} · ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.boss ? ' · BOSS' : ''}</p><h1>The Mosslight Cavern</h1><p className="subtitle">Every word is a weapon. Every run makes you stronger.</p></div>
+        <div><p className="eyebrow">DEPTH {run.depth} · FLOOR {run.floor}/{EXPEDITION_FLOORS} · ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.boss ? ' · BOSS' : ''}</p><h1>{depthName(run.depth)}</h1><p className="subtitle">Every word is a weapon. Every run makes you stronger.</p></div>
         <div className="progress-chip"><span>📖</span><strong>{masteredCount(save.mastery)}<small> / {WORDS.length} mastered</small></strong></div>
       </section>
 
@@ -851,7 +864,7 @@ export default function App() {
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
-        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else nextEnemy() } else endRun('defeat') }} />}
+        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}

@@ -11,6 +11,9 @@ type Props = {
   hearts?: { restored: number; now: number; max: number }
   /** The final floor: its boss was beaten, so the expedition is won. */
   final?: boolean
+  /** Final floor: the victory bonus gold and the depth this win unlocks (0 = none). */
+  bonus?: number
+  unlocks?: { depth: number; name: string } | null
   onContinue: () => void
   onClose: () => void
 }
@@ -21,7 +24,7 @@ const wordTile = (id: string) => {
 }
 
 /** Floor-clear and defeat card: what you learned, not just what you earned. Real modal styling, no new design tokens. */
-export default function SummaryModal({ kind, floor, stats, gold, hearts, final = false, onContinue, onClose }: Props) {
+export default function SummaryModal({ kind, floor, stats, gold, hearts, final = false, bonus = 0, unlocks = null, onContinue, onClose }: Props) {
   const btn = useRef<HTMLButtonElement | null>(null)
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -38,6 +41,7 @@ export default function SummaryModal({ kind, floor, stats, gold, hearts, final =
           <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="modal-body">
+          {final && <section className="sum-victory" role="status"><b>+{bonus} gold victory bonus</b>{unlocks && <span>Depth {unlocks.depth} unlocked: {unlocks.name}</span>}</section>}
           {won && !final && hearts && hearts.restored > 0 && <section className="sum-hearts" role="status" aria-label={`${hearts.restored ? `${hearts.restored} heart restored. ` : ''}${hearts.now} of ${hearts.max} hearts`}>
             <span className="sum-hearts-row" aria-hidden="true">{Array.from({ length: hearts.max }, (_, i) => <i key={i} className={i < hearts.now ? (i >= hearts.now - hearts.restored ? 'full new' : 'full') : 'empty'}>{i < hearts.now ? '♥' : '♡'}</i>)}</span>
             <span>{hearts.restored ? `+${hearts.restored} heart${hearts.restored === 1 ? '' : 's'} restored` : 'Hearts already full'}</span>

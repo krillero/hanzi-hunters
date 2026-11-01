@@ -211,10 +211,10 @@ test('advance walks 4 enemies then the next floor; hints refill per fight', () =
 })
 
 test('ending a run banks all gold; "return to camp" is not a defeat; learning is not touched here', () => {
-  const meta = { gold: 10, upgrades: ['W1'], bestFloor: 3, runs: 2, wins: 0 }
+  const meta = { gold: 10, upgrades: ['W1'], bestFloor: 3, runs: 2, wins: 0, depthCleared: 0 }
   const { meta: m, summary } = bankRun(meta, { ...run0(), gold: 55, floor: 5, kills: 17, level: 4 }, 'defeat')
-  assert.deepEqual(m, { gold: 65, upgrades: ['W1'], bestFloor: 5, runs: 3, wins: 0 })
-  assert.deepEqual(summary, { floor: 5, kills: 17, level: 4, goldBanked: 55, result: 'defeat' })
+  assert.deepEqual(m, { gold: 65, upgrades: ['W1'], bestFloor: 5, runs: 3, wins: 0, depthCleared: 0 })
+  assert.deepEqual(summary, { floor: 5, kills: 17, level: 4, goldBanked: 55, bonus: 0, result: 'defeat', depth: 1, unlocked: 0 })
   assert.equal(bankRun(meta, { ...run0(), floor: 2 }, 'defeat').meta.bestFloor, 3)
   const back = bankRun(meta, { ...run0(), gold: 40, floor: 4 }, 'returned')
   assert.equal(back.summary.result, 'returned'); assert.equal(back.meta.gold, 50); assert.equal(back.meta.wins, 0)

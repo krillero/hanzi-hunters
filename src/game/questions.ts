@@ -62,7 +62,19 @@ export type QuestionOptions = {
   clozeEligible?: (item: ClozeItem) => boolean
   /** Recent results this session, used to avoid repeats and to favour weaker kinds. */
   history?: KindResult[]
+  /**
+   * 0..1 (depth and floor of the expedition, `challengeFor` in rules.ts): leans the mix toward recall kinds. It only re-weights kinds
+   * the word's level table already allows and that are fair right now, so it never asks anything the learner was not prepared for.
+   * The very first step of a new word and particles are not affected.
+   */
+  challenge?: number
 }
+
+/** Recall kinds (produce the pinyin / written form, or work from sound) get more weight with challenge; recognition kinds less. */
+export const RECALL_KINDS: QKind[] = ['meaning2pinyin', 'listen2pinyin', 'pinyin2char', 'listen', 'listen2meaning']
+export const RECOGNITION_KINDS: QKind[] = ['meaning', 'character', 'pinyin']
+export const challengeWeight = (kind: QKind, challenge: number) =>
+  RECALL_KINDS.includes(kind) ? 1 + 2 * challenge : RECOGNITION_KINDS.includes(kind) ? 1 - 0.6 * challenge : 1
 
 // ------------------------------------------------------------------------------------------
 // Shuffling, helpers
@@ -245,7 +257,9 @@ export function fallbackKind(word: Word, all: Word[], opts: FeasibilityOptions =
 export function chooseKind(word: Word, entry: MasteryEntry | undefined, all: Word[], opts: QuestionOptions = {}): QKind {
   if (!entry) return 'intro'
   const rng = opts.rng ?? Math.random
-  const table = word.kind === 'particle' ? PARTICLE_WEIGHTS : entry.lv === 0 && entry.ok === 0 ? FIRST_STEP : KIND_WEIGHTS[Math.min(entry.lv, 4)]
+  const firstStep = entry.lv === 0 && entry.ok === 0
+  const table = word.kind === 'particle' ? PARTICLE_WEIGHTS : firstStep ? FIRST_STEP : KIND_WEIGHTS[Math.min(entry.lv, 4)]
+  const challenge = word.kind === 'particle' || firstStep ? 0 : Math.min(1, Math.max(0, opts.challenge ?? 0))
   const history = opts.history ?? []
   const recent = history.slice(-2).map(h => h.kind)
   const weights: [QKind, number][] = []
@@ -253,7 +267,7 @@ export function chooseKind(word: Word, entry: MasteryEntry | undefined, all: Wor
     if (!isFeasible(k, word, all, opts)) continue
     const mine = history.filter(h => h.kind === k)
     const missRate = mine.length >= 2 ? mine.filter(h => !h.ok).length / mine.length : 0
-    let w = base * (1 + 2 * missRate)
+    let w = base * (1 + 2 * missRate) * challengeWeight(k, challenge)
     if (recent[recent.length - 1] === k) w *= 0.15
     else if (recent.includes(k)) w *= 0.5
     weights.push([k, w])

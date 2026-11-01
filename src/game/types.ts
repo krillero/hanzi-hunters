@@ -4,13 +4,15 @@ export type Mastery = Record<string, MasteryEntry>
 
 import type { Habit } from './habit.ts'
 
-/** `wins`: expeditions won (final boss beaten). */
-export type Meta = { gold: number; upgrades: string[]; bestFloor: number; runs: number; wins: number }
+/** `wins`: expeditions won (final boss beaten); `depthCleared`: the deepest depth won (0 = none), which unlocks the next. */
+export type Meta = { gold: number; upgrades: string[]; bestFloor: number; runs: number; wins: number; depthCleared: number }
 
 import type { GearSlot } from '../data.ts'
 
 export type RunPhase = 'fighting' | 'victory' | 'defeat'
 export type Run = {
+  /** The expedition's depth (1..MAX_DEPTH): harder question mix, more gold, tougher final boss. */
+  depth: number
   floor: number; kill: number; kills: number
   level: number; xp: number
   /** The player's hearts: the only player-health value. Whole numbers, 0..maxHearts (rules.ts playerStats). 0 = the run is lost. */
@@ -33,7 +35,8 @@ export type Run = {
   reward: { xp: number; gold: number; loot: string; levelUps: number; hearts: number }
 }
 /** How the expedition ended: `won` (final boss beaten), `defeat` (out of hearts) or `returned` ("Return to camp"). */
-export type RunSummary = { floor: number; kills: number; level: number; goldBanked: number; result: 'won' | 'defeat' | 'returned' }
+/** `goldBanked` includes the victory `bonus`; `unlocked`: the depth this win unlocked (0 = none). */
+export type RunSummary = { floor: number; kills: number; level: number; goldBanked: number; bonus: number; result: 'won' | 'defeat' | 'returned'; depth: number; unlocked: number }
 
 import type { CourseProgress, PeakLevels } from './course.ts'
 

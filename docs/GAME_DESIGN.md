@@ -6,7 +6,22 @@
 3. Per floor (compounding): enemy HP ×1.16 (`TUNING.enemyHpGrowth`, about what the player gains in attack from levels, so fights keep a similar bounded length), XP/gold +8 %. XP from answers is banked during a fight and paid out on the kill (`Run.pendingXp`).
 4. An expedition ends **won**, **lost** (0 hearts) or **returned** (*Return to camp* in Settings). All gold earned is banked every time. Level, gear and potions are lost. **Upgrades and word mastery stay.** Perfect answers always win.
 5. At **camp** you see the result ("You beat the Cavern Warden!" / "You fell on floor 3" / "You returned from floor 2") and your current lesson, spend gold on upgrades, then start a new expedition. Stats (incl. expeditions won), milestones, backups and reset are in **Settings** (⚙).
-6. Next (PR 2, planned): **Depths** — winning unlocks a harder depth (harder question mix within taught words, bigger rewards); cleared depths can be replayed.
+6. **Depths** (see below): winning an expedition unlocks the next depth (5 in total); camp has a depth picker and cleared depths can be replayed.
+
+## Depths (`DEPTHS`, `challengeFor` in `src/game/rules.ts`)
+| Depth | Name | Victory bonus |
+|---|---|---|
+| 1 | Mosslight Cavern | 40 gold |
+| 2 | Ember Halls | 80 |
+| 3 | Frost Archive | 120 |
+| 4 | Sunken Library | 160 |
+| 5 | Jade Throne | 200 |
+
+* **Unlocking:** winning depth *d* sets `meta.depthCleared` and unlocks *d*+1 (`unlockedDepth`). Camp shows the chosen depth (default: the deepest unlocked) with a picker for every unlocked depth; replaying a cleared depth never lowers progress.
+* **Harder questions, only within taught material:** `challengeFor(depth, floor)` (0 at depth 1 floor 1, rising a little each floor and a lot each depth, 1 at depth 5 floor 5) is passed to `chooseKind`. It multiplies the weight of recall kinds (meaning→pinyin, audio→pinyin, pinyin→char, audio→char, audio→meaning) by up to ×3 and recognition kinds (char→meaning, meaning→char, char→pinyin) by down to ×0.4. It only re-weights kinds already in the word's level table that are fair right now (eligibility, sound, distractors), so nothing new is asked; a new word's first step and particles are unaffected.
+* **Rewards and toughness:** enemy gold and XP +25 % per depth (`depthRewardMult`), enemy HP +30 % per depth (`TUNING.depthEnemyHp`), the Cavern Warden another +15 % per depth (`depthBossHpMult`), and the victory bonus (40 × depth) is banked on a win.
+* Words always come from the course: depth never changes which entries are introduced or reviewed.
+* Gear was reviewed for depths and is unchanged.
 
 ## Hearts (`src/game/rules.ts`)
 The player's health is a row of whole **hearts** (`Run.hearts`, the only player-health value). Enemies keep an HP bar but have no attack.
@@ -73,7 +88,7 @@ Weapons and the other accessories are unchanged. A gear review for depths is pla
 ## Balance (tools/simulate.ts, tests/balance.test.ts)
 `node tools/simulate.ts --report` plays a seeded bot (accuracy rises as words are learned; boss seal/trick questions are a little harder) for new players buying upgrades greedily, and for fully upgraded players, 5 seeds.
 
-Targets (agreed 2026-11-01): perfect play always wins; 90 % wins the first expedition without upgrades; 75 % wins within about 4–8 expeditions; 60 % rarely wins early but gets there over time. Results with the chosen setting (enemy HP ×1, ×1.16 per floor; no floor recovery; second chances capped at 3):
+Depth 1 targets (agreed 2026-11-01): perfect play always wins; 90 % wins the first expedition without upgrades; 75 % wins within about 4–8 expeditions; 60 % rarely wins early but gets there over time. Results with the chosen setting (enemy HP ×1, ×1.16 per floor; no floor recovery; second chances capped at 3):
 
 | Accuracy | First win (median expedition) | Win rate: expeditions 1–5 / 6–15 / 16–30 | Answers per expedition (avg / max) | Longest fight | Fully upgraded win rate |
 |---|---|---|---|---|---|
@@ -83,12 +98,24 @@ Targets (agreed 2026-11-01): perfect play always wins; 90 % wins the first exped
 | 90 % | 1st | 100 % | 36 / 61 | 10 | 100 % |
 | 100 % | 1st | 100 % | 34 / 58 | 9 | 100 % |
 
-Tried and rejected: more enemy HP (×1.25–1.8) makes expeditions only a little longer (damage grows with levels and mastery) but drops 60 % players to no wins at all and pushes 75 % to a median of 10 expeditions. So expeditions are about 35–40 answers (6–8 minutes), shorter than first estimated; harder question mixes per depth (PR 2) are the planned way to add challenge. Longest fights are shield bosses. `tests/balance.test.ts` guards the targets, bounded expeditions (≤ 100 answers, fights ≤ 20) and that hearts only come back from potions and Second Wind. Tune `TUNING` (`src/game/rules.ts`) and `src/game/upgrades.ts`. The bot is a model, not real players — expect to retune after human playtests.
+**Depths** (the bot always plays the deepest unlocked depth; model assumption: a recall-heavy mix lowers accuracy by up to 6 points at full challenge), 40 expeditions, median of 5 seeds:
+
+| Accuracy | Expeditions to clear depth 1 / 2 / 3 / 4 / 5 | Win rate | Answers per expedition (avg / max) |
+|---|---|---|---|
+| 60 % | 24 / 28 / never / never / never | 5 % | 33 / 65 |
+| 75 % | 6 / 10 / 12 / 13 / 14 | 61 % | 60 / 76 |
+| 85 % | 1 / 3 / 4 / 5 / 6 | 98 % | 60 / 78 |
+| 90 % | 1 / 2 / 3 / 4 / 5 | 100 % | 56 / 74 |
+| 100 % | 1 / 2 / 3 / 4 / 5 | 100 % | 51 / 63 |
+
+Per-depth enemy HP: without it (only the boss and the question mix) a 75 % player cleared depths 2–5 in 5 expeditions after the first win and expeditions stayed at ~40 answers; +15 % gave 6 / 9 / 10 / 11 / 12; **+30 % (chosen)** gives a real climb at 75 % and brings deep expeditions to ~50–60 answers. A 60 % player stays in depths 1–2 within 40 expeditions (wins remain possible there). Perfect play wins every depth (`tests/depths.test.ts`).
+
+Tried and rejected for depth 1: more enemy HP (×1.25–1.8) makes expeditions only a little longer (damage grows with levels and mastery) but drops 60 % players to no wins at all and pushes 75 % to a median of 10 expeditions. So expeditions are about 35–40 answers (6–8 minutes), shorter than first estimated; harder question mixes per depth (PR 2) are the planned way to add challenge. Longest fights are shield bosses. `tests/balance.test.ts` guards the targets, bounded expeditions (≤ 100 answers, fights ≤ 20) and that hearts only come back from potions and Second Wind. Tune `TUNING` (`src/game/rules.ts`) and `src/game/upgrades.ts`. The bot is a model, not real players — expect to retune after human playtests.
 
 ## Save format v1 (key `hanzi-hunters-save`)
 Saves were **restarted at v1 with expeditions** (2026-11-01): the earlier keys (`hanzi-hunters-save-v1`, `hanzi-hunters-save-v2`) are deleted on start (`clearOldSaves`) and never read, and backups from before are rejected. There are no migrations from earlier formats.
 
-`{ version: 1, meta{gold,upgrades,bestFloor,runs,wins}, mastery{entryId:{lv,ok}}, legacyMastery{id:{lv,ok}}, run|null, lastRun{floor,kills,level,goldBanked,result}|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges}, courses{curriculumId:{version,completed[lessonId]}}, peak{entryId:highestLevel}, legacyPeak{id:level}, practiced[entryId] }`. `run` holds `floor` (1–5), `hearts`, `secondLeft` (the expedition's pool), `recoveredFloor`, `shield` and `reward.hearts`; `lastRun.result` is `won` / `defeat` / `returned`. Every field is validated on load (`src/game/save.ts`); a save with another `version` loads as a fresh save. A mid-run reload resumes the expedition.
+`{ version: 1, meta{gold,upgrades,bestFloor,runs,wins,depthCleared}, mastery{entryId:{lv,ok}}, legacyMastery{id:{lv,ok}}, run|null, lastRun{floor,kills,level,goldBanked,bonus,result,depth,unlocked}|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges}, courses{curriculumId:{version,completed[lessonId]}}, peak{entryId:highestLevel}, legacyPeak{id:level}, practiced[entryId] }`. `run` holds `depth` (1–5), `floor` (1–5), `hearts`, `secondLeft` (the expedition's pool), `recoveredFloor`, `shield` and `reward.hearts`; `lastRun.result` is `won` / `defeat` / `returned`. Every field is validated on load (`src/game/save.ts`); a save with another `version` loads as a fresh save. A mid-run reload resumes the expedition.
 
 ## Entries, readings and questions (`src/content`, `src/game/questions.ts`)
 * An **entry** is one word / character / particle with one meaning and reading (`kind`). Multi-character words, neutral-tone syllables (`neutral`), accepted pronunciation variants (`variants`), connected-speech guidance (`speech`), several entries for one hanzi (explicit `id`s) and per-entry question eligibility (`questions`) are all data: see `docs/CONTENT_GUIDE.md`.

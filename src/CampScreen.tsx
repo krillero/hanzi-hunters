@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { BRANCHES, branchNodes, nodeState, upgradeCost, type UpgradeNode } from './game/upgrades'
 import type { CourseStatus } from './game/course'
 import type { Saved } from './game/types'
+import { DEPTHS, MAX_DEPTH, unlockedDepth, victoryBonus } from './game/rules'
 
 type Props = {
   save: Saved
   course: CourseStatus
   runMilestones: string[]            // names of milestones earned during the run that just ended (not persisted)
   onBuy: (id: string) => void
-  onStart: () => void
+  onStart: (depth: number) => void
   message: string
 }
 
@@ -25,16 +26,31 @@ export default function CampScreen({ save, course, runMilestones, onBuy, onStart
   const known = Object.keys(mastery).length
   const wordsLine = `${known} word${known === 1 ? '' : 's'}`
   const lessonPct = course.lessonsTotal ? Math.round(course.lessonsCompleted / course.lessonsTotal * 100) : 0
+  // Depth to start: the deepest unlocked one by default; cleared depths can be replayed.
+  const maxDepth = unlockedDepth(meta.depthCleared)
+  const [depth, setDepth] = useState(maxDepth)
+  const chosen = Math.min(depth, maxDepth)
+  const info = DEPTHS[chosen - 1]
 
   return (
     <section className="camp" aria-label="Base camp">
       <div className="camp-head">
         <p className="eyebrow">{lastRun ? (lastRun.result === 'won' ? 'EXPEDITION WON' : 'EXPEDITION OVER') : 'BASE CAMP'}</p>
-        <h1>{lastRun ? (lastRun.result === 'won' ? 'You beat the Cavern Warden!' : lastRun.result === 'returned' ? `You returned from floor ${lastRun.floor}` : `You fell on floor ${lastRun.floor}`) : 'Prepare for the expedition'}</h1>
+        <h1>{lastRun ? (lastRun.result === 'won' ? `Depth ${lastRun.depth} cleared!` : lastRun.result === 'returned' ? `You returned from floor ${lastRun.floor}` : `You fell on floor ${lastRun.floor}`) : 'Prepare for the expedition'}</h1>
         {lastRun
-          ? <p className="camp-result"><span>{lastRun.kills} slain</span><span>Level {lastRun.level}</span><span className="gain">+{lastRun.goldBanked} gold</span></p>
+          ? <p className="camp-result"><span>{lastRun.kills} slain</span><span>Level {lastRun.level}</span><span className="gain">+{lastRun.goldBanked} gold{lastRun.bonus ? ` (incl. ${lastRun.bonus} victory bonus)` : ''}</span></p>
           : <p className="camp-result">Upgrades and the words you learn stay between runs.</p>}
+        {lastRun?.unlocked ? <p className="camp-milestone" role="status"><span aria-hidden="true">★</span> Depth {lastRun.unlocked} unlocked: {DEPTHS[lastRun.unlocked - 1].name}</p> : null}
         {runMilestones.length > 0 && <p className="camp-milestone" role="status"><span aria-hidden="true">★</span> New milestone: {runMilestones.join(', ')}</p>}
+      </div>
+
+      <div className="camp-depth">
+        <div className="camp-depth-top"><span>DEPTH {chosen} OF {MAX_DEPTH}</span><span>Win: +{victoryBonus(chosen)} gold</span></div>
+        <strong>{info.name}</strong>
+        <small>{info.note}{chosen < maxDepth ? ' · cleared' : ''}</small>
+        {maxDepth > 1 && <div className="camp-depth-pick" role="radiogroup" aria-label="Choose a depth">
+          {DEPTHS.slice(0, maxDepth).map((d, i) => <button key={d.name} role="radio" aria-checked={chosen === i + 1} aria-label={`Depth ${i + 1}: ${d.name}`} className={chosen === i + 1 ? 'on' : ''} onClick={() => setDepth(i + 1)}>{i + 1}</button>)}
+        </div>}
       </div>
 
       <div className="camp-course" role="status">
@@ -95,7 +111,7 @@ export default function CampScreen({ save, course, runMilestones, onBuy, onStart
       </div>
 
       <div className="camp-start-bar">
-        <button className="primary-btn camp-start" onClick={onStart}>{lastRun ? 'New expedition' : 'Start the expedition'} <span aria-hidden="true">→</span></button>
+        <button className="primary-btn camp-start" onClick={() => onStart(chosen)}>{chosen > 1 ? `Start depth ${chosen}` : lastRun ? 'New expedition' : 'Start the expedition'} <span aria-hidden="true">→</span></button>
       </div>
     </section>
   )

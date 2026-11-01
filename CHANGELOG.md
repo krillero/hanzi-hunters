@@ -1,5 +1,18 @@
 # Changelog / test log
 
+## 2026-11-01 — No question audio behind the new-word card (branch ccr-2aecd5ae-3v8bz2)
+
+- Bug: when a fight started with new-word cards, the next question was prepared first and its word was read aloud behind the card; after "Got it" a different question was shown (rebuilt so the new word can be asked), so the sound never matched anything on screen.
+- Fix (`App.tsx`): a question is only read aloud once nothing covers it (new-word card, boss intro, loot card, floor summary) and at most once per question. `introPending` is set in the same commit that queues the cards, so the prepared question stays silent. Rebuilding the question after "Got it" is unchanged (intended).
+- Checks: `npm run test:brief` 170 pass, build pass; 360 px with speech stubbed: 22 fight steps, 2 new-word cards, no question audio while a card was open, no console errors.
+## 2026-11-01 — Depths (branch ccr-2aecd5ae-3v8bz2)
+
+- **5 depths** (Mosslight Cavern … Jade Throne): winning unlocks the next (`meta.depthCleared`); camp has a depth card with a picker; cleared depths can be replayed. The battle header shows the depth name.
+- **Harder questions within taught material:** `challengeFor(depth, floor)` leans `chooseKind` toward recall kinds, re-weighting only kinds the word is already eligible for (a new word's first step and particles are unaffected).
+- **Rewards:** victory bonus 40 × depth (shown in the final summary and at camp), enemy gold/XP +25 % per depth; enemy HP +30 % per depth and the Warden +15 % more (chosen with the simulator, see `docs/GAME_DESIGN.md`).
+- Saves (still v1): `meta.depthCleared`, `run.depth`, `lastRun.{bonus,depth,unlocked}`, all optional with safe defaults.
+- New `tests/depths.test.ts`; simulator plays the deepest unlocked depth and reports expeditions per depth.
+
 ## 2026-11-01 — Answer feedback no longer cut off; rules message removed (branch ccr-2aecd5ae-3v8bz2)
 
 - The answer feedback box grows into the free space above Continue (never smaller than the answer grid, so nothing jumps) and scrolls only if a note is longer still. It used to be fixed to the grid's height and clipped longer notes.
