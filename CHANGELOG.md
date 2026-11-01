@@ -393,3 +393,17 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Inventory now distinguishes found items from equipped items. Loot auto-equips only into an empty slot; players can equip or replace owned gear from the character panel.
 - Existing v2 saves are sanitized into a compatible loadout by equipping the first owned item in each slot; no save key change or progress reset.
 - Automated test/build results pending review of the feature branch.
+
+## Contextual encounter prototype (2026-11-01)
+- Optional tea and meal scenes after eligible floor clears, one per expedition.
+- Chinese-first presentation develops with current mastery and distinct practice days.
+- Saved selections/help/results and idempotent +3 run-gold completion.
+- Title and button are the same for every scene ("A traveler’s request" / Prepare) so they never name the answer; item pictures are hidden at the Chinese-first stage unless help is open.
+- Scenes moved to `src/content/encounters.json` with per-scene word requirements (checked by `validate:content`); new early "reply" scenes (hello, goodbye, sorry) appear from course word 3–5, usually after floor 1 of the first run.
+- New "point" kind (tap the picture the Chinese line describes): who-is-it scenes (他/她是我朋友。, from course word 20) and counting scenes (这里有三/四/五个人。, from word 35).
+- Golem's Tone Trial: after the Golem's first shield segment breaks, pick the tone-marked pinyin of a line you know. Right: the shield shatters and the Golem loses 25 % HP (never the killing blow); wrong: an ordinary wrong answer; "Not now" skips. Content in `src/content/trials.json` (validated: tone-only distractors, no sandhi-ambiguous ones); preview `/?trial=<id>`. Simulator models it (`golemTrial`, `golemTrialHit`).
+- Echo Wraith's Wail: when the Wraith first drops below 60 % HP it says a line of known words and you pick the reply that answers it. Right: it calms, and your next wrong answer this expedition costs no heart (`Run.calm`, 👻 chip; protection order practice → calm → second chance). Simulator counts trials and calm saves.
+- Ink Scribe's Torn Note: right after the Scribe's first seal breaks it shows a note of known words with one character missing (English shown); pick the character that completes it (distractors are often homophones, 有 / 友). Right: every remaining seal breaks. Wrong: an ordinary wrong answer.
+- Mirror Trickster's Mirrors: the first time the Trickster drops below half HP, three statements about a picture (有/没有, numbers, 是/不是, 他/她); pick the true one. Right: a heavy blow (30 % max HP, never the killing blow). Wrong: an ordinary wrong answer. Small heart cost for strong players in the simulator (documented); skippable.
+- Leaving an encounter reuses the normal next-enemy path (keeps the FLOOR banner).
+- 178 tests passed, build passes, one 360 px browser check passed; see docs/CONTEXTUAL_ENCOUNTERS.md.

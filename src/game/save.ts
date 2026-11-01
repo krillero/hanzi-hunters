@@ -1,4 +1,6 @@
 // Save format v1 under SAVE_KEY (restarted with expeditions). Saves from before (other keys) are deleted on start and never read. Never throws.
+import { cleanEncounter, cleanHistory } from './encounters.ts'
+import { cleanTrial } from './trials.ts'
 import { sanitizeHabit } from './habit.ts'
 import { CURRICULA, ENEMIES, GEAR, WORDS, type GearSlot, type Word } from '../data.ts'
 import type { Curriculum } from '../content/types.ts'
@@ -104,13 +106,15 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   const boss = isBoss(floor, kill) ? bossIdFor(floor) : null
   const rw = isObj(raw.reward) ? raw.reward : {}
   const run: Run = {
+    encounter: cleanEncounter(raw.encounter),
+    trial: cleanTrial(raw.trial),
     depth, floor, kill, level, gear, loadout, phase, hearts, recoveredFloor,
     kills: int(raw.kills, 0, 1e9, 0), xp: int(raw.xp, 0, 1e9, 0), pendingXp: int(raw.pendingXp, 0, 1e9, 0),
     shield: boss && hasShield(boss) && phase === 'fighting' ? int(raw.shield, 0, shieldFor(floor, boss), shieldFor(floor, boss)) : 0, gold: int(raw.gold, 0, 1e9, 0),
     potions: int(raw.potions, 0, 999, 0), streak: int(raw.streak, 0, 999, 0),
     enemyHp: phase === 'victory' ? 0 : int(raw.enemyHp, 1, foeHp, foeHp),
     hintsLeft: int(raw.hintsLeft, 0, stats.hints, stats.hints),
-    secondLeft: int(raw.secondLeft, 0, stats.secondChances, 0),
+    secondLeft: int(raw.secondLeft, 0, stats.secondChances, 0), calm: int(raw.calm, 0, 1, 0),
     reward: { xp: int(rw.xp, 0, 1e9, 0), gold: int(rw.gold, 0, 1e9, 0), loot: typeof rw.loot === 'string' && GEAR.some(g => g.name === rw.loot) ? rw.loot : '', levelUps: int(rw.levelUps, 0, 999, 0), hearts: int(rw.hearts, 0, 99, 0) }
   }
   return run
@@ -158,6 +162,7 @@ export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Cur
   return {
     version: SAVE_VERSION, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
     peak: peaks.peak, legacyPeak: peaks.legacy,
+    encounterHistory: cleanHistory(r.encounterHistory),
     practiced: sanitizePracticed(r.practiced, words),
     courses: sanitizeCourses(r.courses, migrated.mastery, curricula, words, peaks.peak)
   }

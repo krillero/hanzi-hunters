@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Phaser from 'phaser'
 import { PixelScene, type EnemySprite } from './game/PixelScene'
+import EncounterScreen from './EncounterScreen'
+import TrialScreen from './TrialScreen'
+import { closeTrial, offerTrial, optionKeys, resolveTrial, trialById, type TrialState } from './game/trials'
+import { offer, complete, localDate, previewEncounter, type EncounterState } from './game/encounters'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
@@ -35,7 +39,7 @@ import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 /** `sealFallback`: a shield boss question that is not a seal question because none could be built; a correct answer still breaks a segment. */
 type Card = { word: Word; question: Question; sealFallback?: boolean }
-type CombatExchange = { damage: number; heartsLost: number; saved: 'practice' | 'second' | null; heartsRestored: number; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
+type CombatExchange = { damage: number; heartsLost: number; saved: 'practice' | 'second' | 'calm' | null; heartsRestored: number; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
 type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal' | 'shield' | 'hurt'; text: string }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; masteredNow: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
 
@@ -121,6 +125,11 @@ export default function App() {
   const forcedWord = useRef(new URLSearchParams(window.location.search).get('word'))
   const forcedKind = useRef(new URLSearchParams(window.location.search).get('kind') as QKind | null)   // preview aid: /?word=木&kind=homophone
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
+  // Preview aid: /?encounter=tea|meal[&stage=0|1|2] opens that scene on its own. It never touches the save (no gold, no history).
+  const [encounterPreview, setEncounterPreview] = useState<EncounterState | null>(() => { const q = new URLSearchParams(window.location.search); return previewEncounter(q.get('encounter'), q.get('stage')) })
+  // Preview aid: /?trial=<id> opens that boss trial on its own (no fight, nothing saved).
+  const [trialPreview, setTrialPreview] = useState<TrialState | null>(() => { const t = trialById(new URLSearchParams(window.location.search).get('trial') ?? undefined); return t ? { id: t.id, floor: 1, order: optionKeys(t), status: 'pending' } : null })
+  const encounterOpen = !!save.run?.encounter && save.run.encounter.status !== 'closed'
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
   const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
@@ -257,7 +266,7 @@ export default function App() {
   const introPending = useRef(false)
   useEffect(() => {
     if (!run) { introKey.current = ''; return }
-    if (run.phase !== 'fighting' || feedback || reveal || bossIntro || summary || lootReveal || introQueue.length) return
+    if (encounterOpen || run.phase !== 'fighting' || feedback || reveal || bossIntro || summary || lootReveal || introQueue.length) return
     const key = `${run.floor}:${run.kill}`
     if (key === introKey.current) return
     const resumed = introKey.current === null
@@ -365,7 +374,11 @@ export default function App() {
   // Only once the question is actually visible: a card prepared behind the new-word card, the boss intro, a loot card or the floor
   // summary stays silent (it is often replaced before it is shown), and each card is read at most once.
   const spokenCard = useRef<Card | null>(null)
-  const questionCovered = introQueue.length > 0 || bossIntro !== null || lootReveal !== null || summary !== null
+  // The Golem's Tone Trial waits until the answer feedback and every other card are gone; its result stays until Continue.
+  const trialState = run?.trial
+  const trialOpen = !!trialState && (trialState.status === 'pending' || trialState.status === 'answered') && trialState.floor === run?.floor
+    && !encounterOpen && !feedback && !reveal && introQueue.length === 0 && bossIntro === null && lootReveal === null && summary === null
+  const questionCovered = trialOpen || encounterOpen || introQueue.length > 0 || bossIntro !== null || lootReveal !== null || summary !== null
   useEffect(() => {
     if (!card || questionCovered || introPending.current || spokenCard.current === card) return
     spokenCard.current = card
@@ -396,6 +409,7 @@ export default function App() {
     if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: foe?.boss === 'scribe' ? '💥 SEALS BROKEN' : '💥 SHIELD DOWN' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster(!!foe?.boss)
     else if (r.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: '−1 ♥' }) }
+    else if (r.savedByCalm) setCaption({ side: 'hero', kind: 'block', text: '👻 Calmed Wraith · heart saved' })
     else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: 'Second chance · heart saved' })
     else if (r.practiceSaved) setCaption({ side: 'hero', kind: 'block', text: 'Practice · no heart lost' })
 
@@ -409,7 +423,10 @@ export default function App() {
     if (masteredNow) setCeremony(word.id)
     if (isCorrect && hasDetails(word) && !habit.tipsSeen.includes(word.id)) { habit = { ...habit, tipsSeen: [...habit.tipsSeen, word.id] }; setTipPulse(word.id) }
     // The protected first practice is used up by the first non-intro answer (right or wrong), and remembered in the save.
-    patch(s => ({ ...s, run: r.run, mastery, habit, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
+    // The answer may bring a boss to its trial moment (Golem: first shield segment broken; Wraith: below its echo threshold).
+    // Decided once, here, so a re-render cannot reroll it.
+    const runAfter = offerTrial(r.run, mastery, ENEMIES)
+    patch(s => ({ ...s, run: runAfter, mastery, habit, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
 
     // Learning summary for the floor-clear / defeat cards
     const rec = { id: word.id, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
@@ -456,7 +473,7 @@ export default function App() {
       : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
         : after < before ? `Back to level ${after} — it will return for review`
           : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : 'One more correct in a row to level up') : 'Review this one — it will come back'
-    const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
+    const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedByCalm ? 'calm' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
       correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, masteredNow, lv: after, chosen: option, answer: question.answer,
@@ -475,9 +492,31 @@ export default function App() {
     if (run?.phase === 'fighting') { setNextCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
 
-  const nextEnemy = () => {
-    if (!run) return
-    const next = advance(run, bonuses, ENEMIES, GEAR)
+  /** `from` lets a caller advance from a run it just changed (closing an encounter) instead of the rendered one. */
+  /** One submission: resolveTrial ignores anything but a pending trial, and the lock covers a double tap before re-render. */
+  const trialLock = useRef(false)
+  const answerTrial = (chosen: string) => {
+    if (!run || trialLock.current) return
+    const res = resolveTrial({ run, bonuses, enemies: ENEMIES, allGear: GEAR, roll: { drop: Math.random(), item: Math.random() }, chosen })
+    if (!res) return
+    trialLock.current = true
+    patch(s => ({ ...s, run: res.run }))
+    if (res.correct && trialById(run.trial?.id)?.boss === 'wraith') { setCaption({ side: 'hero', kind: 'block', text: '👻 Wraith calmed · next mistake free' }); feel('combo', { streak: 7 }) }
+    else if (res.correct && trialById(run.trial?.id)?.boss === 'trickster') { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '🪞 TRUE STRIKE' }); feel('combo', { streak: 9 }) }
+    else if (res.correct && trialById(run.trial?.id)?.boss === 'scribe') { setCaption({ side: 'monster', kind: 'shield', text: '💥 SEALS BROKEN' }); feel('combo', { streak: 9 }) }
+    else if (res.correct) { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '💥 SHIELD SHATTERED' }); feel('combo', { streak: 9 }) }
+    else if (res.outcome === 'defeat') { sceneRef.current?.playHit('hero'); sceneRef.current?.showDefeat(true); feel('defeat') }
+    else {
+      feel('wrong')
+      if (res.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: '−1 ♥' }) }
+      else if (res.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: 'Second chance · heart saved' })
+    }
+  }
+  const leaveTrial = () => { trialLock.current = false; patch(s => (s.run ? { ...s, run: closeTrial(s.run) } : s)) }
+
+  const nextEnemy = (from: Run | null = run) => {
+    if (!from) return
+    const next = advance(from, bonuses, ENEMIES, GEAR)
     if (!next) { endRun('won'); return }
     patch(s => ({ ...s, run: next }))
     setNextCard(makeCard(save.mastery, card?.word.id ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
@@ -488,7 +527,7 @@ export default function App() {
       if (!save.habit.bossesMet.includes(id)) { setBossIntro(id); patch(s => ({ ...s, habit: { ...s.habit, bossesMet: [...s.habit.bossesMet, id] } })) }
     }
     sceneRef.current?.resetMonster()
-    if (next.floor > run.floor) { setFloorBanner(`FLOOR ${next.floor}`); window.setTimeout(() => setFloorBanner(''), 1800); setFloorStats(emptyStats()) }
+    if (next.floor > from.floor) { setFloorBanner(`FLOOR ${next.floor}`); window.setTimeout(() => setFloorBanner(''), 1800); setFloorStats(emptyStats()) }
   }
 
   /** Leave the in-place reveal of a right answer: next question, or next monster after a kill. */
@@ -500,7 +539,7 @@ export default function App() {
     else { setCaption(null); setNextCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
-  const blockingOpen = explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null || introQueue.length > 0
+  const blockingOpen = trialOpen || encounterOpen || explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null || introQueue.length > 0
   useEffect(() => {
     if (!reveal || blockingOpen) return
     const t = window.setTimeout(advanceAuto, reveal.plan.delay)
@@ -603,6 +642,25 @@ export default function App() {
       </div>
     </header>
   )
+  if (trialPreview) {
+    const t = trialById(trialPreview.id)!
+    const closePreview = () => { const u = new URL(window.location.href); u.searchParams.delete('trial'); window.history.replaceState(null, '', u); setTrialPreview(null) }
+    return (
+      <main className="app-shell in-camp">
+        {topbar}
+        <TrialScreen trial={t} state={trialPreview} onAnswer={o => setTrialPreview(p => p && p.status === 'pending' ? { ...p, status: 'answered', chosen: o } : p)} onSkip={closePreview} onClose={closePreview} />
+      </main>
+    )
+  }
+  if (encounterPreview) {
+    const closePreview = () => { const u = new URL(window.location.href); u.searchParams.delete('encounter'); u.searchParams.delete('stage'); window.history.replaceState(null, '', u); setEncounterPreview(null) }
+    return (
+      <main className="app-shell in-camp">
+        {topbar}
+        <EncounterScreen state={encounterPreview} onChange={setEncounterPreview} onComplete={() => setEncounterPreview(e => e && { ...e, status: 'complete' })} onLeave={closePreview} preview />
+      </main>
+    )
+  }
   if (!run || !stats || !foe) {
     return (
       <main className="app-shell in-camp">
@@ -698,7 +756,7 @@ export default function App() {
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
-                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}{(run.calm ?? 0) > 0 && <span className="second-chip" aria-label="Calmed Wraith: your next mistake costs no heart" title="Calmed Wraith: your next mistake costs no heart">👻</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
                 <div className="bar-label"><span>{foe.enemy.name}</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
@@ -829,7 +887,7 @@ export default function App() {
                   <div className="result-line">
                     <strong>{feedback.correct ? '✓ Correct' : 'Not quite'}{feedback.correct && feedback.word.variants.length > 0 && <small className="result-also"> also {feedback.word.variants.join(', ')}</small>}</strong>
                   </div>
-                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−1 heart · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : 'Practice · no heart lost'}</p>}
+                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−1 heart · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : 'Practice · no heart lost'}</p>}
                   {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
                   <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
                 </div>
@@ -853,7 +911,7 @@ export default function App() {
                     {stats.hints > 0 && <button className="bar-btn ghost hint-btn" onClick={useHint} disabled={run.hintsLeft < 1} aria-label={`Hint, ${run.hintsLeft} left this fight`}>💡 Hint <b>{run.hintsLeft}</b></button>}
                     {run.potions > 0 && <button className="bar-btn ghost potion-btn" onClick={usePotion} disabled={fullHearts} aria-label={fullHearts ? `Potion: hearts are full, ${run.potions} left` : `Use potion: restores ${stats.potionHearts} heart, ${run.potions} left`}>🧪 Potion <b>{run.potions}</b></button>}
                   </>
-                : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? (lastOfFloor ? () => setSummary('floor') : nextEnemy) : () => setSummary('defeat')}>
+                : <button className="bar-btn main" data-kind={fighting ? 'continue' : run.phase === 'victory' ? 'next' : 'camp'} onClick={fighting ? dismissFeedback : run.phase === 'victory' ? (lastOfFloor ? () => setSummary('floor') : () => nextEnemy()) : () => setSummary('defeat')}>
                     {fighting ? 'Continue' : run.phase === 'victory' ? (lastOfFloor ? 'Floor summary' : 'Next enemy') : 'Go to camp'} <span>{run.phase === 'defeat' && !fighting ? '⛺' : '→'}</span>
                   </button>}
             </div>
@@ -864,7 +922,9 @@ export default function App() {
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
-        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else nextEnemy() } else endRun('defeat') }} />}
+        {trialOpen && trialState && (() => { const t = trialById(trialState.id); return t ? <TrialScreen trial={t} state={trialState} onAnswer={answerTrial} onSkip={leaveTrial} onClose={leaveTrial} /> : null })()}
+        {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onComplete={() => patch(s => complete(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
+        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}

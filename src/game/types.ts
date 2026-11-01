@@ -11,6 +11,12 @@ import type { GearSlot } from '../data.ts'
 
 export type RunPhase = 'fighting' | 'victory' | 'defeat'
 export type Run = {
+  /** The optional contextual encounter offered after a floor boss (at most one per expedition; kept as 'closed' once left). */
+  encounter?: import('./encounters').EncounterState
+  /** The boss trial of the current fight (Golem's Tone Trial; once per fight, never changes mastery). See game/trials.ts. */
+  trial?: import('./trials').TrialState
+  /** Echo Wraith calmed by its trial: the next wrong answer this expedition costs no heart (0 or 1; kept until used). */
+  calm?: number
   /** The expedition's depth (1..MAX_DEPTH): harder question mix, more gold, tougher final boss. */
   depth: number
   floor: number; kill: number; kills: number
@@ -62,4 +68,6 @@ export type Saved = {
    * (no heart lost) battle question: its first question after the introduction.
    */
   practiced: string[]
+  /** Local dates (YYYY-MM-DD, up to 30) on which each contextual encounter was completed; drives its support stage. */
+  encounterHistory?: import('./encounters').History
 }

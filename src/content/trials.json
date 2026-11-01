@@ -1,0 +1,570 @@
+{
+  "trials": [
+    {
+      "id": "hello",
+      "boss": "golem",
+      "requires": [
+        "你好"
+      ],
+      "zh": "你好！",
+      "en": "Hello!",
+      "options": [
+        "Nǐ hǎo!",
+        "Nì hǎo!",
+        "Nǐ hào!"
+      ],
+      "answer": "Nǐ hǎo!",
+      "note": "你好 is written nǐ hǎo: two third tones. (In speech the first one rises, ní hǎo, but the written pinyin keeps nǐ.)"
+    },
+    {
+      "id": "thanks",
+      "boss": "golem",
+      "requires": [
+        "谢谢"
+      ],
+      "zh": "谢谢！",
+      "en": "Thank you!",
+      "options": [
+        "Xièxie!",
+        "Xiēxie!",
+        "Xiěxie!"
+      ],
+      "answer": "Xièxie!",
+      "note": "谢谢 is xièxie: a falling fourth tone, then a light toneless xie."
+    },
+    {
+      "id": "goodbye",
+      "boss": "golem",
+      "requires": [
+        "再见"
+      ],
+      "zh": "再见！",
+      "en": "Goodbye!",
+      "options": [
+        "Zàijiàn!",
+        "Zāijiàn!",
+        "Zàijiān!"
+      ],
+      "answer": "Zàijiàn!",
+      "note": "再见 is zàijiàn: two falling fourth tones."
+    },
+    {
+      "id": "how-are-you",
+      "boss": "golem",
+      "requires": [
+        "你好",
+        "吗"
+      ],
+      "zh": "你好吗？",
+      "en": "How are you?",
+      "options": [
+        "Nǐ hǎo ma?",
+        "Nǐ hǎo mā?",
+        "Nǐ hǎo mǎ?"
+      ],
+      "answer": "Nǐ hǎo ma?",
+      "note": "The question particle 吗 is toneless: ma, said lightly and quickly."
+    },
+    {
+      "id": "friend",
+      "boss": "golem",
+      "requires": [
+        "他",
+        "是",
+        "我",
+        "朋友"
+      ],
+      "zh": "他是我朋友。",
+      "en": "He is my friend.",
+      "options": [
+        "Tā shì wǒ péngyou.",
+        "Tā shí wǒ péngyou.",
+        "Tā shì wǒ pēngyou."
+      ],
+      "answer": "Tā shì wǒ péngyou.",
+      "note": "是 is shì (falling) and 朋友 is péngyou: a rising péng, then a light you."
+    },
+    {
+      "id": "three-people",
+      "boss": "golem",
+      "requires": [
+        "这里",
+        "有",
+        "三",
+        "个",
+        "人"
+      ],
+      "zh": "这里有三个人。",
+      "en": "There are three people here.",
+      "options": [
+        "Zhèlǐ yǒu sān ge rén.",
+        "Zhèlǐ yǒu sàn ge rén.",
+        "Zhèlǐ yǒu sān ge rěn."
+      ],
+      "answer": "Zhèlǐ yǒu sān ge rén.",
+      "note": "三 is sān (high and level) and 人 is rén (rising). 个 is usually light in 三个人."
+    },
+    {
+      "id": "wraith-hello",
+      "boss": "wraith",
+      "requires": [
+        "你好",
+        "再见",
+        "对不起"
+      ],
+      "zh": "你好……",
+      "py": "Nǐ hǎo……",
+      "en": "Hello……",
+      "options": [
+        {
+          "zh": "你好！",
+          "py": "Nǐ hǎo!",
+          "en": "Hello!"
+        },
+        {
+          "zh": "再见！",
+          "py": "Zàijiàn!",
+          "en": "Goodbye!"
+        },
+        {
+          "zh": "对不起！",
+          "py": "Duìbuqǐ!",
+          "en": "Sorry!"
+        }
+      ],
+      "answer": "你好！",
+      "note": "A greeting is answered with a greeting: 你好！ 再见 is goodbye and 对不起 is sorry."
+    },
+    {
+      "id": "wraith-goodbye",
+      "boss": "wraith",
+      "requires": [
+        "你好",
+        "再见",
+        "对不起"
+      ],
+      "zh": "再见……",
+      "py": "Zàijiàn……",
+      "en": "Goodbye……",
+      "options": [
+        {
+          "zh": "再见！",
+          "py": "Zàijiàn!",
+          "en": "Goodbye!"
+        },
+        {
+          "zh": "你好！",
+          "py": "Nǐ hǎo!",
+          "en": "Hello!"
+        },
+        {
+          "zh": "对不起！",
+          "py": "Duìbuqǐ!",
+          "en": "Sorry!"
+        }
+      ],
+      "answer": "再见！",
+      "note": "再见 is answered with 再见. 你好 is hello and 对不起 is sorry."
+    },
+    {
+      "id": "wraith-who",
+      "boss": "wraith",
+      "requires": [
+        "你",
+        "是",
+        "谁",
+        "我",
+        "朋友",
+        "谢谢",
+        "再见"
+      ],
+      "zh": "你是谁？",
+      "py": "Nǐ shì shéi?",
+      "en": "Who are you?",
+      "options": [
+        {
+          "zh": "我是你朋友。",
+          "py": "Wǒ shì nǐ péngyou.",
+          "en": "I am your friend."
+        },
+        {
+          "zh": "谢谢！",
+          "py": "Xièxie!",
+          "en": "Thank you!"
+        },
+        {
+          "zh": "再见！",
+          "py": "Zàijiàn!",
+          "en": "Goodbye!"
+        }
+      ],
+      "answer": "我是你朋友。",
+      "note": "谁 asks who. Only 我是你朋友 says who you are; 谢谢 and 再见 do not answer the question."
+    },
+    {
+      "id": "wraith-friend",
+      "boss": "wraith",
+      "requires": [
+        "你",
+        "是",
+        "我",
+        "朋友",
+        "吗",
+        "你好",
+        "再见"
+      ],
+      "zh": "你是我朋友吗？",
+      "py": "Nǐ shì wǒ péngyou ma?",
+      "en": "Are you my friend?",
+      "options": [
+        {
+          "zh": "是，我是你朋友。",
+          "py": "Shì, wǒ shì nǐ péngyou.",
+          "en": "Yes, I am your friend."
+        },
+        {
+          "zh": "你好吗？",
+          "py": "Nǐ hǎo ma?",
+          "en": "How are you?"
+        },
+        {
+          "zh": "再见！",
+          "py": "Zàijiàn!",
+          "en": "Goodbye!"
+        }
+      ],
+      "answer": "是，我是你朋友。",
+      "note": "A 吗 question is answered “yes” by repeating the verb: 是 (yes, I am). 你好吗 is another question, not an answer."
+    },
+    {
+      "id": "wraith-anyone",
+      "boss": "wraith",
+      "requires": [
+        "这里",
+        "有",
+        "人",
+        "吗",
+        "谢谢",
+        "再见"
+      ],
+      "zh": "这里有人吗？",
+      "py": "Zhèlǐ yǒu rén ma?",
+      "en": "Is anyone here?",
+      "options": [
+        {
+          "zh": "有。",
+          "py": "Yǒu.",
+          "en": "Yes, there is."
+        },
+        {
+          "zh": "谢谢！",
+          "py": "Xièxie!",
+          "en": "Thank you!"
+        },
+        {
+          "zh": "再见！",
+          "py": "Zàijiàn!",
+          "en": "Goodbye!"
+        }
+      ],
+      "answer": "有。",
+      "note": "To answer a 有…吗 question with yes, repeat the verb: 有 (there is)."
+    },
+    {
+      "id": "scribe-hello",
+      "boss": "scribe",
+      "requires": [
+        "你好",
+        "吗",
+        "人"
+      ],
+      "zh": "你＿！",
+      "py": "Nǐ hǎo!",
+      "en": "Hello!",
+      "options": [
+        "好",
+        "吗",
+        "人"
+      ],
+      "answer": "好",
+      "note": "你好 is 你 (you) + 好 (good). 吗 makes a question and 人 means person."
+    },
+    {
+      "id": "scribe-sorry",
+      "boss": "scribe",
+      "requires": [
+        "对不起",
+        "也",
+        "是"
+      ],
+      "zh": "对＿起！",
+      "py": "Duìbuqǐ!",
+      "en": "Sorry!",
+      "options": [
+        "不",
+        "也",
+        "是"
+      ],
+      "answer": "不",
+      "note": "对不起 has 不 (not) in the middle, said lightly: duìbuqǐ. 也 means also and 是 means to be."
+    },
+    {
+      "id": "scribe-who",
+      "boss": "scribe",
+      "requires": [
+        "你",
+        "是",
+        "谁",
+        "好",
+        "也"
+      ],
+      "zh": "你是＿？",
+      "py": "Nǐ shì shéi?",
+      "en": "Who are you?",
+      "options": [
+        "谁",
+        "好",
+        "也"
+      ],
+      "answer": "谁",
+      "note": "谁 asks who. 好 means good and 也 means also; neither can end this question."
+    },
+    {
+      "id": "scribe-he-is",
+      "boss": "scribe",
+      "requires": [
+        "他",
+        "是",
+        "我",
+        "朋友",
+        "也",
+        "很"
+      ],
+      "zh": "他＿我朋友。",
+      "py": "Tā shì wǒ péngyou.",
+      "en": "He is my friend.",
+      "options": [
+        "是",
+        "也",
+        "很"
+      ],
+      "answer": "是",
+      "note": "是 links “he” and “my friend”. 也 (also) and 很 (very) cannot do that on their own: “he is also my friend” is 他也是我朋友."
+    },
+    {
+      "id": "scribe-friend",
+      "boss": "scribe",
+      "requires": [
+        "我",
+        "是",
+        "你",
+        "朋友",
+        "有",
+        "人"
+      ],
+      "zh": "我是你朋＿。",
+      "py": "Wǒ shì nǐ péngyou.",
+      "en": "I am your friend.",
+      "options": [
+        "友",
+        "有",
+        "人"
+      ],
+      "answer": "友",
+      "note": "朋友 (friend) is written with 友. 有 sounds the same, yǒu, but means “have / there is”; 人 means person."
+    },
+    {
+      "id": "scribe-there-is",
+      "boss": "scribe",
+      "requires": [
+        "这里",
+        "有",
+        "朋友",
+        "也",
+        "三",
+        "个",
+        "人"
+      ],
+      "zh": "这里＿三个人。",
+      "py": "Zhèlǐ yǒu sān ge rén.",
+      "en": "There are three people here.",
+      "options": [
+        "有",
+        "友",
+        "也"
+      ],
+      "answer": "有",
+      "note": "有 means “there is / have”. 友 sounds the same but appears in words like 朋友; 也 means also."
+    },
+    {
+      "id": "trickster-three",
+      "boss": "trickster",
+      "requires": [
+        "这里",
+        "有",
+        "没有",
+        "三",
+        "四",
+        "个",
+        "人"
+      ],
+      "picture": "🧑🧑🧑",
+      "en": "Three people sit by the fire.",
+      "options": [
+        {
+          "zh": "这里有三个人。",
+          "py": "Zhèlǐ yǒu sān ge rén.",
+          "en": "There are three people here."
+        },
+        {
+          "zh": "这里有四个人。",
+          "py": "Zhèlǐ yǒu sì ge rén.",
+          "en": "There are four people here."
+        },
+        {
+          "zh": "这里没有人。",
+          "py": "Zhèlǐ méiyǒu rén.",
+          "en": "There is nobody here."
+        }
+      ],
+      "answer": "这里有三个人。",
+      "note": "三 is three and 四 is four. 没有 negates 有: 这里没有人 means nobody is here."
+    },
+    {
+      "id": "trickster-five",
+      "boss": "trickster",
+      "requires": [
+        "这里",
+        "有",
+        "三",
+        "四",
+        "五",
+        "个",
+        "人"
+      ],
+      "picture": "🧑🧑🧑🧑🧑",
+      "en": "Five people sit by the fire.",
+      "options": [
+        {
+          "zh": "这里有五个人。",
+          "py": "Zhèlǐ yǒu wǔ ge rén.",
+          "en": "There are five people here."
+        },
+        {
+          "zh": "这里有四个人。",
+          "py": "Zhèlǐ yǒu sì ge rén.",
+          "en": "There are four people here."
+        },
+        {
+          "zh": "这里有三个人。",
+          "py": "Zhèlǐ yǒu sān ge rén.",
+          "en": "There are three people here."
+        }
+      ],
+      "answer": "这里有五个人。",
+      "note": "五 is five; 四 is four and 三 is three."
+    },
+    {
+      "id": "trickster-nobody",
+      "boss": "trickster",
+      "requires": [
+        "这里",
+        "有",
+        "没有",
+        "三",
+        "五",
+        "个",
+        "人"
+      ],
+      "picture": "🔥",
+      "en": "An empty campfire: nobody is there.",
+      "options": [
+        {
+          "zh": "这里没有人。",
+          "py": "Zhèlǐ méiyǒu rén.",
+          "en": "There is nobody here."
+        },
+        {
+          "zh": "这里有三个人。",
+          "py": "Zhèlǐ yǒu sān ge rén.",
+          "en": "There are three people here."
+        },
+        {
+          "zh": "这里有五个人。",
+          "py": "Zhèlǐ yǒu wǔ ge rén.",
+          "en": "There are five people here."
+        }
+      ],
+      "answer": "这里没有人。",
+      "note": "没有 (méiyǒu) negates 有: 这里没有人 means there is nobody here."
+    },
+    {
+      "id": "trickster-her",
+      "boss": "trickster",
+      "requires": [
+        "这",
+        "是",
+        "她",
+        "他",
+        "这里",
+        "没有",
+        "人"
+      ],
+      "picture": "👩",
+      "en": "A woman stands by the fire.",
+      "options": [
+        {
+          "zh": "这是她。",
+          "py": "Zhè shì tā.",
+          "en": "This is her."
+        },
+        {
+          "zh": "这是他。",
+          "py": "Zhè shì tā.",
+          "en": "This is him."
+        },
+        {
+          "zh": "这里没有人。",
+          "py": "Zhèlǐ méiyǒu rén.",
+          "en": "There is nobody here."
+        }
+      ],
+      "answer": "这是她。",
+      "note": "她 (with 女, woman) is she/her; 他 is he/him. Both are said tā, so only the character tells you."
+    },
+    {
+      "id": "trickster-not-her",
+      "boss": "trickster",
+      "requires": [
+        "这",
+        "不",
+        "是",
+        "她",
+        "这里",
+        "没有",
+        "人"
+      ],
+      "picture": "👨",
+      "en": "A man stands by the fire.",
+      "options": [
+        {
+          "zh": "这不是她。",
+          "py": "Zhè bú shì tā.",
+          "en": "This is not her."
+        },
+        {
+          "zh": "这是她。",
+          "py": "Zhè shì tā.",
+          "en": "This is her."
+        },
+        {
+          "zh": "这里没有人。",
+          "py": "Zhèlǐ méiyǒu rén.",
+          "en": "There is nobody here."
+        }
+      ],
+      "answer": "这不是她。",
+      "note": "The picture shows a man, so 这不是她 (this is not her) is true. 不 before a fourth tone is said bú: bú shì."
+    }
+  ]
+}

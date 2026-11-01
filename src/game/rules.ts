@@ -60,9 +60,13 @@ export const SECOND_CHANCE_CAP = 3
 /**
  * Enemy HP grows this much per floor of the expedition (compounding), roughly matching the attack the player gains from levels,
  * so fights keep a similar, bounded length. Chosen with tools/simulate.ts (see docs/GAME_DESIGN.md "Balance").
+ * golemTrial: 1 offers the Golem's Tone Trial, 0 never (simulator comparisons). golemTrialHit: share of the Golem's max HP a right Tone Trial answer removes (game/trials.ts; never the killing blow).
+ * tricksterTrial: 1 offers the Mirror Trickster's Mirrors; tricksterTrialHit: share of its max HP a right answer removes (never the killing blow).
+ * scribeTrial: 1 offers the Ink Scribe's Torn Note (a right character breaks every remaining seal), 0 never.
+ * wraithTrial: 1 offers the Echo Wraith's Wail (a right reply calms it: the next wrong answer this expedition costs no heart), 0 never.
  * Mutable only so the simulator can compare settings; the game never changes it.
  */
-export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1, depthEnemyHp: 0.3 }
+export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1, depthEnemyHp: 0.3, golemTrial: 1, golemTrialHit: 0.25, wraithTrial: 1, scribeTrial: 1, tricksterTrial: 1, tricksterTrialHit: 0.3 }
 
 export const SHIELD_SEGMENTS = 3   // the most a shield ever has
 /** Boss multipliers over the base enemy stats (before the per-floor scaling). Early floors get a gentler boss: they ramp up to the full values. */
@@ -80,7 +84,9 @@ export function sealAsk(boss: BossId, shield: number): 'pinyin' | 'hanzi' | null
   return null
 }
 /** Mirror Trickster: a right answer hits harder. */
-export const TRICKSTER_HIT = 1.4, TRICKSTER_LOW = 0.5
+export const TRICKSTER_HIT = 1.4
+/** Mirror Trickster: below this share of its HP it offers its Mirrors trial (game/trials.ts). */
+export const TRICKSTER_LOW = 0.5
 /** Shield / seals: 2 segments on the first floors, 3 from floor 3; the Warden has 2 wards + 2 seals. */
 export const shieldFor = (floor: number, boss: BossId | null = null) => (boss === 'warden' ? WARDEN_WARDS + WARDEN_SEALS : floor <= 2 ? 2 : SHIELD_SEGMENTS)
 
@@ -197,6 +203,8 @@ export type AnswerResult = {
   practiceSaved: boolean
   /** A wrong answer whose heart was saved by a second-chance charge. */
   savedBySecondChance: boolean
+  /** A wrong answer whose heart was saved by the calmed Echo Wraith (`Run.calm`, from its trial). */
+  savedByCalm: boolean
   /** Hearts restored by clearing the floor (Second Wind only); 0 otherwise, when already full, or on the final floor. */
   heartsRestored: number
   outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; comboHit: boolean
@@ -226,10 +234,12 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   const enemyHp = Math.max(0, run.enemyHp - damage)
   const killed = enemyHp === 0
 
-  // Hearts: only an unprotected wrong answer costs one. Protection order: first practice, then a second-chance charge.
-  let heartsLost = 0, practiceSaved = false, savedBySecondChance = false, secondLeft = run.secondLeft
+  // Hearts: only an unprotected wrong answer costs one. Protection order: first practice, then the calmed Wraith's charge
+  // (kept until used, this expedition), then a second-chance charge.
+  let heartsLost = 0, practiceSaved = false, savedBySecondChance = false, savedByCalm = false, secondLeft = run.secondLeft, calm = run.calm ?? 0
   if (!isCorrect) {
     if (i.practice) practiceSaved = true
+    else if (calm > 0) { calm -= 1; savedByCalm = true }
     else if (secondLeft > 0) { secondLeft -= 1; savedBySecondChance = true }
     else heartsLost = 1
   }
@@ -264,7 +274,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   // Levels add attack only: no heart refill, no maximum-heart growth.
   let xp = run.xp + xpGained, level = run.level, levelUps = 0
   while (xp >= xpForLevel(level)) { xp -= xpForLevel(level); level += 1; levelUps += 1 }
-  let next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hearts, secondLeft, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp, shield: shieldBroken ? run.shield - 1 : run.shield }
+  let next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hearts, secondLeft, calm, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp, shield: shieldBroken ? run.shield - 1 : run.shield }
   // Newly worn loot: a higher maximum is not filled, a lower one clamps.
   next = clampToGear(next, b, i.allGear)
   hearts = next.hearts
@@ -279,7 +289,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
 
   const outcome = killed ? 'victory' : hearts <= 0 ? 'defeat' : 'continue'
   return {
-    damage, heartsLost, practiceSaved, savedBySecondChance, heartsRestored, outcome, loot, comboHit, shieldBroken, shieldBlocked: shieldUp,
+    damage, heartsLost, practiceSaved, savedBySecondChance, savedByCalm, heartsRestored, outcome, loot, comboHit, shieldBroken, shieldBlocked: shieldUp,
     run: {
       ...next, hearts, recoveredFloor,
       gold: run.gold + goldGained, kills: run.kills + (killed ? 1 : 0),
