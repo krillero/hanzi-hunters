@@ -33,7 +33,7 @@ export default function EncounterScreen({ state, level, onChange, onSubmit, onHe
   }
   const submit = () => {
     const right = isCorrect(scene, state.selected)
-    if (!right) setError(`${state.first ? '' : '🌧 Shaken: your next mistake on the next floor cannot be saved. '}Not quite. ${scene.note} Change your ${isSingle(scene.kind) ? 'choice' : 'selection'} and finish the scene.`)
+    if (!right) setError(`${state.first ? '' : '🌧 Shaken: your next mistake on the next floor costs 2 hearts. '}Not quite. ${scene.note} Change your ${isSingle(scene.kind) ? 'choice' : 'selection'} and finish the scene.`)
     onSubmit()
   }
   // Help: bought once for a hint from the next fight (free in previews), then shown / hidden freely.
@@ -51,13 +51,13 @@ export default function EncounterScreen({ state, level, onChange, onSubmit, onHe
         {scene.grammar && <p>{scene.grammar}</p>}
         {scene.closing && <><h3 lang="zh">{scene.closing.zh}</h3><p>{scene.closing.py} — {scene.closing.en}</p></>}
         <p>{scene.result}</p>
-        <strong className={`enc-omen ${state.first === 'wrong' ? 'bad' : 'good'}`}>{state.first === 'wrong' ? '🌧 Shaken: your next mistake on the next floor cannot be saved.' : '✨ Blessing: your next mistake on the next floor costs no heart.'}{preview ? ' (Preview · nothing saved)' : ''}</strong>
+        <strong className={`enc-omen ${state.first === 'wrong' ? 'bad' : 'good'}`}>{state.first === 'wrong' ? '🌧 Shaken: your next mistake on the next floor costs 2 hearts.' : '✨ Blessing: your next mistake on the next floor costs no heart.'}{preview ? ' (Preview · nothing saved)' : ''}</strong>
       </div> : <>
         {scene.situation && <p className="enc-situation">{scene.situation}</p>}
         {scene.zh && <div className="enc-request"><p lang="zh">{scene.zh}</p>{linePinyin && <p>{scene.py}</p>}{help && <p>{scene.en}</p>}</div>}
         {helpButton}
         <p>{text.instruction}</p>
-        {!state.first && <p className="enc-stakes">Right on the first try: ✨ Blessing for the next floor. Wrong: 🌧 Shaken.</p>}
+        {!state.first && <p className="enc-stakes">Right on the first try: ✨ your next mistake on the next floor costs no heart. Wrong: 🌧 it costs 2 hearts.</p>}
         <div className="enc-items">{state.order.map(id => {
           const item = scene.options.find(x => x.id === id)
           if (!item) return null

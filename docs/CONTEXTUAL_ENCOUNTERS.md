@@ -59,9 +59,9 @@ The **first** choice decides an omen for the **next floor** (the scene comes
 after a floor boss), used once, on that floor only:
 - Right first time: **✨ Blessing**: the next mistake on that floor costs no
   heart (used before a calmed Wraith's charge or a second chance).
-- Wrong first time: **🌧 Shaken**: the next mistake on that floor cannot be
-  saved by a calm charge or a second chance (practice questions stay
-  protected). The scene stays open to fix (it still teaches); fixing it
+- Wrong first time: **🌧 Shaken**: the next mistake on that floor costs **2
+  hearts**, and no calm charge or second chance can save it (practice questions
+  stay protected; with 1 heart left it costs that one). The scene stays open to fix (it still teaches); fixing it
   completes it without a Blessing.
 - No gold. No hearts, XP or mastery credit change. Repeat submissions are
   no-ops. A ✨ / 🌧 chip next to the hearts shows an active omen.
@@ -73,12 +73,11 @@ after a floor boss), used once, on that floor only:
   the same); there is no skip or leave button.
 - Balance (simulator models events since this change: after floors 1-4 when
   every word is Familiar, right first time with the player's accuracy, never
-  buying help; 20 seeds, events off → on): wins 0.60 5.4 → 5.8 %, 0.75
-  61.0 → 72.9 %, 0.85 96.9 → 97.9 %; hearts lost/run 0.75 9.86 → 8.37, 0.85
-  2.50 → 1.39. The Blessing is the strong part; Shaken rarely costs anything
-  early (players without second chances or calm lose a heart on a mistake
-  anyway). Measured alternative, not taken: Shaken = the next mistake costs 2
-  hearts (0.75 wins 71.5 %, 0.85 hearts lost/run 1.81).
+  buying help; 20 seeds, events off → on, Shaken = 2 hearts): wins 0.60
+  5.4 → 5.0 %, 0.75 61.0 → 71.5 %, 0.85 96.9 → 97.8 %, 0.90 99.1 → 99.6 %;
+  hearts lost/run 0.75 9.86 → 8.35, 0.85 2.50 → 1.81. With Shaken = "cannot be
+  saved" (1 heart) it was 72.9 % / 1.39: Shaken rarely cost anything for players
+  without second chances or calm, so it now costs 2 hearts.
 
 ## Architecture and persistence
 src/content/encounters.json: the scenes (content; format below).

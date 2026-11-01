@@ -169,15 +169,21 @@ test('an encounter opens straight into the scene; a save from the old intro step
   assert.equal(cleanEncounter({ id: 'hello', stage: 0, status: 'offer', selected: [], order: ['你好', '再见', '谢谢'], help: false })!.status, 'active')
 })
 
-test('omens count once, on their floor: Blessing saves a heart first; Shaken ignores calm and second chances, not practice', () => {
+test('omens count once, on their floor: Blessing saves a heart first; Shaken costs 2 hearts, ignoring calm and second chances, not practice', () => {
   const base = { ...newRun(NO_BONUSES, GEAR, ENEMIES), floor: 2, kill: 0, phase: 'fighting' as const, enemyHp: 30, secondLeft: 1, calm: 1 }
   const wrong = (run: Run, practice = false) => resolveAnswer({ run, bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, lv: 1, isCorrect: false, practice, roll: { drop: 0.99, item: 0 } })
   const blessed = wrong({ ...base, omen: { kind: 'blessing', floor: 2 } })
   assert.ok(blessed.savedByBlessing); assert.equal(blessed.heartsLost, 0); assert.equal(blessed.run.omen, undefined); assert.equal(blessed.run.calm, 1, 'calm kept for later')
   const shaken = wrong({ ...base, omen: { kind: 'shaken', floor: 2 } })
-  assert.ok(shaken.shakenHit); assert.equal(shaken.heartsLost, 1); assert.equal(shaken.savedBySecondChance, false); assert.equal(shaken.run.calm, 1); assert.equal(shaken.run.omen, undefined)
+  assert.ok(shaken.shakenHit); assert.equal(shaken.heartsLost, 2, 'Shaken: the mistake costs 2 hearts'); assert.equal(shaken.savedBySecondChance, false); assert.equal(shaken.run.calm, 1); assert.equal(shaken.run.omen, undefined)
   const practice = wrong({ ...base, omen: { kind: 'shaken', floor: 2 } }, true)
   assert.ok(practice.practiceSaved); assert.deepEqual(practice.run.omen, { kind: 'shaken', floor: 2 }, 'a protected practice question does not use it up')
   const later = wrong({ ...base, floor: 3, omen: { kind: 'shaken', floor: 2 } })
   assert.equal(later.shakenHit, false, 'another floor: no effect'); assert.ok(later.savedByCalm)
+})
+
+test('Shaken with one heart left costs that heart only (hearts lost never exceed hearts left)', () => {
+  const run: Run = { ...newRun(NO_BONUSES, GEAR, ENEMIES), floor: 2, kill: 0, phase: 'fighting', enemyHp: 30, hearts: 1, omen: { kind: 'shaken', floor: 2 } }
+  const r = resolveAnswer({ run, bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, lv: 1, isCorrect: false, roll: { drop: 0.99, item: 0 } })
+  assert.equal(r.heartsLost, 1); assert.equal(r.run.hearts, 0); assert.equal(r.outcome, 'defeat')
 })

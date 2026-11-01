@@ -425,7 +425,7 @@ export default function App() {
     if (isCorrect) sceneRef.current?.playHit('monster')
     if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: foe?.boss === 'scribe' ? '💥 SEALS BROKEN' : '💥 SHIELD DOWN' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster(!!foe?.boss)
-    else if (r.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: r.shakenHit ? '🌧 Shaken · −1 ♥' : '−1 ♥' }) }
+    else if (r.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: r.shakenHit ? '🌧 Shaken · −2 ♥' : '−1 ♥' }) }
     else if (r.savedByBlessing) setCaption({ side: 'hero', kind: 'block', text: '✨ Blessing · heart saved' })
     else if (r.savedByCalm) setCaption({ side: 'hero', kind: 'block', text: '👻 Calmed Wraith · heart saved' })
     else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: 'Second chance · heart saved' })
@@ -809,7 +809,7 @@ export default function App() {
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
-                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}{run.omen && run.omen.floor === run.floor && <span className="second-chip" aria-label={run.omen.kind === 'blessing' ? 'Blessing: your next mistake on this floor costs no heart' : 'Shaken: your next mistake on this floor cannot be saved'} title={run.omen.kind === 'blessing' ? 'Blessing: your next mistake on this floor costs no heart' : 'Shaken: your next mistake on this floor cannot be saved'}>{run.omen.kind === 'blessing' ? '✨' : '🌧'}</span>}{(run.calm ?? 0) > 0 && <span className="second-chip" aria-label="Calmed Wraith: your next mistake costs no heart" title="Calmed Wraith: your next mistake costs no heart">👻</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}{run.omen && run.omen.floor === run.floor && <span className="second-chip" aria-label={run.omen.kind === 'blessing' ? 'Blessing: your next mistake on this floor costs no heart' : 'Shaken: your next mistake on this floor costs 2 hearts'} title={run.omen.kind === 'blessing' ? 'Blessing: your next mistake on this floor costs no heart' : 'Shaken: your next mistake on this floor costs 2 hearts'}>{run.omen.kind === 'blessing' ? '✨' : '🌧'}</span>}{(run.calm ?? 0) > 0 && <span className="second-chip" aria-label="Calmed Wraith: your next mistake costs no heart" title="Calmed Wraith: your next mistake costs no heart">👻</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
                 <div className="bar-label"><span>{foe.enemy.name}</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
@@ -941,7 +941,7 @@ export default function App() {
                   <div className="result-line">
                     <strong>{feedback.correct ? '✓ Correct' : 'Not quite'}{feedback.correct && feedback.word.variants.length > 0 && <small className="result-also"> also {feedback.word.variants.join(', ')}</small>}</strong>
                   </div>
-                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−1 heart · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : feedback.exchange.saved === 'blessing' ? '✨ Blessing · heart saved' : 'Practice · no heart lost'}</p>}
+                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−${feedback.exchange.heartsLost} heart${feedback.exchange.heartsLost > 1 ? 's (Shaken)' : ''} · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : feedback.exchange.saved === 'blessing' ? '✨ Blessing · heart saved' : 'Practice · no heart lost'}</p>}
                   {!feedback.correct && (() => {
                     // The right answer is on the card above; this box shows what was picked, big and clear. Its size follows its
                     // length (one character, a word, a phrase or sentence), and a known word picked by mistake gets its own gloss.

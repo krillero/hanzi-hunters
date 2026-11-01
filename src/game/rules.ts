@@ -219,7 +219,7 @@ export type AnswerResult = {
   savedBySecondChance: boolean
   /** A wrong answer whose heart was saved by the calmed Echo Wraith (`Run.calm`, from its trial). */
   savedByCalm: boolean
-  /** An event's Blessing saved this heart / an event's Shaken made this mistake unsavable (`Run.omen`). */
+  /** An event's Blessing saved this heart / an event's Shaken made this mistake cost 2 hearts, unsavable (`Run.omen`). */
   savedByBlessing: boolean; shakenHit: boolean
   /** Hearts restored by clearing the floor (Second Wind only); 0 otherwise, when already full, or on the final floor. */
   heartsRestored: number
@@ -258,13 +258,14 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   const omenNow = omen && omen.floor === run.floor ? omen.kind : null
   if (!isCorrect) {
     if (i.practice) practiceSaved = true
-    else if (omenNow === 'shaken') { heartsLost = 1; shakenHit = true; omen = undefined }   // no calm or second chance can save it
+    else if (omenNow === 'shaken') { heartsLost = 2; shakenHit = true; omen = undefined }   // 2 hearts; no calm or second chance can save it
     else if (omenNow === 'blessing') { savedByBlessing = true; omen = undefined }
     else if (calm > 0) { calm -= 1; savedByCalm = true }
     else if (secondLeft > 0) { secondLeft -= 1; savedBySecondChance = true }
     else heartsLost = 1
   }
-  let hearts = Math.max(0, run.hearts - heartsLost)
+  heartsLost = Math.min(heartsLost, run.hearts)   // never more than are left (Shaken costs 2: with 1 heart left it costs 1)
+  let hearts = run.hearts - heartsLost
 
   // Experience is paid only when the monster dies: what each answer earned is banked in `pendingXp` and paid out with the kill.
   const answerXp = Math.round((isCorrect ? 5 : 2) * (1 + b.xpPct + gearSum(gear, 'xpPct')))
