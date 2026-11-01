@@ -92,7 +92,7 @@ test('9: old saves migrate without losing progress and without granting readines
     courses: { course: { version: 1, completed: ['a'] }, gone: { version: 2, completed: ['x'] } }
   }
   const s = sanitizeSave(v3, WORDS, [V2])
-  assert.equal(s.version, 4)
+  assert.equal(s.version, 5)
   assert.deepEqual(s.mastery, v3.mastery); assert.deepEqual(s.legacyMastery, v3.legacyMastery)
   assert.deepEqual(s.meta, v3.meta); assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 9); assert.equal(s.habit.correct, 40)
   assert.deepEqual(s.courses.gone, { version: 2, completed: ['x'] }, 'recoverable progress for unknown curricula is kept')

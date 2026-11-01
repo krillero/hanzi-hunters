@@ -22,14 +22,19 @@ test('tiers must be bought in order and cost gold', () => {
 
 test('bonuses add up across branches', () => {
   const b = computeBonuses(['W1', 'W2', 'W3', 'G1', 'S1', 'S2', 'F1', 'F2', 'F3'])
-  assert.equal(b.attack, 5); assert.equal(b.streakDmgPct, 0.25); assert.equal(b.maxHp, 8); assert.equal(b.hints, 1)
+  assert.equal(b.attack, 5); assert.equal(b.streakDmgPct, 0.25); assert.equal(b.maxHearts, 1); assert.equal(b.hints, 1)
   assert.equal(b.xpPct, 0.15); assert.equal(b.goldPct, 0.2); assert.equal(b.lootPct, 0.15); assert.deepEqual(b.startGear, ['Copper Blade'])
   const all = computeBonuses(UPGRADES.map(u => u.id))
-  assert.equal(all.hints, 2); assert.equal(all.secondChance, 2); assert.deepEqual(all.startGear.sort(), ['Copper Blade', 'Mossy Vest'])
+  assert.equal(all.hints, 2); assert.equal(all.secondChance, 3, 'Iron Will, Second Chance, Sage'); assert.equal(all.maxHearts, 2); assert.equal(all.floorHearts, 1); assert.equal(all.potionHearts, 1); assert.deepEqual(all.startGear.sort(), ['Copper Blade', 'Mossy Vest'])
   for (const g of all.startGear) assert.ok(GEAR.some(x => x.name === g), 'start gear exists')
 })
 
 test('no upgrade answers questions for the player (every effect is power or convenience)', () => {
-  const allowed = new Set(['attack', 'maxHp', 'startPotions', 'potionHeal', 'armor', 'healOnKill', 'goldPct', 'xpPct', 'lootPct', 'hints', 'secondChance', 'streakDmgPct', 'executeDmgPct', 'masteryDmgPct', 'startGear'])
+  const allowed = new Set(['attack', 'maxHearts', 'startPotions', 'potionHearts', 'floorHearts', 'goldPct', 'xpPct', 'lootPct', 'hints', 'secondChance', 'streakDmgPct', 'executeDmgPct', 'masteryDmgPct', 'startGear'])
   for (const u of UPGRADES) for (const k of Object.keys(u.fx)) assert.ok(allowed.has(k), `${u.id}.${k}`)
+})
+
+test('upgrade descriptions match the hearts rules (no HP, armor, healing or per-fight second chances)', () => {
+  for (const u of UPGRADES) assert.ok(!/max HP|\d+ HP|armor|heal|per fight, a wrong|countered/i.test(u.desc), `${u.id}: ${u.desc}`)   // 'enemies under 35% HP' is enemy HP and fine
+  assert.match(UPGRADES.find(u => u.id === 'S3')!.desc, /per floor/)
 })

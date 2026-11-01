@@ -15,13 +15,14 @@ export const rarityOf = (item: Pick<GearItem, 'name'> | string): Rarity => RARIT
 
 // ---- comparing two items (for the loot reveal) -------------------------------------------------
 export type StatRow = { label: string; now: number; next: number; delta: number; fmt: 'num' | 'pct' }
-const STATS: { key: 'attack' | 'hp' | 'armor' | 'xpPct' | 'masteryPct' | 'goldFlat'; label: string; fmt: 'num' | 'pct' }[] = [
-  { key: 'attack', label: 'Attack', fmt: 'num' }, { key: 'hp', label: 'Max HP', fmt: 'num' }, { key: 'armor', label: 'Armor', fmt: 'num' },
-  { key: 'xpPct', label: 'XP', fmt: 'pct' }, { key: 'masteryPct', label: 'Mastery damage', fmt: 'pct' }, { key: 'goldFlat', label: 'Gold per win', fmt: 'num' }
+type StatKey = 'attack' | 'maxHearts' | 'secondChance' | 'hints' | 'xpPct' | 'masteryPct' | 'goldFlat'
+const STATS: { key: StatKey; label: string; fmt: 'num' | 'pct' }[] = [
+  { key: 'attack', label: 'Attack', fmt: 'num' }, { key: 'maxHearts', label: 'Max hearts', fmt: 'num' }, { key: 'secondChance', label: 'Second chances per floor', fmt: 'num' },
+  { key: 'hints', label: 'Hints per fight', fmt: 'num' }, { key: 'xpPct', label: 'XP', fmt: 'pct' }, { key: 'masteryPct', label: 'Mastery damage', fmt: 'pct' }, { key: 'goldFlat', label: 'Gold per win', fmt: 'num' }
 ]
 /** One rough number for "is this better?". Only used to decide whether to offer "Equip now" and to show an arrow; never in the rules. */
-export const gearScore = (g: Pick<GearItem, 'attack' | 'hp' | 'armor' | 'xpPct' | 'masteryPct' | 'goldFlat'>) =>
-  g.attack * 3 + g.hp * 0.5 + g.armor * 3 + g.xpPct * 30 + g.masteryPct * 30 + g.goldFlat
+export const gearScore = (g: Pick<GearItem, StatKey>) =>
+  g.attack * 3 + g.maxHearts * 6 + g.secondChance * 5 + g.hints * 3 + g.xpPct * 30 + g.masteryPct * 30 + g.goldFlat
 /** Rows for every stat that either item has, new item against the one in the slot (null = empty slot). */
 export function compareGear(next: GearItem, now: GearItem | null | undefined): StatRow[] {
   return STATS.map(s => ({ label: s.label, fmt: s.fmt, now: now ? now[s.key] : 0, next: next[s.key], delta: next[s.key] - (now ? now[s.key] : 0) }))

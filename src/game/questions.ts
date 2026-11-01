@@ -387,3 +387,20 @@ export const TONE_KINDS: QKind[] = ['pinyin', 'meaning2pinyin', 'listen2pinyin']
 /** Kinds the Ink Scribe asks while its seals are up / the Mirror Trickster always asks (the easy-to-confuse ones). */
 export const CHARACTER_KINDS: QKind[] = ['character', 'pinyin2char', 'listen']
 export const TRICK_KINDS: QKind[] = ['homophone', 'lookalike']
+
+/**
+ * Shield / seal bosses (Golem: tone questions, Scribe: character questions). Tries `tries` times to build a question that can break
+ * the shield. When none can be built (the player's known words do not allow that kind of question), it returns the last fair card it
+ * could build with `sealFallback: true`: a correct answer to it then breaks a segment too, so a shield is never unbreakable.
+ * Returns null only when no fair question at all could be built.
+ */
+export function pickSealCard<C extends { question: Pick<Question, 'ask' | 'kind'> }>(build: () => C | null, isSeal: (q: C['question']) => boolean, tries = 12): (C & { sealFallback: boolean }) | null {
+  let last: C | null = null
+  for (let k = 0; k < tries; k++) {
+    const c = build()
+    if (!c) continue
+    if (isSeal(c.question)) return { ...c, sealFallback: false }
+    last = c
+  }
+  return last ? { ...last, sealFallback: true } : null
+}
