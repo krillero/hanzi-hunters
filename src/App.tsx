@@ -253,6 +253,8 @@ export default function App() {
   const [introQueue, setIntroQueue] = useState<string[]>([])
   const [introTotal, setIntroTotal] = useState(0)
   const introKey = useRef<string | null>(null)   // the fight we last checked; null = this run was resumed from a save
+  // Set in the same commit that queues new-word cards (before the speak effect below runs), so a prepared question stays silent.
+  const introPending = useRef(false)
   useEffect(() => {
     if (!run) { introKey.current = ''; return }
     if (run.phase !== 'fighting' || feedback || reveal || bossIntro || summary || lootReveal || introQueue.length) return
@@ -263,7 +265,7 @@ export default function App() {
     if (forcedWord.current || (resumed && seenCount(save.mastery) > 0)) return   // preview URLs and reloads mid-fight are left alone
     const plan = introPlanFor(save.mastery)
     if (import.meta.env.DEV) logCourse(plan)
-    if (plan.ids.length) { setIntroQueue(plan.ids); setIntroTotal(plan.ids.length) }
+    if (plan.ids.length) { introPending.current = true; setIntroQueue(plan.ids); setIntroTotal(plan.ids.length) }
   })
   const introGotIt = () => {
     const id = introQueue[0]
@@ -273,7 +275,7 @@ export default function App() {
     setFloorStats(s => recordIntro(s, id)); setRunStats(s => recordIntro(s, id))
     const rest = introQueue.slice(1)
     setIntroQueue(rest)
-    if (!rest.length) { setNextCard(makeCard(mastery, null)); setEliminated([]); answerLock.current = false }
+    if (!rest.length) { introPending.current = false; setNextCard(makeCard(mastery, null)); setEliminated([]); answerLock.current = false }
   }
 
   // ---- one-time setup -----------------------------------------------------------------
@@ -360,7 +362,16 @@ export default function App() {
   // The speaker button: when muted, tapping it turns sound back on (and plays the text).
   const pressSpeaker = (text: string) => { if (settings.muted) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
   // Words are only read aloud when the audio can be trusted to match the displayed word and reading (see audioReliable in content/entries.ts).
-  useEffect(() => { if (card?.question.audio && !feedback && !reveal && audioReliable(card.word, WORDS)) speak(card.word.hanzi) /* eslint-disable-next-line */ }, [card])
+  // Only once the question is actually visible: a card prepared behind the new-word card, the boss intro, a loot card or the floor
+  // summary stays silent (it is often replaced before it is shown), and each card is read at most once.
+  const spokenCard = useRef<Card | null>(null)
+  const questionCovered = introQueue.length > 0 || bossIntro !== null || lootReveal !== null || summary !== null
+  useEffect(() => {
+    if (!card || questionCovered || introPending.current || spokenCard.current === card) return
+    spokenCard.current = card
+    if (card.question.audio && !feedback && !reveal && audioReliable(card.word, WORDS)) speak(card.word.hanzi)
+    /* eslint-disable-next-line */
+  }, [card, questionCovered])
 
   // ---- actions --------------------------------------------------------------------------
   const answerQuestion = (option: string) => {

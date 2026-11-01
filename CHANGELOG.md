@@ -1,5 +1,10 @@
 # Changelog / test log
 
+## 2026-11-01 — No question audio behind the new-word card (branch ccr-2aecd5ae-3v8bz2)
+
+- Bug: when a fight started with new-word cards, the next question was prepared first and its word was read aloud behind the card; after "Got it" a different question was shown (rebuilt so the new word can be asked), so the sound never matched anything on screen.
+- Fix (`App.tsx`): a question is only read aloud once nothing covers it (new-word card, boss intro, loot card, floor summary) and at most once per question. `introPending` is set in the same commit that queues the cards, so the prepared question stays silent. Rebuilding the question after "Got it" is unchanged (intended).
+- Checks: `npm run test:brief` 170 pass, build pass; 360 px with speech stubbed: 22 fight steps, 2 new-word cards, no question audio while a card was open, no console errors.
 ## 2026-11-01 — Depths (branch ccr-2aecd5ae-3v8bz2)
 
 - **5 depths** (Mosslight Cavern … Jade Throne): winning unlocks the next (`meta.depthCleared`); camp has a depth card with a picker; cleared depths can be replayed. The battle header shows the depth name.
