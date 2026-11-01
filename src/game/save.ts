@@ -123,6 +123,8 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
     enemyHp: phase === 'victory' ? 0 : int(raw.enemyHp, 1, foeHp, foeHp),
     hintsLeft: int(raw.hintsLeft, 0, stats.hints, stats.hints),
     secondLeft: int(raw.secondLeft, 0, stats.secondChances, 0), calm: int(raw.calm, 0, 1, 0), sigil,
+    omen: isObj(raw.omen) && (raw.omen.kind === 'blessing' || raw.omen.kind === 'shaken') && int(raw.omen.floor, 1, EXPEDITION_FLOORS, 0) >= floor ? { kind: raw.omen.kind, floor: int(raw.omen.floor, 1, EXPEDITION_FLOORS, 0) } : undefined,
+    hintDebt: int(raw.hintDebt, 0, 9, 0),
     reward: { xp: int(rw.xp, 0, 1e9, 0), gold: int(rw.gold, 0, 1e9, 0), loot: typeof rw.loot === 'string' && GEAR.some(g => g.name === rw.loot) ? rw.loot : '', levelUps: int(rw.levelUps, 0, 999, 0), hearts: int(rw.hearts, 0, 99, 0) }
   }
   return run

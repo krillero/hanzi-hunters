@@ -3,7 +3,9 @@
 // offer/completion transitions and save sanitizers (how much help is shown: game/support.ts). Pure functions, no React.
 import type { Saved, Mastery } from './types.ts'
 import encountersJson from '../content/encounters.json' with { type: 'json' }
-import { WORDS } from '../data.ts'
+import { GEAR, WORDS } from '../data.ts'
+import { playerStats } from './rules.ts'
+import { computeBonuses } from './upgrades.ts'
 import { freshFirst, noteRecent } from './recent.ts'
 import { SESSION_LV } from './mastery.ts'
 
@@ -44,7 +46,6 @@ export const KIND_TEXT: Record<EncounterKind, { title: string; action: string; i
 }
 /** Kinds with exactly one right option (tapping another option replaces the choice). */
 export const isSingle = (kind: EncounterKind) => kind !== 'gather'
-export const ENCOUNTER_GOLD = 3
 
 const KINDS: EncounterKind[] = ['gather', 'reply', 'point']
 const isStr = (x: unknown): x is string => typeof x === 'string' && x.trim() !== ''
@@ -108,7 +109,8 @@ export const isCorrect = (scene: Scene, selected: string[]) => selected.length =
 
 export type History = Record<string, { dates: string[] }>
 /** How much help is shown follows the player's word levels (game/support.ts), not anything stored here. */
-export type EncounterState = { id: string; status: 'active' | 'complete' | 'closed'; selected: string[]; order: string[]; help: boolean }
+/** `paid`: the help was bought (a hint from the next fight); `help`: it is shown. `first`: how the first choice went (decides the omen). */
+export type EncounterState = { id: string; status: 'active' | 'complete' | 'closed'; selected: string[]; order: string[]; help: boolean; paid?: boolean; first?: 'right' | 'wrong' }
 /** Key of a scene in Saved.recentEvents. */
 export const sceneKey = (id: string) => `scene:${id}`
 export const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -129,12 +131,33 @@ export function offer(s: Saved, random = Math.random): Saved {
   return { ...s, recentEvents: noteRecent(s.recentEvents, sceneKey(scene.id)), run: { ...r, encounter: { id: scene.id, status: 'active', selected: [], order, help: false } } }
 }
 
-/** A right choice: +ENCOUNTER_GOLD run gold and today's date in the history. Anything else (or a repeat) is a no-op. */
-export function complete(s: Saved, date: string): Saved {
+/**
+ * Submit the current choice. The FIRST submission decides the omen for the next floor (the scene is offered after a floor boss):
+ * right first time = Blessing (the next mistake on that floor costs no heart); wrong first = Shaken (the next mistake on that floor
+ * cannot be saved by a calm charge or a second chance). A wrong choice keeps the scene open to fix (it still teaches); fixing it
+ * completes the scene without a Blessing. Completion records today's date. Anything else (or a repeat) is a no-op.
+ */
+export function submitEncounter(s: Saved, date: string): Saved {
   const e = s.run?.encounter, scene = sceneById(e?.id)
-  if (!s.run || !e || !scene || e.status !== 'active' || !isCorrect(scene, e.selected)) return s
+  if (!s.run || !e || !scene || e.status !== 'active') return s
+  const floor = s.run.floor + 1
+  if (!isCorrect(scene, e.selected)) {
+    if (e.first) return s
+    return { ...s, run: { ...s.run, omen: { kind: 'shaken', floor }, encounter: { ...e, first: 'wrong' } } }
+  }
   const dates = [...new Set([...(s.encounterHistory?.[e.id]?.dates ?? []), date])].sort().slice(-30)
-  return { ...s, encounterHistory: { ...s.encounterHistory, [e.id]: { dates } }, run: { ...s.run, gold: s.run.gold + ENCOUNTER_GOLD, encounter: { ...e, status: 'complete' } } }
+  const first = e.first ?? 'right'
+  return { ...s, encounterHistory: { ...s.encounterHistory, [e.id]: { dates } }, run: { ...s.run, ...(first === 'right' ? { omen: { kind: 'blessing' as const, floor } } : {}), encounter: { ...e, status: 'complete', first } } }
+}
+
+/** Hints the next fight would start with (help costs one of them). */
+export const helpHintsLeft = (s: Saved) => (s.run ? playerStats(s.run, computeBonuses(s.meta.upgrades), GEAR).hints - (s.run.hintDebt ?? 0) : 0)
+
+/** Buy the help once: one hint from the next fight. Showing / hiding it afterwards is free. No hint left: no-op. */
+export function payHelp(s: Saved): Saved {
+  const e = s.run?.encounter
+  if (!s.run || !e || e.status !== 'active' || e.paid || helpHintsLeft(s) < 1) return s
+  return { ...s, run: { ...s.run, hintDebt: (s.run.hintDebt ?? 0) + 1, encounter: { ...e, paid: true, help: true } } }
 }
 
 /** Toggle an option: reply/point scenes keep one choice, a gather scene any number. */
@@ -164,7 +187,8 @@ export function cleanEncounter(raw: unknown): EncounterState | undefined {
   const order = Array.isArray(e.order) && e.order.length === ids.length && new Set(e.order).size === ids.length && e.order.every(x => ids.includes(x)) ? e.order : ids
   // 'offer' (an intro step, removed once encounters became mandatory) opens straight into the scene.
   const status = (e.status as string) === 'offer' ? 'active' : ['active', 'complete', 'closed'].includes(e.status) ? e.status : 'closed'
-  return { id: e.id, status, selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
+  const extra = { ...(e.paid === true ? { paid: true } : {}), ...(e.first === 'right' || e.first === 'wrong' ? { first: e.first } : {}) }
+  return { ...extra, id: e.id, status, selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
 }
 
 /** Preview aid for /?encounter=<scene id> (the word level to show it at comes from &level=, see App): a ready-to-play scene. */

@@ -3,9 +3,10 @@
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS } from '../src/data.ts'
 import { closeTrial, offerTrial, optionKeys, resolveTrial, trialFor, trialKey } from '../src/game/trials.ts'
 import { noteRecent } from '../src/game/recent.ts'
-import { MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
+import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { MAX_LV, isDue, updateMastery } from '../src/game/mastery.ts'
+import { SCENES, eligible } from '../src/game/encounters.ts'
 import { DUE_PER_FIGHT, emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
 
@@ -25,6 +26,8 @@ export type RunLog = {
   heartsLost: number; practiceSaves: number; secondChanceSaves: number; heartsRestored: number; potionsUsed: number
   /** Boss trials taken / answered right, and wrong answers saved by the calmed Wraith. */
   trials: number; trialsRight: number; calmSaves: number
+  /** Events played after floor bosses. */
+  events: number
   /** Hearts at the start of the run, hearts left at the end, and hearts each potion restored. */
   startHearts: number; endHearts: number; potionHearts: number
 }
@@ -32,6 +35,8 @@ export type RunLog = {
 export type SimOptions = {
   /** Expeditions played per calendar day (time-gated mastery levels need real days). Default SIM_RUNS_PER_DAY. */
   runsPerDay?: number
+  /** Model the events after floor bosses (Blessing / Shaken for the next floor). Default true. */
+  events?: boolean
   /** Start with every upgrade bought (an "upgraded" player) instead of buying greedily after each run. */
   maxed?: boolean
 }
@@ -67,11 +72,18 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
     // the bot always plays the deepest depth it has unlocked
     let run = newRun(b, GEAR, ENEMIES, unlockedDepth(meta.depthCleared), meta.depthCleared), word = pick(null), answers = 0
     const startHearts = run.hearts, potionHearts = playerStats(run, b, GEAR).potionHearts
-    const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0, trials: 0, trialsRight: 0, calmSaves: 0 }
+    const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0, trials: 0, trialsRight: 0, calmSaves: 0, events: 0 }
     let fightAnswers = 0, longestFight = 0
     dueThisFight = 0
     while (run.phase !== 'defeat' && !isExpeditionWon(run) && answers < ANSWER_CAP) {
-      if (run.phase === 'victory') { run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; dueThisFight = 0; continue }
+      if (run.phase === 'victory') {
+        // An event after a floor boss (floors 1-4) when its words are Familiar: right first time = Blessing, else Shaken, for the
+        // next floor. The bot never buys help; a reply/gather choice is about as hard as a normal question.
+        if (opts.events !== false && run.kill === ENEMIES_PER_FLOOR - 1 && run.floor < EXPEDITION_FLOORS && SCENES.some(sc => eligible(mastery, sc))) {
+          run = { ...run, omen: { kind: rng() < accuracy ? 'blessing' : 'shaken', floor: run.floor + 1 } }; stat.events++
+        }
+        run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; dueThisFight = 0; continue
+      }
       if (run.hearts <= 2) { const p = drinkPotion(run, b, GEAR); if (p) { run = p; stat.potionsUsed++ } }
       const entry = mastery[word.id]
       if (isDue(entry, today)) dueThisFight++

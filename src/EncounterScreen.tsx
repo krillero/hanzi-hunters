@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { ENCOUNTER_GOLD, KIND_TEXT, choose, isCorrect, isSingle, optionPinyin, sceneById, type EncounterState } from './game/encounters'
+import { KIND_TEXT, choose, isCorrect, isSingle, optionPinyin, sceneById, type EncounterState } from './game/encounters'
 import { pinyinFor, showPinyin, type LevelOf } from './game/support'
 
 /**
- * `level`: the player's word levels, which decide the help shown (game/support.ts). `preview`: opened from /?encounter=… —
- * nothing is saved, so the texts must not promise gold or a next floor.
+ * `level`: the player's word levels, which decide the help shown (game/support.ts). `onSubmit`: checks the choice (the first one
+ * decides Blessing / Shaken, game/encounters.ts). `onHelp`: buys the help once (a hint from the next fight), then shows / hides it.
+ * `hintsLeft`: hints the next fight has (null = free, previews). `preview`: opened from /?encounter=… — nothing is saved.
  */
-export default function EncounterScreen({ state, level, onChange, onComplete, onLeave, preview = false }: { state: EncounterState; level: LevelOf; onChange: (e: EncounterState) => void; onComplete: () => void; onLeave: () => void; preview?: boolean }) {
+export default function EncounterScreen({ state, level, onChange, onSubmit, onHelp, hintsLeft, onLeave, preview = false }: { state: EncounterState; level: LevelOf; onChange: (e: EncounterState) => void; onSubmit: () => void; onHelp: () => void; hintsLeft: number | null; onLeave: () => void; preview?: boolean }) {
   const scene = sceneById(state.id)
   const box = useRef<HTMLDivElement>(null)
   const [error, setError] = useState('')
@@ -31,9 +32,15 @@ export default function EncounterScreen({ state, level, onChange, onComplete, on
     }
   }
   const submit = () => {
-    if (isCorrect(scene, state.selected)) onComplete()
-    else setError(`Not quite. ${scene.note} Change your ${isSingle(scene.kind) ? 'choice' : 'selection'} and try again.`)
+    const right = isCorrect(scene, state.selected)
+    if (!right) setError(`${state.first ? '' : '🌧 Shaken: your next mistake on the next floor cannot be saved. '}Not quite. ${scene.note} Change your ${isSingle(scene.kind) ? 'choice' : 'selection'} and finish the scene.`)
+    onSubmit()
   }
+  // Help: bought once for a hint from the next fight (free in previews), then shown / hidden freely.
+  const helpLabel = allPinyinShown ? 'Translation' : 'Pinyin & translation'
+  const helpButton = state.paid || hintsLeft === null
+    ? <button className="bar-btn ghost" onClick={onHelp}>{state.help ? 'Hide help' : helpLabel}</button>
+    : <button className="bar-btn ghost" onClick={onHelp} disabled={hintsLeft < 1}>{helpLabel} · {hintsLeft < 1 ? 'no hints left' : '💡 1 hint from the next fight'}</button>
   return <div className="modal-backdrop encounter-backdrop"><div ref={box} tabIndex={-1} className="modal encounter" role="dialog" aria-modal="true" aria-labelledby="enc-title" onKeyDown={onKey}>
     <div className="modal-head"><h2 id="enc-title">{text.title}</h2></div>
     <div className="enc-body">
@@ -44,12 +51,13 @@ export default function EncounterScreen({ state, level, onChange, onComplete, on
         {scene.grammar && <p>{scene.grammar}</p>}
         {scene.closing && <><h3 lang="zh">{scene.closing.zh}</h3><p>{scene.closing.py} — {scene.closing.en}</p></>}
         <p>{scene.result}</p>
-        <strong>{preview ? 'Preview · nothing saved' : `+${ENCOUNTER_GOLD} expedition gold · saved`}</strong>
+        <strong className={`enc-omen ${state.first === 'wrong' ? 'bad' : 'good'}`}>{state.first === 'wrong' ? '🌧 Shaken: your next mistake on the next floor cannot be saved.' : '✨ Blessing: your next mistake on the next floor costs no heart.'}{preview ? ' (Preview · nothing saved)' : ''}</strong>
       </div> : <>
         {scene.situation && <p className="enc-situation">{scene.situation}</p>}
         {scene.zh && <div className="enc-request"><p lang="zh">{scene.zh}</p>{linePinyin && <p>{scene.py}</p>}{help && <p>{scene.en}</p>}</div>}
-        <button className="bar-btn ghost" onClick={() => onChange({ ...state, help: !state.help })}>{state.help ? 'Hide extra help' : allPinyinShown ? 'Translation' : 'Pinyin & translation'}</button>
+        {helpButton}
         <p>{text.instruction}</p>
+        {!state.first && <p className="enc-stakes">Right on the first try: ✨ Blessing for the next floor. Wrong: 🌧 Shaken.</p>}
         <div className="enc-items">{state.order.map(id => {
           const item = scene.options.find(x => x.id === id)
           if (!item) return null

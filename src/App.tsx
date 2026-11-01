@@ -5,7 +5,7 @@ import EncounterScreen from './EncounterScreen'
 import TrialScreen from './TrialScreen'
 import { noteRecent } from './game/recent'
 import { TRIALS, closeTrial, offerTrial, optionKeys, resolveTrial, trialById, trialFor, trialKey, type TrialState } from './game/trials'
-import { offer, complete, localDate, previewEncounter, type EncounterState } from './game/encounters'
+import { offer, submitEncounter, payHelp, helpHintsLeft, isCorrect, sceneById, localDate, previewEncounter, type EncounterState } from './game/encounters'
 import { fixedLevel, levelOf } from './game/support'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
@@ -41,7 +41,7 @@ import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 /** `sealFallback`: a shield boss question that is not a seal question because none could be built; a correct answer still breaks a segment. */
 type Card = { word: Word; question: Question; sealFallback?: boolean }
-type CombatExchange = { damage: number; heartsLost: number; saved: 'practice' | 'second' | 'calm' | null; heartsRestored: number; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
+type CombatExchange = { damage: number; heartsLost: number; saved: 'practice' | 'second' | 'calm' | 'blessing' | null; heartsRestored: number; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
 type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal' | 'shield' | 'hurt'; text: string }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; masteredNow: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
 
@@ -425,7 +425,8 @@ export default function App() {
     if (isCorrect) sceneRef.current?.playHit('monster')
     if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: foe?.boss === 'scribe' ? '💥 SEALS BROKEN' : '💥 SHIELD DOWN' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster(!!foe?.boss)
-    else if (r.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: '−1 ♥' }) }
+    else if (r.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: r.shakenHit ? '🌧 Shaken · −1 ♥' : '−1 ♥' }) }
+    else if (r.savedByBlessing) setCaption({ side: 'hero', kind: 'block', text: '✨ Blessing · heart saved' })
     else if (r.savedByCalm) setCaption({ side: 'hero', kind: 'block', text: '👻 Calmed Wraith · heart saved' })
     else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: 'Second chance · heart saved' })
     else if (r.practiceSaved) setCaption({ side: 'hero', kind: 'block', text: 'Practice · no heart lost' })
@@ -493,7 +494,7 @@ export default function App() {
       : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now ${LEVEL_NAMES[after]}${waitDays(after) ? ` · next check ${days(waitDays(after)!)}` : ''}`)
         : after < before ? `Back to ${LEVEL_NAMES[after]} — it will return for review`
           : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : wait !== null ? `${LEVEL_NAMES[after]} — next level after a check ${days(wait)}` : 'One more correct in a row to level up') : 'Review this one — it will come back'
-    const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedByCalm ? 'calm' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
+    const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedByBlessing ? 'blessing' : r.savedByCalm ? 'calm' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
       correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, masteredNow, lv: after, chosen: option, answer: question.answer,
@@ -706,7 +707,8 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        <EncounterScreen state={encounterPreview} level={previewLevel} onChange={setEncounterPreview} onComplete={() => setEncounterPreview(e => e && { ...e, status: 'complete' })} onLeave={closePreview} preview />
+        <EncounterScreen state={encounterPreview} level={previewLevel} onChange={setEncounterPreview} hintsLeft={null} onHelp={() => setEncounterPreview(e => e && { ...e, help: !e.help })}
+          onSubmit={() => setEncounterPreview(e => { const sc = e && sceneById(e.id); if (!e || !sc || e.status !== 'active') return e; return isCorrect(sc, e.selected) ? { ...e, status: 'complete', first: e.first ?? 'right' } : { ...e, first: e.first ?? 'wrong' } })} onLeave={closePreview} preview />
       </main>
     )
   }
@@ -807,7 +809,7 @@ export default function App() {
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
-                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}{(run.calm ?? 0) > 0 && <span className="second-chip" aria-label="Calmed Wraith: your next mistake costs no heart" title="Calmed Wraith: your next mistake costs no heart">👻</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}{run.omen && run.omen.floor === run.floor && <span className="second-chip" aria-label={run.omen.kind === 'blessing' ? 'Blessing: your next mistake on this floor costs no heart' : 'Shaken: your next mistake on this floor cannot be saved'} title={run.omen.kind === 'blessing' ? 'Blessing: your next mistake on this floor costs no heart' : 'Shaken: your next mistake on this floor cannot be saved'}>{run.omen.kind === 'blessing' ? '✨' : '🌧'}</span>}{(run.calm ?? 0) > 0 && <span className="second-chip" aria-label="Calmed Wraith: your next mistake costs no heart" title="Calmed Wraith: your next mistake costs no heart">👻</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
                 <div className="bar-label"><span>{foe.enemy.name}</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
@@ -939,7 +941,7 @@ export default function App() {
                   <div className="result-line">
                     <strong>{feedback.correct ? '✓ Correct' : 'Not quite'}{feedback.correct && feedback.word.variants.length > 0 && <small className="result-also"> also {feedback.word.variants.join(', ')}</small>}</strong>
                   </div>
-                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−1 heart · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : 'Practice · no heart lost'}</p>}
+                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−1 heart · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : feedback.exchange.saved === 'blessing' ? '✨ Blessing · heart saved' : 'Practice · no heart lost'}</p>}
                   {!feedback.correct && (() => {
                     // The right answer is on the card above; this box shows what was picked, big and clear. Its size follows its
                     // length (one character, a word, a phrase or sentence), and a known word picked by mistake gets its own gloss.
@@ -985,7 +987,7 @@ export default function App() {
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen key={`${trialState.id}:${trialState.step ?? 1}`} warden={foe?.boss === 'warden'} level={levelOf(save.mastery)} trial={t} state={trialState} onAnswer={answerTrial} onClose={leaveTrial} /> : null })()}
-        {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} level={levelOf(save.mastery)} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onComplete={() => patch(s => complete(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
+        {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} level={levelOf(save.mastery)} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} hintsLeft={helpHintsLeft(save)} onHelp={() => patch(s => (s.run?.encounter?.paid ? { ...s, run: { ...s.run, encounter: { ...s.run.encounter, help: !s.run.encounter.help } } } : payHelp(s)))} onSubmit={() => patch(s => submitEncounter(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} sigil={run.depth > save.meta.depthCleared ? { level: run.depth, text: sigilText(run.depth) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
