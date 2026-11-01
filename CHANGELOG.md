@@ -393,3 +393,10 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Inventory now distinguishes found items from equipped items. Loot auto-equips only into an empty slot; players can equip or replace owned gear from the character panel.
 - Existing v2 saves are sanitized into a compatible loadout by equipping the first owned item in each slot; no save key change or progress reset.
 - Automated test/build results pending review of the feature branch.
+
+## Contextual encounter prototype (2026-11-01)
+- Optional tea and meal scenes after eligible floor clears, one per expedition.
+- Chinese-first presentation develops with current mastery and distinct practice days.
+- Saved selections/help/results and idempotent +3 run-gold completion.
+- Leaving an encounter reuses the normal next-enemy path (keeps the FLOOR banner).
+- 178 tests passed, build passes, one 360 px browser check passed; see docs/CONTEXTUAL_ENCOUNTERS.md.

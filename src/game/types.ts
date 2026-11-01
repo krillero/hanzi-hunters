@@ -11,6 +11,8 @@ import type { GearSlot } from '../data.ts'
 
 export type RunPhase = 'fighting' | 'victory' | 'defeat'
 export type Run = {
+  /** The optional contextual encounter offered after a floor boss (at most one per expedition; kept as 'closed' once left). */
+  encounter?: import('./encounters').EncounterState
   /** The expedition's depth (1..MAX_DEPTH): harder question mix, more gold, tougher final boss. */
   depth: number
   floor: number; kill: number; kills: number
@@ -62,4 +64,6 @@ export type Saved = {
    * (no heart lost) battle question: its first question after the introduction.
    */
   practiced: string[]
+  /** Local dates (YYYY-MM-DD, up to 30) on which each contextual encounter was completed; drives its support stage. */
+  encounterHistory?: import('./encounters').History
 }
