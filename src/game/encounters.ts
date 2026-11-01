@@ -103,7 +103,7 @@ export const optionPinyin = (id: string) => WORDS.find(w => w.id === id)?.pinyin
 export const isCorrect = (scene: Scene, selected: string[]) => selected.length === scene.answer.length && scene.answer.every(a => selected.includes(a))
 
 export type History = Record<string, { dates: string[] }>
-export type EncounterState = { id: string; stage: number; status: 'offer' | 'active' | 'complete' | 'closed'; selected: string[]; order: string[]; help: boolean }
+export type EncounterState = { id: string; stage: number; status: 'active' | 'complete' | 'closed'; selected: string[]; order: string[]; help: boolean }
 /** Key of a scene in Saved.recentEvents. */
 export const sceneKey = (id: string) => `scene:${id}`
 export const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -128,7 +128,7 @@ export function offer(s: Saved, random = Math.random): Saved {
   const order = scene.options.map(x => x.id)
   for (let i = order.length - 1; i > 0; i--) { const j = Math.max(0, Math.min(i, Math.floor(random() * (i + 1)))); [order[i], order[j]] = [order[j], order[i]] }
   const stage = stageFor(s.mastery, s.encounterHistory?.[scene.id]?.dates ?? [], scene.requires)
-  return { ...s, recentEvents: noteRecent(s.recentEvents, sceneKey(scene.id)), run: { ...r, encounter: { id: scene.id, stage, status: 'offer', selected: [], order, help: false } } }
+  return { ...s, recentEvents: noteRecent(s.recentEvents, sceneKey(scene.id)), run: { ...r, encounter: { id: scene.id, stage, status: 'active', selected: [], order, help: false } } }
 }
 
 /** A right choice: +ENCOUNTER_GOLD run gold and today's date in the history. Anything else (or a repeat) is a no-op. */
@@ -164,7 +164,9 @@ export function cleanEncounter(raw: unknown): EncounterState | undefined {
   const ids = scene.options.map(x => x.id)
   const selected = Array.isArray(e.selected) ? [...new Set(e.selected.filter(x => ids.includes(x)))] : []
   const order = Array.isArray(e.order) && e.order.length === ids.length && new Set(e.order).size === ids.length && e.order.every(x => ids.includes(x)) ? e.order : ids
-  return { id: e.id, stage: [0, 1, 2].includes(e.stage) ? e.stage : 0, status: ['offer', 'active', 'complete', 'closed'].includes(e.status) ? e.status : 'closed', selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
+  // 'offer' (an intro step, removed once encounters became mandatory) opens straight into the scene.
+  const status = (e.status as string) === 'offer' ? 'active' : ['active', 'complete', 'closed'].includes(e.status) ? e.status : 'closed'
+  return { id: e.id, stage: [0, 1, 2].includes(e.stage) ? e.stage : 0, status, selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
 }
 
 /** Preview aid for /?encounter=<scene id>&stage=<0|1|2>: a ready-to-play scene, or null when the id is not a scene. */

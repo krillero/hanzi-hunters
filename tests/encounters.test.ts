@@ -121,3 +121,8 @@ test('point scenes: picture options only, one answer, and the pictures stay out 
   const scene = sceneById('friend-he')!, p = previewEncounter('friend-he', '1')!
   assert.deepEqual(choose(choose(p, scene, 'man'), scene, 'woman').selected, ['woman'])
 })
+
+test('an encounter opens straight into the scene; a save from the old intro step loads as active', () => {
+  assert.equal(offer(ready(), () => 0.5).run!.encounter!.status, 'active')
+  assert.equal(cleanEncounter({ id: 'hello', stage: 0, status: 'offer', selected: [], order: ['你好', '再见', '谢谢'], help: false })!.status, 'active')
+})

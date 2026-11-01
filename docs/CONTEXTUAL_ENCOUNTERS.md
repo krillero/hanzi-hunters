@@ -2,7 +2,8 @@
 
 Short scenes appear after a non-final floor summary, once per expedition.
 They cannot be skipped (no hearts are at risk and retries are unlimited, so
-they can always be finished). Existing depth progression and combat rules remain in charge.
+they can always be finished). There is no intro step: the scene opens straight into the
+task (a save from the old intro step, status "offer", loads as active). Existing depth progression and combat rules remain in charge.
 
 | Scene | Kind | Needs (all introduced) | From course word* |
 |---|---|---|---|
