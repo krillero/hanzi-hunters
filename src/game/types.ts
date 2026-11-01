@@ -34,7 +34,7 @@ export type Saved = {
   legacyMastery: Mastery
   run: Run | null
   lastRun: RunSummary | null
-  /** Days played, warm-up day, correct total, badges. Additive: old saves load with an empty habit; no version bump. */
+  /** Days played, correct total, badges (and the unused warm-up day). Additive: old saves load with an empty habit; no version bump. */
   habit: Habit
   /** Per curriculum id: lesson ids completed at least once (sticky). Entry progress stays in `mastery`, shared by every curriculum. */
   courses: Record<string, CourseProgress>

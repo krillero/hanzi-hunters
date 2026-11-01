@@ -1,5 +1,14 @@
 # Changelog / test log
 
+## 2026-11-01 — Cleaner camp screen; daily warm-up removed (branch ccr-2aecd5ae-3v8bz2)
+
+- **Camp** now shows only: the run result in one line ("11 slain · Level 5 · +117 gold"), milestones earned during that run, a course card ("Lesson 3 of 20", lesson title, lesson progress bar, words learned), the upgrades, and a **Descend again** button pinned to the bottom of the screen. Gold is shown once (header).
+- **Removed from camp:** the gold / best floor / runs / mastered strip, the words known / mastered / days played counters, the 10 milestone chips, App & data, Reset ALL progress and the footnote. Reset is also gone from the in-run build panel.
+- **Upgrades:** plain tabs ("Blade 1/5"), "N you can buy", clearer states (Owned / gold **Buy 75** / "75 · need 15" / dashed Locked), and each branch lists owned + next + the first locked node with "+N more in this branch". Desktop keeps the four-column layout.
+- **Settings sheet (⚙)** gains **Your stats** (best floor, runs, words learning, mastered) and **Milestones** (earned ones as chips, plus the next one to aim for); App & data and **Reset all progress…** (with confirmation) are at the bottom. Long source URLs in Credits now wrap.
+- **Daily warm-up removed** (camp offer, `WarmupScreen`, `pickWarmup` / `warmupAvailable` and their two tests, CSS). `habit.warmupDay` stays in the save so older saves load and round-trip unchanged; no save version change.
+- `npm test` 153 pass (155 minus the two warm-up tests), `npm run validate:content` 0 errors, `npm run build` pass, `node tools/layout-check.mjs` ok at 411/390/360 px. Camp and settings checked in Chromium at 360, 412 and 1280 px with a seeded save: no horizontal scroll, no console errors, reset still asks for confirmation.
+
 ## 2026-11-01 — Details popup: no repeated text or disclaimers; 360 px minimum width (branch ccr-2aecd5ae-3v8bz2)
 
 - **Popup header** shows hanzi, pinyin and meaning once (was "谢谢 (xièxie)" plus "xièxie · thank you"). Unreviewed entries get a small **draft** tag next to the meaning instead of the "About this entry" block (kind, review status, sources, licenses), the per-example "AI draft · not reviewed by a person · Source: …" line and the text-to-speech disclaimer under every example. Sources, licenses and review counts stay in the data and in Settings → Credits & content review. "Dictionary pinyin: …" is gone; the neutral-tone line only appears when the note does not already explain it.

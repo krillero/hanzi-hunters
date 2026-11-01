@@ -1,17 +1,30 @@
 import { useState } from 'react'
-import { WORDS } from './data'
-import { BRANCHES, branchNodes, nodeState, upgradeCost } from './game/upgrades'
-import { MAX_LV, masteredCount } from './game/mastery'
+import { BRANCHES, branchNodes, nodeState, upgradeCost, type UpgradeNode } from './game/upgrades'
+import type { CourseStatus } from './game/course'
 import type { Saved } from './game/types'
-import AppData from './AppData'
-import { BADGES } from './game/habit'
 
-type Props = { save: Saved; course: string; warmup: { available: boolean; done: boolean; words: string[] }; onWarmup: () => void; onBuy: (id: string) => void; onStart: () => void; onReset: () => void; message: string; outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void }
+type Props = {
+  save: Saved
+  course: CourseStatus
+  runMilestones: string[]            // names of milestones earned during the run that just ended (not persisted)
+  onBuy: (id: string) => void
+  onStart: () => void
+  message: string
+}
 
-export default function CampScreen({ save, course, warmup, onWarmup, onBuy, onStart, onReset, message, outdated, onUpdate, onExport, onImport }: Props) {
-  const { meta, lastRun, mastery, habit } = save
+/**
+ * Base camp between runs: the run result, the course position, upgrades, and one pinned start button.
+ * Stats, milestones, backups and reset live in the Settings sheet (MenuSheet), not here.
+ */
+export default function CampScreen({ save, course, runMilestones, onBuy, onStart, message }: Props) {
+  const { meta, lastRun, mastery } = save
   const [tab, setTab] = useState(BRANCHES[0].id)
   const owned = (branch: string) => branchNodes(branch).filter(n => meta.upgrades.includes(n.id)).length
+  const canBuy = (n: UpgradeNode) => nodeState(meta.upgrades, n) === 'available' && meta.gold >= upgradeCost(n.tier)
+  const buyable = BRANCHES.flatMap(b => branchNodes(b.id)).filter(canBuy).length
+  const known = Object.keys(mastery).length
+  const wordsLine = `${known} word${known === 1 ? '' : 's'}`
+  const lessonPct = course.lessonsTotal ? Math.round(course.lessonsCompleted / course.lessonsTotal * 100) : 0
 
   return (
     <section className="camp" aria-label="Base camp">
@@ -19,79 +32,71 @@ export default function CampScreen({ save, course, warmup, onWarmup, onBuy, onSt
         <p className="eyebrow">{lastRun ? 'RUN OVER' : 'BASE CAMP'}</p>
         <h1>{lastRun ? `You fell on floor ${lastRun.floor}` : 'Prepare for the descent'}</h1>
         {lastRun
-          ? <div className="camp-summary">
-              <div><small>Floor</small><b>{lastRun.floor}</b></div>
-              <div><small>Slain</small><b>{lastRun.kills}</b></div>
-              <div><small>Level</small><b>{lastRun.level}</b></div>
-              <div className="gain"><small>Gold banked</small><b>+{lastRun.goldBanked}</b></div>
-            </div>
-          : <p className="subtitle">Spend gold on permanent upgrades. Every run starts at level 1 with no gear, but your upgrades and word mastery stay.</p>}
+          ? <p className="camp-result"><span>{lastRun.kills} slain</span><span>Level {lastRun.level}</span><span className="gain">+{lastRun.goldBanked} gold</span></p>
+          : <p className="camp-result">Upgrades and the words you learn stay between runs.</p>}
+        {runMilestones.length > 0 && <p className="camp-milestone" role="status"><span aria-hidden="true">★</span> New milestone: {runMilestones.join(', ')}</p>}
       </div>
 
-      <div className="camp-bank" role="status">
-        <span className="bank-gold">🪙 {meta.gold} G</span>
-        <span>Best floor {meta.bestFloor}</span>
-        <span>Runs {meta.runs}</span>
-        <span>Mastered {masteredCount(mastery)}/{WORDS.length}</span>
+      <div className="camp-course" role="status">
+        {course.lesson
+          ? <>
+              <div className="camp-course-top"><span>LESSON {course.lesson.number} OF {course.lessonsTotal}</span><span>{wordsLine}</span></div>
+              <strong>{course.lesson.unit.title}</strong>
+            </>
+          : <>
+              <div className="camp-course-top"><span>COURSE COMPLETE</span><span>{wordsLine}</span></div>
+              <strong>{course.title}: all {course.lessonsTotal} lessons done</strong>
+            </>}
+        <div className="camp-course-bar" role="img" aria-label={`${course.lessonsCompleted} of ${course.lessonsTotal} lessons done`}><i style={{ width: `${lessonPct}%` }} /></div>
       </div>
-      <p className="camp-course" role="status"><span className="eyebrow">COURSE</span> {course}</p>
-      <div className="camp-counters" role="status" aria-label="Your learning progress">
-        <div><b>{Object.keys(mastery).length}</b><small>WORDS KNOWN</small></div>
-        <div className="good"><b>{masteredCount(mastery)}</b><small>MASTERED</small></div>
-        <div><b>{habit.daysPlayed}</b><small>DAYS PLAYED</small></div>
-      </div>
-      {warmup.available && (
-        <div className="warmup-offer">
-          <div><span className="eyebrow">DAILY WARM-UP · OPTIONAL</span><strong>Review {warmup.words.length} words · no HP risk</strong><small lang="zh">{warmup.words.map(id => WORDS.find(w => w.id === id)?.hanzi ?? id).join(' · ')}</small></div>
-          <button className="bar-btn main" onClick={onWarmup}>Start</button>
-        </div>
-      )}
-      {!warmup.available && warmup.done && <p className="hint-text warmup-done">✓ Today's warm-up is done. A new one is ready tomorrow.</p>}
+
       {message && <div className="toast camp-toast"><span>{message}</span></div>}
 
-      <div className="badges" aria-label="Milestones">
-        {BADGES.map(b => { const got = habit.badges.includes(b.id); return <span key={b.id} className={`badge ${got ? 'got' : ''}`} title={`${b.name}: ${b.desc}`} aria-label={`${b.name}, ${got ? 'earned' : 'not yet: ' + b.desc}`}><i aria-hidden="true">{b.icon}</i>{b.name}</span> })}
+      <div className="camp-upgrades">
+        <div className="camp-upgrades-head"><h2>Upgrades</h2>{buyable > 0 && <span>{buyable} you can buy</span>}</div>
+        <div className="tree-tabs" role="tablist">
+          {BRANCHES.map(b => (
+            <button key={b.id} role="tab" aria-selected={tab === b.id} className={tab === b.id ? 'on' : ''} onClick={() => setTab(b.id)}>
+              {b.name}<small>{owned(b.id)}/5</small>
+            </button>
+          ))}
+        </div>
+        <div className="tree">
+          {BRANCHES.map(b => {
+            const nodes = branchNodes(b.id)
+            const firstLocked = nodes.findIndex(n => nodeState(meta.upgrades, n) === 'locked')
+            const shown = firstLocked < 0 ? nodes : nodes.slice(0, firstLocked + 1)
+            const more = nodes.length - shown.length
+            return (
+              <div key={b.id} className={`branch ${tab === b.id ? 'show' : ''}`}>
+                <h3 className="branch-name">{b.name} <small>{owned(b.id)}/5</small></h3>
+                <ol>
+                  {shown.map(n => {
+                    const state = nodeState(meta.upgrades, n)
+                    const cost = upgradeCost(n.tier)
+                    const affordable = canBuy(n)
+                    return (
+                      <li key={n.id} className={`node ${state} ${affordable ? 'affordable' : ''}`}>
+                        <button disabled={!affordable} onClick={() => onBuy(n.id)} aria-label={`${n.name}: ${n.desc}. ${state === 'owned' ? 'Owned' : state === 'locked' ? `Locked, ${cost} gold` : affordable ? `Buy for ${cost} gold` : `${cost} gold, you need ${cost - meta.gold} more`}`}>
+                          <span className="node-text"><b>{n.name}</b><small>{n.desc}</small></span>
+                          <span className="node-cost">
+                            {state === 'owned' ? 'Owned' : state === 'locked' ? `Locked · ${cost}` : affordable ? <span className="node-buy">Buy {cost}</span> : <>{cost}<small>need {cost - meta.gold}</small></>}
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ol>
+                {more > 0 && <p className="branch-more">+ {more} more in this branch</p>}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
-      <div className="tree-tabs" role="tablist">
-        {BRANCHES.map(b => (
-          <button key={b.id} role="tab" aria-selected={tab === b.id} className={tab === b.id ? 'on' : ''} onClick={() => setTab(b.id)}>
-            <span>{b.icon}</span>{b.name}<small>{owned(b.id)}/5</small>
-          </button>
-        ))}
+      <div className="camp-start-bar">
+        <button className="primary-btn camp-start" onClick={onStart}>{lastRun ? 'Descend again' : 'Start the descent'} <span aria-hidden="true">→</span></button>
       </div>
-
-      <div className="tree">
-        {BRANCHES.map(b => (
-          <div key={b.id} className={`branch ${tab === b.id ? 'show' : ''}`}>
-            <div className="branch-head"><span className="branch-icon">{b.icon}</span><div><strong>{b.name}</strong><small>{b.tagline}</small></div><span className="branch-count">{owned(b.id)}/5</span></div>
-            <ol>
-              {branchNodes(b.id).map(n => {
-                const state = nodeState(meta.upgrades, n)
-                const cost = upgradeCost(n.tier)
-                const canBuy = state === 'available' && meta.gold >= cost
-                return (
-                  <li key={n.id} className={`node ${state} ${canBuy ? 'affordable' : ''}`}>
-                    <button disabled={!canBuy} onClick={() => onBuy(n.id)} aria-label={`${n.name}, tier ${n.tier}, ${n.desc}, ${state === 'owned' ? 'owned' : `${cost} gold`}`}>
-                      <span className="node-icon">{n.icon}</span>
-                      <span className="node-text"><b>{n.name}</b><small>{n.desc}</small></span>
-                      <span className="node-cost">
-                        {state === 'owned' ? '✓' : state === 'locked' ? `🔒 ${cost}` : canBuy ? `🪙 ${cost}` : `🪙 ${cost}`}
-                        {state === 'available' && !canBuy && <small>need {cost - meta.gold}</small>}
-                      </span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
-        ))}
-      </div>
-
-      <button className="primary-btn camp-start" onClick={onStart}>Start new run <span>→</span></button>
-      <AppData outdated={outdated} onUpdate={onUpdate} onExport={onExport} onImport={onImport} />
-      <button className="reset-btn" onClick={onReset}>Reset ALL progress</button>
-      <p className="hint-text camp-note">Max mastery level is {MAX_LV}. Upgrades never answer questions for you.</p>
     </section>
   )
 }

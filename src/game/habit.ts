@@ -1,4 +1,4 @@
-// Gentle long-term progress: days played, correct-answer total, milestone badges and the optional daily warm-up.
+// Gentle long-term progress: days played, correct-answer total and milestone badges.
 // Pure; no DOM. Nothing here can be lost by missing a day (a tally, never a streak).
 import type { Mastery } from './types.ts'
 import { MAX_LV } from './mastery.ts'
@@ -6,8 +6,8 @@ import { MAX_LV } from './mastery.ts'
 export type Habit = {
   daysPlayed: number
   lastPlayed: string      // local date YYYY-MM-DD, '' = never
-  warmupDay: string       // local date of the last finished warm-up, '' = never
-  correct: number         // lifetime correct answers (battle + warm-up)
+  warmupDay: string       // no longer used (the daily warm-up was removed); kept so older saves round-trip unchanged
+  correct: number         // lifetime correct answers
   bosses: number          // bosses defeated
   bossesMet: string[]     // boss types whose intro card has been shown (later floors skip it)
   seed: number            // shuffles the order new words are introduced in (0 = the file's order; a fresh profile gets a random one)
@@ -63,26 +63,6 @@ export const contextFor = (mastery: Mastery, h: Habit, bestFloor: number, runs: 
 
 /** Badges the player has just earned (not stored yet). */
 export const newBadges = (h: Habit, c: BadgeContext): Badge[] => BADGES.filter(b => !h.badges.includes(b.id) && b.earned(c))
-
-// ---- daily warm-up -------------------------------------------------------------------------
-
-export const WARMUP_SIZE = 5
-export const WARMUP_MIN_WORDS = 3
-
-const hash = (s: string) => { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619) } return x >>> 0 }
-
-/** Words to review today: the ones you know least (lowest level, then fewest right in a row), tie-broken by a day-stable shuffle. */
-export function pickWarmup(mastery: Mastery, today: string, size = WARMUP_SIZE): string[] {
-  const seen = Object.entries(mastery)
-  if (seen.length < WARMUP_MIN_WORDS) return []
-  return seen
-    .sort(([ha, a], [hb, b]) => a.lv - b.lv || a.ok - b.ok || hash(today + ha) - hash(today + hb) || (ha < hb ? -1 : 1))
-    .slice(0, size).map(([h]) => h)
-}
-
-export const warmupAvailable = (h: Habit, mastery: Mastery, today: string) => h.warmupDay !== today && pickWarmup(mastery, today).length >= WARMUP_MIN_WORDS
-
-export const WARMUP_GOLD_PER_CORRECT = 3
 
 /** A fresh profile's word-order seed (never 0, which means "file order"). */
 export const newSeed = () => 1 + Math.floor(Math.random() * 2147483646)

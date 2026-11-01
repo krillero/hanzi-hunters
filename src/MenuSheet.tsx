@@ -3,6 +3,7 @@ import AppData from './AppData'
 import { WORDS } from './data'
 import { CLOZE, EXPLANATIONS, SOURCES } from './content'
 import { reviewCounts, usedSources } from './content/provenance'
+import { BADGES } from './game/habit'
 import type { AutoContinue } from './game/flow'
 import type { Settings } from './settings'
 
@@ -10,15 +11,16 @@ type Props = {
   settings: Settings; onChange: (s: Settings) => void; hasVoice: boolean
   fullscreen: { supported: boolean; on: boolean; toggle: () => void }
   tools?: { potions: number; words: number; onGear: () => void; onWords: () => void }
-  outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void; onClose: () => void
+  progress: { bestFloor: number; runs: number; known: number; mastered: number; badges: string[] }
+  outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void; onReset: () => void; onClose: () => void
 }
 
 const SPEEDS: { id: AutoContinue; label: string; hint: string }[] = [
   { id: 'learning', label: 'Learn first', hint: 'Lv 2 · 0.5 s' }, { id: 'quick', label: 'Quick', hint: '0.5 s' }, { id: 'relaxed', label: 'Relaxed', hint: '2.5 s' }, { id: 'off', label: 'Off', hint: 'tap' }
 ]
 
-/** Settings sheet: sound, auto-continue, fullscreen, and app/data tools. */
-export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, outdated, tools, onUpdate, onExport, onImport, onClose }: Props) {
+/** Settings sheet: your stats and milestones, sound, auto-continue, fullscreen, credits, backups and reset. */
+export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, progress, outdated, tools, onUpdate, onExport, onImport, onReset, onClose }: Props) {
   const closeRef = useRef<HTMLButtonElement | null>(null)
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -29,6 +31,8 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
   const rc = reviewCounts(WORDS, EXPLANATIONS, CLOZE)
   const sourcesUsed = usedSources(WORDS, EXPLANATIONS, CLOZE)
   const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator
+  const earned = BADGES.filter(b => progress.badges.includes(b.id))
+  const next = BADGES.find(b => !progress.badges.includes(b.id))
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div className="modal menu-sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title" onClick={e => e.stopPropagation()}>
@@ -38,6 +42,20 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
             <button className="bar-btn ghost" onClick={tools.onGear}>⚔ Gear</button>
             <button className="bar-btn ghost" onClick={tools.onWords}>📚 Wordbook · {tools.words}</button>
           </section>}
+          <section>
+            <h3>Your stats</h3>
+            <div className="menu-stats">
+              <div><b>{progress.bestFloor}</b><small>Best floor</small></div>
+              <div><b>{progress.runs}</b><small>Runs</small></div>
+              <div><b>{progress.known}</b><small>Words learning</small></div>
+              <div className="good"><b>{progress.mastered}</b><small>Mastered</small></div>
+            </div>
+          </section>
+          <section>
+            <h3 className="menu-h-row">Milestones <small>{earned.length} of {BADGES.length}</small></h3>
+            {earned.length > 0 && <div className="milestones">{earned.map(b => <span key={b.id} className="milestone">{b.name}</span>)}</div>}
+            <p className="hint-text">{next ? `Next: ${next.name} (${next.desc.charAt(0).toLowerCase()}${next.desc.slice(1)})` : 'All milestones earned.'}</p>
+          </section>
           <section>
             <h3>Sound</h3>
             <button className={`switch-row ${settings.muted ? '' : 'on'}`} role="switch" aria-checked={!settings.muted} onClick={() => onChange({ ...settings, muted: !settings.muted })}>
@@ -69,6 +87,7 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, ou
           </section>
           {fullscreen.supported && <section><h3>Screen</h3><button className="secondary-btn menu-wide" onClick={fullscreen.toggle}>{fullscreen.on ? '🗗 Exit fullscreen' : '⛶ Fullscreen'}</button></section>}
           <AppData outdated={outdated} onUpdate={onUpdate} onExport={onExport} onImport={onImport} />
+          <button className="danger-btn menu-wide" onClick={onReset}>Reset all progress…</button>
         </div>
       </div>
     </div>

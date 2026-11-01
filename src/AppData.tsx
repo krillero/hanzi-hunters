@@ -2,7 +2,7 @@ import { BUILD, formatBuild } from './appInfo'
 
 type Props = { outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void }
 
-/** Version, "Update app" (keeps progress), and export/import of progress. Used by the camp and the menu. */
+/** Version, "Update app" (keeps progress), and export/import of progress. Shown in the Settings sheet. */
 export default function AppData({ outdated, onUpdate, onExport, onImport }: Props) {
   return (
     <section className="app-data" aria-label="App and data">
