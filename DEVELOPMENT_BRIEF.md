@@ -217,7 +217,7 @@ Run these after baseline build and after relevant changes:
 10. Corrupt/remove the local save and reload; verify safe fallback instead of a crash.
 11. Reach defeat and restart; verify intended permanent progression persists and transient battle state resets.
 12. Test speech playback on supported browsers and confirm graceful failure when unavailable.
-13. Test widths around 360, 375, 390 and 430 CSS px (nothing narrower than 360); inspect horizontal overflow and tap targets.
+13. Check at 360 CSS px (the narrowest supported width; see AGENTS.md for when to run a browser check); inspect horizontal overflow and tap targets.
 14. Test desktop layout and browser console.
 15. Run `npm run build` after code changes.
 
