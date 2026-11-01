@@ -5,6 +5,8 @@
 // Echo Wraith's Wail — offered once it drops below WRAITH_ECHO_AT of its HP (when its echo starts): the Wraith says a line and the
 //   player picks the reply that answers it. Right: the Wraith is calmed and the next wrong answer this expedition costs no heart
 //   (kept until used: the rest of the Wraith fight is often too short to need it).
+// Ink Scribe's Torn Note — offered right after its first ink seal breaks: a note of known words with one character missing (the
+//   English meaning is shown); the player picks the character that completes it. Right: every remaining seal breaks.
 // Either way a wrong answer is an ordinary wrong answer (resolveAnswer decides hearts / second chance / defeat); skipping is free;
 // mastery never changes; once per fight. Pure functions; the content is src/content/trials.json.
 import trialsJson from '../content/trials.json' with { type: 'json' }
@@ -18,13 +20,18 @@ export type ToneTrial = TrialBase & { boss: 'golem'; options: string[] }
 export type ReplyOption = { zh: string; py: string; en: string }
 /** Options are short Chinese replies; `answer` is the `zh` of the one that answers the line. */
 export type ReplyTrial = TrialBase & { boss: 'wraith'; py: string; options: ReplyOption[] }
-export type Trial = ToneTrial | ReplyTrial
+/** `zh` has exactly one blank (＿); options are characters (or short words); `answer` is the one that completes the note. */
+export type NoteTrial = TrialBase & { boss: 'scribe'; py: string; options: string[] }
+export type Trial = ToneTrial | ReplyTrial | NoteTrial
+export const BLANK = '＿'
 export type TrialBoss = Trial['boss']
 /** The trial of the current fight, saved in the run: the same line survives a reload and is answered at most once. */
 export type TrialState = { id: string; floor: number; order: string[]; status: 'pending' | 'answered' | 'done'; chosen?: string }
 
 /** What identifies an option (and is stored in TrialState.order / chosen): the pinyin, or the reply's Chinese. */
-export const optionKeys = (t: Trial): string[] => (t.boss === 'golem' ? t.options : t.options.map(o => o.zh))
+export const optionKeys = (t: Trial): string[] => (t.boss === 'wraith' ? t.options.map(o => o.zh) : t.options)
+/** The note with its blank filled in (scribe trials). */
+export const filledNote = (t: NoteTrial, with_ = t.answer) => t.zh.replace(BLANK, with_)
 
 const isStr = (x: unknown): x is string => typeof x === 'string' && x.trim() !== ''
 const HANZI = /\p{Script=Han}/u
@@ -57,19 +64,24 @@ function trialErrors(t: Trial, wordIds: string[]): string[] {
   const out: string[] = []
   if (!t || typeof t !== 'object') return ['must be an object']
   if (!isStr(t.id) || !/^[a-z][a-z0-9-]*$/.test(t.id)) out.push('id must be lower-case letters, digits or dashes')
-  if (t.boss !== 'golem' && t.boss !== 'wraith') out.push('boss must be "golem" or "wraith"')
+  if (t.boss !== 'golem' && t.boss !== 'wraith' && t.boss !== 'scribe') out.push('boss must be "golem", "wraith" or "scribe"')
   for (const f of ['zh', 'en', 'answer', 'note'] as const) if (!isStr(t[f])) out.push(`${f} is required`)
   const requires = Array.isArray(t.requires) ? t.requires : []
   if (!requires.length) out.push('requires must list the words the trial uses')
   for (const id of requires) if (!wordIds.includes(id)) out.push(`requires "${id}", which is not in words.json`)
   // No untaught vocabulary: every character shown (the line and, for replies, every option) belongs to a required word.
   const known = new Set(requires.join(''))
-  const shown = [t.zh ?? '', ...(t.boss === 'wraith' && Array.isArray(t.options) ? t.options.map(o => o?.zh ?? '') : [])].join('')
+  const shown = [t.zh ?? '', ...(t.boss === 'wraith' && Array.isArray(t.options) ? t.options.map(o => o?.zh ?? '') : []), ...(t.boss === 'scribe' && Array.isArray(t.options) ? t.options : [])].join('')
   for (const ch of new Set(shown)) if (HANZI.test(ch) && !known.has(ch)) out.push(`"${ch}" is shown but no required word contains it`)
   const options = Array.isArray(t.options) ? t.options : []
-  const keys = t.boss === 'golem' || t.boss === 'wraith' ? optionKeys({ ...t, options } as Trial) : []
+  const keys = t.boss === 'golem' || t.boss === 'wraith' || t.boss === 'scribe' ? optionKeys({ ...t, options } as Trial) : []
   if (options.length < 3 || options.length > 4 || new Set(keys).size !== keys.length || !keys.every(isStr)) out.push('needs 3-4 distinct options')
   if (!keys.includes(t.answer)) out.push('answer must be one of the options')
+  if (t.boss === 'scribe') {
+    if (!isStr(t.py)) out.push('py (pinyin of the completed note) is required')
+    if ((t.zh ?? '').split(BLANK).length !== 2) out.push(`zh needs exactly one blank (${BLANK})`)
+    for (const o of keys) if (![...o].every(ch => HANZI.test(ch))) out.push(`option "${o}" must be Chinese characters only`)
+  }
   if (t.boss === 'golem') {
     // A tone trial: every option is the answer with different tone marks only, and never turns a written third tone into a
     // second tone (that is what tone sandhi does in speech, so such a distractor would also be "right").
@@ -94,6 +106,7 @@ const fightBoss = (run: Run) => (isBoss(run.floor, run.kill) ? bossIdFor(run.flo
 /** Has the fight just reached the moment this boss calls its trial? */
 function trialMoment(run: Run, boss: TrialBoss, enemies: AnswerInput['enemies']) {
   if (boss === 'golem') return TUNING.golemTrial > 0 && run.shield > 0 && run.shield === shieldFor(run.floor, 'golem') - 1
+  if (boss === 'scribe') return TUNING.scribeTrial > 0 && run.shield > 0 && run.shield === shieldFor(run.floor, 'scribe') - 1
   return TUNING.wraithTrial > 0 && run.enemyHp > 0 && run.enemyHp <= enemyStats(enemies, run.floor, run.kill, run.depth).hp * WRAITH_ECHO_AT
 }
 
@@ -103,7 +116,7 @@ function trialMoment(run: Run, boss: TrialBoss, enemies: AnswerInput['enemies'])
  */
 export function offerTrial(run: Run, mastery: Mastery, enemies: AnswerInput['enemies'], rng = Math.random): Run {
   const boss = fightBoss(run)
-  if ((boss !== 'golem' && boss !== 'wraith') || run.phase !== 'fighting' || run.trial?.floor === run.floor || !trialMoment(run, boss, enemies)) return run
+  if ((boss !== 'golem' && boss !== 'wraith' && boss !== 'scribe') || run.phase !== 'fighting' || run.trial?.floor === run.floor || !trialMoment(run, boss, enemies)) return run
   const pool = TRIALS.filter(t => t.boss === boss && t.requires.every(id => Object.prototype.hasOwnProperty.call(mastery, id)))
   if (!pool.length) return run
   const t = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]
@@ -122,6 +135,7 @@ export function resolveTrial(i: Omit<AnswerInput, 'lv' | 'isCorrect' | 'practice
   if (i.chosen === trial.answer) {
     const ok = { correct: true, heartsLost: 0, savedBySecondChance: false, outcome: 'continue' as const }
     if (trial.boss === 'wraith') return { ...ok, run: { ...run, calm: 1, streak: run.streak + 1, trial: answered }, hit: 0 }
+    if (trial.boss === 'scribe') return { ...ok, run: { ...run, shield: 0, streak: run.streak + 1, trial: answered }, hit: 0 }
     const foe = enemyStats(i.enemies, run.floor, run.kill, run.depth)
     const hit = Math.max(0, Math.min(run.enemyHp - 1, Math.round(foe.hp * TUNING.golemTrialHit)))
     return { ...ok, run: { ...run, shield: 0, enemyHp: run.enemyHp - hit, streak: run.streak + 1, trial: answered }, hit }

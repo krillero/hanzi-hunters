@@ -1675,6 +1675,8 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .enc-items b{font-size:24px}.enc-items span{font-size:28px}.enc-items small{font-size:14px}
 .enc-items .enc-picture{font-size:20px;line-height:1.25;letter-spacing:-1px;overflow-wrap:anywhere}
 .trial-carving p[lang=zh]{font-size:30px;letter-spacing:2px}
+.trial-blank{display:inline-block;min-width:1.2em;border-bottom:3px dashed #f1ce80;color:#f1ce80;margin:0 2px}
+.trial.scribe-note .answer-btn{font-size:24px}
 .trial-stakes{font-size:14px;color:#b9c8d6}
 .trial-options{display:grid;gap:8px;margin:8px 0}
 .trial-options .answer-btn{width:100%}

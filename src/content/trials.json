@@ -269,6 +269,132 @@
       ],
       "answer": "有。",
       "note": "To answer a 有…吗 question with yes, repeat the verb: 有 (there is)."
+    },
+    {
+      "id": "scribe-hello",
+      "boss": "scribe",
+      "requires": [
+        "你好",
+        "吗",
+        "人"
+      ],
+      "zh": "你＿！",
+      "py": "Nǐ hǎo!",
+      "en": "Hello!",
+      "options": [
+        "好",
+        "吗",
+        "人"
+      ],
+      "answer": "好",
+      "note": "你好 is 你 (you) + 好 (good). 吗 makes a question and 人 means person."
+    },
+    {
+      "id": "scribe-sorry",
+      "boss": "scribe",
+      "requires": [
+        "对不起",
+        "也",
+        "是"
+      ],
+      "zh": "对＿起！",
+      "py": "Duìbuqǐ!",
+      "en": "Sorry!",
+      "options": [
+        "不",
+        "也",
+        "是"
+      ],
+      "answer": "不",
+      "note": "对不起 has 不 (not) in the middle, said lightly: duìbuqǐ. 也 means also and 是 means to be."
+    },
+    {
+      "id": "scribe-who",
+      "boss": "scribe",
+      "requires": [
+        "你",
+        "是",
+        "谁",
+        "好",
+        "也"
+      ],
+      "zh": "你是＿？",
+      "py": "Nǐ shì shéi?",
+      "en": "Who are you?",
+      "options": [
+        "谁",
+        "好",
+        "也"
+      ],
+      "answer": "谁",
+      "note": "谁 asks who. 好 means good and 也 means also; neither can end this question."
+    },
+    {
+      "id": "scribe-he-is",
+      "boss": "scribe",
+      "requires": [
+        "他",
+        "是",
+        "我",
+        "朋友",
+        "也",
+        "很"
+      ],
+      "zh": "他＿我朋友。",
+      "py": "Tā shì wǒ péngyou.",
+      "en": "He is my friend.",
+      "options": [
+        "是",
+        "也",
+        "很"
+      ],
+      "answer": "是",
+      "note": "是 links “he” and “my friend”. 也 (also) and 很 (very) cannot do that on their own: “he is also my friend” is 他也是我朋友."
+    },
+    {
+      "id": "scribe-friend",
+      "boss": "scribe",
+      "requires": [
+        "我",
+        "是",
+        "你",
+        "朋友",
+        "有",
+        "人"
+      ],
+      "zh": "我是你朋＿。",
+      "py": "Wǒ shì nǐ péngyou.",
+      "en": "I am your friend.",
+      "options": [
+        "友",
+        "有",
+        "人"
+      ],
+      "answer": "友",
+      "note": "朋友 (friend) is written with 友. 有 sounds the same, yǒu, but means “have / there is”; 人 means person."
+    },
+    {
+      "id": "scribe-there-is",
+      "boss": "scribe",
+      "requires": [
+        "这里",
+        "有",
+        "朋友",
+        "也",
+        "三",
+        "个",
+        "人"
+      ],
+      "zh": "这里＿三个人。",
+      "py": "Zhèlǐ yǒu sān ge rén.",
+      "en": "There are three people here.",
+      "options": [
+        "有",
+        "友",
+        "也"
+      ],
+      "answer": "有",
+      "note": "有 means “there is / have”. 友 sounds the same but appears in words like 朋友; 也 means also."
     }
   ]
 }

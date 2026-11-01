@@ -76,13 +76,13 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       stat.heartsLost += r.heartsLost; stat.practiceSaves += r.practiceSaved ? 1 : 0; stat.secondChanceSaves += r.savedBySecondChance ? 1 : 0; stat.calmSaves += r.savedByCalm ? 1 : 0; stat.heartsRestored += r.heartsRestored
       run = r.run
       // Boss trials: the bot takes them with more than 2 hearts left. The Golem's is a tone question (as hard as its seal
-      // questions); the Wraith's is a reply to a line of known words (plain accuracy).
+      // questions), the Scribe's a character question (as hard as its seal questions); the Wraith's is a reply (plain accuracy).
       {
         run = offerTrial(run, mastery, ENEMIES, rng)
         const t = run.trial?.status === 'pending' ? trialById(run.trial.id) : undefined
         if (t && run.hearts <= 2) run = closeTrial(run)   // a careful player says "Not now" when a heart matters
         else if (t) {
-          const right = rng() < (accuracy >= 1 ? 1 : Math.min(0.98, accuracy - (t.boss === 'golem' ? 0.06 : 0)))
+          const right = rng() < (accuracy >= 1 ? 1 : Math.min(0.98, accuracy - (t.boss === 'golem' ? 0.06 : t.boss === 'scribe' ? 0.04 : 0)))
           const tr = resolveTrial({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, roll: { drop: rng(), item: rng() }, chosen: right ? t.answer : optionKeys(t).find(o => o !== t.answer)! })
           if (tr) { run = closeTrial(tr.run); answers++; stat.trials++; stat.trialsRight += tr.correct ? 1 : 0; stat.heartsLost += tr.heartsLost; stat.secondChanceSaves += tr.savedBySecondChance ? 1 : 0 }
         }

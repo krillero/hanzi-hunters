@@ -502,6 +502,7 @@ export default function App() {
     trialLock.current = true
     patch(s => ({ ...s, run: res.run }))
     if (res.correct && trialById(run.trial?.id)?.boss === 'wraith') { setCaption({ side: 'hero', kind: 'block', text: '👻 Wraith calmed · next mistake free' }); feel('combo', { streak: 7 }) }
+    else if (res.correct && trialById(run.trial?.id)?.boss === 'scribe') { setCaption({ side: 'monster', kind: 'shield', text: '💥 SEALS BROKEN' }); feel('combo', { streak: 9 }) }
     else if (res.correct) { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '💥 SHIELD SHATTERED' }); feel('combo', { streak: 9 }) }
     else if (res.outcome === 'defeat') { sceneRef.current?.playHit('hero'); sceneRef.current?.showDefeat(true); feel('defeat') }
     else {

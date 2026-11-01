@@ -118,3 +118,34 @@ test('a calm charge survives a reload, also between fights; junk is clamped', ()
   s.run = { ...wraith(0.5), calm: 7 as number }
   assert.equal(sanitizeSave(JSON.parse(JSON.stringify(s))).run!.calm, 1)
 })
+
+/** The floor-3 Scribe fight with the given number of ink seals left. */
+const scribe = (seals: number, over: Partial<Run> = {}): Run => {
+  const r = newRun(NO_BONUSES, GEAR, ENEMIES)
+  return { ...r, floor: 3, kill: 3, phase: 'fighting', enemyHp: enemyStats(ENEMIES, 3, 3, r.depth).hp, shield: seals, ...over }
+}
+
+test('the Scribe offers its torn note right after its first seal breaks, not before or later', () => {
+  const max = shieldFor(3, 'scribe')
+  assert.equal(offerTrial(scribe(max), known, ENEMIES).trial, undefined)
+  assert.equal(offerTrial(scribe(max - 2), known, ENEMIES).trial, undefined)
+  const t = offerTrial(scribe(max - 1), known, ENEMIES, () => 0).trial!
+  assert.equal(trialById(t.id)!.boss, 'scribe'); assert.equal(t.status, 'pending')
+})
+
+test('the validator checks torn notes: one blank, Chinese options, known characters', () => {
+  const n = trialsJson.trials.find(t => t.id === 'scribe-friend')!
+  const bad = (patch: object) => validateTrials({ trials: [{ ...n, ...patch }] }, wordIds).join()
+  assert.match(bad({ zh: '我是你朋友。' }), /exactly one blank/)
+  assert.match(bad({ zh: '＿是你朋＿。' }), /exactly one blank/)
+  assert.match(bad({ options: ['友', 'you', '人'] }), /Chinese characters only/)
+  assert.match(bad({ options: ['友', '有', '吃'] }), /"吃" is shown/)
+})
+
+test('a right character breaks every remaining seal without damage; a wrong one is an ordinary wrong answer', () => {
+  const run = offerTrial(scribe(shieldFor(3, 'scribe') - 1), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const res = resolveTrial(io(run, t.answer))!
+  assert.ok(res.correct); assert.equal(res.run.shield, 0); assert.equal(res.run.enemyHp, run.enemyHp); assert.equal(res.run.hearts, run.hearts)
+  const miss = resolveTrial(io({ ...run, secondLeft: 0 }, optionKeys(t).find(o => o !== t.answer)!))!
+  assert.equal(miss.run.hearts, run.hearts - 1); assert.equal(miss.run.shield, run.shield)
+})

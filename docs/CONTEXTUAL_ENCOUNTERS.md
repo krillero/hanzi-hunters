@@ -115,6 +115,21 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   used: 557 charges used, hearts lost/run 10.21, wins 61%, depth-1 clear median
   7 -> 5 expeditions; 0.60 accuracy unchanged (29 -> 28, 5% wins).
 
+### Ink Scribe's Torn Note
+- Offered once per Scribe fight, right after its first ink seal breaks (on
+  floor 3 two of its three seals remain), with a note of known words.
+- The note has one missing character (＿, shown as a dashed ？) and its English
+  meaning; the player picks the character that completes it. Pinyin of the
+  whole note appears after answering (before, it would give the answer away).
+  Distractors are characters the player knows that do not fit, preferably
+  homophones (朋友 needs 友, not 有: both are yǒu).
+- Right: every remaining seal breaks (no damage: on floor 3 that saves two
+  character questions). Wrong: an ordinary wrong answer. "Not now": no effect.
+- Balance (20 seeds, scribeTrial on vs off, the other trials on): 0.60
+  accuracy depth-1 median 28 → 30 expeditions (quartiles 26-32 / 28-32), wins
+  5% → 4%; 0.75 accuracy 5 → 6, wins 61% → 60%; hearts lost/run ≈10.2 both.
+  Neutral within noise: its value is the shortcut through the seals.
+
 ### Shared rules
 - Run.trial saves { id, floor, order, status, chosen }: a reload shows the same
   line, an answered trial shows its result, and it is never offered twice in a
@@ -125,13 +140,15 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   differ from the answer **only in tone marks** and rejects a distractor that
   turns a written third tone into a second tone (tone sandhi makes that
   ambiguous). wraith: also py (the line's pinyin); options are { zh, py, en }
-  and answer is the right option's zh. Preview: /?trial=<id>.
+  and answer is the right option's zh. scribe: zh has exactly one blank (＿),
+  py is the completed note's pinyin, options are Chinese characters only.
+  Preview: /?trial=<id>.
 - Balance (bot takes the trial with more than 2 hearts, 20 seeds, depth-1 clear
   median / win rate): 0.60 accuracy 29 → 29 expeditions, 5% → 5%; 0.75 accuracy
   7 → 7, 58% → 61%. Hearts lost per run unchanged (≈10.3).
-- Full report with both trials on (node tools/simulate.ts --report, 5 seeds,
-  noisy): win rates at .60/.75/.85/.90/1.00 = 5/59/96/100/100%; with
-  golemTrial=0 wraithTrial=0 they were 5/61/98/100/100%. Use the 20-seed
+- Full report with all three trials on (node tools/simulate.ts --report, 5
+  seeds, noisy): win rates at .60/.75/.85/.90/1.00 = 6/60/99/100/100%; with
+  every trial off they were 5/61/98/100/100%. Use the 20-seed
   comparisons above, not these 5-seed medians, to judge a trial.
 
 ## Preview link

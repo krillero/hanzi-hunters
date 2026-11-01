@@ -27,7 +27,7 @@ npm run dev                # preview (see "Previewing" below)
 
 * `/?word=<id or hanzi>` forces that entry as the first question (it is introduced as a new word). Add `&kind=<kind>` to force a question type (and to skip the intro, asking it as if you already knew the entry)
 * `/?encounter=<scene id>` (for example `hello`, `sorry`, `tea`) opens that contextual encounter directly (no run or prerequisites needed, nothing is saved). Scenes live in `src/content/encounters.json`; the format is in `docs/CONTEXTUAL_ENCOUNTERS.md`.
-* `/?trial=<id>` (for example `hello`, `friend`, `wraith-who`) opens a boss trial from `src/content/trials.json` the same way. Add `&stage=1` or `&stage=2` to see the reduced-support versions (default `0`: pinyin, English and grammar note).
+* `/?trial=<id>` (for example `hello`, `friend`, `wraith-who`, `scribe-friend`) opens a boss trial from `src/content/trials.json` the same way. Add `&stage=1` or `&stage=2` to see the reduced-support versions (default `0`: pinyin, English and grammar note).
   (`meaning`, `pinyin`, `character`, `listen`, `meaning2pinyin`, `pinyin2char`, `listen2meaning`, `listen2pinyin`, `homophone`, `lookalike`, `particle`);
   the game falls back to a fair question if that kind is not possible for the entry.
 * `/?first=朋友,看-look` introduces these entries (ids or hanzi) before the curriculum, so new content can be played without working up to it (preview only; ordinary play never introduces entries outside the curriculum).
