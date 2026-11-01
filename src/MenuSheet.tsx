@@ -10,7 +10,7 @@ import type { Settings } from './settings'
 type Props = {
   settings: Settings; onChange: (s: Settings) => void; hasVoice: boolean
   fullscreen: { supported: boolean; on: boolean; toggle: () => void }
-  tools?: { potions: number; words: number; onGear: () => void; onWords: () => void }
+  tools?: { potions: number; words: number; onGear: () => void; onWords: () => void; onReturn?: () => void }
   progress: { bestFloor: number; runs: number; known: number; mastered: number; badges: string[] }
   outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void; onReset: () => void; onClose: () => void
 }
@@ -41,7 +41,9 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, pr
           {tools && <section className="menu-tools">
             <button className="bar-btn ghost" onClick={tools.onGear}>⚔ Gear</button>
             <button className="bar-btn ghost" onClick={tools.onWords}>📚 Wordbook · {tools.words}</button>
+            {tools.onReturn && <button className="bar-btn ghost menu-return" onClick={tools.onReturn}>⛺ Return to camp</button>}
           </section>}
+          {tools?.onReturn && <p className="hint-text">Return to camp ends this run: you keep the gold you earned and everything you learned.</p>}
           <section>
             <h3>Your stats</h3>
             <div className="menu-stats">

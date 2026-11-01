@@ -7,6 +7,8 @@ type Props = {
   floor: number
   stats: RunStats
   gold: number
+  /** Floor summary: hearts restored by clearing the floor, and hearts now. */
+  hearts?: { restored: number; now: number; max: number }
   onContinue: () => void
   onClose: () => void
 }
@@ -17,7 +19,7 @@ const wordTile = (id: string) => {
 }
 
 /** Floor-clear and defeat card: what you learned, not just what you earned. Real modal styling, no new design tokens. */
-export default function SummaryModal({ kind, floor, stats, gold, onContinue, onClose }: Props) {
+export default function SummaryModal({ kind, floor, stats, gold, hearts, onContinue, onClose }: Props) {
   const btn = useRef<HTMLButtonElement | null>(null)
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -30,10 +32,14 @@ export default function SummaryModal({ kind, floor, stats, gold, onContinue, onC
       <div className="modal summary-card" role="dialog" aria-modal="true" aria-labelledby="sum-title" onClick={e => e.stopPropagation()}>
         <div className="modal-head">
           <span className="sum-icon" aria-hidden="true">{won ? '🏆' : '💀'}</span>
-          <div className="ex-titles"><h2 id="sum-title">{won ? `Floor ${floor} cleared` : `You fell on floor ${floor}`}</h2><small>{won ? `${stats.total} answer${stats.total === 1 ? "" : "s"} this floor` : `${gold} gold banked for upgrades`}</small></div>
+          <div className="ex-titles"><h2 id="sum-title">{won ? `Floor ${floor} cleared` : `Out of hearts on floor ${floor}`}</h2><small>{won ? `${stats.total} answer${stats.total === 1 ? "" : "s"} this floor` : `${gold} gold banked for upgrades`}</small></div>
           <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="modal-body">
+          {won && hearts && <section className="sum-hearts" role="status" aria-label={`${hearts.restored ? `${hearts.restored} heart restored. ` : ''}${hearts.now} of ${hearts.max} hearts`}>
+            <span className="sum-hearts-row" aria-hidden="true">{Array.from({ length: hearts.max }, (_, i) => <i key={i} className={i < hearts.now ? (i >= hearts.now - hearts.restored ? 'full new' : 'full') : 'empty'}>{i < hearts.now ? '♥' : '♡'}</i>)}</span>
+            <span>{hearts.restored ? `+${hearts.restored} heart${hearts.restored === 1 ? '' : 's'} restored` : 'Hearts already full'}</span>
+          </section>}
           <section>
             <h3>{won ? 'What you learned' : 'What you learned this run'}</h3>
             <div className="sum-row">

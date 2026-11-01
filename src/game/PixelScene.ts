@@ -11,7 +11,7 @@ const TILE = 16
 const FLOOR_A = 0, FLOOR_B = 1, FLOOR_MOSS = 2, WALL = 3, WALL_TOP = 4
 
 /**
- * Decorative encounter scene. React owns HP / enemy identity / progression; this scene only
+ * Decorative encounter scene. React owns the hearts, enemy HP, enemy identity and progression; this scene only
  * draws and animates. Art lives in public/assets (see ASSET_PIPELINE.md and ASSET_CREDITS.md).
  */
 export class PixelScene extends Phaser.Scene {

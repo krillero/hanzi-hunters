@@ -1,11 +1,11 @@
-// Save format v2 with a safe migration from the v1 prototype save. Never throws.
+// Save format v5 (same storage key since v2) with safe migrations from every older format, including the v1 prototype save. Never throws.
 import { sanitizeHabit } from './habit.ts'
 import { CURRICULA, ENEMIES, GEAR, WORDS, type GearSlot, type Word } from '../data.ts'
 import type { Curriculum } from '../content/types.ts'
 import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
 import { emptyCourse, recordPeaks, syncCourse, wordMap, type CourseProgress, type PeakLevels } from './course.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
-import { ENEMIES_PER_FLOOR, bossIdFor, enemyStats, hasShield, isBoss, playerStats, shieldFor } from './rules.ts'
+import { ENEMIES_PER_FLOOR, bossIdFor, enemyStats, hasShield, isBoss, isFinalFight, playerStats, shieldFor } from './rules.ts'
 import { MAX_LV } from './mastery.ts'
 
 export const SAVE_KEY = 'hanzi-hunters-save-v2'
@@ -78,7 +78,26 @@ export function migratePeaks(raw: unknown, legacyRaw: unknown, mastery: Mastery,
   return { peak: recordPeaks(r.claimed, mastery), legacy: r.legacy }
 }
 
-function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
+/**
+ * The HP rules before hearts (save v4 and older), used ONLY to convert an active legacy run: its maximum HP was
+ * 30 + 5 per level above 1 + Tough Skin 8 + Titan Heart 15 + the HP of the worn gear.
+ */
+export const LEGACY_HP = {
+  base: 30, perLevel: 5,
+  upgrades: { G1: 8, G5: 15 } as Record<string, number>,
+  gear: { 'Mossy Vest': 8, 'Guardian Helm': 4, 'Golem Plate': 12, 'Trick Mantle': 6 } as Record<string, number>
+}
+export function legacyMaxHp(level: number, upgrades: string[], loadout: Partial<Record<GearSlot, string>>): number {
+  return LEGACY_HP.base + LEGACY_HP.perLevel * (level - 1) + upgrades.reduce((n, id) => n + (LEGACY_HP.upgrades[id] ?? 0), 0) +
+    Object.values(loadout).reduce((n, name) => n + (name ? LEGACY_HP.gear[name] ?? 0 : 0), 0)
+}
+
+/**
+ * `legacy`: the run was saved before hearts (v4 or older). Its HP is converted, never read as hearts: the share of the OLD maximum HP
+ * becomes the same share of the new maximum hearts, rounded up and clamped (a living run keeps at least 1 heart, a defeated one has 0).
+ * No floor recovery is granted by the migration, and second-chance charges are only clamped, never refilled.
+ */
+function sanitizeRun(raw: unknown, upgrades: string[], legacy: boolean): Run | null {
   if (!isObj(raw)) return null
   const b = computeBonuses(upgrades)
   const gear = strs(raw.gear, GEAR.map(g => g.name))
@@ -87,27 +106,51 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   for (const slot of ['Weapon', 'Armor', 'Accessory'] as GearSlot[]) {
     const candidate = rawLoadout[slot]
     const valid = typeof candidate === 'string' && gear.includes(candidate) && GEAR.some(g => g.name === candidate && g.slot === slot)
-    const legacy = gear.find(name => GEAR.some(g => g.name === name && g.slot === slot))
-    const chosen = valid ? candidate as string : legacy
+    const old = gear.find(name => GEAR.some(g => g.name === name && g.slot === slot))
+    const chosen = valid ? candidate as string : old
     if (chosen) loadout[slot] = chosen
   }
   const floor = int(raw.floor, 1, 1e6, 1), kill = int(raw.kill, 0, ENEMIES_PER_FLOOR - 1, 0), level = int(raw.level, 1, 999, 1)
-  const stats = playerStats({ level, gear, loadout }, b, GEAR)
+  const stats = playerStats({ level, loadout }, b, GEAR)
   const foeHp = enemyStats(ENEMIES, floor, kill).hp
-  const phase = raw.phase === 'victory' || raw.phase === 'defeat' ? raw.phase : 'fighting'
-  const hp = int(raw.hp, 0, stats.maxHp, stats.maxHp)
-  if (hp <= 0 && phase !== 'defeat') return null
+  let phase: Run['phase'] = raw.phase === 'victory' || raw.phase === 'defeat' ? raw.phase : 'fighting'
+  let hearts: number
+  if (legacy) {
+    const oldMax = legacyMaxHp(level, upgrades, loadout)
+    const oldHp = int(raw.hp, 0, oldMax, oldMax)
+    if (oldHp <= 0 && phase !== 'defeat') return null   // unchanged v4 behaviour: a "living" run with no HP was never valid
+    hearts = phase === 'defeat' ? 0 : Math.min(stats.maxHearts, Math.max(1, Math.ceil(oldHp / oldMax * stats.maxHearts)))
+  } else {
+    hearts = int(raw.hearts, 0, stats.maxHearts, stats.maxHearts)
+    if (phase === 'defeat') hearts = 0
+    else if (hearts <= 0) phase = 'defeat'   // no hearts left: the run is over (its gold is still banked by the defeat screen)
+  }
+  // Legacy runs: the floor they are on was not cleared under the hearts rules, and a cleared boss never grants recovery after migration.
+  const recoveredFloor = legacy ? (phase === 'victory' && isFinalFight(kill) ? floor : floor - 1) : int(raw.recoveredFloor, 0, floor, floor - 1)
   const rw = isObj(raw.reward) ? raw.reward : {}
   const run: Run = {
-    floor, kill, level, gear, loadout, phase, hp,
+    floor, kill, level, gear, loadout, phase, hearts, recoveredFloor,
     kills: int(raw.kills, 0, 1e9, 0), xp: int(raw.xp, 0, 1e9, 0), pendingXp: int(raw.pendingXp, 0, 1e9, 0),
     shield: isBoss(floor, kill) && hasShield(bossIdFor(floor)) && phase === 'fighting' ? int(raw.shield, 0, shieldFor(floor), shieldFor(floor)) : 0, gold: int(raw.gold, 0, 1e9, 0),
     potions: int(raw.potions, 0, 999, 0), streak: int(raw.streak, 0, 999, 0),
     enemyHp: phase === 'victory' ? 0 : int(raw.enemyHp, 1, foeHp, foeHp),
-    hintsLeft: int(raw.hintsLeft, 0, b.hints, b.hints), secondLeft: int(raw.secondLeft, 0, b.secondChance, b.secondChance),
-    reward: { xp: int(rw.xp, 0, 1e9, 0), gold: int(rw.gold, 0, 1e9, 0), loot: typeof rw.loot === 'string' && GEAR.some(g => g.name === rw.loot) ? rw.loot : '', levelUps: int(rw.levelUps, 0, 999, 0) }
+    hintsLeft: int(raw.hintsLeft, 0, stats.hints, stats.hints),
+    secondLeft: int(raw.secondLeft, 0, stats.secondChances, legacy ? 0 : stats.secondChances),
+    reward: { xp: int(rw.xp, 0, 1e9, 0), gold: int(rw.gold, 0, 1e9, 0), loot: typeof rw.loot === 'string' && GEAR.some(g => g.name === rw.loot) ? rw.loot : '', levelUps: int(rw.levelUps, 0, 999, 0), hearts: legacy ? 0 : int(rw.hearts, 0, 99, 0) }
   }
   return run
+}
+
+/**
+ * Entries whose protected first practice is used up. v5 saves: the saved list (ids moved through aliases like mastery).
+ * Older saves: every entry they already know (mastery and parked legacy progress) counts as practiced, so the upgrade never hands
+ * out fresh protection for words the player has met before.
+ */
+export function sanitizePracticed(raw: unknown, legacy: boolean, mastery: Mastery, legacyMastery: Mastery, words: Word[] = WORDS): string[] {
+  if (legacy) return [...new Set([...Object.keys(mastery), ...Object.keys(legacyMastery)])]
+  const asRecord = Array.isArray(raw) ? Object.fromEntries(raw.filter((x): x is string => typeof x === 'string' && ID.test(x)).map(k => [k, true])) : {}
+  const r = migrateById(asRecord, {}, words, v => (v === true ? true : null), () => true)
+  return [...new Set([...Object.keys(r.claimed), ...Object.keys(r.legacy)])]
 }
 
 const ID = /^[^\s]{1,64}$/
@@ -139,10 +182,13 @@ export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Cur
   const upgrades = validUpgrades(m.upgrades)
   const meta: Meta = { gold: int(m.gold, 0, 1e9, 0), upgrades, bestFloor: int(m.bestFloor, 1, 1e6, 1), runs: int(m.runs, 0, 1e9, 0) }
   const ls = isObj(r.lastRun) ? r.lastRun : null
-  const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, 1e6, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0) } : null
+  const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, 1e6, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0), returned: ls.returned === true } : null
+  // Saves without a version are treated as legacy (pre-hearts): the safe direction (HP converted, no fresh protection).
+  const legacy = int(r.version, 0, 1e6, 0) < 5
   return {
-    version: 4, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
+    version: 5, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades, legacy), lastRun, habit: sanitizeHabit(r.habit),
     peak: peaks.peak, legacyPeak: peaks.legacy,
+    practiced: sanitizePracticed(r.practiced, legacy, migrated.mastery, migrated.legacy, words),
     courses: sanitizeCourses(r.courses, migrated.mastery, curricula, words, peaks.peak)
   }
 }

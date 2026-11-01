@@ -1,5 +1,16 @@
 # Changelog / test log
 
+## 2026-11-01 — Hearts replace player HP (branch ccr-2aecd5ae-3v8bz2)
+
+- **Rules** (`src/game/rules.ts`): 5 hearts and 1 potion per run. A correct answer attacks and never costs a heart (no counterattack); a wrong answer deals no damage and costs exactly one heart on every floor and boss. 0 hearts ends the run. Potion +1 heart (not used at full), floor clear +1 heart exactly once (`recoveredFloor`), no healing from kills or levels (levels add attack only). Max hearts capped at 8; gear raising it adds an empty heart, lowering it clamps.
+- **Protection:** the first non-intro question of each new entry is protected ("Practice · no heart lost"), stored in `Saved.practiced`. Second-chance charges (S3, S5, G3, gear) stack and refill only on entering a floor.
+- **Upgrades / gear:** Aegis and second-chance upgrades rewritten for hearts (ids, costs, prerequisites unchanged). Armor-slot gear remapped (before/after table in `docs/GAME_DESIGN.md`); item names unchanged.
+- **Bosses:** Trickster no longer heals on mistakes, Scribe seals no longer regrow. Shield/seal fallback (`pickSealCard`): when no seal question can be built, a correct answer still breaks a segment.
+- **Save v5** (same key): explicit migration of v4 runs (HP share of the OLD max HP -> hearts, rounded up; no floor recovery; charges not refilled; known entries marked practiced). Backups accept v2-v5.
+- **UI:** hearts row with accessible label, heart captions and feedback lines, one-time rules message, floor summary shows restored hearts, "Return to camp" in Settings during a run (camp: "You returned from floor N"), HP/armor/healing text removed. Header menu button enlarged to 44 px.
+- **Balance:** simulator rewritten for hearts; enemy HP growth 1.16 -> 1.25 per floor chosen from the comparison in `docs/GAME_DESIGN.md` (Balance).
+- **Tests:** `npm test` 169 pass (new `tests/hearts.test.ts`, rewritten rules/boss/balance tests); `npm run validate:content` 0 errors; `npm run build` pass. Browser (Chromium, 360x800 and 390x844): practice miss keeps hearts, normal miss -1 heart, migrated v4 save shows 2 of 7 hearts, no horizontal scroll. Not re-checked after the last CSS change: Return to camp and floor summary in the browser, and the layout check.
+
 ## 2026-11-01 — Cleaner camp screen; daily warm-up removed (branch ccr-2aecd5ae-3v8bz2)
 
 - **Camp** now shows only: the run result in one line ("11 slain · Level 5 · +117 gold"), milestones earned during that run, a course card ("Lesson 3 of 20", lesson title, lesson progress bar, words learned), the upgrades, and a **Descend again** button pinned to the bottom of the screen. Gold is shown once (header).

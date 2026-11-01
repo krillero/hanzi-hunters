@@ -68,21 +68,21 @@ Read `src/App.tsx` for exact logic before changing numbers. The following is a h
 
 1. The player sees an enemy and a Chinese word.
 2. The player chooses an answer from a set of options.
-3. Correct answers deal a stronger attack; incorrect answers deal a weak attack and allow a counterattack under the current rules.
+3. Correct answers attack the enemy and never cost a heart; an incorrect answer deals no damage and costs exactly one heart unless protected (first practice of a new word, then second-chance charges). Zero hearts ends the run (see `docs/GAME_DESIGN.md`, Hearts).
 4. The game shows feedback, the correct answer and a short learning note.
 5. Defeating an enemy awards XP and gold and may award gear.
-6. XP contributes to leveling. Leveling improves character survivability/strength according to current code.
-7. Gear bonuses can affect attack, HP or gold rewards; the current implementation is intentionally simple and some bonuses may need a careful balance/implementation review.
-8. Potions restore HP during a fight.
+6. XP contributes to leveling. Levels add attack only (never hearts or healing).
+7. Gear bonuses affect attack, maximum hearts (cap 8), second chances per floor, hints, XP, mastery damage or gold.
+8. Potions restore one heart (never used at full hearts); clearing a floor restores one heart.
 9. Correct answers can add a Hanzi to the learned-word list; the wordbook shows learned entries.
 10. Progress is saved in the current browser. Defeat/restart behavior retains some permanent progress as described in the README and code.
 
 ### Combat review checklist
 - Ensure answer controls disable after the first tap until feedback is dismissed.
 - Ensure enemy death, player defeat and victory states cannot overlap.
-- Check whether the final blow correctly prevents an unnecessary counterattack.
-- Check HP clamping at 0 and max HP, including after gear or level changes.
-- Verify enemy HP scaling by floor and the displayed HP denominator agree.
+- A correct answer never costs a heart; a wrong one costs exactly one (unless protected) and never damages the enemy.
+- Check heart clamping at 0 and the maximum, including after gear swaps (a higher maximum is not filled) and level-ups (no healing).
+- Verify enemy HP scaling by floor and the displayed enemy HP denominator agree.
 - Verify rewards are awarded exactly once per enemy.
 - Verify random gear drops are understandable (only gear you do not own yet can drop; no duplicate conversion).
 - Verify that a restart does not unintentionally reset permanent progress or keep stale battle state.
@@ -207,11 +207,11 @@ Run these after baseline build and after relevant changes:
 
 1. Load the game in a fresh browser; confirm default stats and first encounter render.
 2. Answer correctly; verify damage, feedback, learning note and progression.
-3. Answer incorrectly; verify correct answer is revealed and counterattack rules apply.
+3. Answer incorrectly; verify the correct answer is revealed and exactly one heart is lost (or "Practice · no heart lost" / "Second chance · heart saved").
 4. Tap answer buttons rapidly; verify only one answer resolves.
 5. Defeat an enemy; verify victory state, XP, gold and any gear reward are applied once.
-6. Continue to next enemy; verify HP/state and enemy HP display reset correctly.
-7. Use a potion at low HP; verify heal amount and potion count. Attempt at full HP/zero potions.
+6. Continue to next enemy; verify hearts carry over and the enemy HP display resets correctly.
+7. Use a potion below full hearts; verify +1 heart and the potion count. At full hearts / zero potions it must be disabled.
 8. Open gear and wordbook drawers; close them and verify layout is intact.
 9. Learn a word, refresh the page, and verify saved progress returns.
 10. Corrupt/remove the local save and reload; verify safe fallback instead of a crash.

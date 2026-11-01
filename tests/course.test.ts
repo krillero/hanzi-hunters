@@ -212,7 +212,7 @@ test('migration: a v2 save keeps mastery, gold, gear, runs; known entries count 
     lastRun: null, habit: { daysPlayed: 3, correct: 50 }
   }
   const s = sanitizeSave(v2, WORDS, [COMPAT])
-  assert.equal(s.version, 4)
+  assert.equal(s.version, 5)
   assert.deepEqual(s.meta, { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7 })
   assert.deepEqual(s.mastery, v2.mastery)
   assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 40); assert.equal(s.habit.correct, 50)

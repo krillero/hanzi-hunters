@@ -4,14 +4,14 @@ import { BOSSES, BOSS_INFO, ENEMIES, GEAR } from '../src/data.ts'
 import { NO_BONUSES } from '../src/game/upgrades.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import {
-  BOSS_HP, BOSS_ORDER, TRICKSTER_HEAL, TRICKSTER_HEAL_LOW, TRICKSTER_HIT, hasShield, bossDamageMult, bossHpMult, ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, bossIdFor, bossPhase, enemyStats, isBoss, isFinalFight, newRun, resolveAnswer, startFight
+  BOSS_HP, BOSS_ORDER, TRICKSTER_HIT, TUNING, hasShield, bossHpMult, ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, bossIdFor, bossPhase, enemyStats, isBoss, isFinalFight, newRun, resolveAnswer, startFight
 } from '../src/game/rules.ts'
 import type { Run } from '../src/game/types.ts'
 
 const none = { ...NO_BONUSES }
 const last = ENEMIES_PER_FLOOR - 1
 /** A run at the boss fight of `floor`. */
-const bossRun = (floor: number, over: Partial<Run> = {}): Run => ({ ...startFight({ ...newRun(none, GEAR, ENEMIES), floor, kill: last, level: 10 }, none, ENEMIES), hp: 400, ...over })
+const bossRun = (floor: number, over: Partial<Run> = {}): Run => ({ ...startFight({ ...newRun(none, GEAR, ENEMIES), floor, kill: last, level: 10 }, none, ENEMIES, GEAR), ...over })
 const ask = (run: Run, over: Partial<Parameters<typeof resolveAnswer>[0]> = {}) =>
   resolveAnswer({ run, bonuses: none, enemies: ENEMIES, allGear: GEAR, lv: 0, isCorrect: true, roll: { drop: 0.99, item: 0 }, ...over })
 
@@ -25,7 +25,7 @@ test('every floor ends with a boss, and the bosses take turns', () => {
 test('boss stats: own name and sprite, bigger than a normal enemy of the same floor', () => {
   const b = enemyStats(ENEMIES, 5, last), normal = enemyStats(ENEMIES, 5, 0)
   assert.equal(b.boss, 'golem'); assert.equal(b.enemy.name, 'Shield Golem'); assert.equal(b.enemy.sprite, 'golem')
-  assert.equal(b.hp, Math.round(BOSSES.golem.hp * 1.16 ** 4 * BOSS_HP))
+  assert.equal(b.hp, Math.round(BOSSES.golem.hp * TUNING.enemyHpGrowth ** 4 * BOSS_HP))
   assert.ok(b.hp > normal.hp && b.xp > normal.xp && b.gold > normal.gold)
   assert.equal(enemyStats(ENEMIES, 2, last).enemy.name, 'Echo Wraith'); assert.equal(enemyStats(ENEMIES, 1, last).enemy.name, 'Shield Golem')
   assert.equal(enemyStats(ENEMIES, 3, last).enemy.name, 'Ink Scribe'); assert.equal(enemyStats(ENEMIES, 4, last).enemy.name, 'Mirror Trickster')
@@ -36,10 +36,10 @@ test('only the golem fight starts with a shield', () => {
   assert.equal(bossRun(1).shield, 2, 'floors 1-2: a 2-segment shield'); assert.equal(bossRun(3).shield, SHIELD_SEGMENTS); assert.equal(bossRun(5).shield, SHIELD_SEGMENTS)
   assert.equal(bossRun(2).shield, 0, 'the wraith has no shield'); assert.equal(bossRun(4).shield, 0, 'nor the trickster')
   assert.equal(bossRun(3).shield, SHIELD_SEGMENTS, 'the scribe has 3 seals from floor 3')
-  assert.equal(startFight({ ...newRun(none, GEAR, ENEMIES), floor: 5, kill: 0 }, none, ENEMIES).shield, 0, 'not the last fight')
-  const next = advance({ ...bossRun(5), kill: last - 1, phase: 'victory' }, none, ENEMIES)
+  assert.equal(startFight({ ...newRun(none, GEAR, ENEMIES), floor: 5, kill: 0 }, none, ENEMIES, GEAR).shield, 0, 'not the last fight')
+  const next = advance({ ...bossRun(5), kill: last - 1, phase: 'victory' }, none, ENEMIES, GEAR)
   assert.equal(next.shield, SHIELD_SEGMENTS, 'arriving at the boss raises the shield')
-  assert.equal(advance({ ...bossRun(5), phase: 'victory' }, none, ENEMIES).shield, 0, 'floor 6 starts with a normal enemy and no shield')
+  assert.equal(advance({ ...bossRun(5), phase: 'victory' }, none, ENEMIES, GEAR).shield, 0, 'floor 6 starts with a normal enemy and no shield')
 })
 
 test('the shield blocks damage; only a correct tone answer breaks a segment', () => {
@@ -50,7 +50,7 @@ test('the shield blocks damage; only a correct tone answer breaks a segment', ()
   assert.equal(notTone.damage, 0); assert.equal(notTone.run.shield, SHIELD_SEGMENTS); assert.ok(!notTone.shieldBroken && notTone.shieldBlocked)
   const wrong = ask(r, { sealQuestion: true, isCorrect: false })
   assert.equal(wrong.run.shield, SHIELD_SEGMENTS, 'a wrong answer never breaks and never repairs')
-  assert.ok(tone.counter > 0, 'the boss still hits back while shielded')
+  assert.equal(tone.heartsLost, 0, 'a correct answer never costs a heart, shield or not'); assert.equal(wrong.heartsLost, 1)
   let cur = r
   for (let k = 0; k < SHIELD_SEGMENTS; k++) cur = ask(cur, { sealQuestion: true }).run
   assert.equal(cur.shield, 0)
@@ -96,41 +96,48 @@ test('saves: the shield is only kept for a golem fight, and clamped', () => {
 
 test('early bosses are gentler and ramp up to the full values', () => {
   assert.ok(bossHpMult(1) < bossHpMult(3) && bossHpMult(3) < bossHpMult(5))
-  assert.equal(bossHpMult(50), BOSS_HP, 'capped'); assert.ok(bossDamageMult(1) < 1 && bossDamageMult(99) > 1)
+  assert.equal(bossHpMult(50), BOSS_HP, 'capped')
   assert.ok(enemyStats(ENEMIES, 1, last).hp < enemyStats(ENEMIES, 1, 0).hp * 2.5, 'floor-1 boss is beatable')
 })
 
-test('ink scribe: seals break only on correct character answers; a miss with the seals down regrows one', () => {
+test('ink scribe: seals break only on correct character answers; mistakes never regrow them', () => {
   const r = bossRun(3), foe = enemyStats(ENEMIES, 3, last)
   assert.ok(hasShield('scribe') && r.shield === SHIELD_SEGMENTS)
-  const ok = ask(r, { sealQuestion: true }); assert.equal(ok.run.shield, SHIELD_SEGMENTS - 1); assert.equal(ok.damage, 0); assert.ok(ok.shieldBroken && !ok.shieldRegrown)
+  const ok = ask(r, { sealQuestion: true }); assert.equal(ok.run.shield, SHIELD_SEGMENTS - 1); assert.equal(ok.damage, 0); assert.ok(ok.shieldBroken)
   assert.equal(ask(r, { sealQuestion: false }).run.shield, SHIELD_SEGMENTS, 'a non-character answer does not break a seal')
-  const wrongSealed = ask(r, { isCorrect: false, sealQuestion: true }); assert.equal(wrongSealed.run.shield, SHIELD_SEGMENTS); assert.ok(!wrongSealed.shieldRegrown, 'sealed: a miss changes nothing')
+  const wrongSealed = ask(r, { isCorrect: false, sealQuestion: true }); assert.equal(wrongSealed.run.shield, SHIELD_SEGMENTS); assert.equal(wrongSealed.heartsLost, 1)
   const down = { ...r, shield: 0 }
   assert.ok(ask(down).damage > 0, 'seals down: normal damage')
-  const miss = ask(down, { isCorrect: false }); assert.equal(miss.run.shield, 1); assert.ok(miss.shieldRegrown, 'a wrong answer regrows one seal')
-  assert.equal(ask({ ...down, enemyHp: 1 }).outcome, 'victory', 'a killing blow is never undone')
+  const miss = ask(down, { isCorrect: false }); assert.equal(miss.run.shield, 0, 'a wrong answer no longer regrows a seal'); assert.equal(miss.heartsLost, 1)
+  assert.equal(ask({ ...down, enemyHp: 1 }).outcome, 'victory')
   assert.equal(bossPhase(r, foe.hp), 1); assert.equal(bossPhase(down, foe.hp), 2)
 })
 
-test('mirror trickster: right answers hit +40%, wrong answers deal nothing and heal it (double below half)', () => {
+test('mirror trickster: right answers hit +40%; a wrong answer costs one heart and never heals it', () => {
   const foe = enemyStats(ENEMIES, 4, last), full = bossRun(4), plain = bossRun(2)   // the wraith is a plain boss with the same stats basis
   const hit = ask({ ...full, enemyHp: foe.hp }), base = ask({ ...plain, enemyHp: enemyStats(ENEMIES, 2, last).hp })
   assert.equal(hit.damage, Math.round(base.damage * TRICKSTER_HIT))
-  const hurt = { ...full, enemyHp: Math.round(foe.hp * 0.8) }
+  const hurt = { ...full, enemyHp: Math.round(foe.hp * 0.3) }
   const miss = ask(hurt, { isCorrect: false })
-  assert.equal(miss.damage, 0); assert.equal(miss.bossHealed, Math.round(foe.hp * TRICKSTER_HEAL)); assert.equal(miss.run.enemyHp, hurt.enemyHp + miss.bossHealed)
-  const low = { ...full, enemyHp: Math.round(foe.hp * 0.3) }, missLow = ask(low, { isCorrect: false })
-  assert.equal(missLow.bossHealed, Math.round(foe.hp * TRICKSTER_HEAL_LOW)); assert.ok(missLow.bossHealed > miss.bossHealed)
-  assert.equal(ask({ ...full, enemyHp: foe.hp }, { isCorrect: false }).bossHealed, 0, 'cannot heal above full')
-  assert.equal(ask({ ...low, enemyHp: 1 }, { isCorrect: false }).outcome, 'continue', 'a wrong answer never kills it')
-  assert.equal(bossPhase(full, foe.hp), 1); assert.equal(bossPhase(low, foe.hp), 2)
-  assert.ok(ask(bossRun(2)).bossHealed === 0 && ask(bossRun(2), { isCorrect: false }).bossHealed === 0, 'only the trickster heals')
+  assert.equal(miss.damage, 0); assert.equal(miss.run.enemyHp, hurt.enemyHp, 'no healing'); assert.equal(miss.heartsLost, 1)
+  assert.equal(ask({ ...hurt, enemyHp: 1 }, { isCorrect: false }).outcome, 'continue', 'a wrong answer never kills it')
+  const practice = ask(hurt, { isCorrect: false, practice: true })
+  assert.equal(practice.heartsLost, 0); assert.equal(practice.run.enemyHp, hurt.enemyHp, 'protected practice: no extra boss penalty either')
+})
+
+test('every boss mistake costs at most one heart, before protection', () => {
+  for (const floor of [1, 2, 3, 4, 5, 8]) for (const shield of [0, 2]) {
+    const r = bossRun(floor, { shield: hasShield(bossIdFor(floor)) ? shield : 0 })
+    assert.equal(ask(r, { isCorrect: false }).heartsLost, 1, `floor ${floor}`)
+    assert.equal(ask(r, { isCorrect: false, practice: true }).heartsLost, 0)
+    assert.equal(ask(r).heartsLost, 0)
+  }
 })
 
 test('every boss has info text, an item to drop and a sprite name', () => {
   for (const id of BOSS_ORDER) {
-    assert.ok(BOSS_INFO[id].rule.length > 20 && BOSS_INFO[id].phases.length === 2, id)
+    assert.ok(BOSS_INFO[id].rule.length > 20 && BOSS_INFO[id].phases.length >= 1, id)
+    assert.ok(!/heal|regrow|grow back|max HP|armor/i.test(BOSS_INFO[id].rule + BOSS_INFO[id].phases.join(' ') + BOSS_INFO[id].reward), `${id}: no obsolete HP / healing text`)
     assert.equal(BOSSES[id].sprite, id)
     assert.equal(GEAR.filter(g => g.boss === id).length, 1, `${id} drops exactly one item`)
   }
