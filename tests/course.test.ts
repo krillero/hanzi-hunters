@@ -10,6 +10,8 @@ import {
 import { updateMastery } from '../src/game/mastery.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import type { Mastery } from '../src/game/types.ts'
+/** Answers in these tests all happen on one day (time-gated mastery levels are tested in mastery.test.ts). */
+const D = '2026-11-01'
 
 const lcg = (seed: number) => { let s = seed; return () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296) }
 const lv = (n: number, ok = 0) => ({ lv: n, ok })
@@ -32,12 +34,12 @@ function play(c: Curriculum, words: Word[], seed: number, fights = 120, acc = 0.
   let m: Mastery = {}, p = emptyCourse()
   const order: string[] = []
   for (let f = 0; f < fights; f++) {
-    for (const id of selectIntroductions({ curriculum: c, mastery: m, progress: p, words: byId }).ids) { order.push(id); m = updateMastery(m, id, true) }
+    for (const id of selectIntroductions({ curriculum: c, mastery: m, progress: p, words: byId }).ids) { order.push(id); m = updateMastery(m, id, true, D) }
     for (let q = 0; q < 4; q++) {
       const w = selectReview(words, m, { rng })
       assert.ok(w, 'something is always reviewable after the first introductions')
       assert.ok(m[w!.id], 'review never returns an unseen entry')
-      m = updateMastery(m, w!.id, rng() < acc); p = syncCourse(c, m, p, byId)
+      m = updateMastery(m, w!.id, rng() < acc, D); p = syncCourse(c, m, p, byId)
     }
   }
   return { order, mastery: m, progress: p }
@@ -63,8 +65,8 @@ test('reordering words.json has no effect on the teaching order', () => {
   for (let f = 0; f < 150; f++) {
     const plans = [WORDS, reversed, shuffled].map(ws => selectIntroductions(state(ACTIVE_CURRICULUM, m, p, ws)))
     assert.deepEqual(plans[1], plans[0]); assert.deepEqual(plans[2], plans[0]); checked++
-    for (const id of plans[0].ids) m = updateMastery(m, id, true)
-    for (let q = 0; q < 4; q++) { const w = selectReview(WORDS, m, { rng })!; m = updateMastery(m, w.id, rng() < 0.8); p = syncCourse(ACTIVE_CURRICULUM, m, p, byId) }
+    for (const id of plans[0].ids) m = updateMastery(m, id, true, D)
+    for (let q = 0; q < 4; q++) { const w = selectReview(WORDS, m, { rng })!; m = updateMastery(m, w.id, rng() < 0.8, D); p = syncCourse(ACTIVE_CURRICULUM, m, p, byId) }
   }
   assert.ok(Object.keys(m).length >= Math.min(20, stepsOf(ACTIVE_CURRICULUM).length) && checked === 150)
   // and playing with a reordered file still follows the declared order
@@ -142,8 +144,8 @@ test('no relocking: once a lesson is completed, later mistakes send entries to r
   const ready: Mastery = { 人: lv(1), 大: lv(1) }
   const p = syncCourse(c, ready, emptyCourse())
   assert.deepEqual(p.completed, ['a'])
-  let m = updateMastery(ready, '人', false); m = updateMastery(m, '大', false)
-  assert.deepEqual(m, { 人: lv(0), 大: lv(0) })
+  let m = updateMastery(ready, '人', false, D); m = updateMastery(m, '大', false, D)
+  assert.deepEqual([m['人'].lv, m['大'].lv], [0, 0])
   const earned = recordPeaks({}, ready)   // readiness history: 人 and 大 reached level 1 before the mistakes
   assert.deepEqual(syncCourse(c, m, p, undefined, earned).completed, ['a'], 'completion is never removed')
   assert.equal(lessonSatisfied(state(c, m, p, WORDS, earned), 'a'), true)

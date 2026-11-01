@@ -34,7 +34,13 @@ function validUpgrades(raw: unknown): string[] {
   return out
 }
 
-const cleanEntry = (e: unknown) => (isObj(e) ? { lv: int(e.lv, 0, MAX_LV, 0), ok: int(e.ok, 0, 1, 0) } : null)
+// An entry from before time-gated levels (no `at`) keeps its level (at most 4, the old maximum) and is due at once, so levels 2-4
+// are re-checked by their next right answer instead of being wiped. Only an entry with a date can be at level 5.
+const cleanEntry = (e: unknown) => {
+  if (!isObj(e)) return null
+  const at = typeof e.at === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.at) ? e.at : undefined
+  return { lv: int(e.lv, 0, at ? MAX_LV : MAX_LV - 1, 0), ok: int(e.ok, 0, 1, 0), ...(at ? { at } : {}) }
+}
 const better = (a: { lv: number; ok: number }, b: { lv: number; ok: number }) => (b.lv > a.lv || (b.lv === a.lv && b.ok > a.ok) ? b : a)
 
 /**
@@ -117,6 +123,8 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
     enemyHp: phase === 'victory' ? 0 : int(raw.enemyHp, 1, foeHp, foeHp),
     hintsLeft: int(raw.hintsLeft, 0, stats.hints, stats.hints),
     secondLeft: int(raw.secondLeft, 0, stats.secondChances, 0), calm: int(raw.calm, 0, 1, 0), sigil,
+    omen: isObj(raw.omen) && (raw.omen.kind === 'blessing' || raw.omen.kind === 'shaken') && int(raw.omen.floor, 1, EXPEDITION_FLOORS, 0) >= floor ? { kind: raw.omen.kind, floor: int(raw.omen.floor, 1, EXPEDITION_FLOORS, 0) } : undefined,
+    hintDebt: int(raw.hintDebt, 0, 9, 0),
     reward: { xp: int(rw.xp, 0, 1e9, 0), gold: int(rw.gold, 0, 1e9, 0), loot: typeof rw.loot === 'string' && GEAR.some(g => g.name === rw.loot) ? rw.loot : '', levelUps: int(rw.levelUps, 0, 999, 0), hearts: int(rw.hearts, 0, 99, 0) }
   }
   return run

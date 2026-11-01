@@ -1,5 +1,7 @@
 import { useEffect, useRef, type KeyboardEvent } from 'react'
 import { BLANK, filledNote, type Trial, type TrialState } from './game/trials'
+import { blankedPinyin } from './game/trialgen'
+import { pinyinFor, type LevelOf } from './game/support'
 
 /** Per-boss framing. The texts never hint at the answer; they say what is at stake. */
 const FRAME = {
@@ -45,7 +47,8 @@ const WARDEN = [
 ] as const
 
 /** A boss trial: one choice inside the boss fight. It cannot be skipped and answering is final. `onExit`: preview links only. */
-export default function TrialScreen({ trial, state, onAnswer, onClose, onExit, warden = false }: { trial: Trial; state: TrialState; onAnswer: (option: string) => void; onClose: () => void; onExit?: () => void; warden?: boolean }) {
+/** `level`: the player's word levels: pinyin shows while a word is at most Familiar; English only after answering (game/support.ts). */
+export default function TrialScreen({ trial, state, level, onAnswer, onClose, onExit, warden = false }: { trial: Trial; state: TrialState; level: LevelOf; onAnswer: (option: string) => void; onClose: () => void; onExit?: () => void; warden?: boolean }) {
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => { box.current?.focus() }, [])
   const frame = warden ? WARDEN[trial.boss === 'golem' ? 0 : 1] : FRAME[trial.boss]
@@ -65,7 +68,7 @@ export default function TrialScreen({ trial, state, onAnswer, onClose, onExit, w
   const label = (key: string) => {
     if (trial.boss !== 'wraith' && trial.boss !== 'trickster') return <>{key}</>
     const o = trial.options.find(x => x.zh === key)!
-    return <span className="trial-reply"><b lang="zh">{o.zh}</b><small>{o.py}</small>{answered && <small>{o.en}</small>}</span>
+    return <span className="trial-reply"><b lang="zh">{o.zh}</b>{(answered || pinyinFor(o.zh, trial.requires, level)) && <small>{o.py}</small>}{answered && <small>{o.en}</small>}</span>
   }
   return <div className="modal-backdrop encounter-backdrop"><div ref={box} tabIndex={-1} className={`modal encounter trial ${trial.boss === 'scribe' ? 'scribe-note' : ''}`} role="dialog" aria-modal="true" aria-labelledby="trial-title" onKeyDown={onKey}>
     <div className="modal-head"><h2 id="trial-title">{frame.title}{warden && steps > 1 ? ` · ${state.step ?? 1}/${steps}` : ''}</h2></div>
@@ -75,8 +78,8 @@ export default function TrialScreen({ trial, state, onAnswer, onClose, onExit, w
       {trial.boss === 'trickster'
         ? <div className="enc-request trial-carving"><p className="trial-picture" role="img" aria-label={trial.en}>{trial.picture}</p>{answered && <p>{trial.en}</p>}</div>
         : trial.boss === 'scribe'
-        ? <div className="enc-request trial-carving"><p lang="zh">{answered ? filledNote(trial) : trial.zh.split(BLANK).flatMap((part, i) => i ? [<span key={i} className="trial-blank" aria-label="missing character">？</span>, part] : [part])}</p>{answered && <p>{trial.py}</p>}<p>{trial.en}</p></div>
-        : <div className="enc-request trial-carving"><p lang="zh">{trial.zh}</p>{trial.boss === 'wraith' && <p>{trial.py}</p>}{answered && <p>{trial.en}</p>}</div>}
+        ? <div className="enc-request trial-carving"><p lang="zh">{answered ? filledNote(trial) : trial.zh.split(BLANK).flatMap((part, i) => i ? [<span key={i} className="trial-blank" aria-label="missing character">？</span>, part] : [part])}</p>{answered ? <p>{trial.py}</p> : pinyinFor(filledNote(trial), trial.requires, level) && blankedPinyin(trial.zh, trial.py) && <p>{blankedPinyin(trial.zh, trial.py)}</p>}{answered && <p>{trial.en}</p>}</div>
+        : <div className="enc-request trial-carving"><p lang="zh">{trial.zh}</p>{trial.boss === 'wraith' && (answered || pinyinFor(trial.zh, trial.requires, level)) && <p>{trial.py}</p>}{answered && <p>{trial.en}</p>}</div>}
       {!answered && <p className="trial-stakes">{frame.stakes}</p>}
       <div className="trial-options">{state.order.map(o => {
         const mark = !answered ? '' : o === trial.answer ? 'answer-correct' : o === state.chosen ? 'trial-wrong' : ''

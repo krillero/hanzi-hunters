@@ -1,4 +1,8 @@
-export type MasteryEntry = { lv: number; ok: number }
+/**
+ * lv 0-5 (see game/mastery.ts), ok = right answers in a row toward the next session level, at = local date (YYYY-MM-DD) of the
+ * last level change: time-gated levels wait from it. Entries saved before time-gated levels have no `at` and count as due.
+ */
+export type MasteryEntry = { lv: number; ok: number; at?: string }
 /** Per-word mastery keyed by hanzi. A word with no entry has never been shown. */
 export type Mastery = Record<string, MasteryEntry>
 
@@ -19,6 +23,10 @@ export type Run = {
   calm?: number
   /** Warden Sigil level for this expedition (depths cleared when it started; see rules.sigilBonus). Old saves: 0. */
   sigil?: number
+  /** An event's result for one floor: Blessing (next mistake costs no heart) or Shaken (next mistake cannot be saved). Used once. */
+  omen?: { kind: 'blessing' | 'shaken'; floor: number }
+  /** Hints spent on event help between fights, taken from the next fight's hints. */
+  hintDebt?: number
   /** The expedition's depth (1..MAX_DEPTH): harder question mix, more gold, tougher final boss. */
   depth: number
   floor: number; kill: number; kills: number

@@ -26,8 +26,8 @@ npm run dev                # preview (see "Previewing" below)
 ### Previewing
 
 * `/?word=<id or hanzi>` forces that entry as the first question (it is introduced as a new word). Add `&kind=<kind>` to force a question type (and to skip the intro, asking it as if you already knew the entry)
-* `/?encounter=<scene id>` (for example `hello`, `sorry`, `tea`) opens that contextual encounter directly (no run or prerequisites needed, nothing is saved). Scenes live in `src/content/encounters.json`; the format is in `docs/CONTEXTUAL_ENCOUNTERS.md`.
-* `/?trial=<id>` (for example `hello`, `friend`, `wraith-who`, `scribe-friend`, `trickster-her`, or `warden` for a sample two-step Cavern Warden gauntlet) opens a boss trial from `src/content/trials.json` the same way. Add `&stage=1` or `&stage=2` to see the reduced-support versions (default `0`: pinyin, English and grammar note).
+* `/?encounter=<scene id>` (for example `hello`, `sorry`, `tea`) opens that contextual encounter directly (no run or prerequisites needed, nothing is saved). Add `&level=3` to see it as with Remembered words (characters only; default `2`, Familiar: with pinyin). `&level=` works for `/?trial=` too. Scenes live in `src/content/encounters.json`; the format is in `docs/CONTEXTUAL_ENCOUNTERS.md`.
+* `/?trial=<id>` (for example `hello`, `friend`, `wraith-who`, `scribe-friend`, `trickster-her`, or `warden` for a sample two-step Cavern Warden gauntlet) opens a boss trial from `src/content/trials.json` the same way.
   (`meaning`, `pinyin`, `character`, `listen`, `meaning2pinyin`, `pinyin2char`, `listen2meaning`, `listen2pinyin`, `homophone`, `lookalike`, `particle`);
   the game falls back to a fair question if that kind is not possible for the entry.
 * `/?first=朋友,看-look` introduces these entries (ids or hanzi) before the curriculum, so new content can be played without working up to it (preview only; ordinary play never introduces entries outside the curriculum).

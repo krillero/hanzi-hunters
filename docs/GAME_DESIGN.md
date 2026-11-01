@@ -5,7 +5,7 @@
 2. Each floor has **4 fights; the 4th is a boss**. Floors 1–4: Shield Golem, Echo Wraith, Ink Scribe, Mirror Trickster. Floor 5: the final boss, the **Cavern Warden**. Beating it **wins the expedition**.
 3. Per floor (compounding): enemy HP ×1.16 (`TUNING.enemyHpGrowth`, about what the player gains in attack from levels, so fights keep a similar bounded length), XP/gold +8 %. XP from answers is banked during a fight and paid out on the kill (`Run.pendingXp`).
 4. An expedition ends **won**, **lost** (0 hearts) or **returned** (*Return to camp* in Settings). All gold earned is banked every time. Level, gear and potions are lost. **Upgrades and word mastery stay.** Perfect answers always win.
-5. At **camp** you see the result ("You beat the Cavern Warden!" / "You fell on floor 3" / "You returned from floor 2") and your current lesson, spend gold on upgrades, then start a new expedition. Stats (incl. expeditions won), milestones, backups and reset are in **Settings** (⚙).
+5. At **camp** you see the result ("You beat the Cavern Warden!" / "You fell on floor 3" / "You returned from floor 2") and your current lesson, spend gold on upgrades, then start a new expedition. Stats (incl. expeditions won), backups and reset are in **Settings** (⚙). Camp also shows how many words are ready for review today.
 6. **Depths** (see below): winning an expedition unlocks the next depth (5 in total); camp has a depth picker and cleared depths can be replayed.
 
 ## Depths (`DEPTHS`, `challengeFor` in `src/game/rules.ts`)
@@ -28,13 +28,44 @@ The player's health is a row of whole **hearts** (`Run.hearts`, the only player-
 * **Correct answer:** attacks the enemy (attack, combo, execute and mastery bonuses as before). It never costs a heart; there is no counterattack.
 * **Wrong answer:** deals no damage and costs **exactly one heart**, on every floor and against every boss, unless it is protected:
   1. **Practice:** the first non-intro question about a newly introduced entry is protected ("Practice · no heart lost" shows before you answer). It is used up by that first answer, right or wrong, and stored per entry in `Saved.practiced`, so reloading, dying or a new run never resets it. The intro question itself (meaning on screen) does not use it. A protected mistake is still a mistake: correction feedback, mastery and combo treat it as wrong, and it uses no second chance.
-  2. **Calm:** otherwise the charge from a right answer to the Echo Wraith's or Mirror Trickster's trial (`Run.calm`, 0 or 1, kept until used this expedition; 👻 next to the hearts) saves it ("Calmed Wraith · heart saved").
-  3. **Second chance:** otherwise a second-chance charge, if one is left, saves the heart ("Second chance · heart saved"). The charges are **one pool per expedition**, set when it starts (Iron Will, Second Chance, Sage: +1 each, capped at `SECOND_CHANCE_CAP` 3) and **never refilled** during it (not per floor, enemy, reload or gear swap). Still wrong for learning and combo.
+  2. **Blessing / Shaken** (an event's omen for this floor, once, `Run.omen`): a Blessing saves the heart; Shaken makes the mistake cost **2 hearts** whatever else would have saved it (practice still protects; never more hearts than are left).
+  3. **Calm:** otherwise the charge from a right answer to the Echo Wraith's or Mirror Trickster's trial (`Run.calm`, 0 or 1, kept until used this expedition; 👻 next to the hearts) saves it ("Calmed Wraith · heart saved").
+  4. **Second chance:** otherwise a second-chance charge, if one is left, saves the heart ("Second chance · heart saved"). The charges are **one pool per expedition**, set when it starts (Iron Will, Second Chance, Sage: +1 each, capped at `SECOND_CHANCE_CAP` 3) and **never refilled** during it (not per floor, enemy, reload or gear swap). Still wrong for learning and combo.
 * **Recovery:** there is **no floor recovery without upgrades**. With **Second Wind** (G4) clearing floors 1–4 restores 1 heart, capped, exactly once per floor (`Run.recoveredFloor`), shown in the floor summary. A potion restores 1 heart (+1 with Titan Heart); it is not used up at full hearts. Nothing else heals: no healing on kills, no healing or maximum-heart growth from levels (levels add attack only).
 * **Maximum hearts:** 5 + upgrades + worn gear, capped at **8** (`MAX_HEARTS`). Raising the maximum mid-run (gear) adds an empty heart; lowering it clamps the current hearts. New runs start full at their final maximum (starting gear included).
 
-## Word mastery (per entry, saved)
-Each word has a level 0-4 (4 = mastered). **Every question kind counts the same**: 2 correct in a row promote, a miss demotes one level.
+## Word mastery (per entry, saved; `src/game/mastery.ts`)
+Each word has a level 0-5. Levels 0-2 are learned within a session; levels 3-5 need **time** (spaced repetition):
+
+| Level | Name | Reached by |
+|---|---|---|
+| 0 | New | introduced |
+| 1 | Learning | 2 right answers in a row |
+| 2 | Familiar | 2 more right in a row (same session is fine) |
+| 3 | Remembered | 1 right answer at least **1 day** after reaching Familiar |
+| 4 | Retained | 1 right answer at least **3 days** after Remembered |
+| 5 | Mastered | 1 right answer at least **7 days** after Retained |
+
+* Days are **local calendar days** (`MasteryEntry.at` = date of the last level change; `RETENTION_DAYS`).
+* A right answer before the word is due counts as practice (damage, streak) but does not promote it; the feedback says when the
+  next check is ("Familiar — next level after a check tomorrow"). A long gap still promotes **one** level only.
+* **A miss drops one level** (also from Mastered) and restarts that level's wait.
+* **Every question kind counts the same.**
+* **Reviews:** a due word is picked far more often (`DUE_WEIGHT` 6) so a session starts by checking yesterday's words, but at most
+  **2 due words per fight** (`DUE_PER_FIGHT`), so new and still-learning words keep their slots. Words still being learned (0-1) weigh
+  3, Familiar and waiting words 0.8 (repeating them cannot promote them today), mastered words 0.4.
+* **New words** come in under the same rules as before (curriculum order, at most 4 at level 0, pool cap). Simulator, words introduced
+  after 10 / 20 / 40 expeditions, old rules → spaced levels: 0.75 accuracy 27 / 40 / 62 → 29 / 40 / 54; 0.85 38 / 56 / 84 →
+  40 / 59 / 84; 0.90 40 / 65 / 95 → 40 / 61 / 89. (Waiting words at weight 1 without the cap gave 0.85 only 75 after 40; at 0.6,
+  95, but 0.75 players then clear depths about 2 expeditions later.)
+* **Camp** shows "📖 N words ready for review today ›" (or when the next review is); tapping it opens the wordbook. The wordbook
+  (also in ⚙ at camp and during runs) lists due words first, marked "review", then the rest by level.
+* **Old saves:** entries from before time-gated levels have no date: they keep their level (at most 4, the old maximum) and are due
+  at once, so levels 2-4 are re-checked by their next right answer (an old "mastered" word needs one more right answer).
+* Simulator: two expeditions per calendar day (`SIM_RUNS_PER_DAY`). 20 seeds, old → new rules: wins 0.60 5.3 → 4.5 %,
+  0.75 68.8 → 65.9 %, 0.85 96.6 → 96.5 %, 0.90 99.5 → 99.4 %; depth-clear medians unchanged; hearts lost/run +0.2 at 0.60/0.75.
+  Words mastered after 40 expeditions (20 days): 0.75 41 → 2, 0.85 69 → 23, 0.90 80 → 37 (mastery now means retention).
+
 A new word is first shown on its own introduction card (word, pinyin, meaning, note, up to two examples, a speaker button) with a "Got it" button. There is no question and no pressure; the word only starts appearing in questions after "Got it". Cards appear at the start of a fight, never in the middle of one.
 
 The level decides which kinds can be asked (weights in `KIND_WEIGHTS`, `src/game/questions.ts`):
@@ -44,11 +75,11 @@ The level decides which kinds can be asked (weights in `KIND_WEIGHTS`, `src/game
 | 0 early | **first question: char→meaning only** (character and pinyin on screen); after one correct answer also audio→char and meaning→char |
 | 1 developing | char→pinyin, pinyin→char, meaning→char, audio→meaning, homophone, look-alike |
 | 2 | char→meaning (char only), meaning→pinyin, audio→pinyin, pinyin→char, look-alike, homophone, + meaning→char, audio→meaning, audio→char |
-| 3-4 higher | mixed: meaning→char, audio→char, pinyin→char, audio→pinyin, audio→meaning, meaning→pinyin, look-alike, homophone, + char→pinyin, char→meaning |
+| 3-5 higher | mixed: meaning→char, audio→char, pinyin→char, audio→pinyin, audio→meaning, meaning→pinyin, look-alike, homophone, + char→pinyin, char→meaning |
 
 Which kind a word gets is a weighted draw: the level table, filtered by what is *fair* for that word, x 0.15 if it was the previous kind,
 x 0.5 if it was one of the last two, x (1 + 2 x miss rate) for kinds missed in this session (weak areas). Audio kinds need a Mandarin voice.
-Not yet: spaced review by time, per-kind history across sessions, sentence/context questions (see the roadmap discussion).
+Not yet: per-kind history across sessions, sentence/context questions (see the roadmap discussion).
 
 **Difficulty of the wrong answers** follows the level: level 0 (and the intro) = clearly different words (other families first, look-alike characters last, so 四 is never offered next to 五 六 九); level 1 = mixed; level 2+ = same family first (the hard version). A word that drops back to level 0 starts again with the easy first step.
 
@@ -57,11 +88,13 @@ Not yet: spaced review by time, per-kind history across sessions, sentence/conte
 - **Homophones** (same pinyin, e.g. 木/目 mù, 他/她 tā, 十/石 shí): sound-only kinds (audio→char, pinyin→char, audio→meaning) are not asked for a word whose homophone the learner already knows; the homophone question (pinyin + meaning → character, both homophones offered) is used instead. If the partner is unknown it is never offered as an option.
 - **Look-alikes** come from the `lookalike` field in `words.json`; they are only used once the partner has been met.
 - Tone-change readings (`alt`, e.g. 不 bú, 一 yí/yì) are never offered as wrong pinyin.
-- 2 correct answers in a row promote a word; a miss drops it one level. Level 4 = mastered (asked rarely).
-- Harder levels deal bonus damage (+0/10/25/40 %).
+- Session levels: 2 correct answers in a row promote; levels 3-5 need 1/3/7 days (above); a miss drops one level. Level 5 = mastered (asked rarely).
+- Harder levels deal bonus damage (+0/10/25/40 %, the full bonus from Remembered on).
 - New entries come in curriculum order (see below); no new entry is introduced while 4 entries are still at level 0, and entries met may exceed entries at level 1+ by at most 6.
 
 ## Flow after an answer
+A wrong answer's recap does not repeat the right answer (the card above shows it). It shows **what you chose** in its own red box, sized by length (one character big; words, pinyin, phrases and sentences smaller and wrapped), with the pinyin and meaning when it is a word you know, so the mix-up itself is taught.
+
 Right answer: the card reveals the word in place and the game continues by itself (Quick 1 s / Relaxed 2.5 s / Off in settings); after a normal kill the next monster follows ~1.5 s later. Always paused: wrong answer, defeat, floor cleared (elite). Rewards are shown in the scene and counters, loot sets a NEW dot on Gear. Sound off = no audio and no listening questions.
 
 ## Upgrade tree (permanent; 4 branches × 5 tiers, bought in order)
@@ -127,7 +160,7 @@ on: 0.75 accuracy wins 64.4 % → 68.8 %, depth 3/4 cleared after 11/12 → 10/1
 ## Save format v1 (key `hanzi-hunters-save`)
 Saves were **restarted at v1 with expeditions** (2026-11-01): the earlier keys (`hanzi-hunters-save-v1`, `hanzi-hunters-save-v2`) are deleted on start (`clearOldSaves`) and never read, and backups from before are rejected. There are no migrations from earlier formats.
 
-`{ version: 1, meta{gold,upgrades,bestFloor,runs,wins,depthCleared}, mastery{entryId:{lv,ok}}, legacyMastery{id:{lv,ok}}, run|null, lastRun{floor,kills,level,goldBanked,bonus,result,depth,unlocked}|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges}, courses{curriculumId:{version,completed[lessonId]}}, peak{entryId:highestLevel}, legacyPeak{id:level}, practiced[entryId] }`. `run` holds `depth` (1–5), `floor` (1–5), `hearts`, `secondLeft` (the expedition's pool), `recoveredFloor`, `shield` and `reward.hearts`; `lastRun.result` is `won` / `defeat` / `returned`. Every field is validated on load (`src/game/save.ts`); a save with another `version` loads as a fresh save. A mid-run reload resumes the expedition.
+`{ version: 1, meta{gold,upgrades,bestFloor,runs,wins,depthCleared}, mastery{entryId:{lv,ok,at?}}, legacyMastery{id:{lv,ok}}, run|null, lastRun{floor,kills,level,goldBanked,bonus,result,depth,unlocked}|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges}, courses{curriculumId:{version,completed[lessonId]}}, peak{entryId:highestLevel}, legacyPeak{id:level}, practiced[entryId] }`. `run` holds `depth` (1–5), `floor` (1–5), `hearts`, `secondLeft` (the expedition's pool), `recoveredFloor`, `shield` and `reward.hearts`; `lastRun.result` is `won` / `defeat` / `returned`. Every field is validated on load (`src/game/save.ts`); a save with another `version` loads as a fresh save. A mid-run reload resumes the expedition.
 
 Optional additive fields (old saves load without them): `run.encounter`, `run.trial` (`{id, floor, order, status, chosen?, data?}`; `data` holds a generated trial and is re-validated on load), `run.calm`, `encounterHistory`, and `recentEvents` (the last 12 scenes/trials shown, `scene:<id>` / `trial:<id>`). See `docs/CONTEXTUAL_ENCOUNTERS.md`.
 
@@ -138,10 +171,10 @@ Optional additive fields (old saves load without them): `run.encounter`, `run.tr
 * **Particle (sentence) questions** (`particle` kind) come from authored, reviewed `cloze.json` items; the answer entry's progress is updated; every wrong option has an authored reason shown after a miss.
 * Provenance: `source` (names from `sources.json`) and `review` (`ai-draft` / `imported` / `human-reviewed`) on entries, examples, explanations and sentence questions; credits appear under Settings and in the details popup.
 
-## Days played and badges (`src/game/habit.ts`)
+## Days played (`src/game/habit.ts`)
 * The daily warm-up was removed (PR #29); `habit.warmupDay` stays in saves, unused.
 * Days played: +1 the first time you answer on a new local day; never decreases.
-* Badges: 10 milestones in `BADGES`; checked after every battle answer, stored in `habit.badges`, listed in Settings.
+* Milestone badges were removed (they were noise); `habit.badges` stays in saves, unused, so older saves round-trip unchanged.
 
 ## Bosses (`src/game/rules.ts`, `src/data.ts`)
 * **Every floor ends with a boss** (the 4th fight): **Shield Golem** (floor 1), **Echo Wraith** (2), **Ink Scribe** (3), **Mirror Trickster** (4) (`BOSS_ORDER`), and the final boss **Cavern Warden** (floor 5, `FINAL_BOSS`). To add a boss: a sprite, an entry in `BOSSES` / `BOSS_INFO` (`data.ts`), its place in `bossIdFor`, and its rule in `resolveAnswer` / `makeCard`.

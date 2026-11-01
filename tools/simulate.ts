@@ -3,10 +3,11 @@
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS } from '../src/data.ts'
 import { closeTrial, offerTrial, optionKeys, resolveTrial, trialFor, trialKey } from '../src/game/trials.ts'
 import { noteRecent } from '../src/game/recent.ts'
-import { MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
+import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
-import { updateMastery } from '../src/game/mastery.ts'
-import { emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
+import { MAX_LV, isDue, updateMastery } from '../src/game/mastery.ts'
+import { SCENES, eligible } from '../src/game/encounters.ts'
+import { DUE_PER_FIGHT, emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
 
 /** Safety stop only: an expedition is bounded (5 floors of bounded fights) and never gets near this. */
@@ -25,16 +26,28 @@ export type RunLog = {
   heartsLost: number; practiceSaves: number; secondChanceSaves: number; heartsRestored: number; potionsUsed: number
   /** Boss trials taken / answered right, and wrong answers saved by the calmed Wraith. */
   trials: number; trialsRight: number; calmSaves: number
+  /** Events played after floor bosses. */
+  events: number
   /** Hearts at the start of the run, hearts left at the end, and hearts each potion restored. */
   startHearts: number; endHearts: number; potionHearts: number
 }
 
 export type SimOptions = {
+  /** Expeditions played per calendar day (time-gated mastery levels need real days). Default SIM_RUNS_PER_DAY. */
+  runsPerDay?: number
+  /** Model the events after floor bosses (Blessing / Shaken for the next floor). Default true. */
+  events?: boolean
   /** Start with every upgrade bought (an "upgraded" player) instead of buying greedily after each run. */
   maxed?: boolean
 }
 
+/** Model assumption: a player plays about two expeditions a day (each about 6-8 minutes). */
+export const SIM_RUNS_PER_DAY = 2
+/** The simulated calendar: expedition n (1-based) is played on this local date. */
+export const simDay = (n: number, perDay = SIM_RUNS_PER_DAY) => new Date(Date.UTC(2026, 0, 1) + Math.floor((n - 1) / perDay) * 86_400_000).toISOString().slice(0, 10)
+
 export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: SimOptions = {}): RunLog[] {
+  let today = simDay(1, opts.runsPerDay)
   let s = seed
   const rng = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296)
   let meta: Meta = { gold: 0, upgrades: opts.maxed ? UPGRADES.map(u => u.id) : [], bestFloor: 1, runs: 0, wins: 0, depthCleared: 0 }
@@ -47,22 +60,33 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   // Like the game: introduction cards (curriculum order) at the start of each fight, then questions about known entries only.
   // The intro question shows the meaning, so it is always answered right; the next question about the word is its protected practice.
   const introduce = () => {
-    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) mastery = updateMastery(mastery, id, true)
+    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) mastery = updateMastery(mastery, id, true, today)
   }
-  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng })!
+  let dueThisFight = 0   // like the game: at most DUE_PER_FIGHT due words per fight
+  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, today, dueCapped: dueThisFight >= DUE_PER_FIGHT })!
   const log: RunLog[] = []
   for (let n = 1; n <= runsToPlay; n++) {
+    today = simDay(n, opts.runsPerDay)
     const b = computeBonuses(meta.upgrades)
     introduce()
     // the bot always plays the deepest depth it has unlocked
     let run = newRun(b, GEAR, ENEMIES, unlockedDepth(meta.depthCleared), meta.depthCleared), word = pick(null), answers = 0
     const startHearts = run.hearts, potionHearts = playerStats(run, b, GEAR).potionHearts
-    const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0, trials: 0, trialsRight: 0, calmSaves: 0 }
+    const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0, trials: 0, trialsRight: 0, calmSaves: 0, events: 0 }
     let fightAnswers = 0, longestFight = 0
+    dueThisFight = 0
     while (run.phase !== 'defeat' && !isExpeditionWon(run) && answers < ANSWER_CAP) {
-      if (run.phase === 'victory') { run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; continue }
+      if (run.phase === 'victory') {
+        // An event after a floor boss (floors 1-4) when its words are Familiar: right first time = Blessing, else Shaken, for the
+        // next floor. The bot never buys help; a reply/gather choice is about as hard as a normal question.
+        if (opts.events !== false && run.kill === ENEMIES_PER_FLOOR - 1 && run.floor < EXPEDITION_FLOORS && SCENES.some(sc => eligible(mastery, sc))) {
+          run = { ...run, omen: { kind: rng() < accuracy ? 'blessing' : 'shaken', floor: run.floor + 1 } }; stat.events++
+        }
+        run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; dueThisFight = 0; continue
+      }
       if (run.hearts <= 2) { const p = drinkPotion(run, b, GEAR); if (p) { run = p; stat.potionsUsed++ } }
       const entry = mastery[word.id]
+      if (isDue(entry, today)) dueThisFight++
       const practice = !practiced.has(word.id)
       // Accuracy rises a little as a word is learned; boss questions are a little harder:
       // tone questions (Golem shield), character questions (Scribe seals), look-alikes (Trickster).
@@ -91,7 +115,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
           if (run.trial?.status === 'pending') recent = noteRecent(recent, trialKey(run.trial.id))
         }
       }
-      mastery = updateMastery(mastery, word.id, ok); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
+      mastery = updateMastery(mastery, word.id, ok, today); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
     }
     const end: RunLog['end'] = isExpeditionWon(run) ? 'won' : run.phase === 'defeat' ? 'defeat' : 'returned'
     const banked = bankRun(meta, run, end); meta = banked.meta
@@ -101,7 +125,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       if (!next) break
       meta = buyUpgrade(meta, next.id)!
     }
-    log.push({ run: n, depth: run.depth, depthCleared: meta.depthCleared, floor: run.floor, gold: banked.summary.goldBanked, mastered: Object.values(mastery).filter(e => e.lv >= 4).length, upgrades: meta.upgrades.length, answers, end, longestFight, ...stat, startHearts, endHearts: run.hearts, potionHearts })
+    log.push({ run: n, depth: run.depth, depthCleared: meta.depthCleared, floor: run.floor, gold: banked.summary.goldBanked, mastered: Object.values(mastery).filter(e => e.lv >= MAX_LV).length, upgrades: meta.upgrades.length, answers, end, longestFight, ...stat, startHearts, endHearts: run.hearts, potionHearts })
   }
   return log
 }

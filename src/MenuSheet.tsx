@@ -3,15 +3,15 @@ import AppData from './AppData'
 import { WORDS } from './data'
 import { CLOZE, EXPLANATIONS, SOURCES } from './content'
 import { reviewCounts, usedSources } from './content/provenance'
-import { BADGES } from './game/habit'
 import type { AutoContinue } from './game/flow'
 import type { Settings } from './settings'
 
 type Props = {
   settings: Settings; onChange: (s: Settings) => void; hasVoice: boolean
   fullscreen: { supported: boolean; on: boolean; toggle: () => void }
-  tools?: { potions: number; words: number; onGear: () => void; onWords: () => void; onReturn?: () => void }
-  progress: { wins: number; bestFloor: number; runs: number; known: number; mastered: number; badges: string[] }
+  /** Shortcuts: the wordbook always (camp and runs); gear and return to camp during a run only. */
+  tools?: { words: number; onWords: () => void; onGear?: () => void; onReturn?: () => void }
+  progress: { wins: number; bestFloor: number; runs: number; known: number; mastered: number }
   outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void; onReset: () => void; onClose: () => void
 }
 
@@ -19,7 +19,7 @@ const SPEEDS: { id: AutoContinue; label: string; hint: string }[] = [
   { id: 'learning', label: 'Learn first', hint: 'Lv 2 · 0.5 s' }, { id: 'quick', label: 'Quick', hint: '0.5 s' }, { id: 'relaxed', label: 'Relaxed', hint: '2.5 s' }, { id: 'off', label: 'Off', hint: 'tap' }
 ]
 
-/** Settings sheet: your stats and milestones, sound, auto-continue, fullscreen, credits, backups and reset. */
+/** Settings sheet: your stats, sound, auto-continue, fullscreen, credits, backups and reset. */
 export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, progress, outdated, tools, onUpdate, onExport, onImport, onReset, onClose }: Props) {
   const closeRef = useRef<HTMLButtonElement | null>(null)
   useEffect(() => {
@@ -31,15 +31,13 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, pr
   const rc = reviewCounts(WORDS, EXPLANATIONS, CLOZE)
   const sourcesUsed = usedSources(WORDS, EXPLANATIONS, CLOZE)
   const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator
-  const earned = BADGES.filter(b => progress.badges.includes(b.id))
-  const next = BADGES.find(b => !progress.badges.includes(b.id))
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div className="modal menu-sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title" onClick={e => e.stopPropagation()}>
         <div className="modal-head"><div className="ex-titles"><h2 id="menu-title">Settings</h2></div><button className="icon-btn" ref={closeRef} onClick={onClose} aria-label="Close settings">×</button></div>
         <div className="modal-body">
           {tools && <section className="menu-tools">
-            <button className="bar-btn ghost" onClick={tools.onGear}>⚔ Gear</button>
+            {tools.onGear && <button className="bar-btn ghost" onClick={tools.onGear}>⚔ Gear</button>}
             <button className="bar-btn ghost" onClick={tools.onWords}>📚 Wordbook · {tools.words}</button>
             {tools.onReturn && <button className="bar-btn ghost menu-return" onClick={tools.onReturn}>⛺ Return to camp</button>}
           </section>}
@@ -53,11 +51,6 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, pr
               <div><b>{progress.known}</b><small>Words learning</small></div>
               <div className="good"><b>{progress.mastered}</b><small>Mastered</small></div>
             </div>
-          </section>
-          <section>
-            <h3 className="menu-h-row">Milestones <small>{earned.length} of {BADGES.length}</small></h3>
-            {earned.length > 0 && <div className="milestones">{earned.map(b => <span key={b.id} className="milestone">{b.name}</span>)}</div>}
-            <p className="hint-text">{next ? `Next: ${next.name} (${next.desc.charAt(0).toLowerCase()}${next.desc.slice(1)})` : 'All milestones earned.'}</p>
           </section>
           <section>
             <h3>Sound</h3>

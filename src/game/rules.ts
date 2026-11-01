@@ -169,7 +169,8 @@ export function startFight(run: Run, b: Bonuses, enemies: Enemy[], allGear: Gear
   const s = playerStats(run, b, allGear)
   const boss = isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null
   return {
-    ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill, run.depth).hp, hintsLeft: s.hints, secondLeft: Math.min(run.secondLeft, s.secondChances),
+    // A hint spent on an event's help between fights is taken from the next fight (Run.hintDebt).
+    ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill, run.depth).hp, hintsLeft: Math.max(0, s.hints - (run.hintDebt ?? 0)), hintDebt: 0, secondLeft: Math.min(run.secondLeft, s.secondChances),
     reward: noReward, pendingXp: 0,
     shield: boss && hasShield(boss) ? shieldFor(run.floor, boss) : 0
   }
@@ -218,6 +219,8 @@ export type AnswerResult = {
   savedBySecondChance: boolean
   /** A wrong answer whose heart was saved by the calmed Echo Wraith (`Run.calm`, from its trial). */
   savedByCalm: boolean
+  /** An event's Blessing saved this heart / an event's Shaken made this mistake cost 2 hearts, unsavable (`Run.omen`). */
+  savedByBlessing: boolean; shakenHit: boolean
   /** Hearts restored by clearing the floor (Second Wind only); 0 otherwise, when already full, or on the final floor. */
   heartsRestored: number
   outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; comboHit: boolean
@@ -249,14 +252,20 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
 
   // Hearts: only an unprotected wrong answer costs one. Protection order: first practice, then the calmed Wraith's charge
   // (kept until used, this expedition), then a second-chance charge.
-  let heartsLost = 0, practiceSaved = false, savedBySecondChance = false, savedByCalm = false, secondLeft = run.secondLeft, calm = run.calm ?? 0
+  let heartsLost = 0, practiceSaved = false, savedBySecondChance = false, savedByCalm = false, savedByBlessing = false, shakenHit = false
+  let secondLeft = run.secondLeft, calm = run.calm ?? 0, omen = run.omen
+  // An event's omen (Blessing / Shaken) counts only on the floor it was given for, once (see game/encounters.ts).
+  const omenNow = omen && omen.floor === run.floor ? omen.kind : null
   if (!isCorrect) {
     if (i.practice) practiceSaved = true
+    else if (omenNow === 'shaken') { heartsLost = 2; shakenHit = true; omen = undefined }   // 2 hearts; no calm or second chance can save it
+    else if (omenNow === 'blessing') { savedByBlessing = true; omen = undefined }
     else if (calm > 0) { calm -= 1; savedByCalm = true }
     else if (secondLeft > 0) { secondLeft -= 1; savedBySecondChance = true }
     else heartsLost = 1
   }
-  let hearts = Math.max(0, run.hearts - heartsLost)
+  heartsLost = Math.min(heartsLost, run.hearts)   // never more than are left (Shaken costs 2: with 1 heart left it costs 1)
+  let hearts = run.hearts - heartsLost
 
   // Experience is paid only when the monster dies: what each answer earned is banked in `pendingXp` and paid out with the kill.
   const answerXp = Math.round((isCorrect ? 5 : 2) * (1 + b.xpPct + gearSum(gear, 'xpPct')))
@@ -289,7 +298,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   // Levels add attack only: no heart refill, no maximum-heart growth.
   let xp = run.xp + xpGained, level = run.level, levelUps = 0
   while (xp >= xpForLevel(level)) { xp -= xpForLevel(level); level += 1; levelUps += 1 }
-  let next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hearts, secondLeft, calm, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp, shield: shieldBroken ? run.shield - 1 : run.shield }
+  let next: Run = { ...run, level, xp, gear: owned, loadout, enemyHp, hearts, secondLeft, calm, omen, streak: isCorrect ? run.streak + 1 : 0, pendingXp: killed ? 0 : run.pendingXp + answerXp, shield: shieldBroken ? run.shield - 1 : run.shield }
   // Newly worn loot: a higher maximum is not filled, a lower one clamps.
   next = clampToGear(next, b, i.allGear)
   hearts = next.hearts
@@ -304,7 +313,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
 
   const outcome = killed ? 'victory' : hearts <= 0 ? 'defeat' : 'continue'
   return {
-    damage, heartsLost, practiceSaved, savedBySecondChance, savedByCalm, heartsRestored, outcome, loot, comboHit, shieldBroken, shieldBlocked: shieldUp,
+    damage, heartsLost, practiceSaved, savedBySecondChance, savedByCalm, savedByBlessing, shakenHit, heartsRestored, outcome, loot, comboHit, shieldBroken, shieldBlocked: shieldUp,
     run: {
       ...next, hearts, recoveredFloor,
       gold: run.gold + goldGained, kills: run.kills + (killed ? 1 : 0),

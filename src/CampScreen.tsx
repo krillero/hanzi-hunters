@@ -3,11 +3,13 @@ import { BRANCHES, branchNodes, nodeState, upgradeCost, type UpgradeNode } from 
 import type { CourseStatus } from './game/course'
 import type { Saved } from './game/types'
 import { DEPTHS, MAX_DEPTH, sigilText, unlockedDepth, victoryBonus } from './game/rules'
+import { daysUntilDue, dueCount } from './game/mastery'
+import { localDay } from './game/habit'
 
 type Props = {
+  onReview: () => void                // opens the wordbook (due words first)
   save: Saved
   course: CourseStatus
-  runMilestones: string[]            // names of milestones earned during the run that just ended (not persisted)
   onBuy: (id: string) => void
   onStart: (depth: number) => void
   message: string
@@ -15,9 +17,9 @@ type Props = {
 
 /**
  * Base camp between runs: the run result, the course position, upgrades, and one pinned start button.
- * Stats, milestones, backups and reset live in the Settings sheet (MenuSheet), not here.
+ * Stats, backups and reset live in the Settings sheet (MenuSheet), not here.
  */
-export default function CampScreen({ save, course, runMilestones, onBuy, onStart, message }: Props) {
+export default function CampScreen({ save, course, onReview, onBuy, onStart, message }: Props) {
   const { meta, lastRun, mastery } = save
   const [tab, setTab] = useState(BRANCHES[0].id)
   const owned = (branch: string) => branchNodes(branch).filter(n => meta.upgrades.includes(n.id)).length
@@ -31,6 +33,11 @@ export default function CampScreen({ save, course, runMilestones, onBuy, onStart
   const [depth, setDepth] = useState(maxDepth)
   const chosen = Math.min(depth, maxDepth)
   const info = DEPTHS[chosen - 1]
+  // Spaced review: words due for their next step today, or when the next one will be.
+  const today = localDay(), due = dueCount(mastery, today)
+  const waits = Object.values(mastery).map(e => daysUntilDue(e, today)).filter((d): d is number => d !== null && d > 0)
+  const soonest = waits.length ? Math.min(...waits) : null
+  const review = due > 0 ? `${due} word${due === 1 ? '' : 's'} ready for review today` : soonest ? `Next word review ${soonest === 1 ? 'tomorrow' : `in ${soonest} days`}` : null
 
   return (
     <section className="camp" aria-label="Base camp">
@@ -41,7 +48,7 @@ export default function CampScreen({ save, course, runMilestones, onBuy, onStart
           ? <p className="camp-result"><span>{lastRun.kills} slain</span><span>Level {lastRun.level}</span><span className="gain">+{lastRun.goldBanked} gold{lastRun.bonus ? ` (incl. ${lastRun.bonus} victory bonus)` : ''}</span></p>
           : <p className="camp-result">Upgrades and the words you learn stay between runs.</p>}
         {lastRun?.unlocked ? <p className="camp-milestone" role="status"><span aria-hidden="true">★</span> Depth {lastRun.unlocked} unlocked: {DEPTHS[lastRun.unlocked - 1].name}</p> : null}
-        {runMilestones.length > 0 && <p className="camp-milestone" role="status"><span aria-hidden="true">★</span> New milestone: {runMilestones.join(', ')}</p>}
+        {review && <button className={`camp-review ${due > 0 ? 'is-due' : ''}`} onClick={onReview}><span aria-hidden="true">📖</span> {review} <span aria-hidden="true">›</span></button>}
       </div>
 
       <div className="camp-depth">
