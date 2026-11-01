@@ -9,7 +9,8 @@ import type { Settings } from './settings'
 type Props = {
   settings: Settings; onChange: (s: Settings) => void; hasVoice: boolean
   fullscreen: { supported: boolean; on: boolean; toggle: () => void }
-  tools?: { potions: number; words: number; onGear: () => void; onWords: () => void; onReturn?: () => void }
+  /** Shortcuts: the wordbook always (camp and runs); gear and return to camp during a run only. */
+  tools?: { words: number; onWords: () => void; onGear?: () => void; onReturn?: () => void }
   progress: { wins: number; bestFloor: number; runs: number; known: number; mastered: number }
   outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void; onReset: () => void; onClose: () => void
 }
@@ -36,7 +37,7 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, pr
         <div className="modal-head"><div className="ex-titles"><h2 id="menu-title">Settings</h2></div><button className="icon-btn" ref={closeRef} onClick={onClose} aria-label="Close settings">×</button></div>
         <div className="modal-body">
           {tools && <section className="menu-tools">
-            <button className="bar-btn ghost" onClick={tools.onGear}>⚔ Gear</button>
+            {tools.onGear && <button className="bar-btn ghost" onClick={tools.onGear}>⚔ Gear</button>}
             <button className="bar-btn ghost" onClick={tools.onWords}>📚 Wordbook · {tools.words}</button>
             {tools.onReturn && <button className="bar-btn ghost menu-return" onClick={tools.onReturn}>⛺ Return to camp</button>}
           </section>}

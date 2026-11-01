@@ -1652,7 +1652,11 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .camp-depth-top{display:flex;justify-content:space-between;gap:10px;font:11px 'DM Mono',monospace;letter-spacing:1.2px;color:#c9b27a}
 .camp-depth strong{font-size:18px}.camp-depth small{font-size:13px;color:#c9b99a}
 .camp-depth small.camp-sigil{color:var(--gold)}
-.camp-review{margin:8px 0 0;font-size:14px;color:#c9b99a}.camp-review.is-due{color:var(--gold);font-weight:600}
+.camp-review{display:flex;align-items:center;gap:6px;width:100%;min-height:44px;margin:10px 0 0;padding:8px 12px;border:1px solid #5b4a26;border-radius:10px;background:#1a1710;color:#c9b99a;font-size:14px;text-align:left}
+.camp-review>span:last-child{margin-left:auto;font-size:18px}
+.camp-review.is-due{color:var(--gold);font-weight:600;border-color:#9b7535}
+/* At camp the wordbook is always an overlay (in battle it can sit in the layout on wide screens). */
+.in-camp .wordbook-drawer{position:fixed;left:10px;right:10px;top:max(10px,env(safe-area-inset-top));bottom:max(10px,env(safe-area-inset-bottom));z-index:40;margin:0 auto;max-width:620px;overflow:auto;background:#101925;box-shadow:0 0 0 100vmax #000a}
 .camp-depth-pick{display:flex;gap:6px;margin-top:6px}
 .camp-depth-pick button{min-width:44px;min-height:44px;border:1px solid #5b4a26;border-radius:8px;background:transparent;color:#e9dcc0;font:500 15px 'DM Mono',monospace}
 .camp-depth-pick button.on{border-color:var(--gold);background:#2a2316;color:var(--gold)}

@@ -5,8 +5,8 @@ import { closeTrial, offerTrial, optionKeys, resolveTrial, trialFor, trialKey } 
 import { noteRecent } from '../src/game/recent.ts'
 import { MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
-import { MAX_LV, updateMastery } from '../src/game/mastery.ts'
-import { emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
+import { MAX_LV, isDue, updateMastery } from '../src/game/mastery.ts'
+import { DUE_PER_FIGHT, emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
 
 /** Safety stop only: an expedition is bounded (5 floors of bounded fights) and never gets near this. */
@@ -57,7 +57,8 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   const introduce = () => {
     for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) mastery = updateMastery(mastery, id, true, today)
   }
-  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, today })!
+  let dueThisFight = 0   // like the game: at most DUE_PER_FIGHT due words per fight
+  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, today, dueCapped: dueThisFight >= DUE_PER_FIGHT })!
   const log: RunLog[] = []
   for (let n = 1; n <= runsToPlay; n++) {
     today = simDay(n, opts.runsPerDay)
@@ -68,10 +69,12 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
     const startHearts = run.hearts, potionHearts = playerStats(run, b, GEAR).potionHearts
     const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0, trials: 0, trialsRight: 0, calmSaves: 0 }
     let fightAnswers = 0, longestFight = 0
+    dueThisFight = 0
     while (run.phase !== 'defeat' && !isExpeditionWon(run) && answers < ANSWER_CAP) {
-      if (run.phase === 'victory') { run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; continue }
+      if (run.phase === 'victory') { run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; dueThisFight = 0; continue }
       if (run.hearts <= 2) { const p = drinkPotion(run, b, GEAR); if (p) { run = p; stat.potionsUsed++ } }
       const entry = mastery[word.id]
+      if (isDue(entry, today)) dueThisFight++
       const practice = !practiced.has(word.id)
       // Accuracy rises a little as a word is learned; boss questions are a little harder:
       // tone questions (Golem shield), character questions (Scribe seals), look-alikes (Trickster).

@@ -7,6 +7,7 @@ import { daysUntilDue, dueCount } from './game/mastery'
 import { localDay } from './game/habit'
 
 type Props = {
+  onReview: () => void                // opens the wordbook (due words first)
   save: Saved
   course: CourseStatus
   onBuy: (id: string) => void
@@ -18,7 +19,7 @@ type Props = {
  * Base camp between runs: the run result, the course position, upgrades, and one pinned start button.
  * Stats, backups and reset live in the Settings sheet (MenuSheet), not here.
  */
-export default function CampScreen({ save, course, onBuy, onStart, message }: Props) {
+export default function CampScreen({ save, course, onReview, onBuy, onStart, message }: Props) {
   const { meta, lastRun, mastery } = save
   const [tab, setTab] = useState(BRANCHES[0].id)
   const owned = (branch: string) => branchNodes(branch).filter(n => meta.upgrades.includes(n.id)).length
@@ -47,7 +48,7 @@ export default function CampScreen({ save, course, onBuy, onStart, message }: Pr
           ? <p className="camp-result"><span>{lastRun.kills} slain</span><span>Level {lastRun.level}</span><span className="gain">+{lastRun.goldBanked} gold{lastRun.bonus ? ` (incl. ${lastRun.bonus} victory bonus)` : ''}</span></p>
           : <p className="camp-result">Upgrades and the words you learn stay between runs.</p>}
         {lastRun?.unlocked ? <p className="camp-milestone" role="status"><span aria-hidden="true">★</span> Depth {lastRun.unlocked} unlocked: {DEPTHS[lastRun.unlocked - 1].name}</p> : null}
-        {review && <p className={`camp-review ${due > 0 ? 'is-due' : ''}`}><span aria-hidden="true">📖</span> {review}</p>}
+        {review && <button className={`camp-review ${due > 0 ? 'is-due' : ''}`} onClick={onReview}><span aria-hidden="true">📖</span> {review} <span aria-hidden="true">›</span></button>}
       </div>
 
       <div className="camp-depth">

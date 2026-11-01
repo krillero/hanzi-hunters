@@ -26,7 +26,7 @@ import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS, type BossId, type Word } from 
 import { audioReliable, homographsOf } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
 import { LEVEL_NAMES, MAX_LV, daysUntilDue, dueCount, isDue, masteredCount, seenCount, updateMastery, waitDays } from './game/mastery'
-import { DEFAULT_LIMITS, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
+import { DEFAULT_LIMITS, DUE_PER_FIGHT, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, tryBuildQuestion, isCharacterQuestion, isToneQuestion, pickSealCard, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
@@ -209,6 +209,8 @@ export default function App() {
     return (item: ClozeItem) => sentencePrereqsMet(item, st, elsewhere)
   }
   const recentWords = useRef<string[]>([])
+  /** Due words answered in the current fight (reset when a fight starts): at most DUE_PER_FIGHT, see course.ts. */
+  const dueThisFight = useRef(0)
   /** The next question: a previously introduced entry (never an unseen one), or null when no fair question exists (see noCard). */
   const makeCard = (mastery = save.mastery, current: string | null = null, listen = canListen, forRun: Run | null = run): Card | null => {
     // Only the very first card of a session (no current word). Not consumed here: React StrictMode runs effects twice.
@@ -232,7 +234,7 @@ export default function App() {
       let prevId: string | null = current
       // a known entry (review selection never returns an unseen one); particles only when nothing else is known
       const build = (): Card | null => {
-        const word: Word | null = selectReview(WORDS, mastery, { today: localDay(), currentId: prevId, recent: recentWords.current, filter: w => w.kind !== 'particle' }) ?? selectReview(WORDS, mastery, { currentId: prevId, recent: recentWords.current })
+        const word: Word | null = selectReview(WORDS, mastery, { today: localDay(), dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: prevId, recent: recentWords.current, filter: w => w.kind !== 'particle' }) ?? selectReview(WORDS, mastery, { currentId: prevId, recent: recentWords.current })
         if (!word) return null
         prevId = word.id
         const question = tryBuildQuestion(word, mastery[word.id], WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)]))
@@ -252,7 +254,7 @@ export default function App() {
     }
     const tried = new Set<string>()
     for (let k = 0; k < 8; k++) {
-      const word = selectReview(WORDS, mastery, { today: localDay(), currentId: current, recent: recentWords.current, filter: w => !tried.has(w.id) })
+      const word = selectReview(WORDS, mastery, { today: localDay(), dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: current, recent: recentWords.current, filter: w => !tried.has(w.id) })
       if (!word) break
       tried.add(word.id)
       const question = tryBuildQuestion(word, mastery[word.id], WORDS, opts(echo))
@@ -411,6 +413,7 @@ export default function App() {
       roll: { drop: Math.random(), item: Math.random() }
     })
     const today = localDay()
+    if (isDue(entry, today)) dueThisFight.current += 1
     const mastery = updateMastery(save.mastery, word.id, isCorrect, today)
     recentWords.current = [word.id, ...recentWords.current.filter(h => h !== word.id)].slice(0, 8)
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
@@ -540,6 +543,7 @@ export default function App() {
   const nextEnemy = (from: Run | null = run) => {
     if (!from) return
     const next = advance(from, bonuses, ENEMIES, GEAR)
+    dueThisFight.current = 0
     if (!next) { endRun('won'); return }
     patch(s => ({ ...s, run: next }))
     setNextCard(makeCard(save.mastery, card?.word.id ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
@@ -613,7 +617,7 @@ export default function App() {
   }
 
   const startRun = (depth: number) => {
-    setReveal(null)
+    setReveal(null); dueThisFight.current = 0
     const fresh = newRun(bonuses, GEAR, ENEMIES, Math.min(depth, unlockedDepth(save.meta.depthCleared)), save.meta.depthCleared)
     patch(s => ({ ...s, run: fresh }))
     setFloorStats(emptyStats()); setRunStats(emptyStats()); setSummary(null)
@@ -655,7 +659,25 @@ export default function App() {
   }
 
   // ---- camp -----------------------------------------------------------------------------
-  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onReset={() => { setMenuOpen(false); resetAll() }} progress={{ wins: save.meta.wins, bestFloor: save.meta.bestFloor, runs: save.meta.runs, known: Object.keys(save.mastery).length, mastered: masteredCount(save.mastery) }} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) }, onReturn: run.phase !== 'defeat' ? returnToCamp : undefined } : undefined} /> : null
+  // Wordbook (battle screen and camp): due words first, then by level. During a question its own word is hidden (no peeking).
+  const wordbookToday = localDay()
+  const hiddenWord = run && run.phase === 'fighting' && !feedback ? card?.word.id : undefined
+  const wordbook = showWords ? <div className="drawer wordbook-drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">
+    {WORDS.filter(w => save.mastery[w.id] && w.id !== hiddenWord)
+      .map(w => ({ w, e: save.mastery[w.id], due: isDue(save.mastery[w.id], wordbookToday) }))
+      .sort((a, b) => Number(b.due) - Number(a.due) || b.e.lv - a.e.lv)
+      .map(({ w, e, due }) => {
+        const lv = e.lv, rich = hasDetails(w)
+        return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => setExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. Open details`}>
+          <strong className={`wb-len${lenClass(w.hanzi)}`}>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small>
+          {w.kind === 'particle' && <u className="kind-tag">particle</u>}{due && <u className="kind-tag due-tag">review</u>}
+          <i className="pips" aria-label={`${LEVEL_NAMES[lv]}${due ? ', due for review' : ''}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>
+          {rich && <em className="tip-badge" aria-hidden>💡</em>}
+        </button>
+      })}
+    {seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}
+  </div></div> : null
+  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onReset={() => { setMenuOpen(false); resetAll() }} progress={{ wins: save.meta.wins, bestFloor: save.meta.bestFloor, runs: save.meta.runs, known: Object.keys(save.mastery).length, mastered: masteredCount(save.mastery) }} onClose={() => setMenuOpen(false)} tools={run ? { words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) }, onReturn: run.phase !== 'defeat' ? returnToCamp : undefined } : { words: seenCount(save.mastery), onWords: () => { setMenuOpen(false); setShowWords(true) } }} /> : null
   const topbar = (
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
@@ -689,9 +711,11 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        <CampScreen save={save} course={courseStatus(courseFor())} onBuy={buy} onStart={startRun} message={campMsg} />
+        <CampScreen save={save} course={courseStatus(courseFor())} onReview={() => setShowWords(true)} onBuy={buy} onStart={startRun} message={campMsg} />
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
+        {wordbook}
       {menu}
+      {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
       </main>
     )
   }
@@ -879,7 +903,7 @@ export default function App() {
             </section>
             </>
           </section>}
-          {showWords && <div className="drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">{WORDS.filter(w => save.mastery[w.id] && !(fighting && !feedback && card?.word.id === w.id)).sort((a, b) => save.mastery[b.id].lv - save.mastery[a.id].lv).map(w => { const lv = save.mastery[w.id].lv; const rich = hasDetails(w); const body = <><strong className={`wb-len${lenClass(w.hanzi)}`}>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small>{w.kind === 'particle' && <u className="kind-tag">particle</u>}{isDue(save.mastery[w.id], localDay()) && <u className="kind-tag due-tag">review</u>}<i className="pips" aria-label={`${LEVEL_NAMES[lv]}${isDue(save.mastery[w.id], localDay()) ? ', due for review' : ''}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>{rich && <em className="tip-badge" aria-hidden>💡</em>}</>; return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => setExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. Open details`}>{body}</button> })}{seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}</div></div>}
+          {wordbook}
         </div>
 
         <div className="right-column">

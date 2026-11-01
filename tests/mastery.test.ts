@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { LEVEL_NAMES, MAX_LEARNING, MAX_LV, MIN_KNOWN, RETENTION_DAYS, SESSION_LV, STARTING_POOL, daysBetween, daysUntilDue, dueCount, isDue, masteredCount, updateMastery } from '../src/game/mastery.ts'
-import { introCapacity } from '../src/game/course.ts'
+import { DUE_PER_FIGHT, introCapacity, selectReview } from '../src/game/course.ts'
+import { WORDS } from '../src/data.ts'
 import type { Mastery } from '../src/game/types.ts'
 
 const D1 = '2026-11-01'
@@ -62,4 +63,17 @@ test('introduction capacity keeps the old limits: 3 to start, then one per fight
   assert.equal(introCapacity(lvs(1, 0, 0, 0)), 1, 'a level-1 entry frees a slot')
   assert.equal(introCapacity(lvs(...Array(STARTING_POOL + 2).fill(1), 0, 0)), 1)
   assert.equal(introCapacity(lvs(0, 0, 0), { maxLearning: 9, minKnown: 3, perFight: 1, startingPool: 3 }), 0, 'pool cap: met entries may exceed level-1 entries by at most startingPool')
+})
+
+test('reviews favour due words, at most DUE_PER_FIGHT per fight; a capped due word is still the last resort', () => {
+  const ids = ['人', '大', '小']
+  const words = WORDS.filter(w => ids.includes(w.id))
+  const m: Mastery = { 人: { lv: 2, ok: 0, at: D1 }, 大: { lv: 0, ok: 0, at: D1 }, 小: { lv: 1, ok: 0, at: D1 } }
+  const today = after(1)   // 人 is due (Familiar for a day); 大 and 小 are still being learned
+  let s = 0.37; const rng = () => (s = (s * 9301 + 0.49297) % 1)
+  const share = (o: object) => { let n = 0; for (let i = 0; i < 600; i++) if (selectReview(words, m, { rng, today, ...o })!.id === '人') n++; return n / 600 }
+  assert.ok(share({}) > 0.45, `due word favoured (${share({})})`)
+  assert.equal(share({ dueCapped: true }), 0, 'capped: never picked while other words exist')
+  assert.equal(selectReview(words.filter(w => w.id === '人'), m, { rng, today, dueCapped: true })!.id, '人', 'only due words left: still asked')
+  assert.equal(DUE_PER_FIGHT, 2)
 })

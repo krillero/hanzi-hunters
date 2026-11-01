@@ -50,9 +50,15 @@ Each word has a level 0-5. Levels 0-2 are learned within a session; levels 3-5 n
   next check is ("Familiar — next level after a check tomorrow"). A long gap still promotes **one** level only.
 * **A miss drops one level** (also from Mastered) and restarts that level's wait.
 * **Every question kind counts the same.**
-* **Reviews:** a due word is picked far more often (`DUE_WEIGHT` 6) so a session starts by checking yesterday's words; words still
-  being learned (0-1) weigh 3, Familiar and waiting words 1 (repeating them cannot promote them today), mastered words 0.4.
-* **Camp** shows "📖 N words ready for review today" (or when the next review is); the wordbook marks due words "review".
+* **Reviews:** a due word is picked far more often (`DUE_WEIGHT` 6) so a session starts by checking yesterday's words, but at most
+  **2 due words per fight** (`DUE_PER_FIGHT`), so new and still-learning words keep their slots. Words still being learned (0-1) weigh
+  3, Familiar and waiting words 0.8 (repeating them cannot promote them today), mastered words 0.4.
+* **New words** come in under the same rules as before (curriculum order, at most 4 at level 0, pool cap). Simulator, words introduced
+  after 10 / 20 / 40 expeditions, old rules → spaced levels: 0.75 accuracy 27 / 40 / 62 → 29 / 40 / 54; 0.85 38 / 56 / 84 →
+  40 / 59 / 84; 0.90 40 / 65 / 95 → 40 / 61 / 89. (Waiting words at weight 1 without the cap gave 0.85 only 75 after 40; at 0.6,
+  95, but 0.75 players then clear depths about 2 expeditions later.)
+* **Camp** shows "📖 N words ready for review today ›" (or when the next review is); tapping it opens the wordbook. The wordbook
+  (also in ⚙ at camp and during runs) lists due words first, marked "review", then the rest by level.
 * **Old saves:** entries from before time-gated levels have no date: they keep their level (at most 4, the old maximum) and are due
   at once, so levels 2-4 are re-checked by their next right answer (an old "mastered" word needs one more right answer).
 * Simulator: two expeditions per calendar day (`SIM_RUNS_PER_DAY`). 20 seeds, old → new rules: wins 0.60 5.3 → 4.5 %,
