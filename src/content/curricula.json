@@ -1,5 +1,5 @@
 {
-  "default": "starter-compat",
+  "default": "beginner-mandarin-100",
   "curricula": [
     {
       "id": "starter-compat",
@@ -357,6 +357,1429 @@
       "review": {
         "status": "ai-draft",
         "note": "Provisional order. Not a pedagogical sequence; a Mandarin teacher has not reviewed it."
+      }
+    },
+    {
+      "id": "beginner-mandarin-100",
+      "version": 1,
+      "title": "First 100 everyday words",
+      "description": "Twenty lessons of 4-6 entries for beginner Mandarin. Every entry has a dictionary check and an exact official syllabus reference. Editorial teaching order awaiting human educator review.",
+      "provisional": true,
+      "readiness": {
+        "minLevel": 1
+      },
+      "units": [
+        {
+          "id": "b100-unit-01",
+          "title": "Polite everyday expressions",
+          "lessons": [
+            {
+              "id": "b100-lesson-01",
+              "title": "Polite everyday expressions",
+              "prerequisiteLessons": [],
+              "introductions": [
+                {
+                  "entryId": "你好",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 147; printed page 80 (PDF page 83); 你好 nǐ hǎo"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "谢谢",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 241; printed page 83 (PDF page 86); 谢谢 xièxie"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "再见",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 271; printed page 83 (PDF page 86); 再见 zàijiàn"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "请",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 165; printed page 81 (PDF page 84); 请 qǐng"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "对不起",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 45; printed page 78 (PDF page 81); 对不起 duìbuqǐ"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-02",
+          "title": "People in a conversation",
+          "lessons": [
+            {
+              "id": "b100-lesson-02",
+              "title": "People in a conversation",
+              "prerequisiteLessons": [
+                "b100-lesson-01"
+              ],
+              "introductions": [
+                {
+                  "entryId": "我",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 221; printed page 82 (PDF page 85); 我 wǒ"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "你",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 146; printed page 80 (PDF page 83); 你 nǐ"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "他",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 200; printed page 81 (PDF page 84); 他 tā"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "她",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 204; printed page 82 (PDF page 85); 她 tā"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "您",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 150; printed page 80 (PDF page 83); 您 nín"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-03",
+          "title": "Your first descriptions and questions",
+          "lessons": [
+            {
+              "id": "b100-lesson-03",
+              "title": "Your first descriptions and questions",
+              "prerequisiteLessons": [
+                "b100-lesson-02"
+              ],
+              "introductions": [
+                {
+                  "entryId": "是",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 188; printed page 81 (PDF page 84); 是 shì"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "人",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 170; printed page 81 (PDF page 84); 人 rén"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "好",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 71; printed page 78 (PDF page 81); 好 hǎo"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "很",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 79; printed page 78 (PDF page 81); 很 hěn"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "吗",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 115; printed page 79 (PDF page 82); 吗 ma"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-04",
+          "title": "Names and friends",
+          "lessons": [
+            {
+              "id": "b100-lesson-04",
+              "title": "Names and friends",
+              "prerequisiteLessons": [
+                "b100-lesson-03"
+              ],
+              "introductions": [
+                {
+                  "entryId": "叫",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 91; printed page 79 (PDF page 82); 叫 jiào"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "名字",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 128; printed page 80 (PDF page 83); 名字 míngzi"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "谁",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 181; printed page 81 (PDF page 84); 谁 shéi/shuí"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "什么",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 182; printed page 81 (PDF page 84); 什么 shénme"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "朋友",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 156; printed page 80 (PDF page 83); 朋友 péngyou"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-05",
+          "title": "Having, negating, and belonging",
+          "lessons": [
+            {
+              "id": "b100-lesson-05",
+              "title": "Having, negating, and belonging",
+              "prerequisiteLessons": [
+                "b100-lesson-04"
+              ],
+              "introductions": [
+                {
+                  "entryId": "不",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 13; printed page 77 (PDF page 80); 不 bù"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "也",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 253; printed page 83 (PDF page 86); 也 yě"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "有",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 263; printed page 83 (PDF page 86); 有 yǒu"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "没有",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 122; printed page 80 (PDF page 83); 没有 méiyǒu"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "的",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 30; printed page 77 (PDF page 80); 的 de"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-06",
+          "title": "Pointing and choosing",
+          "lessons": [
+            {
+              "id": "b100-lesson-06",
+              "title": "Pointing and choosing",
+              "prerequisiteLessons": [
+                "b100-lesson-05"
+              ],
+              "introductions": [
+                {
+                  "entryId": "这",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 279; printed page 83 (PDF page 86); 这 zhè"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "那",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 136; printed page 80 (PDF page 83); 那 nà"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "哪",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 131; printed page 80 (PDF page 83); 哪 nǎ"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "这里",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 282; printed page 84 (PDF page 87); 这里 zhèlǐ"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "个",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 60; printed page 78 (PDF page 81); 个 gè"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-07",
+          "title": "Numbers one to five",
+          "lessons": [
+            {
+              "id": "b100-lesson-07",
+              "title": "Numbers one to five",
+              "prerequisiteLessons": [
+                "b100-lesson-06"
+              ],
+              "introductions": [
+                {
+                  "entryId": "一",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 254; printed page 83 (PDF page 86); 一 yī"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "二",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 49; printed page 78 (PDF page 81); 二 èr"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "三",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 173; printed page 81 (PDF page 84); 三 sān"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "四",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 198; printed page 81 (PDF page 84); 四 sì"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "五",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 223; printed page 82 (PDF page 85); 五 wǔ"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-08",
+          "title": "Numbers six to ten",
+          "lessons": [
+            {
+              "id": "b100-lesson-08",
+              "title": "Numbers six to ten",
+              "prerequisiteLessons": [
+                "b100-lesson-07"
+              ],
+              "introductions": [
+                {
+                  "entryId": "六",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 113; printed page 79 (PDF page 82); 六 liù"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "七",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 160; printed page 80 (PDF page 83); 七 qī"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "八",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 2; printed page 77 (PDF page 80); 八 bā"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "九",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 95; printed page 79 (PDF page 82); 九 jiǔ"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "十",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 184; printed page 81 (PDF page 84); 十 shí"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-09",
+          "title": "Counting, quantity, and size",
+          "lessons": [
+            {
+              "id": "b100-lesson-09",
+              "title": "Counting, quantity, and size",
+              "prerequisiteLessons": [
+                "b100-lesson-08"
+              ],
+              "introductions": [
+                {
+                  "entryId": "零",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 112; printed page 79 (PDF page 82); 零 líng"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "两",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 111; printed page 79 (PDF page 82); 两 liǎng"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "多",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 46; printed page 78 (PDF page 81); 多 duō"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "少",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 180; printed page 81 (PDF page 84); 少 shǎo"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "大",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 25; printed page 77 (PDF page 80); 大 dà"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "小",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 234; printed page 82 (PDF page 85); 小 xiǎo"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-10",
+          "title": "Home and family",
+          "lessons": [
+            {
+              "id": "b100-lesson-10",
+              "title": "Home and family",
+              "prerequisiteLessons": [
+                "b100-lesson-09"
+              ],
+              "introductions": [
+                {
+                  "entryId": "家",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 86; printed page 79 (PDF page 82); 家 jiā"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "妈妈",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 114; printed page 79 (PDF page 82); 妈妈 māma"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "爸爸",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 3; printed page 77 (PDF page 80); 爸爸 bàba"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "孩子",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 68; printed page 78 (PDF page 81); 孩子 háizi"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "喜欢",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 225; printed page 82 (PDF page 85); 喜欢 xǐhuan"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-11",
+          "title": "Brothers, sisters, and happiness",
+          "lessons": [
+            {
+              "id": "b100-lesson-11",
+              "title": "Brothers, sisters, and happiness",
+              "prerequisiteLessons": [
+                "b100-lesson-10"
+              ],
+              "introductions": [
+                {
+                  "entryId": "哥哥",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 58; printed page 78 (PDF page 81); 哥哥 gēge"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "姐姐",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 92; printed page 79 (PDF page 82); 姐姐 jiějie"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "弟弟",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 31; printed page 77 (PDF page 80); 弟弟 dìdi"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "妹妹",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 123; printed page 80 (PDF page 83); 妹妹 mèimei"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "高兴",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 57; printed page 78 (PDF page 81); 高兴 gāoxìng"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-12",
+          "title": "Wants, eating, and drinking",
+          "lessons": [
+            {
+              "id": "b100-lesson-12",
+              "title": "Wants, eating, and drinking",
+              "prerequisiteLessons": [
+                "b100-lesson-11"
+              ],
+              "introductions": [
+                {
+                  "entryId": "想",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 233; printed page 82 (PDF page 85); 想 xiǎng"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "要",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 252; printed page 83 (PDF page 86); 要 yào"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "吃",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 21; printed page 77 (PDF page 80); 吃 chī"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "喝",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 77; printed page 78 (PDF page 81); 喝 hē"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "水",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 192; printed page 81 (PDF page 84); 水 shuǐ"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-13",
+          "title": "Food and drinks",
+          "lessons": [
+            {
+              "id": "b100-lesson-13",
+              "title": "Food and drinks",
+              "prerequisiteLessons": [
+                "b100-lesson-12"
+              ],
+              "introductions": [
+                {
+                  "entryId": "茶",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 17; printed page 77 (PDF page 80); 茶 chá"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "咖啡",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "2",
+                      "ref": "Vocabulary entry 377; printed page 86 (PDF page 89); 咖啡 kāfēi"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "米饭",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 125; printed page 80 (PDF page 83); 米饭 mǐfàn"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "菜",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 16; printed page 77 (PDF page 80); 菜 cài"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-14",
+          "title": "Going places",
+          "lessons": [
+            {
+              "id": "b100-lesson-14",
+              "title": "Going places",
+              "prerequisiteLessons": [
+                "b100-lesson-13"
+              ],
+              "introductions": [
+                {
+                  "entryId": "来",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 106; printed page 79 (PDF page 82); 来 lái"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "去",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 167; printed page 81 (PDF page 84); 去 qù"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "回",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 81; printed page 79 (PDF page 82); 回 huí"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "在",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 272; printed page 83 (PDF page 86); 在 zài"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "学校",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 250; printed page 83 (PDF page 86); 学校 xuéxiào"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-15",
+          "title": "Today, tomorrow, and when",
+          "lessons": [
+            {
+              "id": "b100-lesson-15",
+              "title": "Today, tomorrow, and when",
+              "prerequisiteLessons": [
+                "b100-lesson-14"
+              ],
+              "introductions": [
+                {
+                  "entryId": "今天",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 94; printed page 79 (PDF page 82); 今天 jīntiān"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "明天",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 130; printed page 80 (PDF page 83); 明天 míngtiān"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "昨天",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 297; printed page 84 (PDF page 87); 昨天 zuótiān"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "现在",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 232; printed page 82 (PDF page 85); 现在 xiànzài"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "时候",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 185; printed page 81 (PDF page 84); 时候 shíhou"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-16",
+          "title": "Dates and the clock",
+          "lessons": [
+            {
+              "id": "b100-lesson-16",
+              "title": "Dates and the clock",
+              "prerequisiteLessons": [
+                "b100-lesson-15"
+              ],
+              "introductions": [
+                {
+                  "entryId": "年",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 149; printed page 80 (PDF page 83); 年 nián"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "月",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 269; printed page 83 (PDF page 86); 月 yuè"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "天",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 207; printed page 82 (PDF page 85); 天 tiān"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "星期",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 243; printed page 83 (PDF page 86); 星期 xīngqī"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "点",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 33; printed page 77 (PDF page 80); 点 diǎn"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-17",
+          "title": "How you feel",
+          "lessons": [
+            {
+              "id": "b100-lesson-17",
+              "title": "How you feel",
+              "prerequisiteLessons": [
+                "b100-lesson-16"
+              ],
+              "introductions": [
+                {
+                  "entryId": "热",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 169; printed page 81 (PDF page 84); 热 rè"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "冷",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 109; printed page 79 (PDF page 82); 冷 lěng"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "忙",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 118; printed page 79 (PDF page 82); 忙 máng"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "累",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "2",
+                      "ref": "Vocabulary entry 388; printed page 86 (PDF page 89); 累 lèi"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-18",
+          "title": "School and learning",
+          "lessons": [
+            {
+              "id": "b100-lesson-18",
+              "title": "School and learning",
+              "prerequisiteLessons": [
+                "b100-lesson-17"
+              ],
+              "introductions": [
+                {
+                  "entryId": "学生",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 248; printed page 83 (PDF page 86); 学生 xuéshēng"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "老师",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 107; printed page 79 (PDF page 82); 老师 lǎoshī"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "学习",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 249; printed page 83 (PDF page 86); 学习 xuéxí"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "汉语",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 69; printed page 78 (PDF page 81); 汉语 Hànyǔ"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "字",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 296; printed page 84 (PDF page 87); 字 zì"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-19",
+          "title": "Reading, speaking, and writing",
+          "lessons": [
+            {
+              "id": "b100-lesson-19",
+              "title": "Reading, speaking, and writing",
+              "prerequisiteLessons": [
+                "b100-lesson-18"
+              ],
+              "introductions": [
+                {
+                  "entryId": "看-look",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 99; printed page 79 (PDF page 82); 看 kàn"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "听",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 209; printed page 82 (PDF page 85); 听 tīng"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "说",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 196; printed page 81 (PDF page 84); 说 shuō"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "读",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 42; printed page 78 (PDF page 81); 读 dú"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "写",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 240; printed page 82 (PDF page 85); 写 xiě"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "书",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 190; printed page 81 (PDF page 84); 书 shū"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "b100-unit-20",
+          "title": "Shopping and prices",
+          "lessons": [
+            {
+              "id": "b100-lesson-20",
+              "title": "Shopping and prices",
+              "prerequisiteLessons": [
+                "b100-lesson-19"
+              ],
+              "introductions": [
+                {
+                  "entryId": "钱",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 164; printed page 81 (PDF page 84); 钱 qián"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "买",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 116; printed page 79 (PDF page 82); 买 mǎi"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "多少",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 47; printed page 78 (PDF page 81); 多少 duōshao"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "商店",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 174; printed page 81 (PDF page 84); 商店 shāngdiàn"
+                    }
+                  ]
+                },
+                {
+                  "entryId": "块",
+                  "officialLevels": [
+                    {
+                      "source": "HSK-2025",
+                      "edition": "HSK syllabus published 2025-11; effective 2026-07",
+                      "level": "1",
+                      "ref": "Vocabulary entry 105; printed page 79 (PDF page 82); 块 kuài"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "source": [
+        {
+          "name": "HSK-2025",
+          "note": "Official level mappings guide coverage; the lesson sequence is editorial."
+        },
+        {
+          "name": "HH-editorial-2026"
+        }
+      ],
+      "review": {
+        "status": "ai-draft",
+        "note": "Deliberate practical sequence; not reviewed by a human Mandarin teacher."
       }
     }
   ]

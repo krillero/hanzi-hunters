@@ -39,7 +39,9 @@ test('an authored sentence is only assessed once its prerequisite entries and le
 })
 
 test('without an eligibility check, only sentences that declare no prerequisites are assessed (safe default)', () => {
-  assert.deepEqual(clozeFor(ma, { cloze: [gated, base] }).map(x => x.id), [base.id])
+  // Use an explicitly ungated fixture: shipped exercises may legitimately have prerequisites.
+  const ungated: ClozeItem = { ...base, id: 'ma-ungated', prerequisiteEntries: [], prerequisiteLessons: [] }
+  assert.deepEqual(clozeFor(ma, { cloze: [gated, ungated] }).map(x => x.id), [ungated.id])
 })
 
 test('too few safe distractors: another valid kind, or no question at all; never a one-option question', () => {
