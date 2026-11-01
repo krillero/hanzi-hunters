@@ -42,3 +42,9 @@ export function cleanEncounter(raw: unknown): EncounterState|undefined {
  const order=Array.isArray(e.order)&&e.order.length===ids.length&&new Set(e.order).size===ids.length&&e.order.every(x=>ids.includes(x))?e.order:ids
  return {id:e.id,stage:[0,1,2].includes(e.stage)?e.stage:0,status:['offer','active','complete','closed'].includes(e.status)?e.status:'closed',selected,order,help:e.help===true}
 }
+/** Preview aid for /?encounter=<scene id>&stage=<0|1|2>: a ready-to-play scene, or null when the id is not a scene. */
+export function previewEncounter(id: string | null, stage: string | null): EncounterState | null {
+ if(!SCENES.some(x=>x.id===id))return null
+ const n=Number(stage)
+ return {id:id!,stage:[0,1,2].includes(n)?n:0,status:'active',selected:[],order:ITEMS.map(x=>x.id),help:false}
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ITEMS, SCENES, type EncounterState } from './game/encounters'
-export default function EncounterScreen({ state, onChange, onComplete, onLeave }: { state: EncounterState; onChange: (e: EncounterState)=>void; onComplete: ()=>void; onLeave: ()=>void }) {
+/** `preview`: opened from /?encounter=… — nothing is saved, so the texts must not promise gold or a next floor. */
+export default function EncounterScreen({ state, onChange, onComplete, onLeave, preview = false }: { state: EncounterState; onChange: (e: EncounterState)=>void; onComplete: ()=>void; onLeave: ()=>void; preview?: boolean }) {
  const scene=SCENES.find(x=>x.id===state.id)!
  const box=useRef<HTMLDivElement>(null)
  const [error,setError]=useState('')
@@ -13,7 +14,7 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave }
  <div className="modal-head"><h2 id="enc-title">{scene.title}</h2></div>
  <div className="enc-body">
  <div className="enc-person" aria-hidden="true">🧑‍🍳 {state.status==='complete'?(state.id==='tea'?'🍵':'🍱'):'🏕️'}</div>
- {state.status==='offer'?<><p>A traveler has a request. Help prepare something using the Chinese you have met.</p><p>No hearts at risk. Complete the encounter for 3 gold. Translation is always available.</p></>:state.status==='complete'?<div role="status"><h3 lang="zh">谢谢！</h3><p>Xièxie! — Thank you!</p><p>{scene.result}</p><strong>+3 expedition gold · saved</strong></div>:<>
+ {state.status==='offer'?<><p>A traveler has a request. Help prepare something using the Chinese you have met.</p><p>No hearts at risk. Complete the encounter for 3 gold. Translation is always available.</p></>:state.status==='complete'?<div role="status"><h3 lang="zh">谢谢！</h3><p>Xièxie! — Thank you!</p><p>{scene.result}</p><strong>{preview?'Preview · nothing saved':'+3 expedition gold · saved'}</strong></div>:<>
  <div className="enc-request"><p lang="zh">{scene.zh}</p>{py&&<p>{scene.py}</p>}{english&&<p>{scene.en}</p>}</div>
  {state.stage===0&&<p>我 means “I”. 要 expresses wanting something here. The traveler is telling you what they would like.</p>}
  <button className="bar-btn ghost" onClick={()=>onChange({...state,help:!state.help})}>{state.help?'Hide extra help':'Pinyin & translation'}</button>
@@ -24,6 +25,6 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave }
  <button className="bar-btn main" onClick={()=>{if(state.selected.length===scene.ingredients.length&&scene.ingredients.every(x=>state.selected.includes(x)))onComplete();else setError('Not quite. '+scene.note+' Change your selection and try again.')}}>{scene.action}</button>
  </>}
  </div>
- <div className="enc-footer">{state.status==='offer'&&<button className="bar-btn main" onClick={()=>onChange({...state,status:'active'})}>Help the traveler</button>}<button className="bar-btn ghost" onClick={onLeave}>{state.status==='complete'?'Continue to next floor':state.status==='offer'?'Skip and continue':'Leave and continue'}</button></div>
+ <div className="enc-footer">{state.status==='offer'&&<button className="bar-btn main" onClick={()=>onChange({...state,status:'active'})}>Help the traveler</button>}<button className="bar-btn ghost" onClick={onLeave}>{preview?'Close preview':state.status==='complete'?'Continue to next floor':state.status==='offer'?'Skip and continue':'Leave and continue'}</button></div>
  </div></div>
 }

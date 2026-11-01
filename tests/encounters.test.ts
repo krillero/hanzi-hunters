@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { offer, complete, REQUIRED, cleanEncounter, stageFor } from '../src/game/encounters.ts'
+import { offer, complete, REQUIRED, cleanEncounter, stageFor, previewEncounter } from '../src/game/encounters.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import { newRun, bankRun } from '../src/game/rules.ts'
 import { NO_BONUSES } from '../src/game/upgrades.ts'
@@ -28,4 +28,8 @@ test('old save defaults and pending save resume preserve stage and selected opti
 })
 test('stages require distinct completion days and current mastery',()=>{
  const m=ready().mastery;assert.equal(stageFor(m,[]),0);assert.equal(stageFor(m,['2026-11-01','2026-11-01']),1);assert.equal(stageFor(m,['2026-11-01','2026-11-02']),2);m['水'].lv=0;assert.equal(stageFor(m,['2026-11-01','2026-11-02']),0)
+})
+test('preview link builds a playable scene only for known ids and clamps the stage',()=>{
+ assert.equal(previewEncounter('nope','1'),null);assert.equal(previewEncounter(null,null),null)
+ const p=previewEncounter('meal','2')!;assert.equal(p.status,'active');assert.equal(p.stage,2);assert.equal(previewEncounter('tea','9')!.stage,0)
 })

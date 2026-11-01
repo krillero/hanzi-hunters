@@ -44,6 +44,10 @@ The existing sanitizer retains these fields on load/import. Older app versions
 will discard the added fields: avoid rolling back an active encounter save.
 No promises are made about importing obsolete pre-expedition save formats.
 
+## Preview link
+`/?encounter=tea|meal[&stage=0|1|2]` opens a scene on its own, without a run or the
+prerequisite words. It never changes the save; Close preview removes the parameter.
+
 ## Validation and review handoff
 - Four new rule tests: prerequisites, exact selection/idempotency/banking,
   old and pending saves, distinct-day presentation stages.

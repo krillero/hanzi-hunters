@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Phaser from 'phaser'
 import { PixelScene, type EnemySprite } from './game/PixelScene'
 import EncounterScreen from './EncounterScreen'
-import { offer, complete, localDate } from './game/encounters'
+import { offer, complete, localDate, previewEncounter, type EncounterState } from './game/encounters'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
@@ -123,6 +123,8 @@ export default function App() {
   const forcedWord = useRef(new URLSearchParams(window.location.search).get('word'))
   const forcedKind = useRef(new URLSearchParams(window.location.search).get('kind') as QKind | null)   // preview aid: /?word=木&kind=homophone
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
+  // Preview aid: /?encounter=tea|meal[&stage=0|1|2] opens that scene on its own. It never touches the save (no gold, no history).
+  const [encounterPreview, setEncounterPreview] = useState<EncounterState | null>(() => { const q = new URLSearchParams(window.location.search); return previewEncounter(q.get('encounter'), q.get('stage')) })
   const encounterOpen = !!save.run?.encounter && save.run.encounter.status !== 'closed'
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
@@ -607,6 +609,15 @@ export default function App() {
       </div>
     </header>
   )
+  if (encounterPreview) {
+    const closePreview = () => { const u = new URL(window.location.href); u.searchParams.delete('encounter'); u.searchParams.delete('stage'); window.history.replaceState(null, '', u); setEncounterPreview(null) }
+    return (
+      <main className="app-shell in-camp">
+        {topbar}
+        <EncounterScreen state={encounterPreview} onChange={setEncounterPreview} onComplete={() => setEncounterPreview(e => e && { ...e, status: 'complete' })} onLeave={closePreview} preview />
+      </main>
+    )
+  }
   if (!run || !stats || !foe) {
     return (
       <main className="app-shell in-camp">
