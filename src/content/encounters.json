@@ -1,0 +1,102 @@
+{
+  "scenes": [
+    {
+      "id": "hello",
+      "kind": "reply",
+      "requires": ["你好", "再见", "谢谢"],
+      "speaker": "🧙",
+      "situation": "A traveler walks up to you on the road.",
+      "zh": "你好！",
+      "py": "Nǐ hǎo!",
+      "en": "Hello!",
+      "grammar": "你好 is the everyday hello. Answering 你好 with 你好 is completely normal.",
+      "options": [
+        { "id": "你好", "en": "hello", "icon": "👋" },
+        { "id": "再见", "en": "goodbye", "icon": "🚶" },
+        { "id": "谢谢", "en": "thank you", "icon": "🙏" }
+      ],
+      "answer": ["你好"],
+      "note": "你好 means hello, so you greet them back with 你好. 再见 is goodbye and 谢谢 is thank you.",
+      "result": "The traveler smiles and waves.",
+      "resultIcon": "😊"
+    },
+    {
+      "id": "goodbye",
+      "kind": "reply",
+      "requires": ["你好", "再见", "谢谢"],
+      "speaker": "🧙",
+      "situation": "The traveler packs up and gets ready to leave.",
+      "zh": "再见！",
+      "py": "Zàijiàn!",
+      "en": "Goodbye!",
+      "grammar": "再见 literally means “see again”: it is the usual way to say goodbye.",
+      "options": [
+        { "id": "你好", "en": "hello", "icon": "👋" },
+        { "id": "再见", "en": "goodbye", "icon": "🚶" },
+        { "id": "谢谢", "en": "thank you", "icon": "🙏" }
+      ],
+      "answer": ["再见"],
+      "note": "再见 means goodbye, so you say 再见 back. 你好 is hello and 谢谢 is thank you.",
+      "result": "The traveler waves and heads down the road.",
+      "resultIcon": "👋"
+    },
+    {
+      "id": "sorry",
+      "kind": "reply",
+      "requires": ["对不起", "谢谢", "你好"],
+      "speaker": "🧙",
+      "situation": "You trip and spill the traveler’s water. What do you say?",
+      "options": [
+        { "id": "对不起", "en": "sorry", "icon": "🙇" },
+        { "id": "谢谢", "en": "thank you", "icon": "🙏" },
+        { "id": "你好", "en": "hello", "icon": "👋" }
+      ],
+      "answer": ["对不起"],
+      "note": "对不起 means sorry: use it when you have caused a problem. 谢谢 is thank you and 你好 is hello.",
+      "result": "The traveler laughs it off and refills the flask.",
+      "resultIcon": "😄"
+    },
+    {
+      "id": "tea",
+      "kind": "gather",
+      "requires": ["我", "要", "谢谢", "茶", "水", "米饭", "菜"],
+      "speaker": "🧑‍🍳",
+      "zh": "我要茶。",
+      "py": "Wǒ yào chá.",
+      "en": "I would like tea.",
+      "grammar": "我 means “I”. 要 expresses wanting something here. The traveler is telling you what they would like.",
+      "options": [
+        { "id": "茶", "en": "tea leaves", "icon": "🍃" },
+        { "id": "水", "en": "water", "icon": "💧" },
+        { "id": "米饭", "en": "cooked rice", "icon": "🍚" },
+        { "id": "菜", "en": "vegetable dish", "icon": "🥬" }
+      ],
+      "answer": ["茶", "水"],
+      "note": "茶 names tea leaves here. Water and tea leaves make the drink.",
+      "result": "You prepare tea with the leaves and water.",
+      "resultIcon": "🍵",
+      "closing": { "zh": "谢谢！", "py": "Xièxie!", "en": "Thank you!" }
+    },
+    {
+      "id": "meal",
+      "kind": "gather",
+      "requires": ["我", "要", "谢谢", "茶", "水", "米饭", "菜"],
+      "speaker": "🧑‍🍳",
+      "zh": "我要米饭。我要菜。",
+      "py": "Wǒ yào mǐfàn. Wǒ yào cài.",
+      "en": "I would like rice. I would like some dishes.",
+      "grammar": "我 means “I”. 要 expresses wanting something here. The traveler is telling you what they would like.",
+      "options": [
+        { "id": "茶", "en": "tea leaves", "icon": "🍃" },
+        { "id": "水", "en": "water", "icon": "💧" },
+        { "id": "米饭", "en": "cooked rice", "icon": "🍚" },
+        { "id": "菜", "en": "vegetable dish", "icon": "🥬" }
+      ],
+      "answer": ["米饭", "菜"],
+      "note": "米饭 is cooked rice. 菜 here means prepared dishes; our tray contains vegetables.",
+      "result": "You serve the cooked rice and vegetable side dish.",
+      "resultIcon": "🍱",
+      "closing": { "zh": "谢谢！", "py": "Xièxie!", "en": "Thank you!" }
+    }
+  ]
+}

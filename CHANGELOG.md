@@ -399,5 +399,6 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Chinese-first presentation develops with current mastery and distinct practice days.
 - Saved selections/help/results and idempotent +3 run-gold completion.
 - Title and button are the same for every scene ("A traveler’s request" / Prepare) so they never name the answer; item pictures are hidden at the Chinese-first stage unless help is open.
+- Scenes moved to `src/content/encounters.json` with per-scene word requirements (checked by `validate:content`); new early "reply" scenes (hello, goodbye, sorry) appear from course word 3–5, usually after floor 1 of the first run.
 - Leaving an encounter reuses the normal next-enemy path (keeps the FLOOR banner).
 - 178 tests passed, build passes, one 360 px browser check passed; see docs/CONTEXTUAL_ENCOUNTERS.md.

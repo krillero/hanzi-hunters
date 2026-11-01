@@ -1,13 +1,28 @@
 # Contextual encounters
 
-Implemented on main b61792a (merged PR #32). Two optional scenes—tea preparation
-and serving a rice/vegetable meal—appear after a non-final floor summary, once
-per expedition. Existing depth progression and combat rules remain in charge.
+Short optional scenes appear after a non-final floor summary, once per
+expedition. Existing depth progression and combat rules remain in charge.
 
-The seven prerequisites 我 要 谢谢 茶 水 米饭 菜 must all have entries in current
-mastery. This intentionally makes the feature appear later in the first-100
-course, not on the first run. An encounter with fewer distinct completed dates
-is selected first (ID breaks ties). No new vocabulary is silently introduced.
+| Scene | Kind | Needs (all introduced) | From course word* |
+|---|---|---|---|
+| hello | reply: answer 你好！ | 你好 再见 谢谢 | 3 |
+| goodbye | reply: answer 再见！ | 你好 再见 谢谢 | 3 |
+| sorry | reply: you spilled their water | 对不起 谢谢 你好 | 5 |
+| tea | gather: 我要茶。 | 我 要 谢谢 茶 水 米饭 菜 | 65 |
+| meal | gather: 我要米饭。我要菜。 | 我 要 谢谢 茶 水 米饭 菜 | 65 |
+
+*Position in beginner-mandarin-100. A new player usually meets a greeting scene
+after floor 1 of the first run. Each scene needs only its own words (every
+option and every character of its Chinese lines; the validator enforces this),
+so no new vocabulary is silently introduced. Among eligible scenes, the one
+completed on the fewest distinct days is offered; file order breaks ties.
+
+Kinds: **reply** = choose the one right thing to say (single choice, button
+"Say it"); **gather** = choose every item asked for (button "Prepare"). The
+title, instruction and button are shared by every scene of a kind, so they never
+name the answer. A reply scene's explanation names the answer, so it only
+appears after a wrong choice; a gather scene's recipe hint is also shown at the
+first stage and with help.
 
 First completion or weak prerequisites: Chinese, pinyin, translation and grammar
 explanation. After completion with all prerequisite levels >=1: Chinese/pinyin,
@@ -17,24 +32,38 @@ At the Chinese-first stage the item pictures are hidden as well (they would give
 the answer away); asking for help shows them with pinyin and English. Item order
 is shuffled once and persisted. Help is free.
 
-Select the exact ingredients and tap Prepare. The title ("A traveler’s request"),
-instruction and button are the same for every scene so they never name the answer. Wrong combinations explain the
-recipe and allow editing. Completed scenes show food and the companion's thanks.
+Wrong choices explain and allow editing. Completed scenes show the result and,
+if the scene has one, the traveler's closing line (谢谢！ for tea/meal).
 These are short visual state changes, not a fully animated crafting simulation.
 Completion gives exactly 3 run gold; no hearts, XP, mastery credit, or protection
 charges change. Gold follows normal expedition banking. Repeat completion is a
 no-op. Skip/Leave consume the offer and move to the next floor. No farmable heal.
 
 ## Architecture and persistence
-src/game/encounters.ts: authored scenes, labels, prerequisites, presentation
-policy, offer/completion transitions, sanitizers. Mandarin is an original
-AI-assisted draft requiring teacher review; scenes are not currently included
-in the vocabulary validator/review totals. Source inspiration: Hito's World
+src/content/encounters.json: the scenes (content; format below).
+src/game/encounters.ts: scene validation (also run by validate:content),
+eligibility, presentation stage, offer/completion transitions, sanitizers.
+Option pinyin is read from words.json, the single source of tone marks.
+Mandarin is an original AI-assisted draft requiring teacher review; scenes are
+not part of the vocabulary review totals. Source inspiration: Hito's World
 https://hito.world/play (public recipe structure inspected, no code copied) and
 https://www.learnjapaneserpg.com/ (adaptive dialogue concept).
 
+### Scene format (src/content/encounters.json)
+- `id` (lower-case), `kind` (`reply` | `gather`), `speaker` (emoji).
+- `requires`: word ids from words.json the player must have been introduced to.
+  Must include every option and every character used in `zh` / `closing.zh`.
+- `situation` (optional English context, shown at every stage; must not
+  translate the answer) and/or `zh` + `py` + `en` (the traveler's line).
+- `grammar` (optional, first stage only), `note` (explanation of the answer).
+- `options`: 2-6 of `{ id, en, icon }`; `answer`: option ids (exactly one for
+  `reply`; at least one option must be wrong).
+- `result`, `resultIcon`, optional `closing` `{ zh, py, en }`.
+Broken scenes are reported by `npm run validate:content` and skipped by the game.
+Preview any scene with `/?encounter=<id>&stage=0|1|2`.
+
 src/EncounterScreen.tsx: reusable accessible dialog with focus containment,
-Escape/Leave, pressed ingredient states, result feedback, help and scrollable
+Escape/Leave, pressed option states, result feedback, help and scrollable
 body. System emoji provide temporary illustrations; no external artwork/audio.
 No pronunciation audio is added for these scenes pending voice/content review.
 
@@ -48,7 +77,7 @@ will discard the added fields: avoid rolling back an active encounter save.
 No promises are made about importing obsolete pre-expedition save formats.
 
 ## Preview link
-`/?encounter=tea|meal[&stage=0|1|2]` opens a scene on its own, without a run or the
+`/?encounter=<scene id>[&stage=0|1|2]` opens a scene on its own, without a run or the
 prerequisite words. It never changes the save; Close preview removes the parameter.
 
 ## Validation and review handoff

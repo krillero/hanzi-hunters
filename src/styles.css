@@ -1666,6 +1666,7 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .encounter .modal-head h2{font-size:20px;margin:0}
 .enc-body{padding:16px;overflow:auto;min-height:0;color:#dbe6f0;line-height:1.5}
 .enc-person{text-align:center;font-size:48px}
+.enc-situation{font-style:italic;color:#b9c8d6;text-align:center;margin:0 0 8px}
 .enc-request{padding:10px;background:#182d3a;border-radius:8px;text-align:center}
 .enc-request p{margin:4px 0}.enc-request p[lang=zh]{font-size:26px}
 .enc-items{display:grid;grid-template-columns:1fr 1fr;gap:8px}
