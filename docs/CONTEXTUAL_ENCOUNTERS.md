@@ -1,7 +1,9 @@
 # Contextual encounters
 
-Short optional scenes appear after a non-final floor summary, once per
-expedition. Existing depth progression and combat rules remain in charge.
+Short scenes appear after a non-final floor summary, once per expedition.
+They cannot be skipped (no hearts are at risk and retries are unlimited, so
+they can always be finished). There is no intro step: the scene opens straight into the
+task (a save from the old intro step, status "offer", loads as active). Existing depth progression and combat rules remain in charge.
 
 | Scene | Kind | Needs (all introduced) | From course word* |
 |---|---|---|---|
@@ -42,7 +44,8 @@ if the scene has one, the traveler's closing line (谢谢！ for tea/meal).
 These are short visual state changes, not a fully animated crafting simulation.
 Completion gives exactly 3 run gold; no hearts, XP, mastery credit, or protection
 charges change. Gold follows normal expedition banking. Repeat completion is a
-no-op. Skip/Leave consume the offer and move to the next floor. No farmable heal.
+no-op. "Continue to next floor" appears only once the scene is complete (Escape
+does the same); there is no skip or leave button. No farmable heal.
 
 ## Architecture and persistence
 src/content/encounters.json: the scenes (content; format below).
@@ -98,7 +101,7 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
 - Right: the rest of the shield shatters and the Golem loses 25% of its max HP
   (TUNING.golemTrialHit), clamped so it never kills. Wrong: resolveAnswer with
   isCorrect=false (heart, second chance or defeat; never a practice save).
-  "Not now" closes it with no effect. Mastery never changes.
+  Mastery never changes.
 ### Echo Wraith's Wail
 - Offered once per Wraith fight, when it first drops below 60% HP
   (WRAITH_ECHO_AT, the moment its echo starts), with a line of known words.
@@ -108,7 +111,7 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   valid answer.
 - Right: Run.calm = 1: the next wrong answer this expedition costs no heart
   (protection order: practice, calm, second chance; 👻 chip by the hearts).
-  Wrong: an ordinary wrong answer. "Not now": no effect. Mastery never changes.
+  Wrong: an ordinary wrong answer. Mastery never changes.
 - Why the charge is kept until used: limited to the rest of the Wraith fight,
   the bot (0.75 accuracy, 20 seeds) used only 133 charges for ~205 hearts lost
   on wrong replies (hearts lost/run 10.30 -> 10.71, wins 61% -> 55%). Kept until
@@ -124,7 +127,7 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   Distractors are characters the player knows that do not fit, preferably
   homophones (朋友 needs 友, not 有: both are yǒu).
 - Right: every remaining seal breaks (no damage: on floor 3 that saves two
-  character questions). Wrong: an ordinary wrong answer. "Not now": no effect.
+  character questions). Wrong: an ordinary wrong answer.
 - Balance (20 seeds, scribeTrial on vs off, the other trials on): 0.60
   accuracy depth-1 median 28 → 30 expeditions (quartiles 26-32 / 28-32), wins
   5% → 4%; 0.75 accuracy 5 → 6, wins 61% → 60%; hearts lost/run ≈10.2 both.
@@ -139,17 +142,58 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   他 / 她 (same pinyin, so only the character tells them apart). The picture's
   aria-label is its English description (sighted players see the same thing).
 - Right: a heavy blow, 30% of its max HP (TUNING.tricksterTrialHit), never the
-  killing blow. Wrong: an ordinary wrong answer. "Not now": no effect.
+  killing blow, plus a calm charge (Run.calm: the next wrong answer this
+  expedition costs no heart). Wrong: an ordinary wrong answer.
 - Balance (20 seeds, tricksterTrial on vs off): wins unchanged within noise
   (0.75: 60% → 59%; 0.85: 97% → 97%), hearts lost/run slightly up (0.75:
   10.18 → 10.33; 0.85: 3.01 → 3.33); 0.60 players rarely reach floor 4
   (unchanged). The hit size barely matters (0.3, 0.4 and 0.5 gave identical
   runs): below half HP the Trickster usually falls to the next right answer
   either way, so the trial saves about one answer while being as hard as a
-  trick question (the bot gets 66% right). Players can skip it; revisit after
-  playtests if it feels like a trap.
+  trick question (the bot gets 66% right). Once trials became mandatory this
+  cost more (0.75: wins 60.1% → 56.5%, hearts lost/run 9.99 → 10.39), so a
+  right answer now also gives a calm charge: 0.75 wins 60.4%, hearts lost/run
+  10.09 (see "Trials are mandatory" below).
 - Statements cannot be checked automatically for truth: reviewers must check
   that exactly one statement matches the picture.
+
+### Cavern Warden's Gauntlet
+- The final boss's shield is 2 tone wards on top of 2 ink seals, so its trial
+  has two steps that mirror them. Offered once per Warden fight, right after
+  the first tone ward breaks.
+- Step 1: a tone trial (the Golem's pool: authored and generated). Right: the
+  last tone ward breaks (shield down to WARDEN_SEALS).
+- Step 2 (follows straight away, "Next challenge"): a torn note (the Scribe's
+  pool). Right: every remaining seal breaks (shield 0).
+- Each step is answered once; a wrong step is an ordinary wrong answer and
+  the next step still follows (a defeat ends the gauntlet). No damage, no
+  calm charge. If no note can be built from the player's words, the gauntlet
+  is the tone step alone.
+- The reward depends on the fight (resolveTrial checks for the Warden), not
+  on the trial content, so both steps reuse the existing trial types.
+  Run.trial.next holds step 2 (id, shuffled order, and the trial itself when
+  generated); closeTrial starts it; step is 1 or 2. Both survive a reload, and
+  a broken next step is dropped on load.
+- Balance (20 seeds, wardenTrial on vs off, all other trials on): 0.60
+  wins 4.8% → 4.4% (they rarely reach floor 5); 0.75 wins 60.4% → 64.4%,
+  depth-5 clear median 14 → 13 expeditions, hearts lost/run 10.09 → 9.90,
+  longest fight 22 → 18 answers; 0.85 wins 97.5% → 97.0%, hearts lost/run
+  2.62 → 2.74; 0.90 99.8% → 99.5%, 0.61 → 0.74. The Warden is the longest
+  fight; the gauntlet shortens it.
+- Preview: /?trial=warden plays a sample gauntlet (both steps).
+
+### Trials are mandatory
+Boss trials cannot be skipped: there is no "Not now" button, Escape does
+nothing until the trial is answered, and closeTrial only closes an answered
+trial (a pending one stays open, also across reloads). The trials shorten the
+fight (shield, HP) or protect the player (calm), so a forced trial mostly
+replaces risk rather than adding it. Simulator (20 seeds, the bot answers
+every trial; before → after the Trickster's calm charge was added, compared with
+every trial off):
+- 0.60: wins 5.1% (off) → 4.8%, hearts lost/run 10.29 → 10.11.
+- 0.75: wins 57.8% (off) → 56.5% (forced, no calm) → 60.4% (forced, calm);
+  hearts lost/run 10.34 → 10.39 → 10.09.
+- 0.85: wins 95.9% (off) → 97.5%; hearts lost/run 3.52 → 2.62.
 
 ### Shared rules
 - Run.trial saves { id, floor, order, status, chosen }: a reload shows the same
@@ -170,10 +214,50 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
   median / win rate): 0.60 accuracy 29 → 29 expeditions, 5% → 5%; 0.75 accuracy
   7 → 7, 58% → 61%. Hearts lost per run unchanged (≈10.3).
 - Full report with all four trials on (node tools/simulate.ts --report, 5
-  seeds, noisy): win rates at .60/.75/.85/.90/1.00 = 6/56/99/100/100%; with
+  seeds, noisy; trials mandatory, Trickster calm charge): win rates at
+  .60/.75/.85/.90/1.00 = 5/66/98/100/100%; with
   every trial off they were 5/61/98/100/100%. Judge a single trial by the
   20-seed comparisons in its section, not by these medians. Use the 20-seed
   comparisons above, not these 5-seed medians, to judge a trial.
+
+## Repeat protection
+Saved.recentEvents keeps the last 12 encounters and boss trials offered
+("scene:<id>", "trial:<id>", newest first; src/game/recent.ts). Offers skip
+anything in it while something else is available, and fall back to the full
+pool only when everything is recent. An offered scene counts even if skipped.
+
+## Generated trials
+src/game/trialgen.ts builds Golem and Scribe trials from the words the player has
+met, so they rarely repeat. Authored and generated trials are drawn half and
+half for those bosses (when both exist), then recent ones are skipped. A
+generated trial is stored whole in Run.trial.data (so a reload shows the same
+one) and re-validated on load; ids start with "gen-" (reserved: trials.json
+may not use it). Every generated trial passes the same validator as authored
+ones, and tests generate every trial from the whole course with several seeds
+and check the rules below.
+
+- Golem tone trials: any known word (not particles) or any example sentence
+  from explanations.json whose characters are all known (20 sentences today).
+  Two wrong options, each changing ONE syllable's tone mark: never a written
+  third tone into a second tone (sandhi), never the syllable of 一 or 不, never
+  a toneless syllable, never into an accepted variant, a connected-speech
+  reading, or the reading of another entry written the same way (看 kàn/kān).
+  The note names the tones of the changed syllables.
+- Scribe torn notes: one character of a known multi-character word is blanked
+  (never a character that appears twice, like 谢谢). Wrong options are known
+  single-character words, same-sound or look-alike first; a wrong option may
+  not turn the word into another real word (这里 + 那 would be 那里). The
+  English meaning is shown as for authored notes. Sentences are not used:
+  a wrong character can silently make another valid sentence (很大 → 很好).
+- Coverage (default course): after 5 words about 6 tone trials, after 40 words
+  40 tone trials and 9 notes, after 100 words 115 tone trials and 33 notes.
+- The Wraith and Trickster trials stay authored (replies and true statements
+  need a person). Planned: a tagged reply bank and picture/measure-word fields
+  in words.json for templated scenes and statements.
+- Balance (20 seeds, before → after): wins 0.60 4.1% → 4.9%, 0.75 58.8% →
+  58.6%, 0.85 97.4% → 97.0%; hearts lost/run 10.25 → 10.32, 10.33 → 10.32,
+  3.33 → 3.03; trials per run about the same (the authored pool already
+  covered most fights): the change is variety, not frequency.
 
 ## Preview link
 `/?encounter=<scene id>[&stage=0|1|2]` opens a scene on its own, without a run or the
@@ -204,7 +288,7 @@ current save). It starts at a cleared floor with an encounter ready. Check:
 7. Test a normal beginner save: encounter stays hidden until words are introduced.
 
 ## Balance
-Existing simulator does not model optional encounters, so its report is a
+Existing simulator does not model the between-floor encounters, so its report is a
 baseline reference rather than proof of encounter-adjusted progression.
 The added direct reward is bounded at +3 gold per eligible completed expedition;
 no combat resources change. Earlier upgrades may still affect later progression.

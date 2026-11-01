@@ -48,7 +48,6 @@ export const GEAR: GearItem[] = [
   { name: 'Golem Plate', slot: 'Armor', icon: '🗿', bonus: '+1 max heart · +1 hint per fight', attack: 0, maxHearts: 1, hints: 1, xpPct: 0, masteryPct: 0, goldFlat: 0, boss: 'golem' },
   { name: 'Wraith Lantern', slot: 'Accessory', icon: '🏮', bonus: '+15% XP · +10% mastery damage', attack: 0, maxHearts: 0, hints: 0, xpPct: 0.15, masteryPct: 0.1, goldFlat: 0, boss: 'wraith' },
   { name: 'Scribe Brush', slot: 'Weapon', icon: '🖌️', bonus: '+3 attack', attack: 3, maxHearts: 0, hints: 0, xpPct: 0, masteryPct: 0, goldFlat: 0, boss: 'scribe' },
-  { name: 'Warden Sigil', slot: 'Accessory', icon: '🔱', bonus: '+15% mastery damage · +1 hint per fight', attack: 0, maxHearts: 0, hints: 1, xpPct: 0, masteryPct: 0.15, goldFlat: 0, boss: 'warden' },
   { name: 'Trick Mantle', slot: 'Armor', icon: '🧥', bonus: '+1 max heart · +10% mastery damage', attack: 0, maxHearts: 1, hints: 0, xpPct: 0, masteryPct: 0.1, goldFlat: 0, boss: 'trickster' }
 ]
 
@@ -91,6 +90,6 @@ export const BOSS_INFO: Record<BossId, { title: string; rule: string; phases: st
     title: 'Cavern Warden',
     rule: 'The final boss of the expedition. Two tone wards, then two ink seals block all damage: answer tone (pinyin) questions, then character questions to break them. Then it echoes the kind of question you missed most recently. Beat it to win the expedition.',
     phases: ['Tone wards: answer tone questions', 'Ink seals: answer character questions', 'Echo: your weak spot comes back'],
-    reward: 'Warden Sigil (+15% mastery damage, +1 hint per fight)'
+    reward: 'The Warden Sigil, kept forever: it grows stronger with every depth you clear'
   }
 }

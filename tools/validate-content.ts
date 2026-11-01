@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs'
 import { needsReview, validateContent } from '../src/content/validate.ts'
 import { validateEncounters } from '../src/game/encounters.ts'
-import { validateTrials } from '../src/game/trials.ts'
+import { validateTrialsFile } from '../src/game/trials.ts'
 
 const read = (f: string) => {
   try { return JSON.parse(readFileSync(new URL(`../src/content/${f}`, import.meta.url), 'utf8')) } catch (e) { console.error(`${f} is not valid JSON:`, (e as Error).message); process.exit(1) }
@@ -16,7 +16,7 @@ const encounters = read('encounters.json')
 const wordIds = Array.isArray(words) ? words.map((w: { id?: string; hanzi: string }) => w.id ?? w.hanzi) : []
 errors.push(...validateEncounters(encounters, wordIds))
 const trials = read('trials.json')
-errors.push(...validateTrials(trials, wordIds))
+errors.push(...validateTrialsFile(trials, wordIds))
 const nTrials = Array.isArray(trials?.trials) ? trials.trials.length : 0
 const nScenes = Array.isArray(encounters?.scenes) ? encounters.scenes.length : 0
 const nWords = Array.isArray(words) ? words.length : 0

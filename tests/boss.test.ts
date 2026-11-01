@@ -80,7 +80,8 @@ test('a boss kill guarantees its own item once, whatever the roll; normal fights
   assert.equal(golem.outcome, 'victory'); assert.equal(golem.loot?.name, 'Golem Plate'); assert.equal(golem.run.loadout.Armor, golem.run.loadout.Armor)
   const wraith = ask({ ...bossRun(2), enemyHp: 1 }, { roll: { drop: 0.999, item: 0.5 } })
   assert.equal(wraith.loot?.name, 'Wraith Lantern')
-  assert.equal(ask({ ...bossRun(5), enemyHp: 1, shield: 0 }, { roll: { drop: 0.999, item: 0.5 } }).loot?.name, 'Warden Sigil')
+  // The Cavern Warden ends the expedition, so it drops nothing (its reward is the Warden Sigil relic), whatever the roll.
+  for (const drop of [0, 0.5, 0.999]) assert.equal(ask({ ...bossRun(5), enemyHp: 1, shield: 0 }, { roll: { drop, item: 0.5 } }).loot, null)
   const owned = { ...bossRun(1), enemyHp: 1, shield: 0, gear: ['Golem Plate'] }
   const again = ask(owned, { roll: { drop: 0.1, item: 0 } })
   assert.ok(again.loot && !again.loot.boss, 'own item already owned: it rolls like a lucky kill for other gear')
@@ -142,11 +143,11 @@ test('every boss mistake costs at most one heart, before protection', () => {
   }
 })
 
-test('every boss has info text, an item to drop and a sprite name', () => {
+test('every boss has info text, a sprite name, and an item to drop (the Warden: the Sigil relic instead)', () => {
   for (const id of [...BOSS_ORDER, 'warden'] as const) {
     assert.ok(BOSS_INFO[id].rule.length > 20 && BOSS_INFO[id].phases.length >= 1, id)
     assert.ok(!/heal|regrow|grow back|max HP|armor/i.test(BOSS_INFO[id].rule + BOSS_INFO[id].phases.join(' ') + BOSS_INFO[id].reward), `${id}: no obsolete HP / healing text`)
     assert.equal(BOSSES[id].sprite, id === 'warden' ? 'golem' : id)
-    assert.equal(GEAR.filter(g => g.boss === id).length, 1, `${id} drops exactly one item`)
+    assert.equal(GEAR.filter(g => g.boss === id).length, id === 'warden' ? 0 : 1, `${id} drops exactly one item (the Warden none)`)
   }
 })

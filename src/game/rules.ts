@@ -43,6 +43,17 @@ export const depthRewardMult = (depth: number) => 1 + 0.25 * (Math.max(1, depth)
 export const depthBossHpMult = (depth: number) => 1 + 0.15 * (Math.max(1, depth) - 1)
 /** Gold added when an expedition is won. */
 export const victoryBonus = (depth: number) => 40 * Math.max(1, depth)
+/**
+ * Warden Sigil: a relic kept forever instead of loot (the expedition ends right after the Cavern Warden). Its level is the number
+ * of depths cleared (Meta.depthCleared), fixed for each expedition when it starts (Run.sigil). No slot, nothing to manage.
+ * Mutable only so the simulator can compare settings; the game never changes it.
+ */
+export const SIGIL = { hints: 1, masteryBase: 0.10, masteryPerLevel: 0.05 }
+export const sigilBonus = (level = 0) => level > 0
+  ? { hints: SIGIL.hints, masteryPct: SIGIL.masteryBase + SIGIL.masteryPerLevel * (level - 1) }
+  : { hints: 0, masteryPct: 0 }
+/** "+15% mastery damage · +1 hint per fight" for a Sigil level (empty below level 1). */
+export const sigilText = (level = 0) => { const s = sigilBonus(level); return level > 0 ? `+${Math.round(s.masteryPct * 100)}% mastery damage · +${s.hints} hint per fight` : '' }
 export const BASE_ATTACK = 5
 export const ATTACK_PER_LEVEL = 1
 export const xpForLevel = (level: number) => level * 30
@@ -61,12 +72,13 @@ export const SECOND_CHANCE_CAP = 3
  * Enemy HP grows this much per floor of the expedition (compounding), roughly matching the attack the player gains from levels,
  * so fights keep a similar, bounded length. Chosen with tools/simulate.ts (see docs/GAME_DESIGN.md "Balance").
  * golemTrial: 1 offers the Golem's Tone Trial, 0 never (simulator comparisons). golemTrialHit: share of the Golem's max HP a right Tone Trial answer removes (game/trials.ts; never the killing blow).
+ * wardenTrial: 1 offers the Cavern Warden's Gauntlet (tones break its last ward, a character every seal), 0 never.
  * tricksterTrial: 1 offers the Mirror Trickster's Mirrors; tricksterTrialHit: share of its max HP a right answer removes (never the killing blow).
  * scribeTrial: 1 offers the Ink Scribe's Torn Note (a right character breaks every remaining seal), 0 never.
  * wraithTrial: 1 offers the Echo Wraith's Wail (a right reply calms it: the next wrong answer this expedition costs no heart), 0 never.
  * Mutable only so the simulator can compare settings; the game never changes it.
  */
-export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1, depthEnemyHp: 0.3, golemTrial: 1, golemTrialHit: 0.25, wraithTrial: 1, scribeTrial: 1, tricksterTrial: 1, tricksterTrialHit: 0.3 }
+export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1, depthEnemyHp: 0.3, golemTrial: 1, golemTrialHit: 0.25, wraithTrial: 1, scribeTrial: 1, tricksterTrial: 1, tricksterTrialHit: 0.3, wardenTrial: 1 }
 
 export const SHIELD_SEGMENTS = 3   // the most a shield ever has
 /** Boss multipliers over the base enemy stats (before the per-floor scaling). Early floors get a gentler boss: they ramp up to the full values. */
@@ -122,7 +134,7 @@ export function enemyStats(enemies: Enemy[], floor: number, kill: number, depth 
 }
 
 /** Everything the equipped gear and upgrades give. Levels add attack only (never hearts). */
-export function playerStats(run: Pick<Run, 'level' | 'loadout'>, b: Bonuses, allGear: GearItem[]) {
+export function playerStats(run: Pick<Run, 'level' | 'loadout'> & { sigil?: number }, b: Bonuses, allGear: GearItem[]) {
   const gear = equippedGear(allGear, run.loadout)
   return {
     maxHearts: Math.min(MAX_HEARTS, START_HEARTS + b.maxHearts + gearSum(gear, 'maxHearts')),
@@ -130,7 +142,7 @@ export function playerStats(run: Pick<Run, 'level' | 'loadout'>, b: Bonuses, all
     /** Second-chance charges an expedition starts with (capped). */
     secondChances: Math.min(SECOND_CHANCE_CAP, b.secondChance),
     /** Hints a fight starts with. */
-    hints: b.hints + gearSum(gear, 'hints'),
+    hints: b.hints + gearSum(gear, 'hints') + sigilBonus(run.sigil).hints,
     potionHearts: POTION_HEARTS + b.potionHearts,
     floorHearts: FLOOR_HEARTS + b.floorHearts
   }
@@ -164,12 +176,13 @@ export function startFight(run: Run, b: Bonuses, enemies: Enemy[], allGear: Gear
 }
 
 /** A new expedition at `depth`: full hearts at the final equipped maximum (starting gear included), START_POTIONS (+ Spare Vial). */
-export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[], depth = 1): Run {
+/** `sigil`: the Warden Sigil's level for this expedition (Meta.depthCleared when it starts). */
+export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[], depth = 1, sigil = 0): Run {
   const start = allGear.filter(g => b.startGear.includes(g.name))
   const base: Run = {
     depth: Math.min(MAX_DEPTH, Math.max(1, depth)), floor: 1, kill: 0, kills: 0, level: 1, xp: 0, hearts: 0, enemyHp: 0, gold: 0, potions: START_POTIONS + b.startPotions,
     gear: start.map(g => g.name), loadout: Object.fromEntries(start.map(g => [g.slot, g.name])) as Partial<Record<GearSlot, string>>, streak: 0, hintsLeft: 0, secondLeft: 0,
-    recoveredFloor: 0, phase: 'fighting', reward: noReward, pendingXp: 0, shield: 0
+    recoveredFloor: 0, phase: 'fighting', reward: noReward, pendingXp: 0, shield: 0, sigil: Math.min(MAX_DEPTH, Math.max(0, Math.floor(sigil)))
   }
   const s = playerStats(base, b, allGear)
   return startFight({ ...base, hearts: s.maxHearts, secondLeft: s.secondChances }, b, enemies, allGear)
@@ -221,7 +234,7 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   // A correct answer attacks; a wrong answer never damages the enemy.
   let damage = 0, comboHit = false
   if (isCorrect) {
-    let pct = MASTERY_DAMAGE[Math.min(i.lv, MASTERY_DAMAGE.length - 1)] + (i.lv >= 1 ? b.masteryDmgPct : 0) + gearSum(gear, 'masteryPct')
+    let pct = MASTERY_DAMAGE[Math.min(i.lv, MASTERY_DAMAGE.length - 1)] + (i.lv >= 1 ? b.masteryDmgPct : 0) + gearSum(gear, 'masteryPct') + sigilBonus(run.sigil).masteryPct
     if (run.streak >= 2) { pct += b.streakDmgPct; comboHit = b.streakDmgPct > 0 }
     if (run.enemyHp <= foe.hp * 0.35) pct += b.executeDmgPct
     damage = Math.round((8 + stats.attack) * (1 + pct))
@@ -259,7 +272,9 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
     const pool = unowned.filter(g => !g.boss)
     const bossItem = foe.boss ? unowned.find(g => g.boss === foe.boss) : undefined
     let item: GearItem | undefined
-    if (bossItem) item = bossItem
+    // The Cavern Warden ends the expedition: loot would vanish at once, so it drops nothing (its reward is the Warden Sigil).
+    if (foe.boss === FINAL_BOSS) item = undefined
+    else if (bossItem) item = bossItem
     else if (pool.length > 0 && i.roll.drop < dropChance) item = pool[Math.min(pool.length - 1, Math.floor(i.roll.item * pool.length))]
     if (item) {
       // One item per slot, no bag: an empty slot or a pure upgrade is worn at once; a pure downgrade is left behind;

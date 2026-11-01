@@ -407,3 +407,12 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Mirror Trickster's Mirrors: the first time the Trickster drops below half HP, three statements about a picture (有/没有, numbers, 是/不是, 他/她); pick the true one. Right: a heavy blow (30 % max HP, never the killing blow). Wrong: an ordinary wrong answer. Small heart cost for strong players in the simulator (documented); skippable.
 - Leaving an encounter reuses the normal next-enemy path (keeps the FLOOR banner).
 - 178 tests passed, build passes, one 360 px browser check passed; see docs/CONTEXTUAL_ENCOUNTERS.md.
+
+## Varied encounters and generated trials (2026-11-01)
+- Repeat protection: the last 12 scenes/trials shown (`Saved.recentEvents`) are skipped while others are available.
+- Generated Golem tone trials (any known word or fully known example sentence) and Scribe torn notes (any known multi-character word), mixed half and half with the authored ones; stored in `run.trial.data` and re-validated on load. Safety rules (no sandhi or homograph readings as wrong options, no wrong option that makes a real word) are checked by exhaustive tests.
+- Balance unchanged within noise (20-seed simulator comparison in `docs/CONTEXTUAL_ENCOUNTERS.md`).
+- Encounters and boss trials can no longer be skipped (no Skip/Leave/"Not now"; Escape only continues after completion). A right Trickster answer now also gives a calm charge, because the forced trial otherwise cost 0.75-accuracy players wins (simulator, `docs/CONTEXTUAL_ENCOUNTERS.md`).
+- Encounters open straight into the scene: the intro popup ("Help the traveler") is gone, since it only existed to offer a skip. Saves waiting on it load into the scene.
+- Cavern Warden's Gauntlet: right after its first tone ward breaks, a tone trial (right: the last ward breaks) and then a torn note (right: every remaining seal breaks), reusing the Golem/Scribe pools including generated ones. Preview `/?trial=warden`. Simulator: 0.75 wins 60.4% → 64.4%, longest fight 22 → 18 answers.
+- Warden Sigil is a relic kept forever instead of loot (the Warden ends the expedition, so an item vanished at once): the Warden drops nothing; the Sigil's level is the number of depths cleared (+1 hint per fight, +10 % mastery damage, +5 % per further level), fixed per expedition (`Run.sigil`). Shown at camp, in the bonus list and on the first-clear victory card. Simulator: 0.75 wins 64.4 % → 68.8 %, expeditions about 6–7 % shorter.

@@ -1,8 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import trialsJson from '../src/content/trials.json' with { type: 'json' }
-import { TRIALS, validateTrials, offerTrial, resolveTrial, closeTrial, cleanTrial, trialById, optionKeys } from '../src/game/trials.ts'
-import { WRAITH_ECHO_AT, enemyStats, newRun, resolveAnswer, shieldFor, startFight } from '../src/game/rules.ts'
+import { TRIALS, validateTrials, validateTrialsFile, offerTrial, resolveTrial, closeTrial, cleanTrial, trialById, trialFor, optionKeys } from '../src/game/trials.ts'
+import { WARDEN_SEALS, WRAITH_ECHO_AT, enemyStats, newRun, resolveAnswer, shieldFor, startFight } from '../src/game/rules.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import { NO_BONUSES } from '../src/game/upgrades.ts'
 import { ENEMIES, GEAR, WORDS } from '../src/data.ts'
@@ -19,7 +19,8 @@ const golem = (over: Partial<Run> = {}): Run => {
 const io = (run: Run, chosen: string) => ({ run, bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, roll: { drop: 0.99, item: 0.5 }, chosen })
 
 test('trials.json is valid, loads completely and only uses early course words', () => {
-  assert.deepEqual(validateTrials(trialsJson, wordIds), [])
+  assert.deepEqual(validateTrialsFile(trialsJson, wordIds), [])
+  assert.match(validateTrialsFile({ trials: [{ ...trialsJson.trials[0], id: 'gen-hello' }] }, wordIds).join(), /reserved/)
   assert.equal(TRIALS.length, trialsJson.trials.length)
 })
 
@@ -42,7 +43,7 @@ test('offered once per Golem fight, after the first shield segment breaks, with 
 })
 
 test('a right answer shatters the shield and staggers the Golem without killing it; answering twice does nothing', () => {
-  const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const res = resolveTrial(io(run, t.answer))!
   assert.ok(res.correct); assert.equal(res.run.shield, 0); assert.equal(res.run.hearts, run.hearts)
   assert.ok(res.hit > 0 && res.run.enemyHp === run.enemyHp - res.hit && res.run.enemyHp >= 1)
@@ -52,7 +53,7 @@ test('a right answer shatters the shield and staggers the Golem without killing 
 })
 
 test('a wrong answer is an ordinary wrong answer: a heart (or a second chance), the shield holds, defeat at zero', () => {
-  const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const wrong = t.options.find(o => o !== t.answer)!
   const res = resolveTrial(io({ ...run, secondLeft: 0 }, wrong))!
   assert.equal(res.correct, false); assert.equal(res.run.hearts, run.hearts - 1); assert.equal(res.run.shield, run.shield); assert.equal(res.run.trial?.status, 'answered')
@@ -62,10 +63,11 @@ test('a wrong answer is an ordinary wrong answer: a heart (or a second chance), 
   assert.equal(last.outcome, 'defeat'); assert.equal(last.run.phase, 'defeat')
 })
 
-test('skipping changes nothing but the trial status; a pending trial survives a reload; junk is dropped', () => {
+test('a pending trial cannot be closed unanswered and survives a reload; an answered one closes; junk is dropped', () => {
   const run = offerTrial(golem(), known, ENEMIES, () => 0.7)
-  const skipped = closeTrial(run)
-  assert.deepEqual({ ...skipped, trial: undefined }, { ...run, trial: undefined }); assert.equal(skipped.trial?.status, 'done')
+  assert.equal(closeTrial(run), run)
+  const answered = resolveTrial(io(run, trialFor(run.trial)!.answer))!.run
+  assert.equal(closeTrial(answered).trial?.status, 'done')
   const s = sanitizeSave(null); s.run = run; s.mastery = known
   assert.deepEqual(sanitizeSave(JSON.parse(JSON.stringify(s))).run!.trial, run.trial)
   assert.equal(cleanTrial('junk'), undefined)
@@ -82,7 +84,7 @@ const wraith = (share: number, over: Partial<Run> = {}): Run => {
 test('the Wraith offers its trial once it drops below its echo threshold, never above it', () => {
   assert.equal(offerTrial(wraith(0.9), known, ENEMIES).trial, undefined)
   const t = offerTrial(wraith(WRAITH_ECHO_AT - 0.05), known, ENEMIES, () => 0).trial!
-  assert.equal(trialById(t.id)!.boss, 'wraith'); assert.equal(t.floor, 2); assert.equal(t.status, 'pending')
+  assert.equal(trialFor(t)!.boss, 'wraith'); assert.equal(t.floor, 2); assert.equal(t.status, 'pending')
 })
 
 test('the validator checks reply trials: every shown character known, options complete', () => {
@@ -94,7 +96,7 @@ test('the validator checks reply trials: every shown character known, options co
 })
 
 test('a right reply calms the Wraith: the next wrong answer costs no heart, then hearts count again', () => {
-  const run = offerTrial(wraith(0.5), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(wraith(0.5), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const calmed = resolveTrial(io({ ...run, secondLeft: 0 }, t.answer))!
   assert.ok(calmed.correct); assert.equal(calmed.run.calm, 1); assert.equal(calmed.run.enemyHp, run.enemyHp); assert.equal(calmed.run.hearts, run.hearts)
   const wrong1 = resolveAnswer({ run: closeTrial(calmed.run), bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, lv: 1, isCorrect: false, roll: { drop: 0.99, item: 0.5 } })
@@ -130,7 +132,7 @@ test('the Scribe offers its torn note right after its first seal breaks, not bef
   assert.equal(offerTrial(scribe(max), known, ENEMIES).trial, undefined)
   assert.equal(offerTrial(scribe(max - 2), known, ENEMIES).trial, undefined)
   const t = offerTrial(scribe(max - 1), known, ENEMIES, () => 0).trial!
-  assert.equal(trialById(t.id)!.boss, 'scribe'); assert.equal(t.status, 'pending')
+  assert.equal(trialFor(t)!.boss, 'scribe'); assert.equal(t.status, 'pending')
 })
 
 test('the validator checks torn notes: one blank, Chinese options, known characters', () => {
@@ -143,7 +145,7 @@ test('the validator checks torn notes: one blank, Chinese options, known charact
 })
 
 test('a right character breaks every remaining seal without damage; a wrong one is an ordinary wrong answer', () => {
-  const run = offerTrial(scribe(shieldFor(3, 'scribe') - 1), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(scribe(shieldFor(3, 'scribe') - 1), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const res = resolveTrial(io(run, t.answer))!
   assert.ok(res.correct); assert.equal(res.run.shield, 0); assert.equal(res.run.enemyHp, run.enemyHp); assert.equal(res.run.hearts, run.hearts)
   const miss = resolveTrial(io({ ...run, secondLeft: 0 }, optionKeys(t).find(o => o !== t.answer)!))!
@@ -159,7 +161,7 @@ const trickster = (share: number, over: Partial<Run> = {}): Run => {
 test('the Trickster offers its mirrors once below half HP; the validator needs a picture and full statements', () => {
   assert.equal(offerTrial(trickster(0.8), known, ENEMIES).trial, undefined)
   const t = offerTrial(trickster(0.4), known, ENEMIES, () => 0).trial!
-  assert.equal(trialById(t.id)!.boss, 'trickster')
+  assert.equal(trialFor(t)!.boss, 'trickster')
   const her = trialsJson.trials.find(x => x.id === 'trickster-her')!
   const bad = (patch: object) => validateTrials({ trials: [{ ...her, ...patch }] }, wordIds).join()
   assert.match(bad({ picture: '' }), /picture is required/)
@@ -168,11 +170,69 @@ test('the Trickster offers its mirrors once below half HP; the validator needs a
 })
 
 test('the true statement lands a heavy blow that never kills; a false one is an ordinary wrong answer', () => {
-  const run = offerTrial(trickster(0.45), known, ENEMIES, () => 0), t = trialById(run.trial!.id)!
+  const run = offerTrial(trickster(0.45), known, ENEMIES, () => 0), t = trialFor(run.trial)!
   const hp = enemyStats(ENEMIES, 4, 3, run.depth).hp
   const res = resolveTrial(io(run, t.answer))!
-  assert.ok(res.correct); assert.equal(res.hit, Math.min(run.enemyHp - 1, Math.round(hp * 0.3))); assert.equal(res.run.hearts, run.hearts)
+  assert.ok(res.correct); assert.equal(res.hit, Math.min(run.enemyHp - 1, Math.round(hp * 0.3))); assert.equal(res.run.hearts, run.hearts); assert.equal(res.run.calm, 1)
   assert.equal(resolveTrial(io({ ...run, enemyHp: 2 }, t.answer))!.run.enemyHp, 1)
   const miss = resolveTrial(io({ ...run, secondLeft: 0 }, optionKeys(t).find(o => o !== t.answer)!))!
   assert.equal(miss.run.hearts, run.hearts - 1); assert.equal(miss.run.enemyHp, run.enemyHp)
+})
+
+/** The floor-5 Cavern Warden fight with the given number of shield segments (2 tone wards on top of 2 ink seals). */
+const warden = (segments: number, over: Partial<Run> = {}): Run => {
+  const r = newRun(NO_BONUSES, GEAR, ENEMIES)
+  return { ...r, floor: 5, kill: 3, phase: 'fighting', enemyHp: enemyStats(ENEMIES, 5, 3, r.depth).hp, shield: segments, ...over }
+}
+const everyWord: Mastery = Object.fromEntries(WORDS.map(w => [w.id, { lv: 1, ok: 0 }]))
+
+test('the Warden offers its gauntlet right after the first ward breaks: a tone step, then a note step', () => {
+  const max = shieldFor(5, 'warden')
+  assert.equal(offerTrial(warden(max), everyWord, ENEMIES).trial, undefined)
+  assert.equal(offerTrial(warden(max - 2), everyWord, ENEMIES).trial, undefined)
+  const t = offerTrial(warden(max - 1), everyWord, ENEMIES, () => 0.3).trial!
+  assert.equal(t.step, 1); assert.equal(trialFor(t)!.boss, 'golem'); assert.equal(trialFor(t.next)!.boss, 'scribe')
+  // Only single-character words known: no note can be built, so the gauntlet is the tone step alone.
+  const singles: Mastery = Object.fromEntries(WORDS.filter(w => [...w.hanzi].length === 1 && TRIALS.every(x => x.boss !== 'scribe' || !x.requires.includes(w.id))).map(w => [w.id, { lv: 1, ok: 0 }]))
+  const lone = offerTrial(warden(max - 1), singles, ENEMIES, () => 0.3).trial
+  assert.ok(lone && !lone.next)
+})
+
+test('gauntlet: right tones break the last ward, the note follows, a right character breaks every seal, then it ends', () => {
+  let run = offerTrial(warden(shieldFor(5, 'warden') - 1), everyWord, ENEMIES, () => 0.3)
+  const tone = trialFor(run.trial)!
+  let res = resolveTrial(io(run, tone.answer))!
+  assert.ok(res.correct); assert.equal(res.run.shield, WARDEN_SEALS); assert.equal(res.run.enemyHp, run.enemyHp)
+  run = closeTrial(res.run)
+  assert.equal(run.trial?.status, 'pending'); assert.equal(run.trial?.step, 2)
+  const note = trialFor(run.trial)!
+  assert.equal(note.boss, 'scribe')
+  res = resolveTrial(io(run, note.answer))!
+  assert.equal(res.run.shield, 0)
+  run = closeTrial(res.run)
+  assert.equal(run.trial?.status, 'done'); assert.equal(closeTrial(run), run)
+  assert.equal(offerTrial(run, everyWord, ENEMIES), run)
+})
+
+test('gauntlet: a wrong step is an ordinary wrong answer and the next step still follows; defeat ends it', () => {
+  const run = offerTrial(warden(shieldFor(5, 'warden') - 1), everyWord, ENEMIES, () => 0.3), tone = trialFor(run.trial)!
+  const wrong = optionKeys(tone).find(o => o !== tone.answer)!
+  const miss = resolveTrial(io({ ...run, secondLeft: 0 }, wrong))!
+  assert.equal(miss.run.hearts, run.hearts - 1); assert.equal(miss.run.shield, run.shield)
+  const after = closeTrial(miss.run)
+  assert.equal(after.trial?.step, 2)
+  assert.equal(resolveTrial(io(after, trialFor(after.trial)!.answer))!.run.shield, 0)
+  const dead = resolveTrial(io({ ...run, hearts: 1, secondLeft: 0 }, wrong))!
+  assert.equal(dead.outcome, 'defeat'); assert.equal(closeTrial(dead.run).trial?.status, 'done')
+})
+
+test('gauntlet survives a reload at every step; a broken next step is dropped', () => {
+  const run = offerTrial(warden(shieldFor(5, 'warden') - 1), everyWord, ENEMIES, () => 0.3)
+  const s = sanitizeSave(null); s.mastery = everyWord
+  for (const r of [run, resolveTrial(io(run, trialFor(run.trial)!.answer))!.run, closeTrial(resolveTrial(io(run, trialFor(run.trial)!.answer))!.run)]) {
+    s.run = r
+    assert.deepEqual(sanitizeSave(JSON.parse(JSON.stringify(s))).run!.trial, r.trial)
+  }
+  assert.equal(cleanTrial({ ...run.trial, next: { id: 'nope', order: [] } })!.next, undefined)
+  assert.equal(cleanTrial({ ...run.trial, next: { ...run.trial!.next!, order: ['x'] } })!.next, undefined)
 })

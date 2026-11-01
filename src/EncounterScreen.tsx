@@ -14,7 +14,8 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave, 
   const py = state.stage < 2 || state.help, english = state.stage === 0 || state.help, pictures = py
   const onKey = (e: KeyboardEvent) => {
     e.stopPropagation()
-    if (e.key === 'Escape') { e.preventDefault(); onLeave() }
+    // Encounters cannot be skipped: Escape only continues once the scene is complete (or closes a preview).
+    if (e.key === 'Escape') { e.preventDefault(); if (preview || state.status === 'complete') onLeave() }
     if (e.key === 'Tab') {
       const buttons = Array.from(box.current!.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'))
       const first = buttons[0], last = buttons[buttons.length - 1]
@@ -30,10 +31,7 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave, 
     <div className="modal-head"><h2 id="enc-title">{text.title}</h2></div>
     <div className="enc-body">
       <div className="enc-person" aria-hidden="true">{scene.speaker} {state.status === 'complete' ? scene.resultIcon : '🏕️'}</div>
-      {state.status === 'offer' ? <>
-        <p>A traveler stops you on the road. Answer them using the Chinese you have met.</p>
-        <p>No hearts at risk. Complete the encounter for {ENCOUNTER_GOLD} gold. Translation is always available.</p>
-      </> : state.status === 'complete' ? <div role="status">
+      {state.status === 'complete' ? <div role="status">
         {scene.closing && <><h3 lang="zh">{scene.closing.zh}</h3><p>{scene.closing.py} — {scene.closing.en}</p></>}
         <p>{scene.result}</p>
         <strong>{preview ? 'Preview · nothing saved' : `+${ENCOUNTER_GOLD} expedition gold · saved`}</strong>
@@ -58,9 +56,8 @@ export default function EncounterScreen({ state, onChange, onComplete, onLeave, 
         <button className="bar-btn main" onClick={submit}>{text.action}</button>
       </>}
     </div>
-    <div className="enc-footer">
-      {state.status === 'offer' && <button className="bar-btn main" onClick={() => onChange({ ...state, status: 'active' })}>Help the traveler</button>}
-      <button className="bar-btn ghost" onClick={onLeave}>{preview ? 'Close preview' : state.status === 'complete' ? 'Continue to next floor' : state.status === 'offer' ? 'Skip and continue' : 'Leave and continue'}</button>
-    </div>
+    {(preview || state.status !== 'active') && <div className="enc-footer">
+      {(preview || state.status === 'complete') && <button className={`bar-btn ${state.status === 'complete' ? 'main' : 'ghost'}`} onClick={onLeave}>{preview ? 'Close preview' : 'Continue to next floor'}</button>}
+    </div>}
   </div></div>
 }

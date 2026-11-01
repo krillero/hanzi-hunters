@@ -1,7 +1,8 @@
 // Balance simulator for expeditions: node tools/simulate.ts [accuracy] [expeditions]   (needs Node 22.18+)
 // Also: node tools/simulate.ts --report   compares new and upgraded players at several accuracies.
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS } from '../src/data.ts'
-import { closeTrial, offerTrial, optionKeys, resolveTrial, trialById } from '../src/game/trials.ts'
+import { closeTrial, offerTrial, optionKeys, resolveTrial, trialFor, trialKey } from '../src/game/trials.ts'
+import { noteRecent } from '../src/game/recent.ts'
 import { MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { updateMastery } from '../src/game/mastery.ts'
@@ -41,6 +42,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   let course: CourseProgress = emptyCourse()
   let peak: PeakLevels = {}
   const practiced = new Set<string>()
+  let recent: string[] = []   // Saved.recentEvents: trials shown lately
   const byId = wordMap(WORDS)
   // Like the game: introduction cards (curriculum order) at the start of each fight, then questions about known entries only.
   // The intro question shows the meaning, so it is always answered right; the next question about the word is its protected practice.
@@ -53,7 +55,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
     const b = computeBonuses(meta.upgrades)
     introduce()
     // the bot always plays the deepest depth it has unlocked
-    let run = newRun(b, GEAR, ENEMIES, unlockedDepth(meta.depthCleared)), word = pick(null), answers = 0
+    let run = newRun(b, GEAR, ENEMIES, unlockedDepth(meta.depthCleared), meta.depthCleared), word = pick(null), answers = 0
     const startHearts = run.hearts, potionHearts = playerStats(run, b, GEAR).potionHearts
     const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0, trials: 0, trialsRight: 0, calmSaves: 0 }
     let fightAnswers = 0, longestFight = 0
@@ -75,16 +77,18 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       practiced.add(word.id); answers++; fightAnswers++; longestFight = Math.max(longestFight, fightAnswers)
       stat.heartsLost += r.heartsLost; stat.practiceSaves += r.practiceSaved ? 1 : 0; stat.secondChanceSaves += r.savedBySecondChance ? 1 : 0; stat.calmSaves += r.savedByCalm ? 1 : 0; stat.heartsRestored += r.heartsRestored
       run = r.run
-      // Boss trials: the bot takes them with more than 2 hearts left. The Golem's is a tone question (as hard as its seal
+      // Boss trials cannot be skipped. The Golem's is a tone question (as hard as its seal
       // questions), the Scribe's a character question (as hard as its seal questions), the Trickster's as hard as its trick questions; the Wraith's is a reply (plain accuracy).
       {
-        run = offerTrial(run, mastery, ENEMIES, rng)
-        const t = run.trial?.status === 'pending' ? trialById(run.trial.id) : undefined
-        if (t && run.hearts <= 2) run = closeTrial(run)   // a careful player says "Not now" when a heart matters
-        else if (t) {
+        run = offerTrial(run, mastery, ENEMIES, rng, recent)
+        if (run.trial?.status === 'pending' && run.trial.floor === run.floor) recent = noteRecent(recent, trialKey(run.trial.id))
+        // Every step is answered (the Warden's Gauntlet has two: closing the first starts the second).
+        for (let t = run.trial?.status === 'pending' ? trialFor(run.trial) : undefined; t; t = run.trial?.status === 'pending' ? trialFor(run.trial) : undefined) {
           const right = rng() < (accuracy >= 1 ? 1 : Math.min(0.98, accuracy - (t.boss === 'golem' ? 0.06 : t.boss === 'scribe' ? 0.04 : t.boss === 'trickster' ? 0.08 : 0)))
           const tr = resolveTrial({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, roll: { drop: rng(), item: rng() }, chosen: right ? t.answer : optionKeys(t).find(o => o !== t.answer)! })
-          if (tr) { run = closeTrial(tr.run); answers++; stat.trials++; stat.trialsRight += tr.correct ? 1 : 0; stat.heartsLost += tr.heartsLost; stat.secondChanceSaves += tr.savedBySecondChance ? 1 : 0 }
+          if (!tr) break
+          run = closeTrial(tr.run); answers++; stat.trials++; stat.trialsRight += tr.correct ? 1 : 0; stat.heartsLost += tr.heartsLost; stat.secondChanceSaves += tr.savedBySecondChance ? 1 : 0
+          if (run.trial?.status === 'pending') recent = noteRecent(recent, trialKey(run.trial.id))
         }
       }
       mastery = updateMastery(mastery, word.id, ok); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)

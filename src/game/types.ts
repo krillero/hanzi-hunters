@@ -17,6 +17,8 @@ export type Run = {
   trial?: import('./trials').TrialState
   /** Echo Wraith calmed by its trial: the next wrong answer this expedition costs no heart (0 or 1; kept until used). */
   calm?: number
+  /** Warden Sigil level for this expedition (depths cleared when it started; see rules.sigilBonus). Old saves: 0. */
+  sigil?: number
   /** The expedition's depth (1..MAX_DEPTH): harder question mix, more gold, tougher final boss. */
   depth: number
   floor: number; kill: number; kills: number
@@ -70,4 +72,6 @@ export type Saved = {
   practiced: string[]
   /** Local dates (YYYY-MM-DD, up to 30) on which each contextual encounter was completed; drives its support stage. */
   encounterHistory?: import('./encounters').History
+  /** The last encounters and boss trials shown ("scene:<id>" / "trial:<id>", newest first): offers skip them while they can. */
+  recentEvents?: string[]
 }

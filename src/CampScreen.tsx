@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BRANCHES, branchNodes, nodeState, upgradeCost, type UpgradeNode } from './game/upgrades'
 import type { CourseStatus } from './game/course'
 import type { Saved } from './game/types'
-import { DEPTHS, MAX_DEPTH, unlockedDepth, victoryBonus } from './game/rules'
+import { DEPTHS, MAX_DEPTH, sigilText, unlockedDepth, victoryBonus } from './game/rules'
 
 type Props = {
   save: Saved
@@ -48,6 +48,7 @@ export default function CampScreen({ save, course, runMilestones, onBuy, onStart
         <div className="camp-depth-top"><span>DEPTH {chosen} OF {MAX_DEPTH}</span><span>Win: +{victoryBonus(chosen)} gold</span></div>
         <strong>{info.name}</strong>
         <small>{info.note}{chosen < maxDepth ? ' · cleared' : ''}</small>
+        <small className="camp-sigil">{meta.depthCleared > 0 ? <>🔱 Warden Sigil Lv {meta.depthCleared}: {sigilText(meta.depthCleared)}</> : <>🔱 Beat the Cavern Warden to earn the Warden Sigil, kept forever</>}</small>
         {maxDepth > 1 && <div className="camp-depth-pick" role="radiogroup" aria-label="Choose a depth">
           {DEPTHS.slice(0, maxDepth).map((d, i) => <button key={d.name} role="radio" aria-checked={chosen === i + 1} aria-label={`Depth ${i + 1}: ${d.name}`} className={chosen === i + 1 ? 'on' : ''} onClick={() => setDepth(i + 1)}>{i + 1}</button>)}
         </div>}

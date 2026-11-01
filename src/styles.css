@@ -1655,6 +1655,7 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .camp-depth{display:flex;flex-direction:column;gap:6px;padding:16px;border:1px solid #5b4a26;border-radius:12px;background:#1a1710}
 .camp-depth-top{display:flex;justify-content:space-between;gap:10px;font:11px 'DM Mono',monospace;letter-spacing:1.2px;color:#c9b27a}
 .camp-depth strong{font-size:18px}.camp-depth small{font-size:13px;color:#c9b99a}
+.camp-depth small.camp-sigil{color:var(--gold)}
 .camp-depth-pick{display:flex;gap:6px;margin-top:6px}
 .camp-depth-pick button{min-width:44px;min-height:44px;border:1px solid #5b4a26;border-radius:8px;background:transparent;color:#e9dcc0;font:500 15px 'DM Mono',monospace}
 .camp-depth-pick button.on{border-color:var(--gold);background:#2a2316;color:var(--gold)}

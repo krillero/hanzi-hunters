@@ -106,3 +106,14 @@ export function toneVariants(pinyin: string): string[] {
   const [base, tone] = MARKS[chars[idx]]
   return [1, 2, 3, 4].filter(t => t !== tone).map(t => chars.map((c, i) => (i === idx ? TONES[base][t - 1] : c)).join(''))
 }
+
+/** One syllable with its tone mark moved to tone 1-4 ("hǎo", 4 -> "hào"); null for a toneless syllable. Keeps a leading capital. */
+export function retoneSyllable(text: string, tone: 1 | 2 | 3 | 4): string | null {
+  const chars = [...text.normalize('NFC')]
+  const idx = chars.findIndex(c => MARKS[c.toLowerCase()])
+  if (idx === -1) return null
+  const lower = chars[idx].toLowerCase(), [base] = MARKS[lower]
+  const next = TONES[base][tone - 1]
+  chars[idx] = chars[idx] === lower ? next : next.toUpperCase()
+  return chars.join('')
+}

@@ -8,7 +8,7 @@ export const RARITY_BY_NAME: Record<string, Rarity> = {
   'Copper Blade': 'common', 'Mossy Vest': 'common', 'Windrunner Boots': 'common', 'Lucky Coin': 'common',
   'Scholar Charm': 'rare', 'Jade Pendant': 'rare', 'Guardian Helm': 'rare',
   'Moonlit Katana': 'epic',
-  'Golem Plate': 'epic', 'Wraith Lantern': 'epic', 'Scribe Brush': 'epic', 'Trick Mantle': 'epic', 'Warden Sigil': 'epic'   // boss-only gear
+  'Golem Plate': 'epic', 'Wraith Lantern': 'epic', 'Scribe Brush': 'epic', 'Trick Mantle': 'epic'   // boss-only gear
 }
 
 export const rarityOf = (item: Pick<GearItem, 'name'> | string): Rarity => RARITY_BY_NAME[typeof item === 'string' ? item : item.name] ?? 'common'
