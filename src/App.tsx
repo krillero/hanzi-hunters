@@ -913,7 +913,17 @@ export default function App() {
                     <strong>{feedback.correct ? '✓ Correct' : 'Not quite'}{feedback.correct && feedback.word.variants.length > 0 && <small className="result-also"> also {feedback.word.variants.join(', ')}</small>}</strong>
                   </div>
                   {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−1 heart · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : 'Practice · no heart lost'}</p>}
-                  {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
+                  {!feedback.correct && (() => {
+                    // The right answer is on the card above; this box shows what was picked, big and clear. Its size follows its
+                    // length (one character, a word, a phrase or sentence), and a known word picked by mistake gets its own gloss.
+                    const chosen = feedback.chosen, len = [...chosen].length
+                    const mixedUp = question.optionsAreHanzi ? WORDS.find(w => w.hanzi === chosen) : undefined
+                    return <div className="result-chosen" role="note">
+                      <small>You chose</small>
+                      <span className={`chosen-text ${len <= 2 ? 'xl' : len <= 8 ? 'l' : len <= 20 ? 'm' : 's'}`} lang={question.optionsAreHanzi ? 'zh' : question.ask === 'pinyin' ? 'zh-Latn' : undefined}>{chosen}</span>
+                      {mixedUp && <span className="chosen-gloss">{mixedUp.pinyin} · {mixedUp.meaning}</span>}
+                    </div>
+                  })()}
                   <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {

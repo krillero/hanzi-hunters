@@ -424,3 +424,4 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Old saves: entries without a date keep their level (max 4) and are due at once, so they are re-checked instead of wiped.
 - Milestone badges removed (logic, toast, Settings list); `habit.badges` stays in saves, unused.
 - Simulator plays two expeditions per day; balance essentially unchanged (20 seeds: wins within 3 points, same depth-clear medians); words mastered after 20 days drop sharply (0.85: 69 → 23), as intended.
+- Wrong-answer recap: no more small "Answer: … (you chose ~~…~~)" line. The card already shows the answer; the recap now shows "You chose" in a clear red box, sized by length (single character 36 px down to 17 px for sentences, wrapping), with the pinyin and meaning of a known word picked by mistake. No strike-through.

@@ -86,6 +86,8 @@ Not yet: per-kind history across sessions, sentence/context questions (see the r
 - New entries come in curriculum order (see below); no new entry is introduced while 4 entries are still at level 0, and entries met may exceed entries at level 1+ by at most 6.
 
 ## Flow after an answer
+A wrong answer's recap does not repeat the right answer (the card above shows it). It shows **what you chose** in its own red box, sized by length (one character big; words, pinyin, phrases and sentences smaller and wrapped), with the pinyin and meaning when it is a word you know, so the mix-up itself is taught.
+
 Right answer: the card reveals the word in place and the game continues by itself (Quick 1 s / Relaxed 2.5 s / Off in settings); after a normal kill the next monster follows ~1.5 s later. Always paused: wrong answer, defeat, floor cleared (elite). Rewards are shown in the scene and counters, loot sets a NEW dot on Gear. Sound off = no audio and no listening questions.
 
 ## Upgrade tree (permanent; 4 branches × 5 tiers, bought in order)
