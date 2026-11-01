@@ -1714,3 +1714,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .camp-familiar{margin:0;font-size:15px;color:#dbe6f0}.camp-familiar b{font-size:18px;color:#8ee0a9}.camp-familiar em{font-style:normal;color:#8ee0a9}.camp-familiar span{color:#93a2b6}
 .camp-next{margin:0;padding:8px 10px;border-radius:8px;background:#1d2d40;color:#f1e7cf;font-size:14px}
 .wordbook-summary{margin:0 0 8px;font-size:13px;color:#93a2b6}
+/* The recap never cuts an explanation short (the box scrolls instead); a folded one opens with Why? */
+.in-battle .answer-feedback .result-note{display:block;-webkit-line-clamp:unset;overflow:visible}
+.result-why{align-self:flex-start;min-height:36px;padding:4px 10px;border:1px solid #3c5068;border-radius:8px;background:transparent;color:#cfe0f0;font-size:14px}
