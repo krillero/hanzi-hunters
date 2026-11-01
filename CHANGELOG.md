@@ -1,5 +1,12 @@
 # Changelog / test log
 
+## 2026-11-01 — New-word card: less clutter (branch ccr-2aecd5ae-3v8bz2)
+
+- The large monospace line "Polite everyday expressions · Lesson 1 · 2 of 5 introduced" above the word is gone. The header now reads "New word · 2 of 3" with a small "Lesson 1 · Polite everyday expressions" under it (it replaces the "Word" label; the heading says "New character" / "New grammar word" for those kinds). The second "x of 5 introduced" counter was dropped from the card; camp still shows lesson progress.
+- **Lesson numbers count across the whole course.** They were counted within each unit, so with one lesson per unit (`beginner-mandarin-100`) every lesson was "Lesson 1". `LessonRef.number` (1-based, course-wide), `lessonLabel()`; camp line is now "Lesson 5 · Having, negating, and belonging · 2 of 5 introduced".
+- "Examples (not tested)" is now "Examples". It was fixed UI text meaning "not turned into questions", not a review flag, and read as "unchecked".
+- `npm test` 155 pass, `npm run build` pass; card checked in Chromium at 412 px and 320 px (no horizontal scroll, no console errors).
+
 ## 2026-11-01 — Vocabulary toolkit (branch ccr-2aecd5ae-3v8bz2)
 
 - **`docs/vocabulary-toolkit/`:** workflow, sources and evidence used to pick the first 100 words, so the next batch can start from it (`README.md`, `NEXT-BATCH-PROMPT.md` for an in-repo agent or an outside assistant). The 4 MB CC-CEDICT snapshot is not committed: `tools/fetch-cedict.sh` downloads a fresh one (git-ignored). The nested first-100 ZIP is unpacked to its reports only (`first-100/`).

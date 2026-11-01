@@ -64,11 +64,12 @@ export const isLongTermMastered = (e: MasteryEntry | undefined) => !!e && e.lv >
 // ---- the curriculum as a flat sequence ---------------------------------------------------------------------
 
 export type Step = { unit: Unit; unitIndex: number; lesson: Lesson; lessonIndex: number; intro: Introduction; required: boolean }
-export type LessonRef = { unit: Unit; unitIndex: number; lesson: Lesson; lessonIndex: number }
+export type LessonRef = { unit: Unit; unitIndex: number; lesson: Lesson; lessonIndex: number; number: number }
 
-/** All lessons in declared order. `lessonIndex` is 0-based within its unit. */
+/** All lessons in declared order. `lessonIndex` is 0-based within its unit; `number` is 1-based across the whole course (shown to players). */
 export const lessonsOf = (c: Curriculum): LessonRef[] =>
   c.units.flatMap((unit, unitIndex) => unit.lessons.map((lesson, lessonIndex) => ({ unit, unitIndex, lesson, lessonIndex })))
+    .map((l, i) => ({ ...l, number: i + 1 }))
 
 /** The effective introduction order: units, then lessons, then introductions, exactly as written. */
 export const stepsOf = (c: Curriculum): Step[] =>
@@ -297,21 +298,21 @@ export function courseStatus(s: CourseState, limits: IntroLimits = DEFAULT_LIMIT
   }
 }
 
-/** "Greetings · Lesson 1 · 2 of 5 introduced" (no ids, no schema words). */
+/** "Lesson 3 · Greetings": lesson number counted across the whole course (units may hold one lesson each), then the unit title. */
+export const lessonLabel = (ref: LessonRef): string => `Lesson ${ref.number} · ${ref.unit.title}`
+
+/** "Lesson 1 · Greetings · 2 of 5 introduced" (no ids, no schema words). */
 export function courseLine(st: CourseStatus): string {
   if (!st.lesson) return `${st.title} · all lessons complete`
-  const head = `${st.lesson.unit.title} · Lesson ${st.lesson.lessonIndex + 1}`
+  const head = lessonLabel(st.lesson)
   if (st.introduced < st.total) return `${head} · ${st.introduced} of ${st.total} introduced`
   return `${head} · ${st.ready} of ${st.required} ready`
 }
 
-/** The lesson line for an introduction card: "Greetings · Lesson 1 · 2 of 5 introduced", counting `entryId` as introduced. Null outside the curriculum. */
+/** The short lesson label for an introduction card: "Lesson 1 · Greetings". Null outside the curriculum. */
 export function introCardLine(s: CourseState, entryId: string): string | null {
   const ref = lessonsOf(s.curriculum).find(l => l.lesson.introductions.some(i => i.entryId === entryId))
-  if (!ref) return null
-  const intros = ref.lesson.introductions.filter(i => s.words.has(i.entryId))
-  const n = intros.filter(i => i.entryId === entryId || isIntroduced(s.mastery, i.entryId)).length
-  return `${ref.unit.title} · Lesson ${ref.lessonIndex + 1} · ${n} of ${intros.length} introduced`
+  return ref ? lessonLabel(ref) : null
 }
 
 /** Are an authored sentence question's prerequisites met? Lessons may belong to any curriculum (`completedElsewhere`: their saved completion). */
