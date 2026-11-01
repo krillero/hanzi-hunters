@@ -17,6 +17,8 @@ export default function EncounterScreen({ state, level, onChange, onComplete, on
   // picture (it would give the answer away); a picture option keeps its picture, which is the choice itself.
   const help = state.help
   const linePinyin = help || (!!scene.zh && pinyinFor(scene.zh, scene.requires, level))
+  // The help button only offers what is missing: when every pinyin is already shown, it is just the translation.
+  const allPinyinShown = (!scene.zh || pinyinFor(scene.zh, scene.requires, level)) && scene.options.every(o => o.picture || showPinyin(level(o.id)))
   const onKey = (e: KeyboardEvent) => {
     e.stopPropagation()
     // Encounters cannot be skipped: Escape only continues once the scene is complete (or closes a preview).
@@ -46,7 +48,7 @@ export default function EncounterScreen({ state, level, onChange, onComplete, on
       </div> : <>
         {scene.situation && <p className="enc-situation">{scene.situation}</p>}
         {scene.zh && <div className="enc-request"><p lang="zh">{scene.zh}</p>{linePinyin && <p>{scene.py}</p>}{help && <p>{scene.en}</p>}</div>}
-        <button className="bar-btn ghost" onClick={() => onChange({ ...state, help: !state.help })}>{state.help ? 'Hide extra help' : 'Pinyin & translation'}</button>
+        <button className="bar-btn ghost" onClick={() => onChange({ ...state, help: !state.help })}>{state.help ? 'Hide extra help' : allPinyinShown ? 'Translation' : 'Pinyin & translation'}</button>
         <p>{text.instruction}</p>
         <div className="enc-items">{state.order.map(id => {
           const item = scene.options.find(x => x.id === id)
