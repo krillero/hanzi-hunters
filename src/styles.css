@@ -1674,5 +1674,14 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .enc-items button[aria-pressed=true]{border-color:#f1ce80;background:#304332}
 .enc-items b{font-size:24px}.enc-items span{font-size:28px}.enc-items small{font-size:14px}
 .enc-items .enc-picture{font-size:20px;line-height:1.25;letter-spacing:-1px;overflow-wrap:anywhere}
+.trial-carving p[lang=zh]{font-size:30px;letter-spacing:2px}
+.trial-stakes{font-size:14px;color:#b9c8d6}
+.trial-options{display:grid;gap:8px;margin:8px 0}
+.trial-options .answer-btn{width:100%}
+.trial-options .trial-wrong{border-color:#c0574f;background:#3a1c1c}
+.trial-result{padding:10px 12px;border-radius:8px;margin-top:8px}
+.trial-result.good{background:#1f3324;border:1px solid #4f8a5b}
+.trial-result.bad{background:#33201f;border:1px solid #8a4f4b}
+.trial-result p{margin:6px 0 0}
 .encounter button{min-height:44px;white-space:normal}.encounter .bar-btn{width:100%}
 .enc-footer{padding:12px;display:grid;gap:8px;border-top:1px solid #45576b}

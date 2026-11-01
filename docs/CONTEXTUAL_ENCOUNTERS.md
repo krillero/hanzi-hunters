@@ -84,6 +84,34 @@ The existing sanitizer retains these fields on load/import. Older app versions
 will discard the added fields: avoid rolling back an active encounter save.
 No promises are made about importing obsolete pre-expedition save formats.
 
+## Boss trials (inside a fight)
+A boss trial is a single battle question with a boss-specific payoff, so unlike
+the scenes above it allows exactly one submission and a wrong answer counts.
+First boss: the **Golem's Tone Trial** (src/game/trials.ts, TrialScreen.tsx,
+content src/content/trials.json).
+
+- Offered once per Golem fight, right after its first shield segment breaks (the
+  player has already seen how the shield works), and only with a line whose
+  words have all been introduced (你好！ 谢谢！ 再见！ are available on run 1).
+- The Golem carves the line; the player picks the tone-marked pinyin (3 options).
+- Right: the rest of the shield shatters and the Golem loses 25% of its max HP
+  (TUNING.golemTrialHit), clamped so it never kills. Wrong: resolveAnswer with
+  isCorrect=false (heart, second chance or defeat; never a practice save).
+  "Not now" closes it with no effect. Mastery never changes.
+- Run.trial saves { id, floor, order, status, chosen }: a reload shows the same
+  line, an answered trial shows its result, and it is never offered twice in a
+  fight. Old saves have no trial field.
+- trials.json format: id, boss ("golem"), requires (word ids; every character of
+  zh must belong to one), zh, en, options (3-4), answer, note. The validator
+  requires every option to differ from the answer **only in tone marks** and
+  rejects a distractor that turns a written third tone into a second tone (tone
+  sandhi makes that ambiguous). Preview: /?trial=<id>.
+- Balance (bot takes the trial with more than 2 hearts, 20 seeds, depth-1 clear
+  median / win rate): 0.60 accuracy 29 → 29 expeditions, 5% → 5%; 0.75 accuracy
+  7 → 7, 58% → 61%. Hearts lost per run unchanged (≈10.3). Full report with the
+  trial (node tools/simulate.ts --report): win rates at .60/.75/.85/.90/1.00 =
+  4/66/97/100/100%; golemTrial=0 gives 5/61/98/100/100% (5-seed medians are noisy).
+
 ## Preview link
 `/?encounter=<scene id>[&stage=0|1|2]` opens a scene on its own, without a run or the
 prerequisite words. It never changes the save; Close preview removes the parameter.

@@ -1,5 +1,6 @@
 // Save format v1 under SAVE_KEY (restarted with expeditions). Saves from before (other keys) are deleted on start and never read. Never throws.
 import { cleanEncounter, cleanHistory } from './encounters.ts'
+import { cleanTrial } from './trials.ts'
 import { sanitizeHabit } from './habit.ts'
 import { CURRICULA, ENEMIES, GEAR, WORDS, type GearSlot, type Word } from '../data.ts'
 import type { Curriculum } from '../content/types.ts'
@@ -106,6 +107,7 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
   const rw = isObj(raw.reward) ? raw.reward : {}
   const run: Run = {
     encounter: cleanEncounter(raw.encounter),
+    trial: cleanTrial(raw.trial),
     depth, floor, kill, level, gear, loadout, phase, hearts, recoveredFloor,
     kills: int(raw.kills, 0, 1e9, 0), xp: int(raw.xp, 0, 1e9, 0), pendingXp: int(raw.pendingXp, 0, 1e9, 0),
     shield: boss && hasShield(boss) && phase === 'fighting' ? int(raw.shield, 0, shieldFor(floor, boss), shieldFor(floor, boss)) : 0, gold: int(raw.gold, 0, 1e9, 0),

@@ -60,9 +60,10 @@ export const SECOND_CHANCE_CAP = 3
 /**
  * Enemy HP grows this much per floor of the expedition (compounding), roughly matching the attack the player gains from levels,
  * so fights keep a similar, bounded length. Chosen with tools/simulate.ts (see docs/GAME_DESIGN.md "Balance").
+ * golemTrial: 1 offers the Golem's Tone Trial, 0 never (simulator comparisons). golemTrialHit: share of the Golem's max HP a right Tone Trial answer removes (game/trials.ts; never the killing blow).
  * Mutable only so the simulator can compare settings; the game never changes it.
  */
-export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1, depthEnemyHp: 0.3 }
+export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1, depthEnemyHp: 0.3, golemTrial: 1, golemTrialHit: 0.25 }
 
 export const SHIELD_SEGMENTS = 3   // the most a shield ever has
 /** Boss multipliers over the base enemy stats (before the per-floor scaling). Early floors get a gentler boss: they ramp up to the full values. */

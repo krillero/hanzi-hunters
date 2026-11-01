@@ -13,6 +13,8 @@ export type RunPhase = 'fighting' | 'victory' | 'defeat'
 export type Run = {
   /** The optional contextual encounter offered after a floor boss (at most one per expedition; kept as 'closed' once left). */
   encounter?: import('./encounters').EncounterState
+  /** The boss trial of the current fight (Golem's Tone Trial; once per fight, never changes mastery). See game/trials.ts. */
+  trial?: import('./trials').TrialState
   /** The expedition's depth (1..MAX_DEPTH): harder question mix, more gold, tougher final boss. */
   depth: number
   floor: number; kill: number; kills: number

@@ -1,0 +1,64 @@
+{
+  "trials": [
+    {
+      "id": "hello",
+      "boss": "golem",
+      "requires": ["你好"],
+      "zh": "你好！",
+      "en": "Hello!",
+      "options": ["Nǐ hǎo!", "Nì hǎo!", "Nǐ hào!"],
+      "answer": "Nǐ hǎo!",
+      "note": "你好 is written nǐ hǎo: two third tones. (In speech the first one rises, ní hǎo, but the written pinyin keeps nǐ.)"
+    },
+    {
+      "id": "thanks",
+      "boss": "golem",
+      "requires": ["谢谢"],
+      "zh": "谢谢！",
+      "en": "Thank you!",
+      "options": ["Xièxie!", "Xiēxie!", "Xiěxie!"],
+      "answer": "Xièxie!",
+      "note": "谢谢 is xièxie: a falling fourth tone, then a light toneless xie."
+    },
+    {
+      "id": "goodbye",
+      "boss": "golem",
+      "requires": ["再见"],
+      "zh": "再见！",
+      "en": "Goodbye!",
+      "options": ["Zàijiàn!", "Zāijiàn!", "Zàijiān!"],
+      "answer": "Zàijiàn!",
+      "note": "再见 is zàijiàn: two falling fourth tones."
+    },
+    {
+      "id": "how-are-you",
+      "boss": "golem",
+      "requires": ["你好", "吗"],
+      "zh": "你好吗？",
+      "en": "How are you?",
+      "options": ["Nǐ hǎo ma?", "Nǐ hǎo mā?", "Nǐ hǎo mǎ?"],
+      "answer": "Nǐ hǎo ma?",
+      "note": "The question particle 吗 is toneless: ma, said lightly and quickly."
+    },
+    {
+      "id": "friend",
+      "boss": "golem",
+      "requires": ["他", "是", "我", "朋友"],
+      "zh": "他是我朋友。",
+      "en": "He is my friend.",
+      "options": ["Tā shì wǒ péngyou.", "Tā shí wǒ péngyou.", "Tā shì wǒ pēngyou."],
+      "answer": "Tā shì wǒ péngyou.",
+      "note": "是 is shì (falling) and 朋友 is péngyou: a rising péng, then a light you."
+    },
+    {
+      "id": "three-people",
+      "boss": "golem",
+      "requires": ["这里", "有", "三", "个", "人"],
+      "zh": "这里有三个人。",
+      "en": "There are three people here.",
+      "options": ["Zhèlǐ yǒu sān ge rén.", "Zhèlǐ yǒu sàn ge rén.", "Zhèlǐ yǒu sān ge rěn."],
+      "answer": "Zhèlǐ yǒu sān ge rén.",
+      "note": "三 is sān (high and level) and 人 is rén (rising). 个 is usually light in 三个人."
+    }
+  ]
+}

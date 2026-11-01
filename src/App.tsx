@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Phaser from 'phaser'
 import { PixelScene, type EnemySprite } from './game/PixelScene'
 import EncounterScreen from './EncounterScreen'
+import TrialScreen from './TrialScreen'
+import { closeTrial, offerTrial, resolveTrial, trialById, type TrialState } from './game/trials'
 import { offer, complete, localDate, previewEncounter, type EncounterState } from './game/encounters'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
@@ -125,6 +127,8 @@ export default function App() {
   const [save, setSave] = useState<Saved>(() => { try { return initialSave() } catch { return sanitizeSave(null) } })
   // Preview aid: /?encounter=tea|meal[&stage=0|1|2] opens that scene on its own. It never touches the save (no gold, no history).
   const [encounterPreview, setEncounterPreview] = useState<EncounterState | null>(() => { const q = new URLSearchParams(window.location.search); return previewEncounter(q.get('encounter'), q.get('stage')) })
+  // Preview aid: /?trial=<id> opens that boss trial on its own (no fight, nothing saved).
+  const [trialPreview, setTrialPreview] = useState<TrialState | null>(() => { const t = trialById(new URLSearchParams(window.location.search).get('trial') ?? undefined); return t ? { id: t.id, floor: 1, order: [...t.options], status: 'pending' } : null })
   const encounterOpen = !!save.run?.encounter && save.run.encounter.status !== 'closed'
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
@@ -370,7 +374,11 @@ export default function App() {
   // Only once the question is actually visible: a card prepared behind the new-word card, the boss intro, a loot card or the floor
   // summary stays silent (it is often replaced before it is shown), and each card is read at most once.
   const spokenCard = useRef<Card | null>(null)
-  const questionCovered = encounterOpen || introQueue.length > 0 || bossIntro !== null || lootReveal !== null || summary !== null
+  // The Golem's Tone Trial waits until the answer feedback and every other card are gone; its result stays until Continue.
+  const trialState = run?.trial
+  const trialOpen = !!trialState && (trialState.status === 'pending' || trialState.status === 'answered') && trialState.floor === run?.floor
+    && !encounterOpen && !feedback && !reveal && introQueue.length === 0 && bossIntro === null && lootReveal === null && summary === null
+  const questionCovered = trialOpen || encounterOpen || introQueue.length > 0 || bossIntro !== null || lootReveal !== null || summary !== null
   useEffect(() => {
     if (!card || questionCovered || introPending.current || spokenCard.current === card) return
     spokenCard.current = card
@@ -414,7 +422,9 @@ export default function App() {
     if (masteredNow) setCeremony(word.id)
     if (isCorrect && hasDetails(word) && !habit.tipsSeen.includes(word.id)) { habit = { ...habit, tipsSeen: [...habit.tipsSeen, word.id] }; setTipPulse(word.id) }
     // The protected first practice is used up by the first non-intro answer (right or wrong), and remembered in the save.
-    patch(s => ({ ...s, run: r.run, mastery, habit, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
+    // Breaking the Golem's first shield segment may call its Tone Trial (decided once, here, so a re-render cannot reroll it).
+    const runAfter = r.shieldBroken ? offerTrial(r.run, mastery) : r.run
+    patch(s => ({ ...s, run: runAfter, mastery, habit, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
 
     // Learning summary for the floor-clear / defeat cards
     const rec = { id: word.id, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
@@ -481,6 +491,24 @@ export default function App() {
   }
 
   /** `from` lets a caller advance from a run it just changed (closing an encounter) instead of the rendered one. */
+  /** One submission: resolveTrial ignores anything but a pending trial, and the lock covers a double tap before re-render. */
+  const trialLock = useRef(false)
+  const answerTrial = (chosen: string) => {
+    if (!run || trialLock.current) return
+    const res = resolveTrial({ run, bonuses, enemies: ENEMIES, allGear: GEAR, roll: { drop: Math.random(), item: Math.random() }, chosen })
+    if (!res) return
+    trialLock.current = true
+    patch(s => ({ ...s, run: res.run }))
+    if (res.correct) { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '💥 SHIELD SHATTERED' }); feel('combo', { streak: 9 }) }
+    else if (res.outcome === 'defeat') { sceneRef.current?.playHit('hero'); sceneRef.current?.showDefeat(true); feel('defeat') }
+    else {
+      feel('wrong')
+      if (res.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: '−1 ♥' }) }
+      else if (res.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: 'Second chance · heart saved' })
+    }
+  }
+  const leaveTrial = () => { trialLock.current = false; patch(s => (s.run ? { ...s, run: closeTrial(s.run) } : s)) }
+
   const nextEnemy = (from: Run | null = run) => {
     if (!from) return
     const next = advance(from, bonuses, ENEMIES, GEAR)
@@ -506,7 +534,7 @@ export default function App() {
     else { setCaption(null); setNextCard(makeCard(save.mastery, card?.word.id ?? null)); setEliminated([]); answerLock.current = false }
   }
   // The reveal runs on a timer; it waits while a popup, drawer or the menu is open.
-  const blockingOpen = encounterOpen || explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null || introQueue.length > 0
+  const blockingOpen = trialOpen || encounterOpen || explain !== null || showBag || showWords || menuOpen || lootReveal !== null || bossIntro !== null || introQueue.length > 0
   useEffect(() => {
     if (!reveal || blockingOpen) return
     const t = window.setTimeout(advanceAuto, reveal.plan.delay)
@@ -609,6 +637,16 @@ export default function App() {
       </div>
     </header>
   )
+  if (trialPreview) {
+    const t = trialById(trialPreview.id)!
+    const closePreview = () => { const u = new URL(window.location.href); u.searchParams.delete('trial'); window.history.replaceState(null, '', u); setTrialPreview(null) }
+    return (
+      <main className="app-shell in-camp">
+        {topbar}
+        <TrialScreen trial={t} state={trialPreview} onAnswer={o => setTrialPreview(p => p && p.status === 'pending' ? { ...p, status: 'answered', chosen: o } : p)} onSkip={closePreview} onClose={closePreview} />
+      </main>
+    )
+  }
   if (encounterPreview) {
     const closePreview = () => { const u = new URL(window.location.href); u.searchParams.delete('encounter'); u.searchParams.delete('stage'); window.history.replaceState(null, '', u); setEncounterPreview(null) }
     return (
@@ -879,6 +917,7 @@ export default function App() {
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
+        {trialOpen && trialState && (() => { const t = trialById(trialState.id); return t ? <TrialScreen trial={t} state={trialState} onAnswer={answerTrial} onSkip={leaveTrial} onClose={leaveTrial} /> : null })()}
         {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onComplete={() => patch(s => complete(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
