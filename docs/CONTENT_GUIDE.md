@@ -65,6 +65,8 @@ An entry is **one word, character or particle with one meaning and one reading**
 | `aliases` | Earlier ids of this same entry, so saved progress moves to it (see 1.7). |
 | `confusable` | Ids of entries too close in meaning to be a fair wrong answer for this one. |
 | `lookalike` | Ids of **same-length** entries that look similar (look-alike questions). Authored only: the game never compares shapes automatically. Not for homographs. |
+| `noun` | `true` for a **concrete noun** that reads naturally in generated sentences: 这里有 X ("there is X here"), 这里没有 X, 我要 X ("I would like X"). Food, objects, animals, places, people. Leave it out for abstract words (time, name, language), body parts, and literary single characters (目, 石, 父). Events and boss trials are generated from these, so a wrong `noun` produces odd sentences for every learner. |
+| `measure` | For a `noun` only: the entry id of the measure word used to count it (`"个"`: 三个人). Only when it is the usual measure word, and only one that is itself in `words.json` (generated sentences never show an untaught character). Nouns without it are left out of counting. |
 | `source`, `review` | Where it comes from and whether a person checked it (see section 4). |
 
 ### 1.3 Neutral tone vs missing tone marks

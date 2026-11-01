@@ -15,7 +15,7 @@ const hasToneNumber = (s: string) => /[a-zA-ZüÜ][1-5]\b/.test(s)
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
 export const LIMITS = { summary: 300, heading: 50, body: 700, tip: 260, note: 200, items: 6, parts: 6, examples: 4, title: 60, hanzi: 8, meaning: 40, particleMeaning: 44, context: 120, why: 140 }
-export const WORD_FIELDS = ['id', 'hanzi', 'pinyin', 'meaning', 'group', 'note', 'kind', 'neutral', 'variants', 'speech', 'wrongPinyin', 'audio', 'questions', 'aliases', 'confusable', 'lookalike', 'source', 'review']
+export const WORD_FIELDS = ['id', 'hanzi', 'pinyin', 'meaning', 'group', 'note', 'kind', 'neutral', 'variants', 'speech', 'wrongPinyin', 'audio', 'questions', 'aliases', 'confusable', 'lookalike', 'noun', 'measure', 'source', 'review']
 export const REVIEW_STATUSES = ['ai-draft', 'imported', 'human-reviewed']
 
 /** `curricula` is optional so the word/explanation rules can be tested alone; the CLI and the shipped-content test always pass it. */
@@ -156,6 +156,9 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
       }
       if (w.aliases !== undefined && !(Array.isArray(w.aliases) && w.aliases.every(isStr))) err(`${at}: "aliases" must be an array of earlier ids`)
       for (const k of ['confusable', 'lookalike'] as const) if (w[k] !== undefined && !(Array.isArray(w[k]) && (w[k] as unknown[]).every(isStr))) err(`${at}: "${k}" must be an array of entry ids`)
+      if (w.noun !== undefined && w.noun !== true) err(`${at}: "noun" is either true or left out`)
+      if (w.noun === true && kind === 'particle') err(`${at}: a particle cannot be a noun`)
+      if (w.measure !== undefined && (!isStr(w.measure) || w.noun !== true)) err(`${at}: "measure" (an entry id) is only for nouns`)
       if (isStr(w.note) && w.note.length > LIMITS.note * 2) warn(`${at}: note is long (${w.note.length} chars)`)
       checkProvenance(at, w)
     })
@@ -164,6 +167,8 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
     words.forEach((w, i) => {
       if (!isObj(w)) return
       const at = `words.json[${i}] (${String(w.hanzi)})`, id = idOf(w)
+      // the measure word must itself be in the vocabulary (generated sentences never show an untaught character)
+      if (isStr(w.measure) && !ids.has(w.measure)) err(`${at}: measure "${w.measure}" is not an entry id in the list`)
       for (const k of ['confusable', 'lookalike'] as const) if (Array.isArray(w[k])) for (const c of w[k] as unknown[]) {
         if (!isStr(c) || !ids.has(c)) { err(`${at}: ${k} "${String(c)}" is not an entry id in the list`); continue }
         if (c === id) err(`${at}: ${k} must not list the entry itself`)
