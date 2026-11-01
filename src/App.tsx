@@ -788,10 +788,6 @@ export default function App() {
 
         <div className="right-column">
           <section className={`question-panel`}>
-            {!save.habit.heartsIntro && <div className="hearts-intro" role="note">
-              <p><b>♥ Hearts.</b> A right answer attacks and never costs a heart. A wrong answer costs 1 heart (your first practice of a new word is free). At 0 hearts the expedition ends. Beat the final boss on floor {EXPEDITION_FLOORS} to win.</p>
-              <button className="bar-btn ghost" onClick={() => patch(s => ({ ...s, habit: { ...s.habit, heartsIntro: true } }))}>Got it</button>
-            </div>}
             <div className={`question-title ${run.phase}`}><div className="title-text">{fighting && !feedback && !revealing && isPractice(card) && <span className="practice-tag">Practice · no heart lost</span>}<h2>{fighting || revealing || feedback ? (question.kind === 'intro' && !feedback && !revealing ? 'Learn this word' : question.text.replace(/^New word!\s*/i, '')) : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
 
             {/* The word card never leaves its slot. Feedback replaces the choices below it. */}

@@ -1,5 +1,11 @@
 # Changelog / test log
 
+## 2026-11-01 — Answer feedback no longer cut off; rules message removed (branch ccr-2aecd5ae-3v8bz2)
+
+- The answer feedback box grows into the free space above Continue (never smaller than the answer grid, so nothing jumps) and scrolls only if a note is longer still. It used to be fixed to the grid's height and clipped longer notes.
+- The one-time hearts rules message is removed (and `habit.heartsIntro`).
+- Checks: `npm run test:brief` 170 pass, build pass; 360x800: a wrong answer on 对不起 shows the whole note (box 271 px, no clipping), Continue visible, no horizontal scroll, no console errors.
+
 ## 2026-11-01 — Faster tests and a cheaper agent workflow (branch ccr-2aecd5ae-3v8bz2)
 
 - `npm run test:brief` (`tools/brief-reporter.mjs`): prints only failures (test, message, expected/actual, file:line) and a one-line summary.
