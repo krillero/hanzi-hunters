@@ -6,7 +6,7 @@ import { noteRecent } from '../src/game/recent.ts'
 import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { MAX_LV, isDue, updateMastery } from '../src/game/mastery.ts'
-import { SCENES, eligible } from '../src/game/encounters.ts'
+import { SCENES, eligible, validGeneratedScenes } from '../src/game/encounters.ts'
 import { DUE_PER_FIGHT, emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
 
@@ -79,7 +79,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       if (run.phase === 'victory') {
         // An event after a floor boss (floors 1-4) when its words are Familiar: right first time = Blessing, else Shaken, for the
         // next floor. The bot never buys help; a reply/gather choice is about as hard as a normal question.
-        if (opts.events !== false && run.kill === ENEMIES_PER_FLOOR - 1 && run.floor < EXPEDITION_FLOORS && SCENES.some(sc => eligible(mastery, sc))) {
+        if (opts.events !== false && run.kill === ENEMIES_PER_FLOOR - 1 && run.floor < EXPEDITION_FLOORS && (SCENES.some(sc => eligible(mastery, sc)) || validGeneratedScenes(mastery, rng).length > 0)) {
           run = { ...run, omen: { kind: rng() < accuracy ? 'blessing' : 'shaken', floor: run.floor + 1 } }; stat.events++
         }
         run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; dueThisFight = 0; continue

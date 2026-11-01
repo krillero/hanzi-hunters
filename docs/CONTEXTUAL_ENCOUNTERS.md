@@ -12,9 +12,9 @@ intro step, status "offer", loads as active.)
 | goodbye | reply: answer 再见！ | 你好 再见 谢谢 | 3 |
 | sorry | reply: you spilled their water | 对不起 谢谢 你好 | 5 |
 | friend-he, friend-she | point: 他/她是我朋友。 → tap the man or woman | 他 她 是 我 朋友 | 20 |
-| count-three, -four, -five | point: 这里有三/四/五个人。 → tap the right group | 这里 有 个 人 三 四 五 | 35 |
 | tea | gather: 我要茶。 | 我 要 谢谢 茶 水 米饭 菜 | 65 |
 | meal | gather: 我要米饭。我要菜。 | 我 要 谢谢 茶 水 米饭 菜 | 65 |
+| *generated* | point: 这里有 N 个 X。 / gather: 我要 X。 | see Generated events | ~35 (counting), ~60 (requests) |
 
 *Position of its last word in beginner-mandarin-100. A scene is offered once
 all its words are at least Familiar (level 2), usually within a session or two
@@ -173,11 +173,12 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
 ### Mirror Trickster's Mirrors
 - Offered once per Trickster fight, the first time it drops below half HP
   (TRICKSTER_LOW), with statements made of known words.
-- A picture (emoji: people by the fire, an empty campfire, a man, a woman) and
-  three statements (Chinese + pinyin; English after answering); exactly one is
-  true. The tricks are the Trickster's own: 有 / 没有, numbers, 是 / 不是, and
-  他 / 她 (same pinyin, so only the character tells them apart). The picture's
-  aria-label is its English description (sighted players see the same thing).
+- A scene and three statements (Chinese, pinyin per word level, English after
+  answering); exactly one is true. The scene is either a **tray of noun tiles
+  written as characters** (generated, see Generated events: 这里有 X / 这里没有
+  X / 这里有 N 个 X, for any noun) or, for 他 / 她, a picture of a man or a
+  woman (authored: same pinyin, so only the character tells them apart).
+  Reading the tiles is part of the task; their aria-label lists them.
 - Right: a heavy blow, 30% of its max HP (TUNING.tricksterTrialHit), never the
   killing blow, plus a calm charge (Run.calm: the next wrong answer this
   expedition costs no heart). Wrong: an ordinary wrong answer.
@@ -296,6 +297,33 @@ and check the rules below.
   3.33 → 3.03; trials per run about the same (the authored pool already
   covered most fights): the change is variety, not frequency.
 
+## Generated events and Trickster trays (src/game/nouns.ts, scenegen.ts, trialgen.ts)
+Built from the `noun` / `measure` fields of words.json, so they scale with the
+vocabulary (1000+ words) instead of a few authored scenes. Only fixed sentence
+patterns are produced (review the patterns once, not every sentence):
+这里有 X。 / 这里没有 X。 (any noun), 这里有 N 个 X。 (nouns whose measure word
+is 个; N = 3..6: 一 changes tone and 两 replaces 二 before a measure word), and
+我要 X。 (any noun). English glosses are quoted ("There is “tea” here.")
+because the data does not say which nouns are countable.
+- **Counting event** (point): 这里有 N 个 X。 → three groups of X tiles of
+  different sizes; tap the group of N. Replaces the old emoji crowd scenes.
+- **Request event** (gather): 我要 X。 or 我要 X。我要 Y。 → pick exactly what
+  was asked for; the other options are known nouns from the same topic group
+  first, so the answer cannot be picked by category. No pictures.
+- **Trickster tray** (boss trial): two nouns on the tray and a third absent
+  (presence), or N tiles of one noun (counting); one true statement.
+- Generated events need every word at Familiar or higher (like authored ones);
+  trays use introduced words (like other trials). Authored and generated events
+  and Trickster scenes are drawn half and half. A generated event or trial is
+  stored whole in the run (Run.encounter.data / Run.trial.data) and re-validated
+  on load; "gen-" ids are reserved (rejected in the JSON files).
+- Tests read every generated statement against its tray and every counting
+  answer against its tiles (exactly one true / right), for the whole course
+  with several seeds.
+- Words without `noun` are never used; nouns without `measure` are left out of
+  counting. Today: 29 nouns, 8 counted with 个 (others' measure words, 本 杯 只
+  条 辆 …, are not taught yet: add them to the course to unlock counting).
+
 ## Preview link
 `/?encounter=<scene id>[&level=0-5]` opens a scene on its own (words at that level, default 2), without a run or the
 prerequisite words. It never changes the save; Close preview removes the parameter.
@@ -312,7 +340,7 @@ prerequisite words. It never changes the save; Close preview removes the paramet
   too noisy to judge one feature).
 - Manual check on a phone (or one 360 px browser check) with the preview links,
   which never touch the save: `/?encounter=hello&level=2` (pinyin, no English,
-  no option icons), `&level=3` (characters only), `/?encounter=count-four`
+  no option icons), `&level=3` (characters only), `/?encounter=friend-he`
   (picture options), `/?trial=scribe-friend&level=2` (blanked pinyin),
   `/?trial=warden` (two steps). In a real run: help shows its hint price, a
   wrong first choice announces Shaken, the next floor shows the ✨ / 🌧 chip.

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import encountersJson from '../src/content/encounters.json' with { type: 'json' }
-import { offer, submitEncounter, payHelp, helpHintsLeft, choose, cleanEncounter, previewEncounter, validateEncounters, sceneById, SCENES } from '../src/game/encounters.ts'
+import { offer, submitEncounter, payHelp, helpHintsLeft, sceneFor, validGeneratedScenes, choose, cleanEncounter, previewEncounter, validateEncounters, sceneById, SCENES } from '../src/game/encounters.ts'
 import { pinyinFor, showPinyin, wordsIn, fixedLevel, levelOf } from '../src/game/support.ts'
 import { blankedPinyin } from '../src/game/trialgen.ts'
 import { sanitizeSave } from '../src/game/save.ts'
@@ -50,9 +50,9 @@ test('a greeting scene is offered from the very first course words; a scene need
 
 test('the scene completed on the fewest days is offered first; file order breaks ties', () => {
   const s = ready()
-  assert.equal(offer(s).run!.encounter!.id, SCENES[0].id)
+  assert.equal(offer(s, () => 0).run!.encounter!.id, SCENES[0].id, 'rng 0 picks the authored source')
   s.encounterHistory = { [SCENES[0].id]: { dates: ['2026-11-01'] } }
-  assert.equal(offer(s).run!.encounter!.id, SCENES[1].id)
+  assert.equal(offer(s, () => 0).run!.encounter!.id, SCENES[1].id)
 })
 
 test('a reply scene keeps one choice; a gather scene several', () => {
@@ -66,7 +66,7 @@ test('a reply scene keeps one choice; a gather scene several', () => {
 
 test('right on the first try: Blessing for the next floor, no gold; repeats change nothing', () => {
   const s = offer(ready(), () => 0.5)
-  const scene = sceneById(s.run!.encounter!.id)!
+  const scene = sceneFor(s.run!.encounter)!
   const r = active(s, [...scene.answer].reverse())
   const done = submitEncounter(r, '2026-11-01')
   assert.equal(done.run!.encounter!.status, 'complete'); assert.equal(done.run!.encounter!.first, 'right')
@@ -81,7 +81,7 @@ test('right on the first try: Blessing for the next floor, no gold; repeats chan
 
 test('wrong first choice: Shaken for the next floor; fixing it completes without a Blessing; later misses add nothing', () => {
   const s = offer(ready(), () => 0.5)
-  const scene = sceneById(s.run!.encounter!.id)!
+  const scene = sceneFor(s.run!.encounter)!
   const wrong = scene.options.map(o => o.id).filter(id => !scene.answer.includes(id)).slice(0, 1)
   const w = submitEncounter(active(s, wrong), '2026-11-01')
   assert.equal(w.run!.encounter!.status, 'active'); assert.equal(w.run!.encounter!.first, 'wrong')
@@ -144,12 +144,11 @@ test('preview link builds a playable scene only for known ids', () => {
   const p = previewEncounter('meal')!; assert.equal(p.status, 'active'); assert.deepEqual(p.selected, [])
 })
 
-test('scenes unlock early in the default course: greetings by word 5, who-is-it by 20, counting by 35', () => {
+test('scenes unlock early in the default course: greetings by word 5, who-is-it by 20', () => {
   const course = [...new Set(stepsOf(ACTIVE_CURRICULUM).map(st => st.intro.entryId))]
   const unlockAt = (id: string) => Math.max(...sceneById(id)!.requires.map(w => course.indexOf(w) + 1))
   assert.ok(unlockAt('hello') <= 3 && unlockAt('sorry') <= 5)
   assert.ok(unlockAt('friend-he') <= 20 && unlockAt('friend-she') <= 20)
-  assert.ok(['count-three', 'count-four', 'count-five'].every(id => unlockAt(id) <= 35))
   for (const s of SCENES) assert.ok(s.requires.every(w => course.includes(w)), `${s.id} uses a word outside the course`)
 })
 
@@ -186,4 +185,41 @@ test('Shaken with one heart left costs that heart only (hearts lost never exceed
   const run: Run = { ...newRun(NO_BONUSES, GEAR, ENEMIES), floor: 2, kill: 0, phase: 'fighting', enemyHp: 30, hearts: 1, omen: { kind: 'shaken', floor: 2 } }
   const r = resolveAnswer({ run, bonuses: NO_BONUSES, enemies: ENEMIES, allGear: GEAR, lv: 1, isCorrect: false, roll: { drop: 0.99, item: 0 } })
   assert.equal(r.heartsLost, 1); assert.equal(r.run.hearts, 0); assert.equal(r.outcome, 'defeat')
+})
+
+test('generated events: valid, every word Familiar, counting answers have exactly N tiles, requests ask exactly for the answer', () => {
+  const familiar: Mastery = Object.fromEntries(WORDS.map(w => [w.id, { lv: 2, ok: 0 }]))
+  const NUM: Record<string, number> = { 三: 3, 四: 4, 五: 5, 六: 6 }
+  for (const seed of [1, 2, 3]) {
+    let x = seed / 10; const rng = () => (x = (x * 9301 + 0.49297) % 1)
+    const made = validGeneratedScenes(familiar, rng)
+    assert.ok(made.filter(sc => sc.kind === 'point').length >= 5 && made.filter(sc => sc.kind === 'gather').length >= 5, `${made.length}`)
+    assert.deepEqual(validateEncounters({ scenes: made.map(sc => ({ ...sc, id: sc.id.replace('gen-', 'g-x') })) }, WORDS.map(w => w.id)).filter(e => !/id must be/.test(e)), [])
+    for (const sc of made) {
+      assert.ok(sc.id.startsWith('gen-'))
+      if (sc.kind === 'point') {
+        const m = sc.zh!.match(/^这里有([三四五六])个(.+)。$/u)!
+        const right = sc.options.filter(o => o.tiles!.length === NUM[m[1]] && o.tiles!.every(t => t === m[2]))
+        assert.deepEqual(right.map(o => o.id), sc.answer, sc.id)
+        assert.equal(new Set(sc.options.map(o => o.tiles!.length)).size, sc.options.length, 'every group has a different size')
+      } else {
+        const asked = [...sc.zh!.matchAll(/我要(.+?)。/gu)].map(r => r[1])
+        assert.deepEqual([...sc.answer].sort(), WORDS.filter(w => asked.includes(w.hanzi)).map(w => w.id).sort(), sc.id)
+        assert.ok(sc.options.length >= 4 && sc.options.every(o => !o.icon && !o.tiles))
+      }
+    }
+  }
+  const few: Mastery = Object.fromEntries(['这里', '有', '个', '三', '人'].map(id => [id, { lv: 1, ok: 0 }]))
+  assert.equal(validGeneratedScenes(few).length, 0, 'Learning words are not enough: generated scenes need Familiar words too')
+})
+
+test('a generated event is stored in the run, survives a reload, and tampered data closes it', () => {
+  const s = ready(WORDS.map(w => w.id))
+  const offered = offer(s, () => 0.99)   // rng near 1 picks the generated source
+  const e = offered.run!.encounter!
+  assert.ok(e.id.startsWith('gen-') && e.data, e.id)
+  assert.deepEqual(sanitizeSave(JSON.parse(JSON.stringify(offered))).run!.encounter, e)
+  assert.equal(cleanEncounter({ ...e, data: { ...e.data!, answer: ['nope'] } })!.status, 'closed')
+  const right = submitEncounter({ ...offered, run: { ...offered.run!, encounter: { ...e, selected: [...e.data!.answer] } } }, '2026-11-01')
+  assert.equal(right.run!.encounter!.status, 'complete'); assert.equal(right.run!.omen!.kind, 'blessing')
 })

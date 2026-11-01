@@ -5,7 +5,7 @@ import EncounterScreen from './EncounterScreen'
 import TrialScreen from './TrialScreen'
 import { noteRecent } from './game/recent'
 import { TRIALS, closeTrial, offerTrial, optionKeys, resolveTrial, trialById, trialFor, trialKey, type TrialState } from './game/trials'
-import { offer, submitEncounter, payHelp, helpHintsLeft, isCorrect, sceneById, localDate, previewEncounter, type EncounterState } from './game/encounters'
+import { offer, submitEncounter, payHelp, helpHintsLeft, isCorrect, sceneFor, localDate, previewEncounter, type EncounterState } from './game/encounters'
 import { fixedLevel, levelOf } from './game/support'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
@@ -708,7 +708,7 @@ export default function App() {
       <main className="app-shell in-camp">
         {topbar}
         <EncounterScreen state={encounterPreview} level={previewLevel} onChange={setEncounterPreview} hintsLeft={null} onHelp={() => setEncounterPreview(e => e && { ...e, help: !e.help })}
-          onSubmit={() => setEncounterPreview(e => { const sc = e && sceneById(e.id); if (!e || !sc || e.status !== 'active') return e; return isCorrect(sc, e.selected) ? { ...e, status: 'complete', first: e.first ?? 'right' } : { ...e, first: e.first ?? 'wrong' } })} onLeave={closePreview} preview />
+          onSubmit={() => setEncounterPreview(e => { const sc = e && sceneFor(e); if (!e || !sc || e.status !== 'active') return e; return isCorrect(sc, e.selected) ? { ...e, status: 'complete', first: e.first ?? 'right' } : { ...e, first: e.first ?? 'wrong' } })} onLeave={closePreview} preview />
       </main>
     )
   }

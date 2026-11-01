@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { KIND_TEXT, choose, isCorrect, isSingle, optionPinyin, sceneById, type EncounterState } from './game/encounters'
+import { KIND_TEXT, choose, isCorrect, isSingle, optionPinyin, sceneFor, type EncounterState } from './game/encounters'
 import { pinyinFor, showPinyin, type LevelOf } from './game/support'
 
 /**
@@ -8,7 +8,7 @@ import { pinyinFor, showPinyin, type LevelOf } from './game/support'
  * `hintsLeft`: hints the next fight has (null = free, previews). `preview`: opened from /?encounter=… — nothing is saved.
  */
 export default function EncounterScreen({ state, level, onChange, onSubmit, onHelp, hintsLeft, onLeave, preview = false }: { state: EncounterState; level: LevelOf; onChange: (e: EncounterState) => void; onSubmit: () => void; onHelp: () => void; hintsLeft: number | null; onLeave: () => void; preview?: boolean }) {
-  const scene = sceneById(state.id)
+  const scene = sceneFor(state)
   const box = useRef<HTMLDivElement>(null)
   const [error, setError] = useState('')
   useEffect(() => { const old = document.activeElement as HTMLElement | null; box.current?.focus(); return () => old?.focus() }, [])
@@ -63,7 +63,9 @@ export default function EncounterScreen({ state, level, onChange, onSubmit, onHe
           if (!item) return null
           return <button key={id} aria-pressed={state.selected.includes(id)} onClick={() => { setError(''); onChange(choose(state, scene, id)) }}>
             {item.picture
-              ? <><span className="enc-picture" role="img" aria-label={help ? item.en : `Picture ${state.order.indexOf(id) + 1}`}>{item.icon}</span>{help && <small>{item.en}</small>}</>
+              ? <>{item.tiles
+                  ? <span className="enc-tiles" lang="zh" role="img" aria-label={item.tiles.join(' ')}>{item.tiles.map((t, k) => <span key={k} className="tray-tile">{t}</span>)}</span>
+                  : <span className="enc-picture" role="img" aria-label={help ? item.en : `Picture ${state.order.indexOf(id) + 1}`}>{item.icon}</span>}{help && <small>{item.en}</small>}</>
               : <><b lang="zh">{id}</b>{(help || showPinyin(level(id))) && <small>{optionPinyin(id)}</small>}{help && <small>{item.en}</small>}</>}
           </button>
         })}</div>

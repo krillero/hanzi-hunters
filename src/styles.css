@@ -1707,3 +1707,5 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 /* A tray of nouns written as characters (generated Trickster scenes, counting events): reading them is the task. */
 .trial-tray,.enc-tiles{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:4px 0}
 .tray-tile{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:2px 8px;border:1px solid #5b6f86;border-radius:6px;background:#1d2d40;color:#f1e7cf;font-size:22px;line-height:1}
+/* Tiles inside an option group: smaller, so groups of up to six two-character words stay compact at 360 px. */
+.enc-tiles{gap:4px}.enc-tiles .tray-tile{min-width:0;min-height:0;padding:3px 5px;font-size:16px}
