@@ -114,7 +114,7 @@ function sanitizeRun(raw: unknown, upgrades: string[]): Run | null {
     potions: int(raw.potions, 0, 999, 0), streak: int(raw.streak, 0, 999, 0),
     enemyHp: phase === 'victory' ? 0 : int(raw.enemyHp, 1, foeHp, foeHp),
     hintsLeft: int(raw.hintsLeft, 0, stats.hints, stats.hints),
-    secondLeft: int(raw.secondLeft, 0, stats.secondChances, 0),
+    secondLeft: int(raw.secondLeft, 0, stats.secondChances, 0), calm: int(raw.calm, 0, 1, 0),
     reward: { xp: int(rw.xp, 0, 1e9, 0), gold: int(rw.gold, 0, 1e9, 0), loot: typeof rw.loot === 'string' && GEAR.some(g => g.name === rw.loot) ? rw.loot : '', levelUps: int(rw.levelUps, 0, 999, 0), hearts: int(rw.hearts, 0, 99, 0) }
   }
   return run

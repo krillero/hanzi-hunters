@@ -3,7 +3,7 @@ import Phaser from 'phaser'
 import { PixelScene, type EnemySprite } from './game/PixelScene'
 import EncounterScreen from './EncounterScreen'
 import TrialScreen from './TrialScreen'
-import { closeTrial, offerTrial, resolveTrial, trialById, type TrialState } from './game/trials'
+import { closeTrial, offerTrial, optionKeys, resolveTrial, trialById, type TrialState } from './game/trials'
 import { offer, complete, localDate, previewEncounter, type EncounterState } from './game/encounters'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
@@ -39,7 +39,7 @@ import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
 /** `sealFallback`: a shield boss question that is not a seal question because none could be built; a correct answer still breaks a segment. */
 type Card = { word: Word; question: Question; sealFallback?: boolean }
-type CombatExchange = { damage: number; heartsLost: number; saved: 'practice' | 'second' | null; heartsRestored: number; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
+type CombatExchange = { damage: number; heartsLost: number; saved: 'practice' | 'second' | 'calm' | null; heartsRestored: number; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
 type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal' | 'shield' | 'hurt'; text: string }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; masteredNow: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
 
@@ -128,7 +128,7 @@ export default function App() {
   // Preview aid: /?encounter=tea|meal[&stage=0|1|2] opens that scene on its own. It never touches the save (no gold, no history).
   const [encounterPreview, setEncounterPreview] = useState<EncounterState | null>(() => { const q = new URLSearchParams(window.location.search); return previewEncounter(q.get('encounter'), q.get('stage')) })
   // Preview aid: /?trial=<id> opens that boss trial on its own (no fight, nothing saved).
-  const [trialPreview, setTrialPreview] = useState<TrialState | null>(() => { const t = trialById(new URLSearchParams(window.location.search).get('trial') ?? undefined); return t ? { id: t.id, floor: 1, order: [...t.options], status: 'pending' } : null })
+  const [trialPreview, setTrialPreview] = useState<TrialState | null>(() => { const t = trialById(new URLSearchParams(window.location.search).get('trial') ?? undefined); return t ? { id: t.id, floor: 1, order: optionKeys(t), status: 'pending' } : null })
   const encounterOpen = !!save.run?.encounter && save.run.encounter.status !== 'closed'
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
@@ -409,6 +409,7 @@ export default function App() {
     if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: foe?.boss === 'scribe' ? '💥 SEALS BROKEN' : '💥 SHIELD DOWN' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster(!!foe?.boss)
     else if (r.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: '−1 ♥' }) }
+    else if (r.savedByCalm) setCaption({ side: 'hero', kind: 'block', text: '👻 Calmed Wraith · heart saved' })
     else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: 'Second chance · heart saved' })
     else if (r.practiceSaved) setCaption({ side: 'hero', kind: 'block', text: 'Practice · no heart lost' })
 
@@ -422,8 +423,9 @@ export default function App() {
     if (masteredNow) setCeremony(word.id)
     if (isCorrect && hasDetails(word) && !habit.tipsSeen.includes(word.id)) { habit = { ...habit, tipsSeen: [...habit.tipsSeen, word.id] }; setTipPulse(word.id) }
     // The protected first practice is used up by the first non-intro answer (right or wrong), and remembered in the save.
-    // Breaking the Golem's first shield segment may call its Tone Trial (decided once, here, so a re-render cannot reroll it).
-    const runAfter = r.shieldBroken ? offerTrial(r.run, mastery) : r.run
+    // The answer may bring a boss to its trial moment (Golem: first shield segment broken; Wraith: below its echo threshold).
+    // Decided once, here, so a re-render cannot reroll it.
+    const runAfter = offerTrial(r.run, mastery, ENEMIES)
     patch(s => ({ ...s, run: runAfter, mastery, habit, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
 
     // Learning summary for the floor-clear / defeat cards
@@ -471,7 +473,7 @@ export default function App() {
       : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now level ${after}`)
         : after < before ? `Back to level ${after} — it will return for review`
           : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : 'One more correct in a row to level up') : 'Review this one — it will come back'
-    const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
+    const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedByCalm ? 'calm' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else setFeedback({
       correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, masteredNow, lv: after, chosen: option, answer: question.answer,
@@ -499,7 +501,8 @@ export default function App() {
     if (!res) return
     trialLock.current = true
     patch(s => ({ ...s, run: res.run }))
-    if (res.correct) { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '💥 SHIELD SHATTERED' }); feel('combo', { streak: 9 }) }
+    if (res.correct && trialById(run.trial?.id)?.boss === 'wraith') { setCaption({ side: 'hero', kind: 'block', text: '👻 Wraith calmed · next mistake free' }); feel('combo', { streak: 7 }) }
+    else if (res.correct) { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '💥 SHIELD SHATTERED' }); feel('combo', { streak: 9 }) }
     else if (res.outcome === 'defeat') { sceneRef.current?.playHit('hero'); sceneRef.current?.showDefeat(true); feel('defeat') }
     else {
       feel('wrong')
@@ -751,7 +754,7 @@ export default function App() {
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
-                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}{(run.calm ?? 0) > 0 && <span className="second-chip" aria-label="Calmed Wraith: your next mistake costs no heart" title="Calmed Wraith: your next mistake costs no heart">👻</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
                 <div className="bar-label"><span>{foe.enemy.name}</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
@@ -882,7 +885,7 @@ export default function App() {
                   <div className="result-line">
                     <strong>{feedback.correct ? '✓ Correct' : 'Not quite'}{feedback.correct && feedback.word.variants.length > 0 && <small className="result-also"> also {feedback.word.variants.join(', ')}</small>}</strong>
                   </div>
-                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−1 heart · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : 'Practice · no heart lost'}</p>}
+                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−1 heart · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : 'Practice · no heart lost'}</p>}
                   {!feedback.correct && <p className="result-answer">Answer: <b>{feedback.answer}</b> <span>(you chose <s>{feedback.chosen}</s>)</span></p>}
                   <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
                 </div>
