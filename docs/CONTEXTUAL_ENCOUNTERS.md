@@ -326,8 +326,8 @@ prerequisite words. It never changes the save; Close preview removes the paramet
 
 ## Testing and review
 - Automated: tests/encounters.test.ts (content validation, eligibility at
-  Familiar, per-word help, offer rotation, first-try Blessing, free translation
-  and hint debt, omen rules in resolveAnswer, saves), tests/trials.test.ts and
+  Familiar, per-word help, offer rotation, first-try Blessing, free translation,
+  Blessing rules in resolveAnswer, saves), tests/trials.test.ts and
   tests/trialgen.test.ts (every boss trial; every generated trial from the whole
   course with several seeds). Run `npm run test:brief`; content changes also
   `npm run validate:content`.

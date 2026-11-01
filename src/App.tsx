@@ -26,7 +26,7 @@ import { parseBackup, serializeBackup } from './game/backup'
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
 import { audioReliable, homographsOf } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
-import { LEVEL_NAMES, MAX_LV, daysUntilDue, dueCount, isDue, masteredCount, seenCount, updateMastery, waitDays } from './game/mastery'
+import { LEVEL_NAMES, MAX_LV, SESSION_LV, daysUntilDue, dueCount, isDue, masteredCount, seenCount, updateMastery, waitDays } from './game/mastery'
 import { DEFAULT_LIMITS, DUE_PER_FIGHT, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, tryBuildQuestion, isCharacterQuestion, isToneQuestion, pickSealCard, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
@@ -666,7 +666,9 @@ export default function App() {
   // Wordbook (battle screen and camp): due words first, then by level. During a question its own word is hidden (no peeking).
   const wordbookToday = localDay()
   const hiddenWord = run && run.phase === 'fighting' && !feedback ? card?.word.id : undefined
-  const wordbook = showWords ? <div className="drawer wordbook-drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">
+  // Long-term mastery lives here: how many words have held up over days.
+  const longTerm = [3, 4, 5].map(lv => `${Object.values(save.mastery).filter(e => e.lv === lv).length} ${LEVEL_NAMES[lv]}`).join(' · ')
+  const wordbook = showWords ? <div className="drawer wordbook-drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><p className="wordbook-summary">{longTerm}</p><div className="wordbook-grid">
     {WORDS.filter(w => save.mastery[w.id] && w.id !== hiddenWord)
       .map(w => ({ w, e: save.mastery[w.id], due: isDue(save.mastery[w.id], wordbookToday) }))
       .sort((a, b) => Number(b.due) - Number(a.due) || b.e.lv - a.e.lv)
@@ -775,7 +777,7 @@ export default function App() {
 
       <section className="hero-strip">
         <div><p className="eyebrow">DEPTH {run.depth} · FLOOR {run.floor}/{EXPEDITION_FLOORS} · ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.boss ? ' · BOSS' : ''}</p><h1>{depthName(run.depth)}</h1><p className="subtitle">Every word is a weapon. Every run makes you stronger.</p></div>
-        <div className="progress-chip"><span>📖</span><strong>{masteredCount(save.mastery)}<small> / {WORDS.length} mastered</small></strong></div>
+        <div className="progress-chip"><span>📖</span><strong>{Object.values(save.mastery).filter(e => e.lv >= SESSION_LV).length}<small> Familiar</small></strong></div>
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">

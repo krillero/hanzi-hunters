@@ -4,6 +4,7 @@ import type { CourseStatus } from './game/course'
 import type { Saved } from './game/types'
 import { DEPTHS, MAX_DEPTH, sigilText, unlockedDepth, victoryBonus } from './game/rules'
 import { daysUntilDue, dueCount } from './game/mastery'
+import { shortTermProgress } from './game/progress'
 import { localDay } from './game/habit'
 
 type Props = {
@@ -26,7 +27,7 @@ export default function CampScreen({ save, course, onReview, onBuy, onStart, mes
   const canBuy = (n: UpgradeNode) => nodeState(meta.upgrades, n) === 'available' && meta.gold >= upgradeCost(n.tier)
   const buyable = BRANCHES.flatMap(b => branchNodes(b.id)).filter(canBuy).length
   const known = Object.keys(mastery).length
-  const wordsLine = `${known} word${known === 1 ? '' : 's'}`
+  const wordsLine = `${known} word${known === 1 ? '' : 's'} met`
   const lessonPct = course.lessonsTotal ? Math.round(course.lessonsCompleted / course.lessonsTotal * 100) : 0
   // Depth to start: the deepest unlocked one by default; cleared depths can be replayed.
   const maxDepth = unlockedDepth(meta.depthCleared)
@@ -37,6 +38,7 @@ export default function CampScreen({ save, course, onReview, onBuy, onStart, mes
   const today = localDay(), due = dueCount(mastery, today)
   const waits = Object.values(mastery).map(e => daysUntilDue(e, today)).filter((d): d is number => d !== null && d > 0)
   const soonest = waits.length ? Math.min(...waits) : null
+  const progress = shortTermProgress(mastery, course, today)
   const review = due > 0 ? `${due} word${due === 1 ? '' : 's'} ready for review today` : soonest ? `Next word review ${soonest === 1 ? 'tomorrow' : `in ${soonest} days`}` : null
 
   return (
@@ -65,13 +67,17 @@ export default function CampScreen({ save, course, onReview, onBuy, onStart, mes
         {course.lesson
           ? <>
               <div className="camp-course-top"><span>LESSON {course.lesson.number} OF {course.lessonsTotal}</span><span>{wordsLine}</span></div>
-              <strong>{course.lesson.unit.title}</strong>
+              <strong>{course.lesson.lesson.title}</strong>
+              <small className="camp-course-unit">{course.lesson.unit.title} · {course.introduced} of {course.total} words met</small>
             </>
           : <>
               <div className="camp-course-top"><span>COURSE COMPLETE</span><span>{wordsLine}</span></div>
               <strong>{course.title}: all {course.lessonsTotal} lessons done</strong>
             </>}
         <div className="camp-course-bar" role="img" aria-label={`${course.lessonsCompleted} of ${course.lessonsTotal} lessons done`}><i style={{ width: `${lessonPct}%` }} /></div>
+        {/* Short-term progress (long-term mastery is in the wordbook). */}
+        <p className="camp-familiar"><b>{progress.familiar}</b> Familiar{progress.familiarToday > 0 && <em> +{progress.familiarToday} today</em>}{progress.almost > 0 && <span> · {progress.almost} one step away</span>}</p>
+        <p className="camp-next"><span aria-hidden="true">→</span> Next: {progress.next}</p>
       </div>
 
       {message && <div className="toast camp-toast"><span>{message}</span></div>}

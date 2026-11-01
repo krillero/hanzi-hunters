@@ -1709,3 +1709,8 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .tray-tile{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:2px 8px;border:1px solid #5b6f86;border-radius:6px;background:#1d2d40;color:#f1e7cf;font-size:22px;line-height:1}
 /* Tiles inside an option group: smaller, so groups of up to six two-character words stay compact at 360 px. */
 .enc-tiles{gap:4px}.enc-tiles .tray-tile{min-width:0;min-height:0;padding:3px 5px;font-size:16px}
+/* Camp: short-term learning progress. */
+.camp-course-unit{font-size:13px;color:#93a2b6;margin-top:-6px}
+.camp-familiar{margin:0;font-size:15px;color:#dbe6f0}.camp-familiar b{font-size:18px;color:#8ee0a9}.camp-familiar em{font-style:normal;color:#8ee0a9}.camp-familiar span{color:#93a2b6}
+.camp-next{margin:0;padding:8px 10px;border-radius:8px;background:#1d2d40;color:#f1e7cf;font-size:14px}
+.wordbook-summary{margin:0 0 8px;font-size:13px;color:#93a2b6}
