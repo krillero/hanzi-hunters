@@ -157,6 +157,31 @@ Code: src/game/trials.ts, TrialScreen.tsx; content: src/content/trials.json.
 - Statements cannot be checked automatically for truth: reviewers must check
   that exactly one statement matches the picture.
 
+### Cavern Warden's Gauntlet
+- The final boss's shield is 2 tone wards on top of 2 ink seals, so its trial
+  has two steps that mirror them. Offered once per Warden fight, right after
+  the first tone ward breaks.
+- Step 1: a tone trial (the Golem's pool: authored and generated). Right: the
+  last tone ward breaks (shield down to WARDEN_SEALS).
+- Step 2 (follows straight away, "Next challenge"): a torn note (the Scribe's
+  pool). Right: every remaining seal breaks (shield 0).
+- Each step is answered once; a wrong step is an ordinary wrong answer and
+  the next step still follows (a defeat ends the gauntlet). No damage, no
+  calm charge. If no note can be built from the player's words, the gauntlet
+  is the tone step alone.
+- The reward depends on the fight (resolveTrial checks for the Warden), not
+  on the trial content, so both steps reuse the existing trial types.
+  Run.trial.next holds step 2 (id, shuffled order, and the trial itself when
+  generated); closeTrial starts it; step is 1 or 2. Both survive a reload, and
+  a broken next step is dropped on load.
+- Balance (20 seeds, wardenTrial on vs off, all other trials on): 0.60
+  wins 4.8% → 4.4% (they rarely reach floor 5); 0.75 wins 60.4% → 64.4%,
+  depth-5 clear median 14 → 13 expeditions, hearts lost/run 10.09 → 9.90,
+  longest fight 22 → 18 answers; 0.85 wins 97.5% → 97.0%, hearts lost/run
+  2.62 → 2.74; 0.90 99.8% → 99.5%, 0.61 → 0.74. The Warden is the longest
+  fight; the gauntlet shortens it.
+- Preview: /?trial=warden plays a sample gauntlet (both steps).
+
 ### Trials are mandatory
 Boss trials cannot be skipped: there is no "Not now" button, Escape does
 nothing until the trial is answered, and closeTrial only closes an answered

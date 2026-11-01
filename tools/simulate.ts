@@ -82,11 +82,13 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       {
         run = offerTrial(run, mastery, ENEMIES, rng, recent)
         if (run.trial?.status === 'pending' && run.trial.floor === run.floor) recent = noteRecent(recent, trialKey(run.trial.id))
-        const t = run.trial?.status === 'pending' ? trialFor(run.trial) : undefined
-        if (t) {
+        // Every step is answered (the Warden's Gauntlet has two: closing the first starts the second).
+        for (let t = run.trial?.status === 'pending' ? trialFor(run.trial) : undefined; t; t = run.trial?.status === 'pending' ? trialFor(run.trial) : undefined) {
           const right = rng() < (accuracy >= 1 ? 1 : Math.min(0.98, accuracy - (t.boss === 'golem' ? 0.06 : t.boss === 'scribe' ? 0.04 : t.boss === 'trickster' ? 0.08 : 0)))
           const tr = resolveTrial({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, roll: { drop: rng(), item: rng() }, chosen: right ? t.answer : optionKeys(t).find(o => o !== t.answer)! })
-          if (tr) { run = closeTrial(tr.run); answers++; stat.trials++; stat.trialsRight += tr.correct ? 1 : 0; stat.heartsLost += tr.heartsLost; stat.secondChanceSaves += tr.savedBySecondChance ? 1 : 0 }
+          if (!tr) break
+          run = closeTrial(tr.run); answers++; stat.trials++; stat.trialsRight += tr.correct ? 1 : 0; stat.heartsLost += tr.heartsLost; stat.secondChanceSaves += tr.savedBySecondChance ? 1 : 0
+          if (run.trial?.status === 'pending') recent = noteRecent(recent, trialKey(run.trial.id))
         }
       }
       mastery = updateMastery(mastery, word.id, ok); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)

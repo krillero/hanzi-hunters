@@ -9,12 +9,14 @@
 //   English meaning is shown); the player picks the character that completes it. Right: every remaining seal breaks.
 // Mirror Trickster's Mirrors — offered once it drops below TRICKSTER_LOW of its HP: a picture and three statements about it from its
 //   mirror images; the player picks the true one. Right: a heavy blow (never the killing blow) and a calm charge (Run.calm).
+// Cavern Warden's Gauntlet — offered right after its first tone ward breaks: a tone trial (as the Golem's), then a torn note (as the
+//   Scribe's). Right tones: the last ward breaks. Right character: every remaining seal breaks. Each step is answered once.
 // Either way a wrong answer is an ordinary wrong answer (resolveAnswer decides hearts / second chance / defeat); trials cannot be
 // skipped (a pending trial stays open until answered, also across reloads);
 // mastery never changes; once per fight. Pure functions; the content is src/content/trials.json.
 import trialsJson from '../content/trials.json' with { type: 'json' }
 import { WORDS } from '../data.ts'
-import { TRICKSTER_LOW, TUNING, WRAITH_ECHO_AT, bossIdFor, enemyStats, isBoss, resolveAnswer, shieldFor, type AnswerInput } from './rules.ts'
+import { TRICKSTER_LOW, TUNING, WARDEN_SEALS, WRAITH_ECHO_AT, bossIdFor, enemyStats, isBoss, resolveAnswer, shieldFor, type AnswerInput } from './rules.ts'
 import type { Mastery, Run } from './types.ts'
 import { GEN_PREFIX, noteTrials, toneTrials } from './trialgen.ts'
 import { freshFirst } from './recent.ts'
@@ -34,7 +36,9 @@ export const BLANK = '＿'
 export type TrialBoss = Trial['boss']
 const BOSSES: TrialBoss[] = ['golem', 'wraith', 'scribe', 'trickster']
 /** The trial of the current fight, saved in the run: the same line survives a reload and is answered at most once. */
-export type TrialState = { id: string; floor: number; order: string[]; status: 'pending' | 'answered' | 'done'; chosen?: string; data?: Trial }
+export type TrialState = { id: string; floor: number; order: string[]; status: 'pending' | 'answered' | 'done'; chosen?: string; data?: Trial; next?: TrialStep; step?: number }
+/** A further step of a multi-step trial (the Cavern Warden's second challenge), started when the current one is closed. */
+export type TrialStep = { id: string; order: string[]; data?: Trial }
 /** Key of a trial in Saved.recentEvents. */
 export const trialKey = (id: string) => `trial:${id}`
 
@@ -134,7 +138,7 @@ export function generatedTrials(boss: TrialBoss, mastery: Mastery, rng = Math.ra
   return made.filter(t => trialErrors(t, WORD_IDS).length === 0)
 }
 
-const fightBoss = (run: Run) => (isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null)
+export const fightBoss = (run: Run) => (isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null)
 /** Has the fight just reached the moment this boss calls its trial? */
 function trialMoment(run: Run, boss: TrialBoss, enemies: AnswerInput['enemies']) {
   if (boss === 'golem') return TUNING.golemTrial > 0 && run.shield > 0 && run.shield === shieldFor(run.floor, 'golem') - 1
@@ -150,21 +154,40 @@ function trialMoment(run: Run, boss: TrialBoss, enemies: AnswerInput['enemies'])
  */
 export function offerTrial(run: Run, mastery: Mastery, enemies: AnswerInput['enemies'], rng = Math.random, recent: string[] = []): Run {
   const boss = fightBoss(run)
-  if (!boss || !BOSSES.includes(boss as TrialBoss) || run.phase !== 'fighting' || run.trial?.floor === run.floor || !trialMoment(run, boss as TrialBoss, enemies)) return run
-  const authored = TRIALS.filter(t => t.boss === boss && t.requires.every(id => Object.prototype.hasOwnProperty.call(mastery, id)))
-  const generated = generatedTrials(boss as TrialBoss, mastery, rng)
+  if (!boss || run.phase !== 'fighting' || run.trial?.floor === run.floor) return run
+  if (boss === 'warden') {
+    // The Gauntlet: right after the first tone ward breaks. A tone trial, then (when one can be built) a torn note.
+    if (!TUNING.wardenTrial || run.shield <= 0 || run.shield !== shieldFor(run.floor, 'warden') - 1) return run
+    const tone = pickTrial('golem', mastery, rng, recent)
+    if (!tone) return run
+    const note = pickTrial('scribe', mastery, rng, recent)
+    return { ...run, trial: { ...asStep(tone, rng), floor: run.floor, status: 'pending', step: 1, ...(note ? { next: asStep(note, rng) } : {}) } }
+  }
+  if (!BOSSES.includes(boss as TrialBoss) || !trialMoment(run, boss as TrialBoss, enemies)) return run
+  const t = pickTrial(boss as TrialBoss, mastery, rng, recent)
+  return t ? { ...run, trial: { ...asStep(t, rng), floor: run.floor, status: 'pending' } } : run
+}
+
+/** One trial of this kind: authored and generated drawn half and half (when both exist), recent ones skipped while others exist. */
+function pickTrial(kind: TrialBoss, mastery: Mastery, rng: () => number, recent: string[]): Trial | null {
+  const authored = TRIALS.filter(t => t.boss === kind && t.requires.every(id => Object.prototype.hasOwnProperty.call(mastery, id)))
+  const generated = generatedTrials(kind, mastery, rng)
   const isNew = (t: Trial) => !recent.includes(trialKey(t.id))
   // Prefer a source that still has something new; with both, a coin flip keeps the authored lines in the mix.
   const sources = [authored, generated].filter(s => s.length)
   const withNew = sources.filter(s => s.some(isNew))
   const from = withNew.length ? withNew : sources
-  if (!from.length) return run
+  if (!from.length) return null
   const source = from[Math.min(from.length - 1, Math.floor(rng() * from.length))]
   const pool = freshFirst(source, t => trialKey(t.id), recent)
-  const t = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]
+  return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]
+}
+
+/** A trial ready to show: shuffled options, and the whole trial when it is generated (it cannot be looked up by id). */
+function asStep(t: Trial, rng: () => number): TrialStep {
   const order = optionKeys(t)
   for (let i = order.length - 1; i > 0; i--) { const j = Math.min(i, Math.floor(rng() * (i + 1))); [order[i], order[j]] = [order[j], order[i]] }
-  return { ...run, trial: { id: t.id, floor: run.floor, order, status: 'pending', ...(t.id.startsWith(GEN_PREFIX) ? { data: t } : {}) } }
+  return { id: t.id, order, ...(t.id.startsWith(GEN_PREFIX) ? { data: t } : {}) }
 }
 
 export type TrialResult = { run: Run; correct: boolean; hit: number; heartsLost: number; savedBySecondChance: boolean; outcome: 'continue' | 'defeat' }
@@ -176,6 +199,11 @@ export function resolveTrial(i: Omit<AnswerInput, 'lv' | 'isCorrect' | 'practice
   const answered: TrialState = { ...state, status: 'answered', chosen: i.chosen }
   if (i.chosen === trial.answer) {
     const ok = { correct: true, heartsLost: 0, savedBySecondChance: false, outcome: 'continue' as const }
+    // The Warden's Gauntlet reuses tone and note trials; the reward is its own: tones break the wards, a character every seal.
+    if (fightBoss(run) === 'warden') {
+      const shield = trial.boss === 'golem' ? Math.min(run.shield, WARDEN_SEALS) : 0
+      return { ...ok, run: { ...run, shield, streak: run.streak + 1, trial: answered }, hit: 0 }
+    }
     if (trial.boss === 'wraith') return { ...ok, run: { ...run, calm: 1, streak: run.streak + 1, trial: answered }, hit: 0 }
     if (trial.boss === 'scribe') return { ...ok, run: { ...run, shield: 0, streak: run.streak + 1, trial: answered }, hit: 0 }
     const foe = enemyStats(i.enemies, run.floor, run.kill, run.depth)
@@ -191,7 +219,13 @@ export function resolveTrial(i: Omit<AnswerInput, 'lv' | 'isCorrect' | 'practice
 }
 
 /** Close the trial after the player has read the result (trials cannot be skipped; a pending trial stays open). */
-export const closeTrial = (run: Run): Run => (run.trial?.status === 'answered' ? { ...run, trial: { ...run.trial, status: 'done' } } : run)
+export function closeTrial(run: Run): Run {
+  const t = run.trial
+  if (t?.status !== 'answered') return run
+  // A multi-step trial goes on with its next step (the Warden's second challenge) while the fight is still on.
+  if (t.next && run.phase === 'fighting') return { ...run, trial: { ...t.next, floor: t.floor, status: 'pending', step: (t.step ?? 1) + 1 } }
+  return { ...run, trial: { ...t, status: 'done', next: undefined } }
+}
 
 export function cleanTrial(raw: unknown): TrialState | undefined {
   if (!raw || typeof raw !== 'object') return undefined
@@ -202,5 +236,12 @@ export function cleanTrial(raw: unknown): TrialState | undefined {
   const order = Array.isArray(t.order) && t.order.length === keys.length && keys.every(o => t.order.includes(o)) ? t.order : [...keys]
   const status = t.status === 'pending' || t.status === 'answered' ? t.status : 'done'
   const chosen = status === 'answered' && keys.includes(t.chosen ?? '') ? t.chosen : undefined
-  return { id: trial.id, floor, order, status: status === 'answered' && !chosen ? 'done' : status, ...(chosen ? { chosen } : {}), ...(trial.id.startsWith(GEN_PREFIX) ? { data: trial } : {}) }
+  const finalStatus = status === 'answered' && !chosen ? 'done' : status
+  // The next step must be a valid trial with a complete order; otherwise the gauntlet simply ends after this step.
+  const nextTrial = finalStatus !== 'done' && t.next && typeof t.next === 'object' ? trialFor(t.next) : undefined
+  const nextKeys = nextTrial ? optionKeys(nextTrial) : []
+  const next = nextTrial && Array.isArray(t.next!.order) && t.next!.order.length === nextKeys.length && nextKeys.every(o => t.next!.order.includes(o))
+    ? { id: nextTrial.id, order: t.next!.order, ...(nextTrial.id.startsWith(GEN_PREFIX) ? { data: nextTrial } : {}) } : undefined
+  const step = Number.isInteger(t.step) && t.step! >= 1 && t.step! <= 2 ? t.step : undefined
+  return { id: trial.id, floor, order, status: finalStatus, ...(chosen ? { chosen } : {}), ...(trial.id.startsWith(GEN_PREFIX) ? { data: trial } : {}), ...(next ? { next } : {}), ...(step ? { step } : {}) }
 }

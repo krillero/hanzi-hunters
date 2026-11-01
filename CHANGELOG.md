@@ -414,3 +414,4 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - Balance unchanged within noise (20-seed simulator comparison in `docs/CONTEXTUAL_ENCOUNTERS.md`).
 - Encounters and boss trials can no longer be skipped (no Skip/Leave/"Not now"; Escape only continues after completion). A right Trickster answer now also gives a calm charge, because the forced trial otherwise cost 0.75-accuracy players wins (simulator, `docs/CONTEXTUAL_ENCOUNTERS.md`).
 - Encounters open straight into the scene: the intro popup ("Help the traveler") is gone, since it only existed to offer a skip. Saves waiting on it load into the scene.
+- Cavern Warden's Gauntlet: right after its first tone ward breaks, a tone trial (right: the last ward breaks) and then a torn note (right: every remaining seal breaks), reusing the Golem/Scribe pools including generated ones. Preview `/?trial=warden`. Simulator: 0.75 wins 60.4% → 64.4%, longest fight 22 → 18 answers.

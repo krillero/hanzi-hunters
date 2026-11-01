@@ -28,12 +28,28 @@ const FRAME = {
     good: '🪞 You found the true reflection! A heavy blow lands, and your next mistake costs no heart.', bad: '↻ Not quite. That reflection was lying.',
   },
 } as const
+/** The Cavern Warden's Gauntlet reuses tone and note trials with its own framing: [tone step, note step]. */
+const WARDEN = [
+  {
+    title: 'The Warden’s Gauntlet', icon: '🛡️',
+    situation: 'The Cavern Warden carves words into its last tone ward. Read them with the right tones.',
+    stakes: 'Right: its last tone ward breaks. Wrong: like any wrong answer, it can cost a heart. Either way, its ink seals come next.',
+    good: '💥 The last tone ward breaks!', bad: '↻ Not quite. The ward holds.',
+  },
+  {
+    title: 'The Warden’s Gauntlet', icon: '🛡️',
+    situation: 'The Warden’s ink seals glow with a torn note. One character is missing. Which one completes it?',
+    stakes: 'Right: every remaining seal breaks at once. Wrong: like any wrong answer, it can cost a heart.',
+    good: '🖋️ Every seal breaks! The Warden stands unguarded.', bad: '↻ Not quite. The seals hold.',
+  },
+] as const
 
 /** A boss trial: one choice inside the boss fight. It cannot be skipped and answering is final. `onExit`: preview links only. */
-export default function TrialScreen({ trial, state, onAnswer, onClose, onExit }: { trial: Trial; state: TrialState; onAnswer: (option: string) => void; onClose: () => void; onExit?: () => void }) {
+export default function TrialScreen({ trial, state, onAnswer, onClose, onExit, warden = false }: { trial: Trial; state: TrialState; onAnswer: (option: string) => void; onClose: () => void; onExit?: () => void; warden?: boolean }) {
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => { box.current?.focus() }, [])
-  const frame = FRAME[trial.boss]
+  const frame = warden ? WARDEN[trial.boss === 'golem' ? 0 : 1] : FRAME[trial.boss]
+  const steps = (state.step ?? 1) + (state.next ? 1 : 0)
   const answered = state.status === 'answered', correct = answered && state.chosen === trial.answer
   const onKey = (e: KeyboardEvent) => {
     e.stopPropagation()
@@ -52,7 +68,7 @@ export default function TrialScreen({ trial, state, onAnswer, onClose, onExit }:
     return <span className="trial-reply"><b lang="zh">{o.zh}</b><small>{o.py}</small>{answered && <small>{o.en}</small>}</span>
   }
   return <div className="modal-backdrop encounter-backdrop"><div ref={box} tabIndex={-1} className={`modal encounter trial ${trial.boss === 'scribe' ? 'scribe-note' : ''}`} role="dialog" aria-modal="true" aria-labelledby="trial-title" onKeyDown={onKey}>
-    <div className="modal-head"><h2 id="trial-title">{frame.title}</h2></div>
+    <div className="modal-head"><h2 id="trial-title">{frame.title}{warden && steps > 1 ? ` · ${state.step ?? 1}/${steps}` : ''}</h2></div>
     <div className="enc-body">
       <div className="enc-person" aria-hidden="true">{frame.icon}</div>
       <p className="enc-situation">{frame.situation}</p>
@@ -72,7 +88,7 @@ export default function TrialScreen({ trial, state, onAnswer, onClose, onExit }:
       </div>}
     </div>
     <div className="enc-footer">
-      {answered ? <button className="bar-btn main" onClick={onClose}>Continue the fight</button> : onExit && <button className="bar-btn ghost" onClick={onExit}>Close preview</button>}
+      {answered ? <button className="bar-btn main" onClick={onClose}>{state.next ? 'Next challenge' : 'Continue the fight'}</button> : onExit && <button className="bar-btn ghost" onClick={onExit}>Close preview</button>}
     </div>
   </div></div>
 }
