@@ -434,3 +434,4 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 ## Housekeeping (2026-11-01)
 - `npm run test:brief` no longer crashes when a failure's cause is a plain string (a test file that fails to import, a test that throws a string); a file that crashes on import now reports its real error line (e.g. a missing export) instead of "test failed".
 - `docs/CONTEXTUAL_ENCOUNTERS.md`: removed the original patch's stale handoff and balance sections (+3 gold, day-based stages, the uncommitted test save); added a current "Testing and review" section with preview links.
+- Tea event: 我要茶 asks for tea only, so 茶 alone is the answer (it required 茶 + 水, which tested tea brewing, not Chinese); 茶 is glossed "tea", not "tea leaves".

@@ -330,7 +330,7 @@
       "options": [
         {
           "id": "茶",
-          "en": "tea leaves"
+          "en": "tea"
         },
         {
           "id": "水",
@@ -346,11 +346,10 @@
         }
       ],
       "answer": [
-        "茶",
-        "水"
+        "茶"
       ],
-      "note": "茶 names tea leaves here. Water and tea leaves make the drink.",
-      "result": "You prepare tea with the leaves and water.",
+      "note": "我要茶 asks for tea only: bring the 茶. 水 is water, 米饭 is cooked rice and 菜 is dishes.",
+      "result": "You bring the traveler a cup of tea.",
       "resultIcon": "🍵",
       "closing": {
         "zh": "谢谢！",
@@ -378,7 +377,7 @@
       "options": [
         {
           "id": "茶",
-          "en": "tea leaves"
+          "en": "tea"
         },
         {
           "id": "水",
