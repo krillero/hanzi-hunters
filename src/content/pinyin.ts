@@ -93,7 +93,8 @@ export function checkPinyin(pinyin: string, neutral: number[] = [], strictNeutra
 export const syllableCount = (pinyin: string) => splitSyllables(pinyin)?.length ?? 0
 
 /** Sound identity for "do these two sound the same?": letters and tone marks, no spacing, apostrophes or case. */
-export const soundKey = (pinyin: string) => pinyin.normalize('NFC').toLowerCase().replace(/[\s'’\-]+/g, '')
+const soundKeys = new Map<string, string>()   // pure and called very often while building questions: cached
+export const soundKey = (pinyin: string) => { let k = soundKeys.get(pinyin); if (k === undefined) { k = pinyin.normalize('NFC').toLowerCase().replace(/[\s'’\-]+/g, ''); soundKeys.set(pinyin, k) } return k }
 
 const TONES: Record<string, string> = { a: 'āáǎà', e: 'ēéěè', i: 'īíǐì', o: 'ōóǒò', u: 'ūúǔù', ü: 'ǖǘǚǜ' }
 /** The three other tones of a ONE-syllable pinyin with a tone mark, e.g. shān -> shán, shǎn, shàn. Empty for anything else (multi-syllable, neutral). */

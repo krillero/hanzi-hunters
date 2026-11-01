@@ -27,9 +27,9 @@ import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
 import { gearVerdict, rarityOf as rarityOfItem } from './game/rarity'
 import {
-  ENEMIES_PER_FLOOR, SHIELD_SEGMENTS, advance, hasShield, shieldFor, bankRun, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
+  ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, SHIELD_SEGMENTS, advance, hasShield, isExpeditionWon, sealAsk, shieldFor, bankRun, type RunResult, bossIdFor, bossPhase, isBoss, isFinalFight, drinkPotion, enemyStats, equipGear, equippedGear, newRun, playerStats, resolveAnswer, startFight, xpForLevel
 } from './game/rules'
-import { SAVE_KEY, loadSave, sanitizeSave, withLearning } from './game/save'
+import { SAVE_KEY, clearOldSaves, loadSave, sanitizeSave, withLearning } from './game/save'
 import type { Mastery, Run, Saved } from './game/types'
 import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 
@@ -69,18 +69,19 @@ function logCourse(plan: IntroPlan) {
 
 function previewStart(): { floor: number; kill: number } | null {
   const q = new URLSearchParams(window.location.search); const f = Number(q.get('floor'))
-  if (!q.has('floor') || !Number.isInteger(f) || f < 1 || f > 99) return null
+  if (!q.has('floor') || !Number.isInteger(f) || f < 1 || f > EXPEDITION_FLOORS) return null
   const k = q.has('kill') ? Number(q.get('kill')) : ENEMIES_PER_FLOOR - 1
   return { floor: f, kill: Number.isInteger(k) && k >= 0 && k < ENEMIES_PER_FLOOR ? k : ENEMIES_PER_FLOOR - 1 }
 }
 
 function initialSave(): Saved {
+  clearOldSaves(window.localStorage)   // saves from before expeditions are deleted, never read
   const s = loadSave(window.localStorage)
   const jump = previewStart()
   if (jump) {
     // A strong enough hero for that depth so the fight itself can be looked at; replaces the current run (explicit test URL only).
     const b = computeBonuses(s.meta.upgrades), base = { ...newRun(b, GEAR, ENEMIES), floor: jump.floor, kill: jump.kill, level: Math.min(40, 2 + jump.floor * 2) }
-    return { ...s, run: startFight({ ...base, hearts: playerStats(base, b, GEAR).maxHearts }, b, ENEMIES, GEAR, true) }
+    return { ...s, run: startFight(base, b, ENEMIES, GEAR) }
   }
   // Brand-new players go straight into a first run; returning players land wherever they left off.
   const brandNew = s.meta.runs === 0 && s.meta.gold === 0 && s.meta.upgrades.length === 0 && Object.keys(s.mastery).length === 0
@@ -202,7 +203,7 @@ export default function App() {
     // While a shield is up, any card that is not a seal question is a fallback: a correct answer still breaks a segment (never unbreakable).
     const shieldUp = !!(forRun && boss && hasShield(boss) && forRun.shield > 0)
     const needed = forced || !forRun || !boss ? null
-      : hasShield(boss) && forRun.shield > 0 ? (boss === 'golem' ? { kinds: TONE_KINDS, ok: isToneQuestion } : { kinds: CHARACTER_KINDS, ok: isCharacterQuestion })
+      : hasShield(boss) && forRun.shield > 0 ? (sealAsk(boss, forRun.shield) === 'pinyin' ? { kinds: TONE_KINDS, ok: isToneQuestion } : { kinds: CHARACTER_KINDS, ok: isCharacterQuestion })
       : boss === 'trickster' ? { kinds: TRICK_KINDS, ok: (q: Question) => q.kind === 'homophone' || q.kind === 'lookalike' }
       : null
     if (needed) {
@@ -221,7 +222,7 @@ export default function App() {
       if (picked) return shieldUp ? picked : { word: picked.word, question: picked.question }
     }
     // Echo Wraith, phase 2: the kind of question you got wrong most recently keeps coming back.
-    const echo = !forced && forRun && bossFoe?.boss === 'wraith' && bossPhase(forRun, bossFoe.hp) === 2 ? [...kindHistory.current].reverse().find(h => !h.ok)?.kind : undefined
+    const echo = !forced && forRun && bossFoe && ((bossFoe.boss === 'wraith' && bossPhase(forRun, bossFoe.hp) === 2) || (bossFoe.boss === 'warden' && bossPhase(forRun, bossFoe.hp) === 3)) ? [...kindHistory.current].reverse().find(h => !h.ok)?.kind : undefined
     if (forced) {
       // Preview aid: with ?word=…&kind=…, an entry you have not met yet is asked as if you already knew it, so the requested question kind is shown
       const asked = forcedKind.current && !mastery[forced.id] ? { lv: 1, ok: 0 } : mastery[forced.id]
@@ -370,7 +371,7 @@ export default function App() {
     const practice = isPractice(card)
     const r = resolveAnswer({
       run, bonuses, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect, practice,
-      sealQuestion: !!card.sealFallback || (foe?.boss === 'scribe' ? isCharacterQuestion(question) : isToneQuestion(question)),
+      sealQuestion: !!card.sealFallback || (foe?.boss ? (sealAsk(foe.boss, run.shield) === 'hanzi' ? isCharacterQuestion(question) : isToneQuestion(question)) : false),
       roll: { drop: Math.random(), item: Math.random() }
     })
     const mastery = updateMastery(save.mastery, word.id, isCorrect)
@@ -428,7 +429,7 @@ export default function App() {
     }
     if (r.outcome === 'victory') {
       // Clearing the floor restores hearts (shown again in the floor summary).
-      if (r.heartsRestored > 0) setCaption({ side: 'hero', kind: 'heal', text: `+${r.heartsRestored} ♥ floor cleared` })
+      if (r.heartsRestored > 0) setCaption({ side: 'hero', kind: 'heal', text: `+${r.heartsRestored} ♥ Second Wind` })
       window.setTimeout(() => {
         const stage = document.querySelector('.arena-stage')?.getBoundingClientRect()
         if (!stage) return
@@ -464,6 +465,7 @@ export default function App() {
   const nextEnemy = () => {
     if (!run) return
     const next = advance(run, bonuses, ENEMIES, GEAR)
+    if (!next) { endRun('won'); return }
     patch(s => ({ ...s, run: next }))
     setNextCard(makeCard(save.mastery, card?.word.id ?? null, canListen, next)); setEliminated([]); setFeedback(null); answerLock.current = false
     setCaption(null)
@@ -513,7 +515,7 @@ export default function App() {
   const returnToCamp = () => {
     if (!run || run.phase === 'defeat') return
     if (!window.confirm(`Return to camp? This run ends now. You keep the ${run.gold} gold you earned and everything you learned; level, gear and potions are lost as usual.`)) return
-    setMenuOpen(false); endRun(true)
+    setMenuOpen(false); endRun('returned')
   }
 
   const useHint = () => {
@@ -524,12 +526,12 @@ export default function App() {
     patch(s => ({ ...s, run: s.run && { ...s.run, hintsLeft: s.run.hintsLeft - 1 } }))
   }
 
-  /** End the run: after a defeat, or with "Return to camp" (`returned`: banks the gold, keeps all learning, not recorded as a defeat). */
-  const endRun = (returned = false) => {
+  /** End the expedition: won (final boss beaten), lost (out of hearts) or "Return to camp". Banks the gold; learning is kept either way. */
+  const endRun = (result: RunResult) => {
     if (!run) return
     setReveal(null)
     forcedWord.current = null
-    const { meta, summary } = bankRun(save.meta, run, returned)
+    const { meta, summary } = bankRun(save.meta, run, result)
     patch(s => ({ ...s, meta, run: null, lastRun: summary }))
     setCampMsg(''); setFeedback(null); setCard(null); setNoCard(false); setShowBag(false); setShowWords(false); answerLock.current = false
     setSummary(null); setLevelUp(null); setLootReveal(null); setBossIntro(null)
@@ -578,7 +580,7 @@ export default function App() {
   }
 
   // ---- camp -----------------------------------------------------------------------------
-  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onReset={() => { setMenuOpen(false); resetAll() }} progress={{ bestFloor: save.meta.bestFloor, runs: save.meta.runs, known: Object.keys(save.mastery).length, mastered: masteredCount(save.mastery), badges: save.habit.badges }} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) }, onReturn: run.phase !== 'defeat' ? returnToCamp : undefined } : undefined} /> : null
+  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onReset={() => { setMenuOpen(false); resetAll() }} progress={{ wins: save.meta.wins, bestFloor: save.meta.bestFloor, runs: save.meta.runs, known: Object.keys(save.mastery).length, mastered: masteredCount(save.mastery), badges: save.habit.badges }} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) }, onReturn: run.phase !== 'defeat' ? returnToCamp : undefined } : undefined} /> : null
   const topbar = (
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
@@ -613,7 +615,7 @@ export default function App() {
             ? `The course “${ACTIVE_CURRICULUM.title}” has no word that can be introduced.`
             : 'None of the words you know can be asked as a fair question right now.'}</p>
           <p className="hint-text">This is a content or configuration problem, not something you did. Your progress is safe. If you maintain this game: run <code>npm run validate:content</code> and check <code>src/content/curricula.json</code> and <code>words.json</code>. ({plan.reason}: {plan.detail})</p>
-          <button className="bar-btn main" onClick={() => endRun(true)}>Back to camp</button>
+          <button className="bar-btn main" onClick={() => endRun('returned')}>Back to camp</button>
         </section>}
         {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
         {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
@@ -648,12 +650,12 @@ export default function App() {
       {topbar}
 
       <section className="hero-strip">
-        <div><p className="eyebrow">FLOOR {pad(run.floor)} · ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.boss ? ' · BOSS' : ''}</p><h1>The Mosslight Cavern</h1><p className="subtitle">Every word is a weapon. Every run makes you stronger.</p></div>
+        <div><p className="eyebrow">FLOOR {run.floor}/{EXPEDITION_FLOORS} · ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.boss ? ' · BOSS' : ''}</p><h1>The Mosslight Cavern</h1><p className="subtitle">Every word is a weapon. Every run makes you stronger.</p></div>
         <div className="progress-chip"><span>📖</span><strong>{masteredCount(save.mastery)}<small> / {WORDS.length} mastered</small></strong></div>
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">
-        <div><strong>FLOOR {pad(run.floor)}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small></div>
+        <div><strong>FLOOR {run.floor}/{EXPEDITION_FLOORS}</strong><small className="floor-path" role="img" aria-label={`Enemy ${run.kill + 1} of ${ENEMIES_PER_FLOOR}${foe.boss ? ', boss' : ''}`}>{Array.from({ length: ENEMIES_PER_FLOOR }, (_, i) => <i key={i} className={`${i < run.kill || (i === run.kill && run.phase === 'victory') ? 'done' : i === run.kill ? 'cur' : ''} ${i === ENEMIES_PER_FLOOR - 1 ? (isBoss(run.floor, i) ? 'boss' : '') : ''}`} />)}</small></div>
         <span className="compact-gold" aria-label={`${run.gold} gold`}>🪙 {run.gold}</span>
         <button className="chip-btn" onClick={() => setMenuOpen(true)} aria-label="Menu">☰</button>
       </header>
@@ -671,8 +673,8 @@ export default function App() {
               <div className="phaser-mount" ref={mountRef} aria-label="Pixel art dungeon battle arena" />
               <div className="arena-hud" aria-hidden={!caption && !floorBanner}>
                 {run.phase === 'fighting' || run.phase === 'victory' ? <ComboBadge streak={run.streak} bonusPct={Math.round(bonuses.streakDmgPct * 100)} /> : null}
-                {foe.boss && hasShield(foe.boss) && (run.shield > 0 || foe.boss === 'scribe') && run.phase === 'fighting' && <div className="boss-shield" role="img" aria-label={`${foe.boss === 'scribe' ? 'Seals' : 'Shield'}: ${run.shield} of ${shieldFor(run.floor)} left`}>{foe.boss === 'scribe' ? 'INK SEALS' : 'SHIELD'} {Array.from({ length: shieldFor(run.floor) }, (_, i) => <i key={i} className={i < run.shield ? '' : 'off'} />)}</div>}
-                {foe.boss === 'wraith' && run.phase === 'fighting' && bossPhase(run, foe.hp) === 2 && <div className="boss-shield echo" role="img" aria-label="Echo phase: your weak spot comes back">ECHO</div>}
+                {foe.boss && hasShield(foe.boss) && run.shield > 0 && run.phase === 'fighting' && (() => { const max = shieldFor(run.floor, foe.boss), label = sealAsk(foe.boss, run.shield) === 'pinyin' ? (foe.boss === 'warden' ? 'TONE WARDS' : 'SHIELD') : 'INK SEALS'; return <div className="boss-shield" role="img" aria-label={`${label.toLowerCase()}: ${run.shield} of ${max} left; ${sealAsk(foe.boss, run.shield) === 'pinyin' ? 'tone' : 'character'} questions break them`}>{label} {Array.from({ length: max }, (_, i) => <i key={i} className={i < run.shield ? '' : 'off'} />)}</div> })()}
+                {((foe.boss === 'wraith' && bossPhase(run, foe.hp) === 2) || (foe.boss === 'warden' && bossPhase(run, foe.hp) === 3)) && run.phase === 'fighting' && <div className="boss-shield echo" role="img" aria-label="Echo phase: your weak spot comes back">ECHO</div>}
                 {foe.boss === 'trickster' && run.phase === 'fighting' && <div className="boss-shield echo" role="img" aria-label="Tricky questions: a right answer hits 40% harder">RIGHT = +40%</div>}
                 {run.phase === 'victory' && <span className="arena-banner win">{foe.boss ? 'BOSS DEFEATED' : 'VICTORY'}</span>}
                 {run.phase === 'defeat' && <span className="arena-banner lose">YOU DIED</span>}
@@ -712,10 +714,10 @@ export default function App() {
               <div className="character-section-title">ACTIVE BONUSES <span>EXPAND FOR SOURCES</span></div>
               <div className="bonus-accordion-list">
                 <details className="bonus-accordion">
-                  <summary><span className="bonus-accordion-icon">❤️</span><b>Hearts &amp; protection</b><strong>{stats.maxHearts} max · {stats.secondChances} second chance{stats.secondChances === 1 ? '' : 's'}/floor</strong></summary>
+                  <summary><span className="bonus-accordion-icon">❤️</span><b>Hearts &amp; protection</b><strong>{stats.maxHearts} max · {stats.secondChances} second chance{stats.secondChances === 1 ? '' : 's'}/expedition</strong></summary>
                   <div className="bonus-sources">
-                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && (node.fx.maxHearts || node.fx.secondChance)).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>{[node.fx.maxHearts ? `+${node.fx.maxHearts} max heart` : '', node.fx.secondChance ? `+${node.fx.secondChance} second chance per floor` : ''].filter(Boolean).join(' · ')}</b></div>)}
-                    {equipped.filter(item => item.maxHearts || item.secondChance).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>{[item.maxHearts ? `+${item.maxHearts} max heart` : '', item.secondChance ? `+${item.secondChance} second chance per floor` : ''].filter(Boolean).join(' · ')}</b></div>)}
+                    {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && (node.fx.maxHearts || node.fx.secondChance)).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>{[node.fx.maxHearts ? `+${node.fx.maxHearts} max heart` : '', node.fx.secondChance ? `+${node.fx.secondChance} second chance per expedition` : ''].filter(Boolean).join(' · ')}</b></div>)}
+                    {equipped.filter(item => item.maxHearts).map(item => <div key={item.name}><span>{item.icon} {item.name}</span><b>+{item.maxHearts} max heart</b></div>)}
                     {!bonuses.maxHearts && !stats.secondChances && !equipped.some(item => item.maxHearts) && <p>No extra hearts or second chances yet. A wrong answer costs one heart; a right answer never does.</p>}
                   </div>
                 </details>
@@ -734,9 +736,9 @@ export default function App() {
                   </div>
                 </details>
                 <details className="bonus-accordion">
-                  <summary><span className="bonus-accordion-icon">💚</span><b>Recovery</b><strong>+{stats.floorHearts} ♥ per floor · potion +{stats.potionHearts} ♥</strong></summary>
+                  <summary><span className="bonus-accordion-icon">💚</span><b>Recovery</b><strong>{stats.floorHearts ? `+${stats.floorHearts} ♥ per floor · ` : ''}potion +{stats.potionHearts} ♥</strong></summary>
                   <div className="bonus-sources">
-                    <div><span>🏁 Clearing a floor</span><b>Restores {stats.floorHearts} heart{stats.floorHearts === 1 ? '' : 's'}</b></div>
+                    <div><span>🏁 Clearing a floor</span><b>{stats.floorHearts ? `Restores ${stats.floorHearts} heart${stats.floorHearts === 1 ? '' : 's'}` : 'No recovery (Second Wind adds it)'}</b></div>
                     {UPGRADES.filter(node => save.meta.upgrades.includes(node.id) && (node.fx.floorHearts || node.fx.potionHearts || node.fx.startPotions)).map(node => <div key={node.id}><span>{node.icon} {node.name}</span><b>{[node.fx.floorHearts ? `+${node.fx.floorHearts} heart on floor clear` : '', node.fx.potionHearts ? `potions +${node.fx.potionHearts} heart` : '', node.fx.startPotions ? `+${node.fx.startPotions} starting potion` : ''].filter(Boolean).join(' · ')}</b></div>)}
                     <div><span>🧪 Current potions</span><b>{run.potions} remaining · each restores {stats.potionHearts} heart{stats.potionHearts === 1 ? '' : 's'}</b></div>
                   </div>
@@ -774,7 +776,7 @@ export default function App() {
                 <div className="character-section">
                   <div className="bonus-line"><span>🧪 Potions<small>Available now</small></span><b>{run.potions} remaining · +{stats.potionHearts} ♥ each</b></div>
                   <div className="bonus-line"><span>💡 Hints<small>Per fight</small></span><b>{run.hintsLeft} remaining</b></div>
-                  <div className="bonus-line"><span>🔁 Second chance<small>Per floor</small></span><b>{run.secondLeft} of {stats.secondChances} left</b></div>
+                  <div className="bonus-line"><span>🔁 Second chance<small>Per expedition</small></span><b>{run.secondLeft} of {stats.secondChances} left</b></div>
                   <div className="bonus-line"><span>🎒 Loot chance<small>Current enemy</small></span><b>{Math.round(lootChance * 100)}%</b></div>
                 </div>
               </details>
@@ -786,10 +788,6 @@ export default function App() {
 
         <div className="right-column">
           <section className={`question-panel`}>
-            {!save.habit.heartsIntro && <div className="hearts-intro" role="note">
-              <p><b>♥ Hearts.</b> A right answer attacks and never costs a heart. A wrong answer costs 1 heart (your first practice of a new word is free). At 0 hearts the run ends. Clearing a floor restores a heart.</p>
-              <button className="bar-btn ghost" onClick={() => patch(s => ({ ...s, habit: { ...s.habit, heartsIntro: true } }))}>Got it</button>
-            </div>}
             <div className={`question-title ${run.phase}`}><div className="title-text">{fighting && !feedback && !revealing && isPractice(card) && <span className="practice-tag">Practice · no heart lost</span>}<h2>{fighting || revealing || feedback ? (question.kind === 'intro' && !feedback && !revealing ? 'Learn this word' : question.text.replace(/^New word!\s*/i, '')) : run.phase === 'victory' ? (lastOfFloor ? '⚔️ Floor cleared!' : '⚔️ Victory!') : '💀 You have fallen'}</h2></div></div>
 
             {/* The word card never leaves its slot. Feedback replaces the choices below it. */}
@@ -853,7 +851,7 @@ export default function App() {
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
-        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} onContinue={() => { if (summary === 'floor') { setSummary(null); nextEnemy() } else endRun() }} />}
+        {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}

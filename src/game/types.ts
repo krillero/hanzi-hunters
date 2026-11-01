@@ -4,7 +4,8 @@ export type Mastery = Record<string, MasteryEntry>
 
 import type { Habit } from './habit.ts'
 
-export type Meta = { gold: number; upgrades: string[]; bestFloor: number; runs: number }
+/** `wins`: expeditions won (final boss beaten). */
+export type Meta = { gold: number; upgrades: string[]; bestFloor: number; runs: number; wins: number }
 
 import type { GearSlot } from '../data.ts'
 
@@ -23,7 +24,7 @@ export type Run = {
   gold: number; potions: number; gear: string[]; loadout: Partial<Record<GearSlot, string>>; streak: number
   /** Hints left in this fight (refilled per fight). */
   hintsLeft: number
-  /** Second-chance charges left on this floor: refilled only on entering a floor (never per enemy, reload or gear swap). */
+  /** Second-chance charges left in this expedition: set when it starts, never refilled (not per floor, enemy, reload or gear swap). */
   secondLeft: number
   /** The last floor whose clear restored hearts (so the floor recovery is applied exactly once, also across reloads). */
   recoveredFloor: number
@@ -31,14 +32,14 @@ export type Run = {
   /** What the last kill gave; `hearts` = hearts restored by clearing the floor (shown in the floor summary). */
   reward: { xp: number; gold: number; loot: string; levelUps: number; hearts: number }
 }
-/** `returned`: the run ended with "Return to camp" (not a defeat). */
-export type RunSummary = { floor: number; kills: number; level: number; goldBanked: number; returned: boolean }
+/** How the expedition ended: `won` (final boss beaten), `defeat` (out of hearts) or `returned` ("Return to camp"). */
+export type RunSummary = { floor: number; kills: number; level: number; goldBanked: number; result: 'won' | 'defeat' | 'returned' }
 
 import type { CourseProgress, PeakLevels } from './course.ts'
 
 export type Saved = {
-  /** 3 = adds `courses`; 4 = adds `peak` / `legacyPeak`; 5 = hearts (run.hearts, secondLeft per floor, recoveredFloor) and `practiced`. Older saves are migrated on load (save.ts). */
-  version: 5
+  /** Save format version under SAVE_KEY. Restarted at 1 with expeditions; earlier formats (other keys) are not read. */
+  version: 1
   meta: Meta
   mastery: Mastery
   /** Progress under ids that no current entry claims (removed entries, or a hanzi that became ambiguous). Kept so nothing is lost; retried on every load. */
@@ -55,8 +56,7 @@ export type Saved = {
   legacyPeak: PeakLevels
   /**
    * Entry ids whose protected first practice has been used (v5). An introduced entry NOT in this list gets one protected
-   * (no heart lost) battle question: its first question after the introduction. Migrated saves mark every entry they already
-   * know as practiced, so old words do not all get fresh protection.
+   * (no heart lost) battle question: its first question after the introduction.
    */
   practiced: string[]
 }

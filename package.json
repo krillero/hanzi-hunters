@@ -12,7 +12,8 @@
     "validate:content": "node tools/validate-content.ts",
     "inventory": "node tools/content-inventory.ts",
     "curriculum": "node tools/curriculum-report.ts",
-    "vocab:candidates": "node tools/vocab-candidates.ts"
+    "vocab:candidates": "node tools/vocab-candidates.ts",
+    "test:brief": "node --test --test-reporter=./tools/brief-reporter.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0",

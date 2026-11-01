@@ -16,7 +16,7 @@ test('migration: existing saves (progress keyed by hanzi) keep every entry', () 
 
 test('migration: the shipped 50 entries still read an old save written before ids existed', () => {
   const old = Object.fromEntries(WORDS.slice(0, 12).map((w, i) => [w.hanzi, lv(i % 5, i % 2)]))
-  const s = sanitizeSave({ version: 2, meta: { gold: 5, upgrades: [], bestFloor: 3, runs: 2 }, mastery: old, run: null, lastRun: null })
+  const s = sanitizeSave({ version: 1, meta: { gold: 5, upgrades: [], bestFloor: 3, runs: 2 }, mastery: old, run: null, lastRun: null })
   for (const w of WORDS.slice(0, 12)) assert.deepEqual(s.mastery[w.id], old[w.hanzi], `${w.hanzi} keeps its level`)
   assert.deepEqual(s.legacyMastery, {})
 })

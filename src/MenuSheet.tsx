@@ -11,7 +11,7 @@ type Props = {
   settings: Settings; onChange: (s: Settings) => void; hasVoice: boolean
   fullscreen: { supported: boolean; on: boolean; toggle: () => void }
   tools?: { potions: number; words: number; onGear: () => void; onWords: () => void; onReturn?: () => void }
-  progress: { bestFloor: number; runs: number; known: number; mastered: number; badges: string[] }
+  progress: { wins: number; bestFloor: number; runs: number; known: number; mastered: number; badges: string[] }
   outdated: boolean; onUpdate: () => void; onExport: () => void; onImport: (file: File) => void; onReset: () => void; onClose: () => void
 }
 
@@ -43,10 +43,11 @@ export default function MenuSheet({ settings, onChange, hasVoice, fullscreen, pr
             <button className="bar-btn ghost" onClick={tools.onWords}>📚 Wordbook · {tools.words}</button>
             {tools.onReturn && <button className="bar-btn ghost menu-return" onClick={tools.onReturn}>⛺ Return to camp</button>}
           </section>}
-          {tools?.onReturn && <p className="hint-text">Return to camp ends this run: you keep the gold you earned and everything you learned.</p>}
+          {tools?.onReturn && <p className="hint-text">Return to camp ends this expedition: you keep the gold you earned and everything you learned.</p>}
           <section>
             <h3>Your stats</h3>
             <div className="menu-stats">
+              <div><b>{progress.wins}</b><small>Expeditions won</small></div>
               <div><b>{progress.bestFloor}</b><small>Best floor</small></div>
               <div><b>{progress.runs}</b><small>Runs</small></div>
               <div><b>{progress.known}</b><small>Words learning</small></div>

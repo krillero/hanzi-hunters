@@ -204,16 +204,16 @@ test('progress line: "Unit · Lesson n · k of N introduced", no ids or schema w
 // A compatibility-style course used by the migration tests (independent of what curricula.json ships).
 const COMPAT = course([['first', [{ id: 'first-1', entries: ['人', '大', '小'] }, { id: 'first-2', entries: ['一', '二', '三'] }, { id: 'first-3', entries: ['日', '月'] }]]], { id: 'compat' })
 
-test('migration: a v2 save keeps mastery, gold, gear, runs; known entries count as introduced; readiness is derived', () => {
+test('a save without course progress keeps mastery, gold, gear, runs; known entries count as introduced; readiness is derived', () => {
   const v2 = {
-    version: 2, meta: { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7 },
+    version: 1, meta: { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7 },
     mastery: { 人: lv(2), 大: lv(1, 1), 小: lv(1), 一: lv(0, 1), 我: lv(3) },
     run: { floor: 2, kill: 1, kills: 5, level: 3, xp: 4, hp: 20, enemyHp: 5, gold: 40, potions: 2, gear: ['Copper Blade'], loadout: { Weapon: 'Copper Blade' }, streak: 1, hintsLeft: 0, secondLeft: 0, phase: 'fighting', reward: { xp: 0, gold: 0, loot: '', levelUps: 0 } },
     lastRun: null, habit: { daysPlayed: 3, correct: 50 }
   }
   const s = sanitizeSave(v2, WORDS, [COMPAT])
-  assert.equal(s.version, 5)
-  assert.deepEqual(s.meta, { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7 })
+  assert.equal(s.version, 1)
+  assert.deepEqual(s.meta, { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7, wins: 0 })
   assert.deepEqual(s.mastery, v2.mastery)
   assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 40); assert.equal(s.habit.correct, 50)
   const p = s.courses.compat
@@ -230,13 +230,13 @@ test('migration: a v2 save keeps mastery, gold, gear, runs; known entries count 
   assert.ok(sanitizeSave(v2).courses[ACTIVE_CURRICULUM.id])
 })
 
-test('migration: progress for other curricula, unknown lessons and entries outside the curriculum is kept', () => {
-  const s = sanitizeSave({ version: 3, meta: {}, mastery: { 水: lv(2) }, courses: { 'old-course': { version: 4, completed: ['x-1', 'x-2'] }, [ACTIVE_CURRICULUM.id]: { version: 1, completed: ['removed-lesson'] } } })
+test('saves: progress for other curricula, unknown lessons and entries outside the curriculum is kept', () => {
+  const s = sanitizeSave({ version: 1, meta: {}, mastery: { 水: lv(2) }, courses: { 'old-course': { version: 4, completed: ['x-1', 'x-2'] }, [ACTIVE_CURRICULUM.id]: { version: 1, completed: ['removed-lesson'] } } })
   assert.deepEqual(s.courses['old-course'], { version: 4, completed: ['x-1', 'x-2'] })
   assert.ok(s.courses[ACTIVE_CURRICULUM.id].completed.includes('removed-lesson'))
   assert.deepEqual(orphanLessons(ACTIVE_CURRICULUM, s.courses[ACTIVE_CURRICULUM.id]), ['removed-lesson'])
   assert.deepEqual(s.mastery, { 水: lv(2) })
-  const junk = sanitizeSave({ meta: {}, courses: { 'a b': {}, ok: { version: 'x', completed: [1, 'l', 'l', null] } } })
+  const junk = sanitizeSave({ version: 1, meta: {}, courses: { 'a b': {}, ok: { version: 'x', completed: [1, 'l', 'l', null] } } })
   assert.deepEqual(junk.courses.ok, { version: 0, completed: ['l'] })
 })
 

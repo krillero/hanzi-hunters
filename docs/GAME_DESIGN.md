@@ -1,21 +1,21 @@
-# Game design: the roguelite loop (implemented in 0.2)
+# Game design: expeditions (implemented in 0.3)
 
 ## Loop
-1. A **run** starts at floor 1, level 1, no gear, **5 full hearts** and 1 potion (plus any upgrades).
-2. Each floor has **4 enemies; the 4th is a boss** (see Bosses). Then you descend.
-3. Per floor (compounding): enemy HP ×1.25 (`TUNING.enemyHpGrowth`), XP/gold +8 %. XP from answers is banked during a fight and paid out with the monster's XP on the kill (`Run.pendingXp`).
-4. **Zero hearts ends the run.** All run gold is banked. Level, gear and potions are lost. **Upgrades and word mastery stay.** *Return to camp* (Settings during a run) ends a run early the same way, without counting as a defeat.
-5. At **camp** you see the run result and your current lesson, spend banked gold on the upgrade tree, then start a new run (the start button stays pinned at the bottom). Stats, milestones, backups and reset are in **Settings** (⚙).
+1. A run is an **expedition**: **5 floors** (`EXPEDITION_FLOORS`), level 1, no gear, **5 full hearts** and 1 potion (plus any upgrades).
+2. Each floor has **4 fights; the 4th is a boss**. Floors 1–4: Shield Golem, Echo Wraith, Ink Scribe, Mirror Trickster. Floor 5: the final boss, the **Cavern Warden**. Beating it **wins the expedition**.
+3. Per floor (compounding): enemy HP ×1.16 (`TUNING.enemyHpGrowth`, about what the player gains in attack from levels, so fights keep a similar bounded length), XP/gold +8 %. XP from answers is banked during a fight and paid out on the kill (`Run.pendingXp`).
+4. An expedition ends **won**, **lost** (0 hearts) or **returned** (*Return to camp* in Settings). All gold earned is banked every time. Level, gear and potions are lost. **Upgrades and word mastery stay.** Perfect answers always win.
+5. At **camp** you see the result ("You beat the Cavern Warden!" / "You fell on floor 3" / "You returned from floor 2") and your current lesson, spend gold on upgrades, then start a new expedition. Stats (incl. expeditions won), milestones, backups and reset are in **Settings** (⚙).
+6. Next (PR 2, planned): **Depths** — winning unlocks a harder depth (harder question mix within taught words, bigger rewards); cleared depths can be replayed.
 
 ## Hearts (`src/game/rules.ts`)
 The player's health is a row of whole **hearts** (`Run.hearts`, the only player-health value). Enemies keep an HP bar but have no attack.
 * **Correct answer:** attacks the enemy (attack, combo, execute and mastery bonuses as before). It never costs a heart; there is no counterattack.
 * **Wrong answer:** deals no damage and costs **exactly one heart**, on every floor and against every boss, unless it is protected:
   1. **Practice:** the first non-intro question about a newly introduced entry is protected ("Practice · no heart lost" shows before you answer). It is used up by that first answer, right or wrong, and stored per entry in `Saved.practiced`, so reloading, dying or a new run never resets it. The intro question itself (meaning on screen) does not use it. A protected mistake is still a mistake: correction feedback, mastery and combo treat it as wrong, and it uses no second chance.
-  2. **Second chance:** otherwise a second-chance charge, if one is left, saves the heart ("Second chance · heart saved"). Charges stack (Iron Will, Second Chance, Sage, Windrunner Boots, Golem Plate, Trick Mantle) and refill **only when you enter a floor** (including floor 1): never per enemy, on reload or by swapping gear. Still wrong for learning and combo.
-* **Recovery:** clearing a floor (beating its boss) restores 1 heart (+1 with Second Wind), capped, exactly once per floor (`Run.recoveredFloor`), before the floor summary, which shows it. A potion restores 1 heart (+1 with Titan Heart); it is not used up at full hearts. Nothing else heals: no healing on ordinary kills, no healing or maximum-heart growth from levels (levels add attack only).
+  2. **Second chance:** otherwise a second-chance charge, if one is left, saves the heart ("Second chance · heart saved"). The charges are **one pool per expedition**, set when it starts (Iron Will, Second Chance, Sage: +1 each, capped at `SECOND_CHANCE_CAP` 3) and **never refilled** during it (not per floor, enemy, reload or gear swap). Still wrong for learning and combo.
+* **Recovery:** there is **no floor recovery without upgrades**. With **Second Wind** (G4) clearing floors 1–4 restores 1 heart, capped, exactly once per floor (`Run.recoveredFloor`), shown in the floor summary. A potion restores 1 heart (+1 with Titan Heart); it is not used up at full hearts. Nothing else heals: no healing on kills, no healing or maximum-heart growth from levels (levels add attack only).
 * **Maximum hearts:** 5 + upgrades + worn gear, capped at **8** (`MAX_HEARTS`). Raising the maximum mid-run (gear) adds an empty heart; lowering it clamps the current hearts. New runs start full at their final maximum (starting gear included).
-* Before the first fight a one-time message explains the rules (`habit.heartsIntro`).
 
 ## Word mastery (per entry, saved)
 Each word has a level 0-4 (4 = mastered). **Every question kind counts the same**: 2 correct in a row promote, a miss demotes one level.
@@ -51,54 +51,44 @@ Right answer: the card reveals the word in place and the game continues by itsel
 ## Upgrade tree (permanent; 4 branches × 5 tiers, bought in order)
 Cost = 25 × tier × (tier+1) / 2 → **25, 75, 150, 250, 375** per branch (875 each, 3 500 total).
 - **Blade** — attack, combo damage (3rd correct in a row), execute bonus.
-- **Aegis** — G1 Tough Skin +1 max heart · G2 Spare Vial +1 starting potion · G3 Iron Will +1 second chance per floor · G4 Second Wind +1 heart on floor clear · G5 Titan Heart +1 max heart and potions +1 heart.
-- **Lore** — hints (remove a wrong option, per fight), XP, S3 Second Chance (+1 second chance per floor), mastery damage, S5 Sage (+1 hint, +1 second chance per floor, +15 % XP).
+- **Aegis** — G1 Tough Skin +1 max heart · G2 Spare Vial +1 starting potion · G3 Iron Will +1 second chance per expedition · G4 Second Wind: clearing a floor restores 1 heart (the only floor recovery) · G5 Titan Heart +1 max heart and potions +1 heart.
+- **Lore** — hints (remove a wrong option, per fight), XP, S3 Second Chance (+1 second chance per expedition), mastery damage, S5 Sage (+1 hint, +1 second chance per expedition, +15 % XP).
 - **Fortune** — gold, loot chance, start-of-run gear (Copper Blade, Mossy Vest).
 No upgrade answers questions; a test enforces that every effect is power or convenience. Upgrade ids, prerequisites and costs did not change with hearts.
 
 ## Gear (`src/data.ts`)
-Item names are their identity in saves. Effects: attack, max hearts, second chances per floor, hints per fight, XP %, mastery damage %, gold per win. Hearts replaced HP/armor on the armor slot:
+Item names are their identity in saves. Effects: attack, max hearts, hints per fight, XP %, mastery damage %, gold per win. Gear gives no second chances (they are a per-expedition pool from upgrades, so gear found mid-run could never add one).
 
-| Item | Before (HP rules) | Now |
-|---|---|---|
-| Mossy Vest | +8 max HP | +1 max heart |
-| Windrunner Boots | +1 armor | +1 second chance per floor |
-| Guardian Helm | +4 max HP · +1 armor | +1 max heart · +1 hint per fight |
-| Golem Plate (boss) | +12 max HP · +1 armor | +1 max heart · +1 second chance per floor |
-| Trick Mantle (boss) | +6 max HP · +2 armor | +1 second chance per floor · +1 hint per fight |
+| Item | HP rules (before hearts) | Hearts (PR #30) | Expeditions (now) |
+|---|---|---|---|
+| Mossy Vest | +8 max HP | +1 max heart | +1 max heart |
+| Windrunner Boots | +1 armor | +1 second chance per floor | +1 hint per fight |
+| Guardian Helm | +4 max HP · +1 armor | +1 max heart · +1 hint per fight | same |
+| Golem Plate (boss) | +12 max HP · +1 armor | +1 max heart · +1 second chance per floor | +1 max heart · +1 hint per fight |
+| Trick Mantle (boss) | +6 max HP · +2 armor | +1 second chance per floor · +1 hint per fight | +1 max heart · +10 % mastery damage |
+| Warden Sigil (final boss) | — | — | +15 % mastery damage · +1 hint per fight |
 
-Weapons and accessories are unchanged. The loot comparison (`compareGear`, `gearVerdict`) uses the same stats, so a trade-off (e.g. Boots against Vest) still asks.
+Weapons and the other accessories are unchanged. A gear review for depths is planned in PR 2.
 
 ## Balance (tools/simulate.ts, tests/balance.test.ts)
-`node tools/simulate.ts --report` plays a seeded bot (accuracy rises as words are learned; boss questions are a little harder) for new and fully upgraded players; a bot that reaches 500 answers uses *Return to camp*.
+`node tools/simulate.ts --report` plays a seeded bot (accuracy rises as words are learned; boss seal/trick questions are a little harder) for new players buying upgrades greedily, and for fully upgraded players, 5 seeds.
 
-Choosing the danger scaling (2026-11-01). Because a mistake always costs exactly one heart, deeper floors can only be harder by taking more answers (enemy HP growth) or by restoring fewer hearts. Compared settings, at 60 / 75 / 85 / 90 / 95 % accuracy:
+Targets (agreed 2026-11-01): perfect play always wins; 90 % wins the first expedition without upgrades; 75 % wins within about 4–8 expeditions; 60 % rarely wins early but gets there over time. Results with the chosen setting (enemy HP ×1, ×1.16 per floor; no floor recovery; second chances capped at 3):
 
-| Setting | 75 %: late runs that end in defeat | 75 % maxed: returned at cap | 85 %+ |
-|---|---|---|---|
-| HP ×1.16, recover every floor (old growth) | 10 % | 80 % | always reach the cap |
-| HP ×1.16, recover every 2nd floor | 13 % | 53 % | always reach the cap |
-| HP ×1.22, recover every floor | 23 % | 43 % | always reach the cap |
-| **HP ×1.25, recover every floor (chosen)** | **47 %** | **23 %** | always reach the cap |
-| HP ×1.25, recover every 2nd floor | 70 % | 3 % | always reach the cap |
+| Accuracy | First win (median expedition) | Win rate: expeditions 1–5 / 6–15 / 16–30 | Answers per expedition (avg / max) | Longest fight | Fully upgraded win rate |
+|---|---|---|---|---|---|
+| 60 % | 24th | 0 % / 0 % / 19 % | 29 / 58 | 14 | 24 % |
+| 75 % | 6th | 8 % / 80 % / 99 % | 41 / 57 | 13 | 98 % |
+| 85 % | 1st (3 of 5 seeds) | 92 % / 100 % / 100 % | 38 / 64 | 10 | 100 % |
+| 90 % | 1st | 100 % | 36 / 61 | 10 | 100 % |
+| 100 % | 1st | 100 % | 34 / 58 | 9 | 100 % |
 
-The chosen setting keeps the simplest rule ("clearing a floor restores a heart") and makes most mid-accuracy runs end naturally. Strong players (85 %+ in the model, where learned words reach ~98 % accuracy and second chances absorb the rest) are effectively never defeated by any setting that keeps one heart per mistake: their runs are bounded by *Return to camp*. Results with the chosen setting (3 seeds):
+Tried and rejected: more enemy HP (×1.25–1.8) makes expeditions only a little longer (damage grows with levels and mastery) but drops 60 % players to no wins at all and pushes 75 % to a median of 10 expeditions. So expeditions are about 35–40 answers (6–8 minutes), shorter than first estimated; harder question mixes per depth (PR 2) are the planned way to add challenge. Longest fights are shield bosses. `tests/balance.test.ts` guards the targets, bounded expeditions (≤ 100 answers, fights ≤ 20) and that hearts only come back from potions and Second Wind. Tune `TUNING` (`src/game/rules.ts`) and `src/game/upgrades.ts`. The bot is a model, not real players — expect to retune after human playtests.
 
-| Accuracy | New player, first 5 runs: floor / answers | Late runs (21–30): floor / answers / returned | Fully upgraded: floor / answers / returned |
-|---|---|---|---|
-| 60 % | 1.9 / 24 | 9.2 / 149 / 0 % | 8.4 / 129 / 0 % |
-| 75 % | 7.1 / 120 | 18.7 / 469 / 53 % | 17.0 / 392 / 23 % |
-| 85 % | 17.3 / 440 | 20 / 500 / 100 % | 19.8 / 500 / 100 % |
-| 90 % | 18.7 / 487 | 20 / 500 / 100 % | 20 / 500 / 100 % |
+## Save format v1 (key `hanzi-hunters-save`)
+Saves were **restarted at v1 with expeditions** (2026-11-01): the earlier keys (`hanzi-hunters-save-v1`, `hanzi-hunters-save-v2`) are deleted on start (`clearOldSaves`) and never read, and backups from before are rejected. There are no migrations from earlier formats.
 
-Compared with the old HP rules: runs are longer (old late runs were ~75–95 answers), first runs at 60 % are as short (old: floor 1–2, ~20 answers), and buying the whole tree takes more play (75 %: ~1 070 answers instead of ~600, but in 6–7 runs instead of 11–13). `tests/balance.test.ts` guards: hearts bookkeeping (no healing from anywhere but floors and potions), shallow first runs, deeper late runs, tree ≥ 600 answers, defeats at 60 %/75 %, and that upgrades help. Tune in `TUNING` (`src/game/rules.ts`) and `src/game/upgrades.ts`. The bot is a model, not real players — expect to retune after human playtests.
-
-## Save format v5 (key `hanzi-hunters-save-v2`)
-`{ version: 5, meta{gold,upgrades,bestFloor,runs}, mastery{entryId:{lv,ok}}, legacyMastery{id:{lv,ok}}, run|null, lastRun|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges,heartsIntro}, courses{curriculumId:{version,completed[lessonId]}}, peak{entryId:highestLevel}, legacyPeak{id:level}, practiced[entryId] }`. `run` holds `hearts`, `secondLeft` (per floor), `recoveredFloor` and `reward.hearts`; `lastRun.returned` marks *Return to camp*. Every field is validated on load (`src/game/save.ts`); a mid-run reload resumes the run. The v1 prototype save is migrated once: learned words → level 1, gold → banked, floor → best floor. The v1 key is left untouched.
-
-**v4 → v5 (hearts) migration** (`sanitizeSave`, saves without `version >= 5`): an active run's HP is never read as hearts. Its maximum HP is recomputed with the **old** rules (`legacyMaxHp`: 30 + 5 per level + Tough Skin 8 + Titan Heart 15 + worn gear HP), and the share `hp / oldMax` becomes the same share of the new maximum hearts, **rounded up** and clamped (a living run keeps at least 1 heart, a defeated run stays at 0). Floor, kill, enemy HP, XP, gold, potions, streak, gear and loadout are kept. No floor recovery is granted (a boss beaten before the update never restores a heart afterwards); second-chance charges are kept but clamped, never refilled. `practiced` is set to every entry the save already knows (mastery and parked legacy progress), so old words do not all get fresh protection. The result is a v5 save: loading it again changes nothing. v2–v4 saves and exports keep loading; `tests/hearts.test.ts` covers migration, repeated loads and export/import.
-
-**Progress is keyed by entry id** (the hanzi unless the content file gives the entry an `id`), so saves written before ids existed load unchanged. `migrateMastery` carries progress over when content changes: an entry's own id or one of its `aliases` (an earlier id of the same entry; the higher level wins), or a hanzi that is now used by exactly one entry. Progress nobody claims (a removed entry, or an ambiguous shared hanzi) is parked in `legacyMastery` instead of being deleted, and is retried on every load. Different meanings are never merged. `habit`, `legacyMastery` and the id keys were added without a version bump (older apps ignore them).
+`{ version: 1, meta{gold,upgrades,bestFloor,runs,wins}, mastery{entryId:{lv,ok}}, legacyMastery{id:{lv,ok}}, run|null, lastRun{floor,kills,level,goldBanked,result}|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges}, courses{curriculumId:{version,completed[lessonId]}}, peak{entryId:highestLevel}, legacyPeak{id:level}, practiced[entryId] }`. `run` holds `floor` (1–5), `hearts`, `secondLeft` (the expedition's pool), `recoveredFloor`, `shield` and `reward.hearts`; `lastRun.result` is `won` / `defeat` / `returned`. Every field is validated on load (`src/game/save.ts`); a save with another `version` loads as a fresh save. A mid-run reload resumes the expedition.
 
 ## Entries, readings and questions (`src/content`, `src/game/questions.ts`)
 * An **entry** is one word / character / particle with one meaning and reading (`kind`). Multi-character words, neutral-tone syllables (`neutral`), accepted pronunciation variants (`variants`), connected-speech guidance (`speech`), several entries for one hanzi (explicit `id`s) and per-entry question eligibility (`questions`) are all data: see `docs/CONTENT_GUIDE.md`.
@@ -113,15 +103,16 @@ Compared with the old HP rules: runs are longer (old late runs were ~75–95 ans
 * Badges: 10 milestones in `BADGES`; checked after every battle answer, stored in `habit.badges`, listed in Settings.
 
 ## Bosses (`src/game/rules.ts`, `src/data.ts`)
-* **Every floor ends with a boss** (the 4th fight; there are no elites any more). The four bosses take turns (`BOSS_ORDER`): **Shield Golem** (floor 1, 5, 9 …), **Echo Wraith** (2, 6 …), **Ink Scribe** (3, 7 …), **Mirror Trickster** (4, 8 …). To add a boss: a sprite, an entry in `BOSSES` / `BOSS_INFO` (`data.ts`), its id in `BOSS_ORDER`, and its rule in `resolveAnswer` / `makeCard`.
+* **Every floor ends with a boss** (the 4th fight): **Shield Golem** (floor 1), **Echo Wraith** (2), **Ink Scribe** (3), **Mirror Trickster** (4) (`BOSS_ORDER`), and the final boss **Cavern Warden** (floor 5, `FINAL_BOSS`). To add a boss: a sprite, an entry in `BOSSES` / `BOSS_INFO` (`data.ts`), its place in `bossIdFor`, and its rule in `resolveAnswer` / `makeCard`.
+* **Cavern Warden** (final boss): 2 **tone wards** then 2 **ink seals** (`WARDEN_WARDS`, `WARDEN_SEALS`; `sealAsk` says which question kind breaks the current segment: tone questions for wards, character questions for seals, with the same safe fallback), then an **echo** phase like the Wraith's. Beating it wins the expedition. Placeholder art: the Golem sprite with a gold glow. Drops the **Warden Sigil** the first time.
 * Stats: base enemy × boss multipliers, then the per-floor scaling. Early bosses are gentler and ramp up: HP ×(1.3 + 0.15·(floor−1)) up to `BOSS_HP` 1.7, rewards ×`BOSS_REWARD` 2. Bosses have no attack: like every enemy, a mistake against them costs exactly one heart (before protection), and protected practice causes no boss penalty either.
-* **Shield Golem:** a shield that blocks all damage: 2 segments on floors 1–2, 3 from floor 3 (`shieldFor`). Only a correct *pinyin* (tone) question breaks a segment; while the shield is up the game asks pinyin questions about words you know. **Safe fallback** (`pickSealCard`): if no such question can be built from your words (e.g. only particles known), the game asks another fair question marked `sealFallback`, and a correct answer to it breaks a segment too, so a shield is never unbreakable (`tests/hearts.test.ts` beats every boss with the first lesson's words). Wrong answers never repair it. Once down it is a normal fight. `Run.shield` is saved.
+* **Shield Golem:** a shield that blocks all damage: 2 segments (`shieldFor`; 3 for the Scribe on floor 3). Only a correct *pinyin* (tone) question breaks a segment; while the shield is up the game asks pinyin questions about words you know. **Safe fallback** (`pickSealCard`): if no such question can be built from your words (e.g. only particles known), the game asks another fair question marked `sealFallback`, and a correct answer to it breaks a segment too, so a shield is never unbreakable (`tests/hearts.test.ts` beats every boss with the first lesson's words). Wrong answers never repair it. Once down it is a normal fight. `Run.shield` is saved.
 * **Ink Scribe:** the same idea with a different skill: ink seals (2, then 3 from floor 3) block all damage and only a correct *character* question (pick the right hanzi) breaks one. Same safe fallback as the Golem. Seals never grow back (removed with hearts). Sprite: recoloured slime.
 * **Mirror Trickster:** no shield. Asks only look-alike and same-sound questions (the easy ones to confuse). A right answer hits +40 % (`TRICKSTER_HIT`); a wrong answer deals nothing (it no longer heals the Trickster). If no trick question can be built, a normal question is asked. Sprite: recoloured imp.
 * **Echo Wraith:** normal fight; below 60 % HP it asks the kind of question you got wrong most recently (falls back to a normal question when that kind cannot be built).
 * Rewards: the first time you beat each boss type it drops its own item (**Golem Plate** / **Wraith Lantern** / **Scribe Brush** / **Trick Mantle**, boss-only gear that never drops elsewhere). After that a boss rolls for normal gear with a +30 % better chance. The first kill of any boss counts for the *Boss slayer* badge.
 * The intro card is shown only the first time you meet each boss type (`habit.bossesMet`); later floors show just the `BOSS · PHASE n/2` tag and the shield / ECHO tag in the arena.
-* Preview a boss without playing: open `/?floor=1` (Golem) or `/?floor=2` (Wraith); `&kill=0..3` picks an earlier fight of that floor. It replaces the current run with a fresh, levelled-up hero (test URLs only).
+* Preview a boss without playing: open `/?floor=1` (Golem) … `/?floor=5` (Warden); `&kill=0..3` picks an earlier fight of that floor. It replaces the current run with a fresh, levelled-up hero (test URLs only).
 * **Longer floors:** `ENEMIES_PER_FLOOR` (rules.ts) is one constant. A trial with 10 per floor typechecks, and the simulator pacing stays similar, but it needs: the pacing and save tests' thresholds re-checked, the header path (10 nodes overflowed the header by ~22 px on a 320 px phone (re-measure at 360 px, the narrowest supported width): shrink the nodes or drop the BOSS tag), and a look at per-floor rewards.
 * Loot reveal: rare/epic gear, boss gear, or a clear upgrade over what you wear opens a chest card that compares the stats with the equipped item (and offers *Equip now*); other drops stay a chip. Auto-continue waits while the card is open.
 

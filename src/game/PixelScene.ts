@@ -3,7 +3,7 @@ import Phaser from 'phaser'
 
 export type EnemySprite = 'slime' | 'imp' | 'bat' | 'golem' | 'wraith' | 'scribe' | 'trickster'
 const ENEMY_SPRITES: EnemySprite[] = ['slime', 'imp', 'bat', 'golem', 'wraith', 'scribe', 'trickster']
-const BOSS_GLOW: Record<string, number> = { golem: 0x6fb5e8, wraith: 0xcfe9f2, scribe: 0x6f86e0, trickster: 0xd77be8 }
+const BOSS_GLOW: Record<string, number> = { golem: 0x6fb5e8, wraith: 0xcfe9f2, scribe: 0x6f86e0, trickster: 0xd77be8, warden: 0xffd166 }
 
 const BASE = import.meta.env.BASE_URL
 const TILE = 16

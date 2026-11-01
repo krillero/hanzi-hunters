@@ -20,7 +20,9 @@ export function normalizeWords(raw: RawWord[]): Word[] {
 export const homographsOf = (word: Word, all: Word[]) => all.filter(w => w.id !== word.id && w.hanzi === word.hanzi)
 
 /** All sound spellings that count as THIS word: its pinyin plus accepted variants. */
-export const soundsOf = (word: Word) => new Set([soundKey(word.pinyin), ...word.variants.map(soundKey)])
+const soundCache = new WeakMap<Word, string[]>()
+/** A fresh Set each call (callers may add to it); the keys themselves are cached per entry. */
+export const soundsOf = (word: Word) => { let k = soundCache.get(word); if (!k) { k = [soundKey(word.pinyin), ...word.variants.map(soundKey)]; soundCache.set(word, k) } return new Set(k) }
 
 /** Can this entry be read aloud reliably? Text-to-speech reads the written form, so a hanzi shared by several entries
  *  (看 kàn / kān) cannot be trusted to choose the intended reading, and an entry can opt out with audio: "none". */

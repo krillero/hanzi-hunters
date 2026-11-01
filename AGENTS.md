@@ -7,9 +7,16 @@ You are continuing an existing prototype. Read `README.md`, `DEVELOPMENT_BRIEF.m
 2. **Do not mistake concept art for implemented assets.** The visual mockup is a target only. The current scene uses Phaser Graphics and the interface uses CSS, text and emoji. No full external sprite sheet or polished UI asset pack is bundled.
 3. **Keep the game playable at each milestone.** Prefer small, reviewable changes.
    **Testing workflow (keep it cheap):**
-   - While working, run only the test files you touched or that cover the changed code (e.g. `node --test tests/rules.test.ts`). Do not rerun the whole suite after every edit.
-   - Once, before committing: `npm test`, `npm run build` (and `npm run validate:content` for content changes). Read only the pass/fail summary.
+   - While working, run only the test files you touched or that cover the changed code, with the compact reporter: `npm run test:brief -- tests/rules.test.ts`. It prints one block per failure (test, message, expected/actual, file:line), so a failure never needs a second run just to see why it failed. Do not rerun the whole suite after every edit.
+   - Once, before committing: `npm run test:brief` (all tests, ~20 s), `npm run build` (and `npm run validate:content` for content changes).
    - Browser checks are **not** part of the normal workflow. Only when the UI changed, run **one simple browser check at the end, at 360 px width only** (no other widths, no screenshots of every state). If you skip it or cannot run it, say so.
+   - Balance changes: compare options with `node tools/simulate.ts --report key=value` (about 2 s each), then quote one final report in the docs. Do not re-run tools to re-measure something already measured in the conversation.
+
+   **Working efficiently (same quality, fewer tokens):**
+   - Apply edits so that one failed edit cannot discard the others: small independent edits (the Edit tool, or one script per file that reports which replacement failed and still writes the rest). Never resend a large script or file because one replacement missed; fix only that replacement.
+   - When rules change, update their tests in the same pass, after checking side effects that can change the expected numbers (loot raising max hearts, upgrades bought mid-run, boss items). This avoids fix-and-rerun loops.
+   - Read narrowly: search for the lines you need and read that range; do not re-read files already read in the conversation unless they changed.
+   - Keep tool output small: summaries, counts and failures, not full logs.
 4. **Preserve the core learning loop.** Every battle question should have an unambiguous correct answer; pinyin tone marks must be preserved; the feedback should teach rather than shame; the player should not be able to submit multiple answers to the same question.
 5. **Keep React and Phaser responsibilities clear.** React currently owns game state and most UI; Phaser owns the decorative/animated encounter scene. Avoid creating duplicate, conflicting sources of truth for HP, enemy identity or progression.
 6. **Mobile-first.** Test narrow portrait widths, touch targets, text wrapping, safe-area spacing and scroll behavior. Do not require keyboard/mouse to complete the core loop.
