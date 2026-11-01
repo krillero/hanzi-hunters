@@ -6,8 +6,7 @@ import ExplainModal from './ExplainModal'
 import MenuSheet from './MenuSheet'
 import NewWordCard from './NewWordCard'
 import SummaryModal from './SummaryModal'
-import WarmupScreen from './WarmupScreen'
-import { WARMUP_GOLD_PER_CORRECT, badgeById, contextFor, localDay, newBadges, pickWarmup, recordCorrect, recordPlay, warmupAvailable } from './game/habit'
+import { contextFor, localDay, newBadges, recordCorrect, recordPlay } from './game/habit'
 import { playSfx, unlockAudio, vibrate, type SfxName, type SfxOptions } from './audio'
 import { flyMotes } from './motes'
 import { rarityOf } from './game/rarity'
@@ -21,7 +20,7 @@ import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS, type BossId, type Word } from 
 import { audioReliable, homographsOf } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
 import { MAX_LV, masteredCount, seenCount, updateMastery } from './game/mastery'
-import { DEFAULT_LIMITS, courseLine, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
+import { DEFAULT_LIMITS, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, tryBuildQuestion, isCharacterQuestion, isToneQuestion, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
 import LootReveal from './LootReveal'
@@ -125,7 +124,7 @@ export default function App() {
   const [lootReveal, setLootReveal] = useState<{ name: string; current: string | null; choice: boolean } | null>(null)
   const [tipPulse, setTipPulse] = useState<string | null>(null)   // 💡 pulses once per word, right after the first right answer
   const [bossIntro, setBossIntro] = useState<BossId | null>(() => { const j = previewStart(); return j && isBoss(j.floor, j.kill) ? bossIdFor(j.floor) : null })
-  const [warmup, setWarmup] = useState<string[] | null>(null)
+  const [runMilestones, setRunMilestones] = useState<string[]>([])   // milestones earned during the current/last run, shown on camp (not saved)
   const [ceremony, setCeremony] = useState<string | null>(null)   // word that was just mastered (confetti for a moment)
   const [floorStats, setFloorStats] = useState<RunStats>(emptyStats)
   const [runStats, setRunStats] = useState<RunStats>(emptyStats)
@@ -384,7 +383,7 @@ export default function App() {
     let habit = recordPlay(save.habit, localDay()); if (isCorrect) habit = recordCorrect(habit)
     if (r.outcome === 'victory' && foe?.boss) habit = { ...habit, bosses: habit.bosses + 1 }
     const earned = newBadges(habit, contextFor(mastery, habit, Math.max(save.meta.bestFloor, r.run.floor), save.meta.runs))
-    if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New badge: ${earned.map(b => b.name).join(', ')}`) }
+    if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New milestone: ${earned.map(b => b.name).join(', ')}`); setRunMilestones(m => [...m, ...earned.map(b => b.name)]) }
     if (masteredNow) setCeremony(word.id)
     if (isCorrect && hasDetails(word) && !habit.tipsSeen.includes(word.id)) { habit = { ...habit, tipsSeen: [...habit.tipsSeen, word.id] }; setTipPulse(word.id) }
     patch(s => ({ ...s, run: r.run, mastery, habit }))
@@ -525,24 +524,7 @@ export default function App() {
     const fresh = newRun(bonuses, GEAR, ENEMIES)
     patch(s => ({ ...s, run: fresh }))
     setFloorStats(emptyStats()); setRunStats(emptyStats()); setSummary(null)
-    setNextCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); answerLock.current = false
-  }
-
-  // ---- daily warm-up -----------------------------------------------------------------------
-  const today = localDay()
-  const warm = { available: warmupAvailable(save.habit, save.mastery, today), done: save.habit.warmupDay === today, words: pickWarmup(save.mastery, today) }
-  const startWarmup = () => { setCampMsg(''); setWarmup(pickWarmup(save.mastery, today)) }
-  const warmupAnswer = (id: string, isCorrect: boolean) => {
-    const mastery = updateMastery(save.mastery, id, isCorrect)
-    let habit = recordPlay(save.habit, localDay()); if (isCorrect) habit = recordCorrect(habit)
-    const earned = newBadges(habit, contextFor(mastery, habit, save.meta.bestFloor, save.meta.runs))
-    if (earned.length) { habit = { ...habit, badges: [...habit.badges, ...earned.map(b => b.id)] }; setToast(`🏅 New badge: ${earned.map(b => b.name).join(', ')}`) }
-    patch(s => ({ ...s, mastery, habit }))
-  }
-  const warmupDone = (correct: number) => {
-    const gold = correct * WARMUP_GOLD_PER_CORRECT
-    patch(s => ({ ...s, meta: { ...s.meta, gold: s.meta.gold + gold }, habit: { ...s.habit, warmupDay: localDay() } }))
-    setWarmup(null); setCampMsg(`Warm-up done: ${correct} right, +${gold} gold.`)
+    setNextCard(makeCard()); setEliminated([]); setFeedback(null); setCampMsg(''); setRunMilestones([]); answerLock.current = false
   }
 
   const buy = (id: string) => {
@@ -580,7 +562,7 @@ export default function App() {
   }
 
   // ---- camp -----------------------------------------------------------------------------
-  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) } } : undefined} /> : null
+  const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onReset={() => { setMenuOpen(false); resetAll() }} progress={{ bestFloor: save.meta.bestFloor, runs: save.meta.runs, known: Object.keys(save.mastery).length, mastered: masteredCount(save.mastery), badges: save.habit.badges }} onClose={() => setMenuOpen(false)} tools={run ? { potions: run.potions, words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) } } : undefined} /> : null
   const topbar = (
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
@@ -594,9 +576,7 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        {warmup
-          ? <WarmupScreen words={warmup} mastery={save.mastery} clozeEligible={sentenceCheck(save.mastery)} canListen={canListen} speakWord={h => speak(h, true)} sfx={n => feel(n)} onAnswer={warmupAnswer} onDone={warmupDone} onExit={() => setWarmup(null)} />
-          : <CampScreen save={save} course={courseLine(courseStatus(courseFor()))} warmup={warm} onWarmup={startWarmup} onBuy={buy} onStart={startRun} onReset={resetAll} message={campMsg} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} />}
+        <CampScreen save={save} course={courseStatus(courseFor())} runMilestones={runMilestones} onBuy={buy} onStart={startRun} message={campMsg} />
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {menu}
       </main>
@@ -845,7 +825,7 @@ export default function App() {
             </div>
           </section>
           {toast && <div className="toast"><span>{toast}</span><button onClick={() => setToast('')} aria-label="Dismiss">×</button></div>}
-          <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear found</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div><button className="reset-btn" onClick={resetAll}>Reset ALL progress</button></section>
+          <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear found</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div></section>
         </div>
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>

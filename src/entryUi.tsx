@@ -1,4 +1,4 @@
-// Small presentation helpers shared by the battle screen and the warm-up.
+// Small presentation helpers for the battle screen.
 
 /** Size class for long entries: 1-2 characters are big, 3-4 smaller, longer smaller still (so they fit the card and the answer buttons). */
 export const lenClass = (s: string) => { const n = [...s.replace(/\s+/g, '')].length; return n <= 2 ? 1 : n <= 4 ? 3 : n <= 7 ? 5 : 8 }

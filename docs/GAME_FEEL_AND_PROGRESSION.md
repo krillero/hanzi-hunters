@@ -78,7 +78,7 @@ Summary: the **informational** feedback is good and calm; the **emotional** feed
 ### 3.3 Per session and across days
 
 * **Words-known counter** in the header/camp: "42 words · 11 mastered", with a gentle bump when it changes.
-* **Daily warm-up** *(needs a `lastPlayed` date in the save)*: five previously seen words, due for review, no HP risk, small gold reward; always optional. Missing a day costs nothing.
+* ~~**Daily warm-up**~~ *(removed 2026-11-01: it cluttered camp; `habit.warmupDay` is kept in saves but unused)*: five previously seen words, no HP risk, small gold reward.
 * **Days-played tally** instead of a fragile streak: "12 days played" never goes down.
 * **Milestones** (cosmetic badges): first mastered word, 10/25/50 words known, first boss, 100 correct answers. Shown in camp; no popups outside natural pauses.
 

@@ -125,7 +125,7 @@ camp adds progress: **"Lesson 1 · Greetings · 2 of 5 introduced"**. No ids or 
 
 **Review / practice** (`selectReview`): a weighted random pick among entries the learner has **already been introduced to**
 (also entries known from another curriculum or an older save). It never returns an unseen entry. Weak entries are asked more
-(level weights `3, 3, 2, 2, 0.6`), and the last few asked are less likely to repeat. Question kinds, distractors, warm-up and boss
+(level weights `3, 3, 2, 2, 0.6`), and the last few asked are less likely to repeat. Question kinds, distractors and boss
 behaviour are unchanged and stay randomised. A future scheduler can pass its own `weight(word, entry)` (e.g. from review dates)
 without changing curriculum order.
 

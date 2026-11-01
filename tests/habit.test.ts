@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { BADGES, emptyHabit, localDay, newBadges, pickWarmup, recordCorrect, recordPlay, sanitizeHabit, warmupAvailable, contextFor, WARMUP_SIZE } from '../src/game/habit.ts'
+import { BADGES, emptyHabit, localDay, newBadges, recordCorrect, recordPlay, sanitizeHabit, contextFor } from '../src/game/habit.ts'
 import { sanitizeSave, loadSave } from '../src/game/save.ts'
 import { parseBackup, serializeBackup } from '../src/game/backup.ts'
 import { WORDS } from '../src/data.ts'
@@ -28,28 +28,6 @@ test('days played counts each new day once and never goes down', () => {
   h = recordPlay(h, '2026-10-01'); assert.equal(h.daysPlayed, 4, 'a clock change cannot lower it')
   assert.equal(localDay(new Date(2026, 9, 5, 23, 59)), '2026-10-05')
   assert.equal(recordCorrect(emptyHabit(), 3).correct, 3)
-})
-
-test('warm-up: needs 3 known words, picks the weakest first, is stable within a day', () => {
-  assert.deepEqual(pickWarmup({ 人: lv(1), 大: lv(1) }, '2026-10-31'), [])
-  const m = Object.fromEntries(WORDS.slice(0, 12).map((w, i) => [w.hanzi, lv(i % 5, i % 2)]))
-  const a = pickWarmup(m, '2026-10-31')
-  assert.equal(a.length, WARMUP_SIZE)
-  assert.deepEqual(a, pickWarmup(m, '2026-10-31'), 'same day, same words')
-  const worst = Math.min(...Object.values(m).map(e => e.lv))
-  assert.ok(a.every(h => m[h].lv <= worst + 1), 'only weak words')
-  assert.ok(m[a[0]].lv === worst, 'weakest first')
-  assert.equal(new Set(a).size, a.length)
-  const small = pickWarmup({ 人: lv(0), 大: lv(2), 小: lv(1) }, '2026-10-31'); assert.equal(small.length, 3)
-})
-
-test('warm-up is offered once per day', () => {
-  const m = Object.fromEntries(WORDS.slice(0, 6).map(w => [w.hanzi, lv(1)]))
-  const h = emptyHabit()
-  assert.equal(warmupAvailable(h, m, '2026-10-31'), true)
-  assert.equal(warmupAvailable({ ...h, warmupDay: '2026-10-31' }, m, '2026-10-31'), false)
-  assert.equal(warmupAvailable({ ...h, warmupDay: '2026-10-31' }, m, '2026-11-01'), true)
-  assert.equal(warmupAvailable(h, { 人: lv(1) }, '2026-10-31'), false)
 })
 
 test('badges unlock at their thresholds and are not awarded twice', () => {

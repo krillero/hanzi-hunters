@@ -5,7 +5,7 @@
 2. Each floor has **4 enemies; the 4th is an elite** (×1.6 HP, ×1.25 damage, ×2 rewards, better drops). Then you descend.
 3. Per floor (compounding): enemy HP +16 %, damage +11 %, XP/gold +8 %. XP from answers is banked during a fight and paid out with the monster's XP on the kill (`Run.pendingXp`).
 4. Dying ends the run. **All run gold is banked.** Level, gear and potions are lost. **Upgrades and word mastery stay.**
-5. At **camp** you spend banked gold on the upgrade tree, then start a new run.
+5. At **camp** you see the run result and your current lesson, spend banked gold on the upgrade tree, then start a new run (the start button stays pinned at the bottom). Stats, milestones, backups and reset are in **Settings** (⚙).
 
 ## Word mastery (per entry, saved)
 Each word has a level 0-4 (4 = mastered). **Every question kind counts the same**: 2 correct in a row promote, a miss demotes one level.
