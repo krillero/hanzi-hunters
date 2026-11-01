@@ -1,11 +1,12 @@
 # Contextual encounters
 
-Short scenes appear after a non-final floor summary, once per expedition.
-They cannot be skipped (no hearts are at risk and retries are unlimited, so
-they can always be finished). There is no intro step: the scene opens straight into the
-task (a save from the old intro step, status "offer", loads as active). Existing depth progression and combat rules remain in charge.
+Short scenes appear after a non-final floor summary, once per expedition. They
+open straight into the task and cannot be skipped: a wrong choice explains the
+answer, so a scene can always be finished. The first choice decides an omen for
+the next floor (Blessing / Shaken, see Reward and cost). (A save from the old
+intro step, status "offer", loads as active.)
 
-| Scene | Kind | Needs (all introduced) | From course word* |
+| Scene | Kind | Needs (all at least Familiar) | Words from course position* |
 |---|---|---|---|
 | hello | reply: answer 你好！ | 你好 再见 谢谢 | 3 |
 | goodbye | reply: answer 再见！ | 你好 再见 谢谢 | 3 |
@@ -15,11 +16,13 @@ task (a save from the old intro step, status "offer", loads as active). Existing
 | tea | gather: 我要茶。 | 我 要 谢谢 茶 水 米饭 菜 | 65 |
 | meal | gather: 我要米饭。我要菜。 | 我 要 谢谢 茶 水 米饭 菜 | 65 |
 
-*Position in beginner-mandarin-100. A new player usually meets a greeting scene
-after floor 1 of the first run. Each scene needs only its own words (every
-option and every character of its Chinese lines; the validator enforces this),
-so no new vocabulary is silently introduced. Among eligible scenes, the one
-completed on the fewest distinct days is offered; file order breaks ties.
+*Position of its last word in beginner-mandarin-100. A scene is offered once
+all its words are at least Familiar (level 2), usually within a session or two
+of meeting them. Each scene needs only its own words (every option and every
+character of its Chinese lines; the validator enforces this), so no new
+vocabulary is silently introduced. Among eligible scenes, recently offered ones
+wait (Repeat protection); then the one completed on the fewest distinct days is
+offered; file order breaks ties.
 
 Kinds: **reply** = choose the one right thing to say (single choice, button
 "Say it"); **gather** = choose every item asked for (button "Prepare");
@@ -105,19 +108,21 @@ https://www.learnjapaneserpg.com/ (adaptive dialogue concept).
 Broken scenes are reported by `npm run validate:content` and skipped by the game.
 Preview any scene with `/?encounter=<id>&level=2` (every word Familiar: pinyin) or `&level=3` (characters only).
 
-src/EncounterScreen.tsx: reusable accessible dialog with focus containment,
-Escape/Leave, pressed option states, result feedback, help and scrollable
-body. System emoji provide temporary illustrations; no external artwork/audio.
-No pronunciation audio is added for these scenes pending voice/content review.
+src/EncounterScreen.tsx: accessible dialog with focus containment, pressed
+option states, result feedback, paid help and a scrollable body. No skip or leave:
+"Continue to next floor" (or Escape) only once the scene is complete. Emoji are
+used only for decoration and for picture options; no external artwork or audio
+(no pronunciation audio pending voice/content review).
 
-App.tsx: floor-summary offer and continuation; scene blocks battle auto-advance
-and speech. Saved.run.encounter retains offer, order, selection, stage and result.
-Saved.encounterHistory records up to 30 unique completion dates per scene.
-These are optional additive fields within the current v1 expedition save schema:
-old saves default to no offer and empty history, with no reset or new storage key.
-The existing sanitizer retains these fields on load/import. Older app versions
-will discard the added fields: avoid rolling back an active encounter save.
-No promises are made about importing obsolete pre-expedition save formats.
+App.tsx: offers a scene from the floor summary and continues to the next floor
+through the normal nextEnemy path; an open scene blocks battle auto-advance and
+speech. Saved.run.encounter keeps the scene, option order, selection, whether
+help was bought/shown and the first-try result; Saved.encounterHistory keeps up
+to 30 completion dates per scene (rotation); Saved.recentEvents the last 12
+scenes/trials shown; Run.omen and Run.hintDebt the stakes. All are optional
+additive fields of the v1 save: old saves load with none of them, old saved
+encounters drop fields that no longer exist (the day-based stage). Older app
+versions discard the added fields: avoid rolling back during an active scene.
 
 ## Boss trials (inside a fight)
 A boss trial is a single battle question with a boss-specific payoff, so unlike
@@ -295,37 +300,21 @@ and check the rules below.
 `/?encounter=<scene id>[&level=0-5]` opens a scene on its own (words at that level, default 2), without a run or the
 prerequisite words. It never changes the save; Close preview removes the parameter.
 
-## Validation and review handoff
-- Four new rule tests: prerequisites, exact selection/idempotency/banking,
-  old and pending saves, distinct-day presentation stages.
-- Full test:brief: 178 passed, 0 failed.
-- validate:content: 0 errors, 7 existing warnings (scene text has separate review).
-- npm run build (tsc + vite + service worker): passes.
-- One 360x800 browser check (Playwright, preview build, test-save.json fixture):
-  offer shown, wrong selection explained, selection survives reload, completion
-  gives +3 run gold once (double tap), Continue starts floor 2 with the FLOOR
-  banner, no horizontal overflow, no console errors. Real-device testing pending.
-- Leaving an encounter goes through the same `nextEnemy` path as the floor
-  summary (floor banner, boss intro, stats reset), not a separate copy of it.
-
-A disposable test-save.json was supplied with the original patch (not committed). Import it only in a
-fresh browser profile or after exporting your real progress (it replaces the
-current save). It starts at a cleared floor with an encounter ready. Check:
-1. Start, select wrong ingredients, read correction, ask for translation.
-2. Reload while pending: selection/order/help/stage remain.
-3. Complete, tap rapidly: +3 gold only, hearts unchanged.
-4. Reload the result, Continue: next floor starts normally, no repeated offer.
-5. Return to camp: reward banked once. Replay to see support stages change.
-6. At 360x800 verify scrolling, focus, readable text and no horizontal overflow.
-7. Test a normal beginner save: encounter stays hidden until words are introduced.
-
-## Balance
-Existing simulator does not model the between-floor encounters, so its report is a
-baseline reference rather than proof of encounter-adjusted progression.
-(Historic: events used to give +3 gold; they now give an omen, see above.)
-no combat resources change. Earlier upgrades may still affect later progression.
-Baseline report (40 expeditions/player, five seeds): win rates at accuracy
-.60/.75/.85/.90/1.00 = 5/61/98/100/100%; average answers = 33/60/60/56/51.
-Use the included full report; do not claim those rates include encounter gold.
-Future balancing can extend the simulator if this small reward materially changes
-purchase timing. Do not change hearts or enemy HP merely to compensate by guess.
+## Testing and review
+- Automated: tests/encounters.test.ts (content validation, eligibility at
+  Familiar, per-word help, offer rotation, first-try Blessing/Shaken, paid help
+  and hint debt, omen rules in resolveAnswer, saves), tests/trials.test.ts and
+  tests/trialgen.test.ts (every boss trial; every generated trial from the whole
+  course with several seeds). Run `npm run test:brief`; content changes also
+  `npm run validate:content`.
+- Balance: tools/simulate.ts models events and trials; the numbers quoted in
+  the sections above are 20-seed comparisons (the 5-seed `--report` medians are
+  too noisy to judge one feature).
+- Manual check on a phone (or one 360 px browser check) with the preview links,
+  which never touch the save: `/?encounter=hello&level=2` (pinyin, no English,
+  no option icons), `&level=3` (characters only), `/?encounter=count-four`
+  (picture options), `/?trial=scribe-friend&level=2` (blanked pinyin),
+  `/?trial=warden` (two steps). In a real run: help shows its hint price, a
+  wrong first choice announces Shaken, the next floor shows the ✨ / 🌧 chip.
+- Still needs a person: Mandarin review of the scene and trial texts and of the
+  generation rules (see Generated trials), and real-device playtesting.

@@ -430,3 +430,7 @@ Every fact now appears once. Learning comes first; the fight is the garnish.
 - The event help button says "Translation" when every pinyin is already shown ("Pinyin & translation" otherwise).
 - Event stakes: no more +3 gold. The first choice decides an omen for the next floor (used once): right = ✨ Blessing (next mistake costs no heart), wrong = 🌧 Shaken (next mistake cannot be saved by calm or a second chance). Help costs one hint of the next fight (`Run.hintDebt`). ✨ / 🌧 chip by the hearts. The simulator now models events (0.75 wins 61 → 73 %).
 - Shaken now costs 2 hearts on the next mistake of that floor (unsavable): as "cannot be saved" it rarely cost anything for players without second chances. Hearts lost never exceed hearts left (bookkeeping fix). Simulator, events on: 0.75 wins 71.5 %, 0.85 hearts lost/run 1.81.
+
+## Housekeeping (2026-11-01)
+- `npm run test:brief` no longer crashes when a failure's cause is a plain string (a test file that fails to import, a test that throws a string); a file that crashes on import now reports its real error line (e.g. a missing export) instead of "test failed".
+- `docs/CONTEXTUAL_ENCOUNTERS.md`: removed the original patch's stale handoff and balance sections (+3 gold, day-based stages, the uncommitted test save); added a current "Testing and review" section with preview links.
