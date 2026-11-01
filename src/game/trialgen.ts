@@ -14,7 +14,8 @@ import { EXPLANATIONS } from '../content/index.ts'
 import { retoneSyllable, soundKey, splitSyllables, type Syllable } from '../content/pinyin.ts'
 import type { Word } from '../content/types.ts'
 import type { Mastery } from './types.ts'
-import type { NoteTrial, ToneTrial } from './trials.ts'
+import type { NoteTrial, ToneTrial, TruthTrial } from './trials.ts'
+import { NUMBERS, hereCount, hereHas, hereHasNot, knownNouns, knows, type Sentence } from './nouns.ts'
 
 export const GEN_PREFIX = 'gen-'
 const BLANK = '＿'
@@ -169,4 +170,37 @@ export function blankedPinyin(zh: string, py: string): string | null {
   if (i < 0 || !spans || spans.length !== slots.length) return null
   const p = py.normalize('NFC')
   return p.slice(0, spans[i].start) + BLANK + p.slice(spans[i].end)
+}
+
+/**
+ * Mirror Trickster: a tray of noun tiles (characters, not pictures) and three statements, exactly one true by construction.
+ * Presence (any noun): the tray holds two nouns, a third is absent; true = 这里有 <present> or 这里没有 <absent>.
+ * Counting (nouns counted with 个): the tray holds N of one noun (3-6); true = 这里有 N 个 X, false = another number, 没有 X.
+ * Works for every noun the player has met, so it scales with the vocabulary.
+ */
+export function truthTrials(mastery: Mastery, rng = Math.random): TruthTrial[] {
+  const out: TruthTrial[] = [], nouns = shuffle(knownNouns(mastery), rng)
+  const reply = (x: Sentence) => ({ zh: x.zh, py: x.py, en: x.en })
+  // `onTray`: the nouns on the tray are words the trial uses too (a tray noun need not appear in any statement).
+  const make = (id: string, onTray: Word[], tiles: string[], right: Sentence, wrong: Sentence[], note: string): TruthTrial => ({
+    id: `${GEN_PREFIX}truth-${id}`, boss: 'trickster', tiles: shuffle(tiles, rng), en: `The tray holds: ${tiles.join(' ')}.`,
+    requires: [...new Set([...[right, ...wrong].flatMap(x => x.requires), ...onTray.map(w => w.id)])], options: [right, ...wrong].map(reply), answer: right.zh, note,
+  })
+  if (knows(mastery, ['这里', '有', '没有'])) for (let i = 0; i + 2 < nouns.length && out.length < 12; i += 3) {
+    const [a, b, c] = nouns.slice(i, i + 3)
+    const tiles = [...Array(1 + Math.floor(rng() * 2)).fill(a.hanzi), ...Array(1 + Math.floor(rng() * 2)).fill(b.hanzi)]
+    const presence = rng() < 0.5
+    const note = `这里有 means "there is … here"; 没有 means "there is no …". The tray holds ${a.hanzi} and ${b.hanzi}, but no ${c.hanzi}.`
+    out.push(presence
+      ? make(`${a.id}-${b.id}-${c.id}-has`, [a, b], tiles, hereHas(a), [hereHasNot(b), hereHas(c)], note)
+      : make(`${a.id}-${b.id}-${c.id}-not`, [a, b], tiles, hereHasNot(c), [hereHasNot(a), hereHas(c)], note))
+  }
+  const counted = nouns.filter(w => w.measure === '个')
+  const numbers = NUMBERS.filter(n => knows(mastery, [n.id]))
+  if (knows(mastery, ['这里', '有', '没有', '个']) && numbers.length >= 2) for (const x of counted.slice(0, 6)) {
+    const [n, m] = shuffle(numbers, rng)
+    out.push(make(`${x.id}-count-${n.n}`, [x], Array(n.n).fill(x.hanzi), hereCount(n, x), [hereCount(m, x), hereHasNot(x)],
+      `${n.id}个${x.hanzi}: number + 个 + noun. Count the tiles: ${n.n}. 没有 would mean there is none.`))
+  }
+  return out
 }

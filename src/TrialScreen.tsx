@@ -76,7 +76,9 @@ export default function TrialScreen({ trial, state, level, onAnswer, onClose, on
       <div className="enc-person" aria-hidden="true">{frame.icon}</div>
       <p className="enc-situation">{frame.situation}</p>
       {trial.boss === 'trickster'
-        ? <div className="enc-request trial-carving"><p className="trial-picture" role="img" aria-label={trial.en}>{trial.picture}</p>{answered && <p>{trial.en}</p>}</div>
+        ? <div className="enc-request trial-carving">{trial.tiles
+          ? <div className="trial-tray" lang="zh" role="img" aria-label={`Tray: ${trial.tiles.join(', ')}`}>{trial.tiles.map((t, i) => <span key={i} className="tray-tile">{t}</span>)}</div>
+          : <p className="trial-picture" role="img" aria-label={trial.en}>{trial.picture}</p>}{answered && <p>{trial.en}</p>}</div>
         : trial.boss === 'scribe'
         ? <div className="enc-request trial-carving"><p lang="zh">{answered ? filledNote(trial) : trial.zh.split(BLANK).flatMap((part, i) => i ? [<span key={i} className="trial-blank" aria-label="missing character">？</span>, part] : [part])}</p>{answered ? <p>{trial.py}</p> : pinyinFor(filledNote(trial), trial.requires, level) && blankedPinyin(trial.zh, trial.py) && <p>{blankedPinyin(trial.zh, trial.py)}</p>}{answered && <p>{trial.en}</p>}</div>
         : <div className="enc-request trial-carving"><p lang="zh">{trial.zh}</p>{trial.boss === 'wraith' && (answered || pinyinFor(trial.zh, trial.requires, level)) && <p>{trial.py}</p>}{answered && <p>{trial.en}</p>}</div>}
