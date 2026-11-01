@@ -1,21 +1,23 @@
-// Balance simulator for the hearts rules: node tools/simulate.ts [accuracy] [runs]   (needs Node 22.18+)
+// Balance simulator for expeditions: node tools/simulate.ts [accuracy] [expeditions]   (needs Node 22.18+)
 // Also: node tools/simulate.ts --report   compares new and upgraded players at several accuracies.
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS } from '../src/data.ts'
-import { TUNING, advance, bankRun, bossIdFor, drinkPotion, isBoss, newRun, playerStats, resolveAnswer } from '../src/game/rules.ts'
+import { TUNING, advance, bankRun, bossIdFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { updateMastery } from '../src/game/mastery.ts'
 import { emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
 
-/** A bot that keeps answering this long uses "Return to camp" (about 25-40 minutes of play). */
-export const ANSWER_CAP = 500
+/** Safety stop only: an expedition is bounded (5 floors of bounded fights) and never gets near this. */
+export const ANSWER_CAP = 1000
 
 export type RunLog = {
   run: number; floor: number; gold: number; mastered: number; upgrades: number
   /** Answers given in the run (its length). */
   answers: number
-  /** How the run ended: out of hearts, or returned to camp at ANSWER_CAP. */
-  end: 'defeat' | 'returned'
+  /** How the expedition ended: won (final boss beaten) or out of hearts ('returned' only at the safety stop). */
+  end: 'won' | 'defeat' | 'returned'
+  /** The most answers any single fight took in this expedition. */
+  longestFight: number
   heartsLost: number; practiceSaves: number; secondChanceSaves: number; heartsRestored: number; potionsUsed: number
   /** Hearts at the start of the run, hearts left at the end, and hearts each potion restored. */
   startHearts: number; endHearts: number; potionHearts: number
@@ -48,8 +50,9 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
     let run = newRun(b, GEAR, ENEMIES), word = pick(null), answers = 0
     const startHearts = run.hearts, potionHearts = playerStats(run, b, GEAR).potionHearts
     const stat = { heartsLost: 0, practiceSaves: 0, secondChanceSaves: 0, heartsRestored: 0, potionsUsed: 0 }
-    while (run.phase !== 'defeat' && answers < ANSWER_CAP) {
-      if (run.phase === 'victory') { run = advance(run, b, ENEMIES, GEAR); introduce(); continue }
+    let fightAnswers = 0, longestFight = 0
+    while (run.phase !== 'defeat' && !isExpeditionWon(run) && answers < ANSWER_CAP) {
+      if (run.phase === 'victory') { run = advance(run, b, ENEMIES, GEAR)!; introduce(); fightAnswers = 0; continue }
       if (run.hearts <= 2) { const p = drinkPotion(run, b, GEAR); if (p) { run = p; stat.potionsUsed++ } }
       const entry = mastery[word.id]
       const practice = !practiced.has(word.id)
@@ -57,48 +60,45 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       // tone questions (Golem shield), character questions (Scribe seals), look-alikes (Trickster).
       const boss = isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null
       const sealed = run.shield > 0
-      const p = Math.min(0.98, accuracy + 0.04 * (entry?.lv ?? 0) - (sealed ? (boss === 'golem' ? 0.06 : 0.04) : boss === 'trickster' ? 0.08 : 0))
+      const harder = sealed ? (sealAsk(boss!, run.shield) === 'pinyin' ? 0.06 : 0.04) : boss === 'trickster' ? 0.08 : 0
+      const p = accuracy >= 1 ? 1 : Math.min(0.98, accuracy + 0.04 * (entry?.lv ?? 0) - harder)
       const ok = rng() < p
       const r = resolveAnswer({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect: ok, practice, sealQuestion: sealed, roll: { drop: rng(), item: rng() } })
-      practiced.add(word.id); answers++
+      practiced.add(word.id); answers++; fightAnswers++; longestFight = Math.max(longestFight, fightAnswers)
       stat.heartsLost += r.heartsLost; stat.practiceSaves += r.practiceSaved ? 1 : 0; stat.secondChanceSaves += r.savedBySecondChance ? 1 : 0; stat.heartsRestored += r.heartsRestored
       run = r.run; mastery = updateMastery(mastery, word.id, ok); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
     }
-    const returned = run.phase !== 'defeat'
-    const banked = bankRun(meta, run, returned); meta = banked.meta
+    const end: RunLog['end'] = isExpeditionWon(run) ? 'won' : run.phase === 'defeat' ? 'defeat' : 'returned'
+    const banked = bankRun(meta, run, end); meta = banked.meta
     // greedy: always buy the cheapest affordable node
     for (;;) {
       const next = UPGRADES.filter(u => nodeState(meta.upgrades, u) === 'available' && upgradeCost(u.tier) <= meta.gold).sort((a, c) => a.tier - c.tier)[0]
       if (!next) break
       meta = buyUpgrade(meta, next.id)!
     }
-    log.push({ run: n, floor: run.floor, gold: banked.summary.goldBanked, mastered: Object.values(mastery).filter(e => e.lv >= 4).length, upgrades: meta.upgrades.length, answers, end: returned ? 'returned' : 'defeat', ...stat, startHearts, endHearts: run.hearts, potionHearts })
+    log.push({ run: n, floor: run.floor, gold: banked.summary.goldBanked, mastered: Object.values(mastery).filter(e => e.lv >= 4).length, upgrades: meta.upgrades.length, answers, end, longestFight, ...stat, startHearts, endHearts: run.hearts, potionHearts })
   }
   return log
 }
 
 const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
-export function summarize(log: RunLog[]) {
-  return {
-    floor: avg(log.map(l => l.floor)), answers: avg(log.map(l => l.answers)),
-    returned: log.filter(l => l.end === 'returned').length / Math.max(1, log.length),
-    heartsLost: avg(log.map(l => l.heartsLost)), restored: avg(log.map(l => l.heartsRestored)),
-    saves: avg(log.map(l => l.practiceSaves + l.secondChanceSaves))
-  }
-}
+const winRate = (log: RunLog[]) => log.filter(l => l.end === 'won').length / Math.max(1, log.length)
+/** Expedition number of the first win (Infinity if none). */
+export const firstWin = (log: RunLog[]) => { const i = log.findIndex(l => l.end === 'won'); return i === -1 ? Infinity : i + 1 }
 
-/** Fresh player (greedy buying over 30 runs: first 5 and last 10 runs) and a fully upgraded player (10 runs), several seeds. */
-export function report(accuracies = [0.6, 0.75, 0.85, 0.9, 0.95], seeds = [1, 2, 3]) {
+/** Fresh players (greedy buying, 30 expeditions) and fully upgraded players, several seeds. */
+export function report(accuracies = [0.6, 0.75, 0.85, 0.9, 1], seeds = [1, 2, 3, 4, 5]) {
   const rows: string[] = []
-  const f = (x: number, d = 1) => x.toFixed(d).padStart(6)
+  const f = (x: number, d = 1) => (Number.isFinite(x) ? x.toFixed(d) : 'never').padStart(6)
   rows.push(`tuning ${JSON.stringify(TUNING)}`)
-  rows.push('   acc | new: floor answers (first 5 runs) | late: floor answers returned | maxed: floor answers returned lost restored saves')
+  rows.push('   acc | first win (median, no-upgrade wins) | win% 1-5  6-15 16-30 | answers avg max | longest fight | maxed win%')
   for (const acc of accuracies) {
-    const fresh = seeds.flatMap(sd => simulate(acc, 30, sd))
-    const early = fresh.filter(l => l.run <= 5), late = fresh.filter(l => l.run > 20)
+    const logs = seeds.map(sd => simulate(acc, 30, sd))
+    const all = logs.flat()
+    const firsts = logs.map(firstWin).sort((a, b) => a - b)
+    const noUpgradeWin = logs.filter(l => l.findIndex(x => x.end === 'won') === 0).length
     const maxed = seeds.flatMap(sd => simulate(acc, 10, sd + 100, { maxed: true }))
-    const e = summarize(early), la = summarize(late), m = summarize(maxed)
-    rows.push(`  ${acc.toFixed(2)} | ${f(e.floor)} ${f(e.answers, 0)}                      | ${f(la.floor)} ${f(la.answers, 0)} ${f(la.returned * 100, 0)}% | ${f(m.floor)} ${f(m.answers, 0)} ${f(m.returned * 100, 0)}% ${f(m.heartsLost)} ${f(m.restored)} ${f(m.saves)}`)
+    rows.push(`  ${acc.toFixed(2)} | ${f(firsts[Math.floor(firsts.length / 2)], 0)} (${noUpgradeWin}/${seeds.length} won the 1st)            | ${f(winRate(all.filter(l => l.run <= 5)) * 100, 0)} ${f(winRate(all.filter(l => l.run > 5 && l.run <= 15)) * 100, 0)} ${f(winRate(all.filter(l => l.run > 15)) * 100, 0)} | ${f(avg(all.map(l => l.answers)), 0)} ${f(Math.max(...all.map(l => l.answers)), 0)} | ${f(Math.max(...all.map(l => l.longestFight)), 0)}        | ${f(winRate(maxed) * 100, 0)}`)
   }
   return rows.join('\n')
 }
@@ -108,9 +108,9 @@ if (process.argv[1]?.endsWith('simulate.ts')) {
     for (const arg of process.argv.slice(3)) { const [k, v] = arg.split('='); if (k in TUNING) (TUNING as Record<string, number>)[k] = Number(v) }
     console.log(report())
   } else {
-    const acc = Number(process.argv[2] ?? 0.7), runs = Number(process.argv[3] ?? 40)
+    const acc = Number(process.argv[2] ?? 0.7), runs = Number(process.argv[3] ?? 30)
     const log = simulate(acc, runs)
-    console.log(`accuracy ${acc}: run floor answers end gold upgrades mastered heartsLost restored`)
-    for (const l of log.filter(l => l.run <= 10 || l.run % 5 === 0)) console.log([l.run, l.floor, l.answers, l.end, l.gold, l.upgrades, l.mastered, l.heartsLost, l.heartsRestored].map(String).map(x => x.padStart(8)).join(''))
+    console.log(`accuracy ${acc}: run floor answers end gold upgrades mastered heartsLost longestFight`)
+    for (const l of log.filter(l => l.run <= 10 || l.run % 5 === 0)) console.log([l.run, l.floor, l.answers, l.end, l.gold, l.upgrades, l.mastered, l.heartsLost, l.longestFight].map(String).map(x => x.padStart(8)).join(''))
   }
 }

@@ -72,8 +72,8 @@ Read `src/App.tsx` for exact logic before changing numbers. The following is a h
 4. The game shows feedback, the correct answer and a short learning note.
 5. Defeating an enemy awards XP and gold and may award gear.
 6. XP contributes to leveling. Levels add attack only (never hearts or healing).
-7. Gear bonuses affect attack, maximum hearts (cap 8), second chances per floor, hints, XP, mastery damage or gold.
-8. Potions restore one heart (never used at full hearts); clearing a floor restores one heart.
+7. Gear bonuses affect attack, maximum hearts (cap 8), hints, XP, mastery damage or gold. Second chances (max 3) come from upgrades and last the whole expedition.
+8. Potions restore one heart (never used at full hearts). Clearing a floor restores a heart only with the Second Wind upgrade. An expedition is 5 floors and is won by beating the final boss.
 9. Correct answers can add a Hanzi to the learned-word list; the wordbook shows learned entries.
 10. Progress is saved in the current browser. Defeat/restart behavior retains some permanent progress as described in the README and code.
 

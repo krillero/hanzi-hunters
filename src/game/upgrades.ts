@@ -4,8 +4,8 @@ import type { Meta } from './types.ts'
 /**
  * maxHearts     extra maximum hearts (rules.ts caps the total at MAX_HEARTS)
  * potionHearts  extra hearts each potion restores
- * floorHearts   extra hearts restored when a floor is cleared (on top of the base recovery)
- * secondChance  second-chance charges per FLOOR (each saves one heart on an unprotected mistake)
+ * floorHearts   hearts restored when a floor is cleared (there is no recovery without it)
+ * secondChance  second-chance charges per EXPEDITION, capped at SECOND_CHANCE_CAP (each saves one heart on an unprotected mistake)
  * hints         hints per fight
  */
 export type Bonuses = {
@@ -37,15 +37,15 @@ export const UPGRADES: UpgradeNode[] = [
 
   { id: 'G1', branch: 'G', tier: 1, name: 'Tough Skin', icon: '🧱', desc: '+1 maximum heart (runs start with it filled)', fx: { maxHearts: 1 } },
   { id: 'G2', branch: 'G', tier: 2, name: 'Spare Vial', icon: '🧪', desc: 'Start each run with +1 potion', fx: { startPotions: 1 } },
-  { id: 'G3', branch: 'G', tier: 3, name: 'Iron Will', icon: '⛓️', desc: '+1 second chance per floor: one mistake costs no heart', fx: { secondChance: 1 } },
-  { id: 'G4', branch: 'G', tier: 4, name: 'Second Wind', icon: '💨', desc: 'Clearing a floor restores 1 more heart', fx: { floorHearts: 1 } },
+  { id: 'G3', branch: 'G', tier: 3, name: 'Iron Will', icon: '⛓️', desc: '+1 second chance per expedition: one mistake costs no heart', fx: { secondChance: 1 } },
+  { id: 'G4', branch: 'G', tier: 4, name: 'Second Wind', icon: '💨', desc: 'Clearing a floor restores 1 heart (the only floor recovery)', fx: { floorHearts: 1 } },
   { id: 'G5', branch: 'G', tier: 5, name: 'Titan Heart', icon: '❤️', desc: '+1 maximum heart and potions restore 1 more heart', fx: { maxHearts: 1, potionHearts: 1 } },
 
   { id: 'S1', branch: 'S', tier: 1, name: 'Eagle Eye', icon: '💡', desc: '1 hint per fight: removes a wrong answer', fx: { hints: 1 } },
   { id: 'S2', branch: 'S', tier: 2, name: 'Quick Study', icon: '✨', desc: '+15% XP', fx: { xpPct: 0.15 } },
-  { id: 'S3', branch: 'S', tier: 3, name: 'Second Chance', icon: '🔁', desc: '+1 second chance per floor: one mistake costs no heart', fx: { secondChance: 1 } },
+  { id: 'S3', branch: 'S', tier: 3, name: 'Second Chance', icon: '🔁', desc: '+1 second chance per expedition: one mistake costs no heart', fx: { secondChance: 1 } },
   { id: 'S4', branch: 'S', tier: 4, name: 'Deep Study', icon: '🧠', desc: '+15% damage bonus from word mastery', fx: { masteryDmgPct: 0.15 } },
-  { id: 'S5', branch: 'S', tier: 5, name: 'Sage', icon: '🎓', desc: '+1 hint per fight, +1 second chance per floor, +15% XP', fx: { hints: 1, secondChance: 1, xpPct: 0.15 } },
+  { id: 'S5', branch: 'S', tier: 5, name: 'Sage', icon: '🎓', desc: '+1 hint per fight, +1 second chance per expedition, +15% XP', fx: { hints: 1, secondChance: 1, xpPct: 0.15 } },
 
   { id: 'F1', branch: 'F', tier: 1, name: 'Pickpocket', icon: '👛', desc: '+20% gold', fx: { goldPct: 0.2 } },
   { id: 'F2', branch: 'F', tier: 2, name: 'Treasure Sense', icon: '🧭', desc: '+15% loot drop chance', fx: { lootPct: 0.15 } },

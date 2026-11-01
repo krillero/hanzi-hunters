@@ -61,7 +61,7 @@ test('run stats: new words, promotions, mastery, misses, streak and accuracy', (
 test('gear comparison: rows only for stats that matter, deltas, upgrade flag', () => {
   const g = (n: string) => GEAR.find(x => x.name === n)!
   const rows = compareGear(g('Windrunner Boots'), g('Mossy Vest'))
-  assert.deepEqual(rows.map(r => [r.label, r.now, r.next, r.delta]), [['Max hearts', 1, 0, -1], ['Second chances per floor', 0, 1, 1]])
+  assert.deepEqual(rows.map(r => [r.label, r.now, r.next, r.delta]), [['Max hearts', 1, 0, -1], ['Hints per fight', 0, 1, 1]])
   assert.deepEqual(compareGear(g('Guardian Helm'), g('Mossy Vest')).map(r => [r.label, r.delta]), [['Max hearts', 0], ['Hints per fight', 1]])
   assert.deepEqual(compareGear(g('Copper Blade'), null).map(r => r.label), ['Attack'], 'empty slot: everything is a gain')
   assert.ok(compareGear(g('Copper Blade'), null).every(r => r.delta > 0))
@@ -74,7 +74,7 @@ test('gear comparison: rows only for stats that matter, deltas, upgrade flag', (
 test('one item per slot: new / better are worn, worse is left behind, a trade-off asks', () => {
   const g = (n: string) => GEAR.find(x => x.name === n)!
   assert.equal(gearVerdict(g('Copper Blade'), null), 'new')
-  assert.equal(gearVerdict(g('Windrunner Boots'), g('Mossy Vest')), 'tradeoff', 'one heart less, one second chance more')
+  assert.equal(gearVerdict(g('Windrunner Boots'), g('Mossy Vest')), 'tradeoff', 'one heart less, one hint more')
   assert.equal(gearVerdict(g('Guardian Helm'), g('Mossy Vest')), 'better', 'same heart plus a hint')
   assert.equal(gearVerdict(g('Mossy Vest'), g('Mossy Vest')), 'worse', 'identical gives nothing')
   const slots = new Set(GEAR.map(x => x.slot))

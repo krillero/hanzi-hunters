@@ -1,5 +1,13 @@
 # Changelog / test log
 
+## 2026-11-01 — Five-floor expeditions, save restarted at v1 (branch ccr-2aecd5ae-3v8bz2)
+
+- **Expeditions:** a run is 5 floors; floor 5 ends with the new final boss, the **Cavern Warden** (2 tone wards, 2 ink seals, then an echo phase; Golem sprite with a gold glow; drops the Warden Sigil). Beating it wins; the floor summary becomes "Expedition won!" and camp shows "You beat the Cavern Warden!". `meta.wins` counts wins (shown in Settings).
+- **No floor recovery without upgrades;** Second Wind restores 1 heart per floor cleared (floors 1-4). **Second chances** are one pool per expedition, capped at 3, never refilled.
+- **Gear** no longer gives second chances: Windrunner Boots +1 hint, Golem Plate +1 max heart +1 hint, Trick Mantle +1 max heart +10 % mastery damage.
+- **Balance:** simulator rewritten for expeditions; targets met (perfect play always wins; 90 % wins the first; 75 % first win around the 6th; 60 % around the 24th). Expeditions are about 35-40 answers. Table in `docs/GAME_DESIGN.md`.
+- **Save v1** under the new key `hanzi-hunters-save`: old saves (`-v1`, `-v2` keys) are deleted on start and never read; all migrations from earlier formats removed; old backups are rejected.
+
 ## 2026-11-01 — Hearts replace player HP (branch ccr-2aecd5ae-3v8bz2)
 
 - **Rules** (`src/game/rules.ts`): 5 hearts and 1 potion per run. A correct answer attacks and never costs a heart (no counterattack); a wrong answer deals no damage and costs exactly one heart on every floor and boss. 0 hearts ends the run. Potion +1 heart (not used at full), floor clear +1 heart exactly once (`recoveredFloor`), no healing from kills or levels (levels add attack only). Max hearts capped at 8; gear raising it adds an empty heart, lowering it clamps.

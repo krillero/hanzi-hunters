@@ -43,9 +43,9 @@ test('badges unlock at their thresholds and are not awarded twice', () => {
 })
 
 test('saves: old saves load with an empty habit; the habit survives export and import', () => {
-  const old = sanitizeSave({ version: 2, meta: { gold: 5, upgrades: [], bestFloor: 2, runs: 1 }, mastery: { 人: lv(1) }, run: null, lastRun: null })
+  const old = sanitizeSave({ version: 1, meta: { gold: 5, upgrades: [], bestFloor: 2, runs: 1 }, mastery: { 人: lv(1) }, run: null, lastRun: null })
   assert.deepEqual(old.habit, emptyHabit())
-  assert.deepEqual(loadSave({ getItem: () => JSON.stringify({ version: 2, meta: { gold: 1 } }) }).habit, emptyHabit())
+  assert.deepEqual(loadSave({ getItem: () => JSON.stringify({ version: 1, meta: { gold: 1 } }) }).habit, emptyHabit())
   const s = sanitizeSave({ ...old, habit: { daysPlayed: 4, lastPlayed: '2026-10-31', warmupDay: '2026-10-31', correct: 40, badges: ['known-10'] } })
   const back = parseBackup(serializeBackup(s))
   assert.deepEqual(back.habit, s.habit)

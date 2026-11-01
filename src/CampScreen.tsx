@@ -29,8 +29,8 @@ export default function CampScreen({ save, course, runMilestones, onBuy, onStart
   return (
     <section className="camp" aria-label="Base camp">
       <div className="camp-head">
-        <p className="eyebrow">{lastRun ? 'RUN OVER' : 'BASE CAMP'}</p>
-        <h1>{lastRun ? (lastRun.returned ? `You returned from floor ${lastRun.floor}` : `You fell on floor ${lastRun.floor}`) : 'Prepare for the descent'}</h1>
+        <p className="eyebrow">{lastRun ? (lastRun.result === 'won' ? 'EXPEDITION WON' : 'EXPEDITION OVER') : 'BASE CAMP'}</p>
+        <h1>{lastRun ? (lastRun.result === 'won' ? 'You beat the Cavern Warden!' : lastRun.result === 'returned' ? `You returned from floor ${lastRun.floor}` : `You fell on floor ${lastRun.floor}`) : 'Prepare for the expedition'}</h1>
         {lastRun
           ? <p className="camp-result"><span>{lastRun.kills} slain</span><span>Level {lastRun.level}</span><span className="gain">+{lastRun.goldBanked} gold</span></p>
           : <p className="camp-result">Upgrades and the words you learn stay between runs.</p>}
@@ -95,7 +95,7 @@ export default function CampScreen({ save, course, runMilestones, onBuy, onStart
       </div>
 
       <div className="camp-start-bar">
-        <button className="primary-btn camp-start" onClick={onStart}>{lastRun ? 'Descend again' : 'Start the descent'} <span aria-hidden="true">→</span></button>
+        <button className="primary-btn camp-start" onClick={onStart}>{lastRun ? 'New expedition' : 'Start the expedition'} <span aria-hidden="true">→</span></button>
       </div>
     </section>
   )

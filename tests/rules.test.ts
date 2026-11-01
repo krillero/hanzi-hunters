@@ -4,7 +4,7 @@ import { ENEMIES, GEAR } from '../src/data.ts'
 import { NO_BONUSES, computeBonuses, type Bonuses } from '../src/game/upgrades.ts'
 import { gearVerdict } from '../src/game/rarity.ts'
 import {
-  ENEMIES_PER_FLOOR, MAX_HEARTS, START_HEARTS, TUNING, advance, bankRun, drinkPotion, enemyStats, equipGear, newRun, playerStats, resolveAnswer, startFight
+  ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_HEARTS, SECOND_CHANCE_CAP, START_HEARTS, advance, isExpeditionWon, bankRun, drinkPotion, enemyStats, equipGear, newRun, playerStats, resolveAnswer, startFight
 } from '../src/game/rules.ts'
 import type { Run } from '../src/game/types.ts'
 
@@ -22,7 +22,7 @@ test('a new run: 5 full hearts, 1 potion, level 1, no gear, floor 1', () => {
   assert.equal(r.enemyHp, ENEMIES[0].hp)
 })
 
-test('upgrades shape the start of a run: Tough Skin heart starts filled, Spare Vial potion, per-floor charges', () => {
+test('upgrades shape the start of a run: Tough Skin heart starts filled, Spare Vial potion, second-chance pool', () => {
   const b = computeBonuses(['G1', 'G2', 'G3', 'S1', 'S2', 'S3'])
   const r = newRun(b, GEAR, ENEMIES)
   assert.equal(r.hearts, 6); assert.equal(playerStats(r, b, GEAR).maxHearts, 6)
@@ -75,45 +75,56 @@ test('protected first practice: no heart, no second chance used, still wrong (co
   const right = ask(r, { bonuses: b, practice: true }); assert.ok(!right.practiceSaved); assert.ok(right.damage > 0)
 })
 
-test('second chances: saved heart, still wrong, used up per floor; refilled only on a new floor', () => {
+test('second chances: one capped pool per expedition; saved heart, still wrong; never refilled', () => {
   const b = computeBonuses(['S1', 'S2', 'S3'])
   let r = newRun(b, GEAR, ENEMIES)
   assert.equal(r.secondLeft, 1)
   const first = ask(r, { bonuses: b, isCorrect: false }); assert.ok(first.savedBySecondChance); assert.equal(first.heartsLost, 0); assert.equal(first.run.secondLeft, 0); assert.equal(first.run.streak, 0)
   const second = ask(first.run, { bonuses: b, isCorrect: false }); assert.ok(!second.savedBySecondChance); assert.equal(second.heartsLost, 1)
-  // next enemy on the same floor: no refill
-  r = advance({ ...first.run, phase: 'victory' }, b, ENEMIES, GEAR); assert.equal(r.kill, 1); assert.equal(r.secondLeft, 0, 'not refilled per enemy')
+  r = advance({ ...first.run, phase: 'victory' }, b, ENEMIES, GEAR)!; assert.equal(r.kill, 1); assert.equal(r.secondLeft, 0, 'not refilled per enemy')
   r = startFight(r, b, ENEMIES, GEAR); assert.equal(r.secondLeft, 0, 'restarting a fight does not refill')
-  // swapping gear back and forth does not refill
-  const boots = { ...r, gear: ['Windrunner Boots', 'Mossy Vest'], loadout: { Armor: 'Mossy Vest' } }
-  const swapped = equipGear(equipGear(boots, 'Windrunner Boots', GEAR, b)!, 'Mossy Vest', GEAR, b)!
-  assert.equal(equipGear(boots, 'Windrunner Boots', GEAR, b)!.secondLeft, 0, 'equipping +1 charge adds no charge'); assert.equal(swapped.secondLeft, 0)
-  // a new floor refills all stacked charges
-  const next = advance({ ...r, kill: ENEMIES_PER_FLOOR - 1, phase: 'victory' }, b, ENEMIES, GEAR)
-  assert.equal(next.floor, 2); assert.equal(next.secondLeft, 1)
+  const next = advance({ ...r, kill: ENEMIES_PER_FLOOR - 1, phase: 'victory' }, b, ENEMIES, GEAR)!
+  assert.equal(next.floor, 2); assert.equal(next.secondLeft, 0, 'not refilled per floor either')
+  const vest = { ...r, gear: ['Mossy Vest', 'Guardian Helm'], loadout: { Armor: 'Mossy Vest' } }
+  assert.equal(equipGear(vest, 'Guardian Helm', GEAR, b)!.secondLeft, 0, 'gear swaps never refill')
   const stacked = computeBonuses(['S1', 'S2', 'S3', 'S4', 'S5', 'G1', 'G2', 'G3'])
-  assert.equal(newRun(stacked, GEAR, ENEMIES).secondLeft, 3, 'S3 + S5 + G3')
+  assert.equal(newRun(stacked, GEAR, ENEMIES).secondLeft, SECOND_CHANCE_CAP, 'S3 + S5 + G3 = 3, the cap')
+  assert.equal(playerStats(run0(), { ...none, secondChance: 9 }, GEAR).secondChances, SECOND_CHANCE_CAP)
 })
-
-test('clearing a floor restores 1 heart exactly once, capped, before the floor summary', () => {
-  const r = lastFight({ ...run0(), hearts: 3 })
-  const k = ask(r)
-  assert.equal(k.outcome, 'victory'); assert.equal(k.heartsRestored, 1); assert.equal(k.run.hearts, 4); assert.equal(k.run.reward.hearts, 1)
-  assert.equal(k.run.recoveredFloor, 1)
-  // the same floor can never award it again (e.g. a stale state replayed)
-  assert.equal(ask({ ...k.run, phase: 'fighting', enemyHp: 1 }).heartsRestored, 0)
-  // advancing does not heal
-  assert.equal(advance(k.run, none, ENEMIES, GEAR).hearts, 4)
-  assert.equal(ask(lastFight(run0())).heartsRestored, 0, 'capped at full')
-  // a boss item that raises the maximum is worn first; the recovery then fills one heart of the new capacity at most
-  const plate = ask({ ...run0(), kill: ENEMIES_PER_FLOOR - 1, shield: 0, enemyHp: 1 })
-  assert.equal(plate.loot?.name, 'Golem Plate'); assert.equal(plate.run.hearts, 6); assert.equal(plate.heartsRestored, 1)
-  assert.equal(ask({ ...run0(), enemyHp: 1, hearts: 2 }).heartsRestored, 0, 'normal enemies never restore hearts')
+test('no floor recovery without upgrades; Second Wind restores 1 heart per floor cleared, once, capped, not on the last floor', () => {
+  const k = ask(lastFight({ ...run0(), hearts: 3 }))
+  assert.equal(k.outcome, 'victory'); assert.equal(k.heartsRestored, 0); assert.equal(k.run.hearts, 3, 'no baseline recovery')
+  assert.equal(advance(k.run, none, ENEMIES, GEAR)!.hearts, 3, 'advancing does not heal')
   const wind = computeBonuses(['G1', 'G2', 'G3', 'G4'])
-  assert.equal(ask(lastFight({ ...newRun(wind, GEAR, ENEMIES), hearts: 2 }), { bonuses: wind }).heartsRestored, 2, 'Second Wind: 2 in total')
-  assert.equal(TUNING.recoveryEvery, 1)
+  const w = ask(lastFight({ ...newRun(wind, GEAR, ENEMIES), hearts: 2 }), { bonuses: wind })
+  assert.equal(w.heartsRestored, 1); assert.equal(w.run.hearts, 3); assert.equal(w.run.reward.hearts, 1); assert.equal(w.run.recoveredFloor, 1)
+  assert.equal(ask({ ...w.run, phase: 'fighting', enemyHp: 1 }, { bonuses: wind }).heartsRestored, 0, 'once per floor')
+  assert.equal(ask(lastFight(newRun(wind, GEAR, ENEMIES)), { bonuses: wind }).heartsRestored, 0, 'capped at full')
+  assert.equal(ask({ ...newRun(wind, GEAR, ENEMIES), enemyHp: 1, hearts: 2 }, { bonuses: wind }).heartsRestored, 0, 'normal enemies never restore hearts')
+  const final = ask(lastFight({ ...newRun(wind, GEAR, ENEMIES), floor: EXPEDITION_FLOORS, hearts: 2 }), { bonuses: wind })
+  assert.equal(final.heartsRestored, 0, 'the last floor ends the expedition')
 })
 
+test('an expedition is 5 floors; beating the final boss wins it and nothing advances past it', () => {
+  assert.equal(EXPEDITION_FLOORS, 5)
+  const won = ask(lastFight({ ...run0(), floor: EXPEDITION_FLOORS }))
+  assert.equal(won.outcome, 'victory'); assert.ok(isExpeditionWon(won.run)); assert.equal(advance(won.run, none, ENEMIES, GEAR)!, null)
+  const floor4 = ask(lastFight({ ...run0(), floor: 4 }))
+  assert.ok(!isExpeditionWon(floor4.run)); assert.equal(advance(floor4.run, none, ENEMIES, GEAR)!.floor, 5)
+  assert.ok(!isExpeditionWon({ ...run0(), floor: 5, kill: 2, phase: 'victory' }), 'only the final boss')
+})
+
+test('perfect play always wins an expedition from a fresh start', () => {
+  for (const b of [none, computeBonuses(['W1', 'G1', 'S1', 'F1'])]) {
+    let r = newRun(b, GEAR, ENEMIES), answers = 0
+    const start = r.hearts
+    while (!isExpeditionWon(r) && answers < 500) {
+      if (r.phase === 'victory') { r = advance(r, b, ENEMIES, GEAR)!; continue }
+      r = ask(r, { bonuses: b, sealQuestion: true, lv: 1 }).run; answers++
+    }
+    assert.ok(isExpeditionWon(r), `won in ${answers} answers`); assert.equal(r.hearts, start, 'without losing a heart')
+  }
+})
 test('potions restore 1 heart (+1 with Titan Heart), capped, and are never wasted at full hearts', () => {
   const r = { ...run0(), hearts: 3 }
   const p = drinkPotion(r, none, GEAR)!; assert.equal(p.hearts, 4); assert.equal(p.potions, 0)
@@ -195,18 +206,19 @@ test('gold and xp bonuses and gear', () => {
 test('advance walks 4 enemies then the next floor; hints refill per fight', () => {
   const b = computeBonuses(['S1'])
   let r = { ...newRun(b, GEAR, ENEMIES), hintsLeft: 0 }
-  for (let k = 1; k < ENEMIES_PER_FLOOR; k++) { r = advance(r, b, ENEMIES, GEAR); assert.deepEqual([r.floor, r.kill], [1, k]); assert.equal(r.hintsLeft, 1) }
-  r = advance(r, b, ENEMIES, GEAR); assert.deepEqual([r.floor, r.kill], [2, 0]); assert.equal(r.enemyHp, enemyStats(ENEMIES, 2, 0).hp)
+  for (let k = 1; k < ENEMIES_PER_FLOOR; k++) { r = advance(r, b, ENEMIES, GEAR)!; assert.deepEqual([r.floor, r.kill], [1, k]); assert.equal(r.hintsLeft, 1) }
+  r = advance(r, b, ENEMIES, GEAR)!; assert.deepEqual([r.floor, r.kill], [2, 0]); assert.equal(r.enemyHp, enemyStats(ENEMIES, 2, 0).hp)
 })
 
 test('ending a run banks all gold; "return to camp" is not a defeat; learning is not touched here', () => {
-  const meta = { gold: 10, upgrades: ['W1'], bestFloor: 3, runs: 2 }
-  const { meta: m, summary } = bankRun(meta, { ...run0(), gold: 55, floor: 5, kills: 17, level: 4 })
-  assert.deepEqual(m, { gold: 65, upgrades: ['W1'], bestFloor: 5, runs: 3 })
-  assert.deepEqual(summary, { floor: 5, kills: 17, level: 4, goldBanked: 55, returned: false })
-  assert.equal(bankRun(meta, { ...run0(), floor: 2 }).meta.bestFloor, 3)
-  const back = bankRun(meta, { ...run0(), gold: 40, floor: 4 }, true)
-  assert.equal(back.summary.returned, true); assert.equal(back.meta.gold, 50)
+  const meta = { gold: 10, upgrades: ['W1'], bestFloor: 3, runs: 2, wins: 0 }
+  const { meta: m, summary } = bankRun(meta, { ...run0(), gold: 55, floor: 5, kills: 17, level: 4 }, 'defeat')
+  assert.deepEqual(m, { gold: 65, upgrades: ['W1'], bestFloor: 5, runs: 3, wins: 0 })
+  assert.deepEqual(summary, { floor: 5, kills: 17, level: 4, goldBanked: 55, result: 'defeat' })
+  assert.equal(bankRun(meta, { ...run0(), floor: 2 }, 'defeat').meta.bestFloor, 3)
+  const back = bankRun(meta, { ...run0(), gold: 40, floor: 4 }, 'returned')
+  assert.equal(back.summary.result, 'returned'); assert.equal(back.meta.gold, 50); assert.equal(back.meta.wins, 0)
+  assert.equal(bankRun(meta, { ...run0(), floor: 5 }, 'won').meta.wins, 1)
 })
 
 test('XP is paid only when the monster is killed (answers bank it, the kill pays it out)', () => {

@@ -178,7 +178,7 @@ ready. The engine default lives in `DEFAULT_READINESS` (`src/game/course.ts`); t
 
 ## 4. Saves
 
-Save format v4 (`SAVE_KEY` is still `hanzi-hunters-save-v2`; the `version` field inside says 4):
+Save format v1 (`SAVE_KEY` `hanzi-hunters-save`, restarted with expeditions; see `GAME_DESIGN.md`):
 
 ```json
 "courses": { "starter-compat": { "version": 1, "completed": ["first-characters-1", "first-characters-2"] } },

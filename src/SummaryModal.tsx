@@ -9,6 +9,8 @@ type Props = {
   gold: number
   /** Floor summary: hearts restored by clearing the floor, and hearts now. */
   hearts?: { restored: number; now: number; max: number }
+  /** The final floor: its boss was beaten, so the expedition is won. */
+  final?: boolean
   onContinue: () => void
   onClose: () => void
 }
@@ -19,7 +21,7 @@ const wordTile = (id: string) => {
 }
 
 /** Floor-clear and defeat card: what you learned, not just what you earned. Real modal styling, no new design tokens. */
-export default function SummaryModal({ kind, floor, stats, gold, hearts, onContinue, onClose }: Props) {
+export default function SummaryModal({ kind, floor, stats, gold, hearts, final = false, onContinue, onClose }: Props) {
   const btn = useRef<HTMLButtonElement | null>(null)
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -31,12 +33,12 @@ export default function SummaryModal({ kind, floor, stats, gold, hearts, onConti
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div className="modal summary-card" role="dialog" aria-modal="true" aria-labelledby="sum-title" onClick={e => e.stopPropagation()}>
         <div className="modal-head">
-          <span className="sum-icon" aria-hidden="true">{won ? '🏆' : '💀'}</span>
-          <div className="ex-titles"><h2 id="sum-title">{won ? `Floor ${floor} cleared` : `Out of hearts on floor ${floor}`}</h2><small>{won ? `${stats.total} answer${stats.total === 1 ? "" : "s"} this floor` : `${gold} gold banked for upgrades`}</small></div>
+          <span className="sum-icon" aria-hidden="true">{final ? '👑' : won ? '🏆' : '💀'}</span>
+          <div className="ex-titles"><h2 id="sum-title">{final ? 'Expedition won!' : won ? `Floor ${floor} cleared` : `Out of hearts on floor ${floor}`}</h2><small>{won ? `${stats.total} answer${stats.total === 1 ? "" : "s"} this floor` : `${gold} gold banked for upgrades`}</small></div>
           <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="modal-body">
-          {won && hearts && <section className="sum-hearts" role="status" aria-label={`${hearts.restored ? `${hearts.restored} heart restored. ` : ''}${hearts.now} of ${hearts.max} hearts`}>
+          {won && !final && hearts && hearts.restored > 0 && <section className="sum-hearts" role="status" aria-label={`${hearts.restored ? `${hearts.restored} heart restored. ` : ''}${hearts.now} of ${hearts.max} hearts`}>
             <span className="sum-hearts-row" aria-hidden="true">{Array.from({ length: hearts.max }, (_, i) => <i key={i} className={i < hearts.now ? (i >= hearts.now - hearts.restored ? 'full new' : 'full') : 'empty'}>{i < hearts.now ? '♥' : '♡'}</i>)}</span>
             <span>{hearts.restored ? `+${hearts.restored} heart${hearts.restored === 1 ? '' : 's'} restored` : 'Hearts already full'}</span>
           </section>}
@@ -58,7 +60,7 @@ export default function SummaryModal({ kind, floor, stats, gold, hearts, onConti
           </section>
           {stats.mastered.length > 0 && <section><h3>Mastered</h3><div className="sum-tiles">{stats.mastered.map(wordTile)}</div></section>}
           {stats.missed.length > 0 && <section><h3>Review soon</h3><div className="sum-tiles">{stats.missed.slice(0, 8).map(wordTile)}</div><p className="hint-text">Words you missed come back first.</p></section>}
-          <section><button ref={btn} className="bar-btn main sum-go" onClick={onContinue}>{won ? `Descend to floor ${floor + 1}` : 'Go to camp'} <span aria-hidden="true">{won ? '→' : '⛺'}</span></button></section>
+          <section><button ref={btn} className="bar-btn main sum-go" onClick={onContinue}>{final ? 'Return to camp' : won ? `Descend to floor ${floor + 1}` : 'Go to camp'} <span aria-hidden="true">{won ? '→' : '⛺'}</span></button></section>
         </div>
       </div>
     </div>

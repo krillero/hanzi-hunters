@@ -83,18 +83,18 @@ test('8: reordering lessons or moving entries neither fabricates nor erases read
   assert.equal(s.peak.你, undefined)
 })
 
-test('9: old saves migrate without losing progress and without granting readiness to unseen or lesson-only entries', () => {
+test('9: saves without peak history keep progress and grant no readiness to unseen or lesson-only entries', () => {
   const v3 = {
-    version: 3, meta: { gold: 77, upgrades: ['W1'], bestFloor: 3, runs: 5 },
+    version: 1, meta: { gold: 77, upgrades: ['W1'], bestFloor: 3, runs: 5 },
     mastery: { 我: lv(0), 他: lv(2), 大: lv(1, 1) }, legacyMastery: { 龙: lv(3) },
     run: { floor: 1, kill: 0, kills: 0, level: 2, xp: 0, hp: 20, enemyHp: 10, gold: 9, potions: 1, gear: ['Copper Blade'], loadout: { Weapon: 'Copper Blade' }, streak: 0, hintsLeft: 0, secondLeft: 0, phase: 'fighting', reward: { xp: 0, gold: 0, loot: '', levelUps: 0 } },
     lastRun: null, habit: { correct: 40 },
     courses: { course: { version: 1, completed: ['a'] }, gone: { version: 2, completed: ['x'] } }
   }
   const s = sanitizeSave(v3, WORDS, [V2])
-  assert.equal(s.version, 5)
+  assert.equal(s.version, 1)
   assert.deepEqual(s.mastery, v3.mastery); assert.deepEqual(s.legacyMastery, v3.legacyMastery)
-  assert.deepEqual(s.meta, v3.meta); assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 9); assert.equal(s.habit.correct, 40)
+  assert.deepEqual(s.meta, { ...v3.meta, wins: 0 }); assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 9); assert.equal(s.habit.correct, 40)
   assert.deepEqual(s.courses.gone, { version: 2, completed: ['x'] }, 'recoverable progress for unknown curricula is kept')
   assert.ok(s.courses.course.completed.includes('a'), 'completed lessons are preserved: the course is not relocked')
   assert.deepEqual(s.peak, { 他: 2, 大: 1 }, 'peaks derived from the current levels only (no history in old saves; level 0 needs no entry)')
@@ -107,10 +107,10 @@ test('9: old saves migrate without losing progress and without granting readines
   const odd = sanitizeSave({ ...v3, peak: { 你: 4 } }, WORDS, [V2])
   assert.equal(odd.peak.你, 4, 'kept (recoverable)'); assert.equal(entrySatisfied(stateOf(odd, V2), '你'), false)
   // v2 saves (no courses, no peaks) too
-  const v2 = sanitizeSave({ version: 2, meta: {}, mastery: { 我: lv(1), 你: lv(0, 1) } }, WORDS, [V2])
+  const v2 = sanitizeSave({ version: 1, meta: {}, mastery: { 我: lv(1), 你: lv(0, 1) } }, WORDS, [V2])
   assert.deepEqual(v2.peak, { 我: 1 }); assert.equal(entrySatisfied(stateOf(v2, V2), '你'), false)
   // garbage peaks are cleaned, and a peak below the current level is raised
-  const junk = sanitizeSave({ version: 4, meta: {}, mastery: { 我: lv(3) }, peak: { 我: 1, 他: 'x', 大: 99, 小: -2 } }, WORDS, [])
+  const junk = sanitizeSave({ version: 1, meta: {}, mastery: { 我: lv(3) }, peak: { 我: 1, 他: 'x', 大: 99, 小: -2 } }, WORDS, [])
   assert.deepEqual(junk.peak, { 我: 3, 大: 4, 小: 0 })
 })
 
@@ -136,7 +136,7 @@ test('10: thresholds are per curriculum: level-1 readiness does not satisfy a cu
 test('11: entry aliases move readiness with progress; removed entries park it; backups round-trip it', () => {
   const raw = (over: Partial<RawWord> & { hanzi: string; pinyin: string; meaning: string }): RawWord => ({ group: 'g', note: 'n', ...over })
   const renamed = normalizeWords([raw({ id: 'ni-you', hanzi: '你', pinyin: 'nǐ', meaning: 'you', aliases: ['你'] }), raw({ hanzi: '我', pinyin: 'wǒ', meaning: 'I' })])
-  const s = sanitizeSave({ version: 4, meta: {}, mastery: { 你: lv(0), 龙: lv(1) }, peak: { 你: 2, 龙: 3 } }, renamed, [])
+  const s = sanitizeSave({ version: 1, meta: {}, mastery: { 你: lv(0), 龙: lv(1) }, peak: { 你: 2, 龙: 3 } }, renamed, [])
   assert.deepEqual(s.mastery, { 'ni-you': lv(0) }); assert.deepEqual(s.peak, { 'ni-you': 2 }, 'the peak follows the alias, like mastery')
   assert.deepEqual(s.legacyMastery, { 龙: lv(1) }); assert.deepEqual(s.legacyPeak, { 龙: 3 }, 'removed entry: parked, not deleted')
   const back = normalizeWords([...renamed, raw({ hanzi: '龙', pinyin: 'lóng', meaning: 'dragon' })])

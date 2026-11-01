@@ -5,6 +5,10 @@
 //  - a wrong answer deals no damage and costs exactly one heart, unless it is protected
 //    (first practice of a new word, then a second-chance charge);
 //  - zero hearts ends the run. Enemies have HP but no attack.
+//
+// Expeditions: a run is EXPEDITION_FLOORS floors; beating the final boss (the Cavern Warden on the last floor) wins it.
+// Nothing restores hearts by itself: only potions and the Second Wind upgrade (+1 heart per floor cleared).
+// Second-chance charges are one pool for the whole expedition (capped), never refilled during it.
 import { BOSSES, type BossId, type Enemy, type GearItem, type GearSlot } from '../data.ts'
 import type { Meta, Run, RunSummary } from './types.ts'
 import type { Bonuses } from './upgrades.ts'
@@ -12,6 +16,8 @@ import { MASTERY_DAMAGE } from './mastery.ts'
 import { gearVerdict } from './rarity.ts'
 
 export const ENEMIES_PER_FLOOR = 4
+/** Floors per expedition; the last one ends with the final boss. */
+export const EXPEDITION_FLOORS = 5
 export const BASE_ATTACK = 5
 export const ATTACK_PER_LEVEL = 1
 export const xpForLevel = (level: number) => level * 30
@@ -22,39 +28,52 @@ export const MAX_HEARTS = 8
 export const START_POTIONS = 1
 /** A potion restores this many hearts (+ Titan Heart). */
 export const POTION_HEARTS = 1
-/** Clearing a floor (beating its boss) restores this many hearts (+ Second Wind). */
-export const FLOOR_HEARTS = 1
+/** Clearing a floor restores this many hearts without upgrades: none. Second Wind adds its own (floorHearts). */
+export const FLOOR_HEARTS = 0
+/** The most second-chance charges an expedition can start with (upgrades). */
+export const SECOND_CHANCE_CAP = 3
 /**
- * Danger scaling, chosen with tools/simulate.ts (see docs/GAME_DESIGN.md "Balance"). A mistake always costs exactly one heart, so
- * deeper floors are harder because they take more answers (enemy HP grows) and hearts come back only every `recoveryEvery` floors.
+ * Enemy HP grows this much per floor of the expedition (compounding), roughly matching the attack the player gains from levels,
+ * so fights keep a similar, bounded length. Chosen with tools/simulate.ts (see docs/GAME_DESIGN.md "Balance").
  * Mutable only so the simulator can compare settings; the game never changes it.
  */
-export const TUNING = { enemyHpGrowth: 1.25, recoveryEvery: 1 }
+export const TUNING = { enemyHpGrowth: 1.16, enemyHpScale: 1 }
 
 export const SHIELD_SEGMENTS = 3   // the most a shield ever has
 /** Boss multipliers over the base enemy stats (before the per-floor scaling). Early floors get a gentler boss: they ramp up to the full values. */
 export const BOSS_HP = 1.7, BOSS_REWARD = 2
 export const bossHpMult = (floor: number) => Math.min(BOSS_HP, 1.3 + 0.15 * (floor - 1))
-/** Bosses with a shield / seals, and which question kind breaks it (the question's `ask`). */
-export const SEAL_ASK: Partial<Record<BossId, 'pinyin' | 'hanzi'>> = { golem: 'pinyin', scribe: 'hanzi' }
-export const hasShield = (id: BossId) => id in SEAL_ASK
+/** Bosses with a shield / seals. The Cavern Warden has both: tone wards first, then ink seals. */
+export const hasShield = (id: BossId) => id === 'golem' || id === 'scribe' || id === 'warden'
+/** Cavern Warden: tone wards and ink seals (the shield counts both: the top WARDEN_WARDS segments are wards). */
+export const WARDEN_WARDS = 2, WARDEN_SEALS = 2
+/** Which question kind breaks the shield right now (the question's `ask`): tone (pinyin) or character (hanzi) questions. */
+export function sealAsk(boss: BossId, shield: number): 'pinyin' | 'hanzi' | null {
+  if (boss === 'golem') return 'pinyin'
+  if (boss === 'scribe') return 'hanzi'
+  if (boss === 'warden') return shield > WARDEN_SEALS ? 'pinyin' : 'hanzi'
+  return null
+}
 /** Mirror Trickster: a right answer hits harder. */
 export const TRICKSTER_HIT = 1.4, TRICKSTER_LOW = 0.5
-/** Shield / seals: 2 segments on the first floors, 3 from floor 3. */
-export const shieldFor = (floor: number) => (floor <= 2 ? 2 : SHIELD_SEGMENTS)
+/** Shield / seals: 2 segments on the first floors, 3 from floor 3; the Warden has 2 wards + 2 seals. */
+export const shieldFor = (floor: number, boss: BossId | null = null) => (boss === 'warden' ? WARDEN_WARDS + WARDEN_SEALS : floor <= 2 ? 2 : SHIELD_SEGMENTS)
 
 /** The last fight of a floor. Every floor ends with a boss. */
 export const isFinalFight = (kill: number) => kill === ENEMIES_PER_FLOOR - 1
 /** `floor` is kept in the signature so a later design can skip bosses on some floors. */
 export const isBoss = (_floor: number, kill: number) => isFinalFight(kill)
-/** The bosses take turns: Golem, Wraith, Scribe, Trickster, then again. Add a boss here (and in data.ts) to lengthen the cycle. */
+/** Floors 1-4: Golem, Wraith, Scribe, Trickster. The last floor of the expedition: the Cavern Warden. */
 export const BOSS_ORDER: BossId[] = ['golem', 'wraith', 'scribe', 'trickster']
-export const bossIdFor = (floor: number): BossId => BOSS_ORDER[(Math.max(1, floor) - 1) % BOSS_ORDER.length]
+export const FINAL_BOSS: BossId = 'warden'
+export const bossIdFor = (floor: number): BossId => (floor >= EXPEDITION_FLOORS ? FINAL_BOSS : BOSS_ORDER[(Math.max(1, floor) - 1) % BOSS_ORDER.length])
+/** The final boss is beaten: the expedition is won (the run ends after the floor summary). */
+export const isExpeditionWon = (run: Pick<Run, 'floor' | 'kill' | 'phase'>) => run.phase === 'victory' && run.floor >= EXPEDITION_FLOORS && isFinalFight(run.kill)
 /** Echo Wraith: below this share of its HP it starts echoing the question kind you missed. */
 export const WRAITH_ECHO_AT = 0.6
 export const equippedGear = (all: GearItem[], loadout: Partial<Record<GearSlot, string>>) =>
   all.filter(g => loadout[g.slot] === g.name)
-const gearSum = (gear: GearItem[], key: 'attack' | 'maxHearts' | 'secondChance' | 'hints' | 'xpPct' | 'masteryPct' | 'goldFlat') => gear.reduce((n, g) => n + g[key], 0)
+const gearSum = (gear: GearItem[], key: 'attack' | 'maxHearts' | 'hints' | 'xpPct' | 'masteryPct' | 'goldFlat') => gear.reduce((n, g) => n + g[key], 0)
 
 export type EnemyStats = { enemy: Enemy; hp: number; xp: number; gold: number; boss: BossId | null }
 /** Per floor (compounding): enemy HP x TUNING.enemyHpGrowth, rewards +8 %; the last enemy of a floor is a boss. */
@@ -64,7 +83,7 @@ export function enemyStats(enemies: Enemy[], floor: number, kill: number): Enemy
   const f = floor - 1
   return {
     enemy, boss,
-    hp: Math.round(enemy.hp * TUNING.enemyHpGrowth ** f * (boss ? bossHpMult(floor) : 1)),
+    hp: Math.round(enemy.hp * TUNING.enemyHpScale * TUNING.enemyHpGrowth ** f * (boss ? bossHpMult(floor) : 1)),
     xp: Math.round(enemy.xp * 1.08 ** f * (boss ? BOSS_REWARD : 1)),
     gold: Math.round(enemy.gold * 1.08 ** f * (boss ? BOSS_REWARD : 1))
   }
@@ -76,8 +95,8 @@ export function playerStats(run: Pick<Run, 'level' | 'loadout'>, b: Bonuses, all
   return {
     maxHearts: Math.min(MAX_HEARTS, START_HEARTS + b.maxHearts + gearSum(gear, 'maxHearts')),
     attack: BASE_ATTACK + b.attack + ATTACK_PER_LEVEL * (run.level - 1) + gearSum(gear, 'attack'),
-    /** Second-chance charges a floor starts with. */
-    secondChances: b.secondChance + gearSum(gear, 'secondChance'),
+    /** Second-chance charges an expedition starts with (capped). */
+    secondChances: Math.min(SECOND_CHANCE_CAP, b.secondChance),
     /** Hints a fight starts with. */
     hints: b.hints + gearSum(gear, 'hints'),
     potionHearts: POTION_HEARTS + b.potionHearts,
@@ -101,13 +120,14 @@ const clampToGear = (run: Run, b: Bonuses, allGear: GearItem[]): Run => {
 
 const noReward = { xp: 0, gold: 0, loot: '', levelUps: 0, hearts: 0 }
 
-/** Start the fight at (floor, kill). `newFloor` refills the per-floor second-chance charges: only on entering a floor (incl. floor 1). */
-export function startFight(run: Run, b: Bonuses, enemies: Enemy[], allGear: GearItem[], newFloor = false): Run {
+/** Start the fight at (floor, kill). Hints refill per fight; second-chance charges never refill during an expedition. */
+export function startFight(run: Run, b: Bonuses, enemies: Enemy[], allGear: GearItem[]): Run {
   const s = playerStats(run, b, allGear)
+  const boss = isBoss(run.floor, run.kill) ? bossIdFor(run.floor) : null
   return {
-    ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: s.hints, secondLeft: newFloor ? s.secondChances : Math.min(run.secondLeft, s.secondChances),
+    ...run, phase: 'fighting', enemyHp: enemyStats(enemies, run.floor, run.kill).hp, hintsLeft: s.hints, secondLeft: Math.min(run.secondLeft, s.secondChances),
     reward: noReward, pendingXp: 0,
-    shield: isBoss(run.floor, run.kill) && hasShield(bossIdFor(run.floor)) ? shieldFor(run.floor) : 0
+    shield: boss && hasShield(boss) ? shieldFor(run.floor, boss) : 0
   }
 }
 
@@ -119,13 +139,15 @@ export function newRun(b: Bonuses, allGear: GearItem[], enemies: Enemy[]): Run {
     gear: start.map(g => g.name), loadout: Object.fromEntries(start.map(g => [g.slot, g.name])) as Partial<Record<GearSlot, string>>, streak: 0, hintsLeft: 0, secondLeft: 0,
     recoveredFloor: 0, phase: 'fighting', reward: noReward, pendingXp: 0, shield: 0
   }
-  return startFight({ ...base, hearts: playerStats(base, b, allGear).maxHearts }, b, enemies, allGear, true)
+  const s = playerStats(base, b, allGear)
+  return startFight({ ...base, hearts: s.maxHearts, secondLeft: s.secondChances }, b, enemies, allGear)
 }
 
-/** After a victory: move to the next enemy, or the next floor after the boss. Never restores hearts (the floor recovery happens on the boss kill). */
-export function advance(run: Run, b: Bonuses, enemies: Enemy[], allGear: GearItem[]): Run {
+/** After a victory: move to the next enemy, or the next floor after the boss. Never restores hearts. A won expedition does not advance (null). */
+export function advance(run: Run, b: Bonuses, enemies: Enemy[], allGear: GearItem[]): Run | null {
+  if (isExpeditionWon(run)) return null
   const done = run.kill + 1 >= ENEMIES_PER_FLOOR
-  return startFight({ ...run, floor: done ? run.floor + 1 : run.floor, kill: done ? 0 : run.kill + 1 }, b, enemies, allGear, done)
+  return startFight({ ...run, floor: done ? run.floor + 1 : run.floor, kill: done ? 0 : run.kill + 1 }, b, enemies, allGear)
 }
 
 export type AnswerInput = {
@@ -149,7 +171,7 @@ export type AnswerResult = {
   practiceSaved: boolean
   /** A wrong answer whose heart was saved by a second-chance charge. */
   savedBySecondChance: boolean
-  /** Hearts restored by clearing the floor (beating its boss); 0 otherwise or when already full. */
+  /** Hearts restored by clearing the floor (Second Wind only); 0 otherwise, when already full, or on the final floor. */
   heartsRestored: number
   outcome: 'continue' | 'victory' | 'defeat'; loot: GearItem | null; comboHit: boolean
   /** Shield / seals: a segment was broken by this answer / the shield was up and blocked the hit. */
@@ -221,9 +243,10 @@ export function resolveAnswer(i: AnswerInput): AnswerResult {
   next = clampToGear(next, b, i.allGear)
   hearts = next.hearts
 
-  // Clearing the floor (the boss kill) restores hearts exactly once per floor, before the floor summary.
+  // Clearing a floor (the boss kill) restores hearts only with Second Wind, exactly once per floor, before the floor summary.
+  // The final floor ends the expedition, so nothing is restored there.
   let heartsRestored = 0, recoveredFloor = run.recoveredFloor
-  if (killed && isFinalFight(run.kill) && run.recoveredFloor < run.floor && hearts > 0 && run.floor % TUNING.recoveryEvery === 0) {
+  if (killed && isFinalFight(run.kill) && run.recoveredFloor < run.floor && hearts > 0 && run.floor < EXPEDITION_FLOORS && stats.floorHearts > 0) {
     const after = Math.min(playerStats(next, b, i.allGear).maxHearts, hearts + stats.floorHearts)
     heartsRestored = after - hearts; hearts = after; recoveredFloor = run.floor
   }
@@ -247,21 +270,23 @@ export function drinkPotion(run: Run, b: Bonuses, allGear: GearItem[]): Run | nu
   return { ...run, potions: run.potions - 1, hearts: Math.min(s.maxHearts, run.hearts + s.potionHearts) }
 }
 
+export type RunResult = 'won' | 'defeat' | 'returned'
 /**
- * End a run and bank every gold coin earned in it; level, gear and potions are lost with the run.
- * `returned`: the player chose "Return to camp" (not a defeat). Learning progress is never touched here.
+ * End an expedition and bank every gold coin earned in it; level, gear and potions are lost with the run.
+ * `won`: the final boss was beaten; `returned`: "Return to camp" (not a defeat). Learning progress is never touched here.
  */
-export function bankRun(meta: Meta, run: Run, returned = false): { meta: Meta; summary: RunSummary } {
+export function bankRun(meta: Meta, run: Run, result: RunResult): { meta: Meta; summary: RunSummary } {
   return {
-    meta: { ...meta, gold: meta.gold + run.gold, bestFloor: Math.max(meta.bestFloor, run.floor), runs: meta.runs + 1 },
-    summary: { floor: run.floor, kills: run.kills, level: run.level, goldBanked: run.gold, returned }
+    meta: { ...meta, gold: meta.gold + run.gold, bestFloor: Math.max(meta.bestFloor, run.floor), runs: meta.runs + 1, wins: meta.wins + (result === 'won' ? 1 : 0) },
+    summary: { floor: run.floor, kills: run.kills, level: run.level, goldBanked: run.gold, result }
   }
 }
 
-/** 1 or 2: which phase of the boss fight this is (for the header and for choosing questions). */
-export function bossPhase(run: Pick<Run, 'floor' | 'kill' | 'shield' | 'enemyHp'>, foeHp: number): 1 | 2 {
+/** Which phase of the boss fight this is (for the header and for choosing questions). The Warden has 3: wards, seals, echo. */
+export function bossPhase(run: Pick<Run, 'floor' | 'kill' | 'shield' | 'enemyHp'>, foeHp: number): 1 | 2 | 3 {
   if (!isBoss(run.floor, run.kill)) return 1
   const id = bossIdFor(run.floor)
+  if (id === 'warden') return run.shield > WARDEN_SEALS ? 1 : run.shield > 0 ? 2 : 3
   if (hasShield(id)) return run.shield > 0 ? 1 : 2
   if (id === 'trickster') return 1
   return run.enemyHp <= foeHp * WRAITH_ECHO_AT ? 2 : 1

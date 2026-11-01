@@ -36,5 +36,5 @@ test('no upgrade answers questions for the player (every effect is power or conv
 
 test('upgrade descriptions match the hearts rules (no HP, armor, healing or per-fight second chances)', () => {
   for (const u of UPGRADES) assert.ok(!/max HP|\d+ HP|armor|heal|per fight, a wrong|countered/i.test(u.desc), `${u.id}: ${u.desc}`)   // 'enemies under 35% HP' is enemy HP and fine
-  assert.match(UPGRADES.find(u => u.id === 'S3')!.desc, /per floor/)
+  assert.match(UPGRADES.find(u => u.id === 'S3')!.desc, /per expedition/)
 })
