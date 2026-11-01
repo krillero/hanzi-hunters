@@ -75,16 +75,24 @@ export function shuffle<T>(items: T[], rng: () => number = Math.random) {
 
 // ---- meaning overlap -------------------------------------------------------------------------
 const STOP = new Set(['to', 'a', 'an', 'the', 'be', 'of', 'is', 'are'])
-const glosses = (meaning: string) => meaning.split('/').map(t => t.trim()).filter(Boolean)
-const contentWords = (gloss: string) => gloss.toLowerCase().replace(/[^a-z\s']/g, ' ').split(/\s+/).filter(w => w && !STOP.has(w))
+// These are pure and called for every candidate option of every question, so results are cached (by string / entry pair).
+const memo = <T>(f: (k: string) => T) => { const c = new Map<string, T>(); return (k: string) => { let v = c.get(k); if (v === undefined) { v = f(k); c.set(k, v) } return v } }
+const glosses = memo((meaning: string) => meaning.split('/').map(t => t.trim()).filter(Boolean))
+const contentWords = memo((gloss: string) => gloss.toLowerCase().replace(/[^a-z\s']/g, ' ').split(/\s+/).filter(w => w && !STOP.has(w)))
 /** Two entries overlap in meaning when they share a gloss, or (for ordinary words) a content word: "sun / day" vs "sky / day",
  *  "look / watch" vs "look after". Particles are described by function, so for them only an identical description counts. */
-const overlaps = (a: Word, b: Word) => glosses(a.meaning).some(ga => glosses(b.meaning).some(gb => {
+const overlapsUncached = (a: Word, b: Word) => glosses(a.meaning).some(ga => glosses(b.meaning).some(gb => {
   if (ga.toLowerCase() === gb.toLowerCase()) return true
   if (a.kind === 'particle' || b.kind === 'particle') return false
   const A = contentWords(ga), B = contentWords(gb)
   return A.some(w => B.includes(w))
 }))
+const overlapCache = new WeakMap<Word, Map<Word, boolean>>()
+const overlaps = (a: Word, b: Word) => {
+  let m = overlapCache.get(a); if (!m) { m = new Map(); overlapCache.set(a, m) }
+  let v = m.get(b); if (v === undefined) { v = overlapsUncached(a, b); m.set(b, v) }
+  return v
+}
 export const meaningsOverlap = overlaps
 /** Too close to be a fair wrong answer: overlapping meaning, declared confusable, or the same hanzi (another reading of the written form). */
 const tooClose = (a: Word, b: Word) => a.id === b.id || a.hanzi === b.hanzi || overlaps(a, b) || !!a.confusable?.includes(b.id) || !!b.confusable?.includes(a.id)

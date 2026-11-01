@@ -1,5 +1,11 @@
 # Changelog / test log
 
+## 2026-11-01 — Faster tests and a cheaper agent workflow (branch ccr-2aecd5ae-3v8bz2)
+
+- `npm run test:brief` (`tools/brief-reporter.mjs`): prints only failures (test, message, expected/actual, file:line) and a one-line summary.
+- Full test suite ~60 s -> ~20 s: pure question helpers are cached (`glosses`, `contentWords`, meaning overlap per entry pair in `questions.ts`; `soundKey` in `pinyin.ts`; `soundsOf` per entry in `entries.ts`). No behaviour change; `questions.test.ts` 43 s -> 19 s with every check kept.
+- AGENTS.md: test with `test:brief`, independent edits (never resend a whole script for one miss), update tests together with rule changes, read narrowly, keep tool output small.
+
 ## 2026-11-01 — Five-floor expeditions, save restarted at v1 (branch ccr-2aecd5ae-3v8bz2)
 
 - **Expeditions:** a run is 5 floors; floor 5 ends with the new final boss, the **Cavern Warden** (2 tone wards, 2 ink seals, then an echo phase; Golem sprite with a gold glow; drops the Warden Sigil). Beating it wins; the floor summary becomes "Expedition won!" and camp shows "You beat the Cavern Warden!". `meta.wins` counts wins (shown in Settings).

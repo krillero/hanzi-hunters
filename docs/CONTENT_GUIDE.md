@@ -19,6 +19,7 @@ No code changes are needed to add content. Read this whole file before editing.
 npm run validate:content   # checks all content files incl. curricula.json; prints errors/warnings/info and how much is still unreviewed
 npm run curriculum         # readable teaching order of the active curriculum
 npm test                   # also validates, plus game-logic tests (must stay green)
+npm run test:brief         # the same tests, printing only failures (test, message, file:line) and a summary
 npm run dev                # preview (see "Previewing" below)
 ```
 
