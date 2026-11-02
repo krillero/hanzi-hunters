@@ -1720,3 +1720,4 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 /* Toasts sit above dialogs (e.g. a warning raised while a new-word card is open). */
 .toast.toast-global{position:fixed;left:12px;right:12px;top:calc(max(6px,env(safe-area-inset-top)) + 56px);z-index:1100;margin:0 auto;max-width:600px;box-shadow:0 8px 30px #000a;pointer-events:none}
 .toast.toast-global button{pointer-events:auto;min-width:44px;min-height:44px}
+.stage-badge .stage-count{font-weight:400;opacity:.85;margin:0 2px}

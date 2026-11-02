@@ -29,6 +29,7 @@ import { fillBlank, lenClass } from './entryUi'
 import { LEVEL_NAMES, MAX_LV, SESSION_LV, isDue, masteredCount, seenCount } from './game/mastery'
 import { answerRevealed, applyAnswer, applyIntroduce, applyReveal, learningNote } from './game/learning'
 import { entryAtLevel } from './game/schedule'
+import { entryStatus } from './game/status'
 import { DEFAULT_LIMITS, DUE_PER_FIGHT, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, tryBuildQuestion, isCharacterQuestion, isToneQuestion, pickSealCard, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
@@ -697,14 +698,14 @@ export default function App() {
   const longTerm = [3, 4, 5].map(lv => `${Object.values(save.mastery).filter(e => e.lv === lv).length} ${LEVEL_NAMES[lv]}`).join(' · ')
   const wordbook = showWords ? <div className="drawer wordbook-drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><p className="wordbook-summary">{longTerm}</p><div className="wordbook-grid">
     {WORDS.filter(w => save.mastery[w.id] && w.id !== hiddenWord)
-      .map(w => ({ w, e: save.mastery[w.id], due: isDue(save.mastery[w.id], wordbookNow) }))
-      .sort((a, b) => Number(b.due) - Number(a.due) || b.e.lv - a.e.lv)
-      .map(({ w, e, due }) => {
+      .map(w => ({ w, e: save.mastery[w.id], st: entryStatus(save.mastery[w.id], wordbookNow) }))
+      .sort((a, b) => Number(!!b.st.tag) - Number(!!a.st.tag) || b.e.lv - a.e.lv)
+      .map(({ w, e, st }) => {
         const lv = e.lv, rich = hasDetails(w)
-        return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => openExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. Open details`}>
+        return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => openExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. ${st.text}. Open details`}>
           <strong className={`wb-len${lenClass(w.hanzi)}`}>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small>
-          {w.kind === 'particle' && <u className="kind-tag">particle</u>}{due && <u className="kind-tag due-tag">review</u>}
-          <i className="pips" aria-label={`${LEVEL_NAMES[lv]}${due ? ', due for review' : ''}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>
+          {w.kind === 'particle' && <u className="kind-tag">particle</u>}{st.tag && <u className="kind-tag due-tag">{st.tag === 'maintenance' ? 'maintenance' : st.tag === 'practise' ? 'practise' : 'review'}</u>}{!st.tag && e.ok < 3 && <u className="kind-tag">{e.ok}/3</u>}
+          <i className="pips" aria-label={`${LEVEL_NAMES[lv]}. ${st.text}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>
           {rich && <em className="tip-badge" aria-hidden>💡</em>}
         </button>
       })}
@@ -953,7 +954,7 @@ export default function App() {
             {showCard && <>
               <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
                 <div className="card-strip">
-                <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : LEVEL_NAMES[pips].toUpperCase()}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
+                <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : LEVEL_NAMES[pips].toUpperCase()}{entry && entry.ok < 3 && <small className="stage-count"> {entry.ok}/3</small>}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
                   {hasDetails(word) && (question.cloze ? revealed || revealing : show.hanzi && show.pinyin && show.meaning) && <button className={`speak-btn tip-btn ${tipPulse === word.id ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); openExplain(word.id) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
                   {canSpeak && <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>}

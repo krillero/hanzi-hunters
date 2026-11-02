@@ -1,6 +1,6 @@
 # Vocabulary scheduling
 
-Status: **milestones (a), (b) and (c) are done.** `src/game/schedule.ts` is the scheduler; `src/game/learning.ts` connects it to answers, the new-word
+Status: **milestones (a) to (d) are done.** `src/game/schedule.ts` is the scheduler; `src/game/learning.ts` connects it to answers, the new-word
 card, details and the wordbook; the save is **v2** (`answerSeq`, entries carry scheduling data) and v1 saves and backups are migrated once on load.
 Still to do: (d) richer UI (due lists, time estimates beyond the answer line), (e) a more
 realistic simulator.
@@ -94,3 +94,10 @@ filter that removes everything returns null, and `App.tsx` already retries other
 so nothing waits for a gap. A just-failed entry cannot come back before 2 other answers, so it cannot occupy every question. Boss-required
 question kinds still override the kind of question, never the credit rules (credit depends on the answer, not on how the word was picked).
 New introductions still come from the curriculum system and the learning-pool limits are unchanged.
+
+## Player-facing wording (`game/status.ts`, `learningNote` in `game/learning.ts`)
+
+Camp: "N words ready for review (M maintenance)", "Maintenance due: N words", "N words to practice again", "Next word review in 2 days".
+Wordbook: a tag per word (review / maintenance / practise, or "1/3" while still learning) and a screen-reader line such as "Next check in 3 days".
+Question card: the level badge shows "LEARNING 1/3" during initial learning. After an answer: see the feedback lines in `learningNote`.
+All estimates come from stored timestamps; a late return only shows words as due, never as lost.

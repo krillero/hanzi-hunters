@@ -3,8 +3,8 @@ import { BRANCHES, branchNodes, nodeState, upgradeCost, type UpgradeNode } from 
 import type { CourseStatus } from './game/course'
 import type { Saved } from './game/types'
 import { DEPTHS, MAX_DEPTH, sigilText, unlockedDepth, victoryBonus } from './game/rules'
-import { dueCount, nextReviewTime } from './game/mastery'
-import { formatWait } from './game/schedule'
+import { dueCount } from './game/mastery'
+import { reviewLine } from './game/status'
 import { shortTermProgress } from './game/progress'
 
 type Props = {
@@ -38,8 +38,7 @@ export default function CampScreen({ save, course, onReview, onBuy, onStart, mes
   const now = Date.now(), due = dueCount(mastery, now)
   const startOfDay = new Date(new Date(now).setHours(0, 0, 0, 0)).getTime()
   const progress = shortTermProgress(mastery, course, startOfDay)
-  const nextAt = nextReviewTime(mastery, now)
-  const review = due > 0 ? `${due} word${due === 1 ? '' : 's'} ready for review` : nextAt !== null ? `Next word review ${formatWait(nextAt - now)}` : null
+  const review = reviewLine(mastery, now)
 
   return (
     <section className="camp" aria-label="Base camp">
