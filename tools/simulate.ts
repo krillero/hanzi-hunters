@@ -6,7 +6,9 @@ import { noteRecent } from '../src/game/recent.ts'
 import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { MAX_LV, isDue } from '../src/game/mastery.ts'
-import { introduce as introduceEntry, recordAnswer } from '../src/game/schedule.ts'
+import { introduce as introduceEntry, recordAnswer, type Outcome } from '../src/game/schedule.ts'
+import { answerRevealed, dimensionOf } from '../src/game/learning.ts'
+import { tryBuildQuestion, type KindResult } from '../src/game/questions.ts'
 import { SCENES, eligible, validGeneratedScenes } from '../src/game/encounters.ts'
 import { DUE_PER_FIGHT, emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
@@ -38,10 +40,19 @@ export type SimOptions = {
   runsPerDay?: number
   /** Model the events after floor bosses (a Blessing for the next floor). Default true. */
   events?: boolean
+  /** Collects how fast words learn (see PaceStats). */
+  pace?: PaceStats
+  /** Chance that the bot uses a hint (an assisted answer, no credit). Default SIM_HINT_RATE. */
+  hintRate?: number
   /** Start with every upgrade bought (an "upgraded" player) instead of buying greedily after each run. */
   maxed?: boolean
 }
 
+/** Learning pace, collected by simulate(): time and answers from the introduction card to Familiar, and what answers did. */
+export type PaceStats = { toFamiliar: { minutes: number; answers: number }[]; outcomes: Partial<Record<Outcome, number>>; answers: number; introduced: number }
+export const newPace = (): PaceStats => ({ toFamiliar: [], outcomes: {}, answers: 0, introduced: 0 })
+/** Model assumption: how often the bot taps a hint (that answer is assisted and earns no memory credit). */
+export const SIM_HINT_RATE = 0.08
 /** Model assumption: a player plays about two expeditions a day (each about 6-8 minutes). */
 export const SIM_RUNS_PER_DAY = 2
 /** The simulated calendar: expedition n (1-based) is played on this local date. */
@@ -55,6 +66,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   const perDay = opts.runsPerDay ?? SIM_RUNS_PER_DAY
   const runStart = (n: number) => Date.UTC(2026, 0, 1) + Math.floor((n - 1) / perDay) * 86_400_000 + ((n - 1) % perDay) * SIM_HOURS_BETWEEN_RUNS * 3_600_000
   let now = runStart(1), seq = 0
+  const pace = opts.pace, intro = new Map<string, { t: number; a: number }>(), history: KindResult[] = []
   let s = seed
   const rng = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296)
   let meta: Meta = { gold: 0, upgrades: opts.maxed ? UPGRADES.map(u => u.id) : [], bestFloor: 1, runs: 0, wins: 0, depthCleared: 0 }
@@ -67,7 +79,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   // Like the game: introduction cards (curriculum order) at the start of each fight, then questions about known entries only.
   // The intro question shows the meaning, so it is always answered right; the next question about the word is its protected practice.
   const introduce = () => {
-    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) { mastery = { ...mastery, [id]: introduceEntry(now, seq) }; now += SIM_ANSWER_MS }   // reading a card: no credit
+    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) { mastery = { ...mastery, [id]: introduceEntry(now, seq) }; intro.set(id, { t: now, a: pace?.answers ?? 0 }); if (pace) pace.introduced++; now += SIM_ANSWER_MS }   // reading a card: no credit
   }
   let dueThisFight = 0   // like the game: at most DUE_PER_FIGHT due words per fight
   const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, now, seq: seq + 1, dueCapped: dueThisFight >= DUE_PER_FIGHT })!
@@ -103,7 +115,11 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       // Model assumption: a recall-heavy mix (deeper depths) is a little harder, up to -6 points at full challenge.
       const recall = entry && !(entry.lv === 0 && entry.ok === 0) ? 0.06 * challengeFor(run.depth, run.floor) : 0
       const p = accuracy >= 1 ? 1 : Math.min(0.98, accuracy + 0.04 * (entry?.lv ?? 0) - harder - recall)
-      const ok = rng() < p
+      // A hint removes one wrong option, so it makes a right answer more likely (about a third of the remaining doubt), but the answer is assisted.
+      const hinted = rng() < (opts.hintRate ?? SIM_HINT_RATE)
+      const ok = rng() < (hinted ? p + (1 - p) / 3 : p)
+      // The question the game would ask this word (real kinds, so a kind that cannot promote is not credited), and whether the bot used a hint.
+      const q = tryBuildQuestion(word, entry, WORDS, { canListen: true, rng, known: new Set(Object.keys(mastery)), history, challenge: challengeFor(run.depth, run.floor) })
       const r = resolveAnswer({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, lv: entry?.lv ?? 0, isCorrect: ok, practice, sealQuestion: sealed, roll: { drop: rng(), item: rng() } })
       practiced.add(word.id); answers++; fightAnswers++; longestFight = Math.max(longestFight, fightAnswers)
       stat.heartsLost += r.heartsLost; stat.practiceSaves += r.practiceSaved ? 1 : 0; stat.secondChanceSaves += r.savedBySecondChance ? 1 : 0; stat.calmSaves += r.savedByCalm ? 1 : 0; stat.heartsRestored += r.heartsRestored
@@ -123,7 +139,14 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
         }
       }
       seq++; now += SIM_ANSWER_MS
-      mastery = { ...mastery, [word.id]: recordAnswer(mastery[word.id] ?? introduceEntry(now, seq - 1), { correct: ok, assisted: false, dim: 'meaning', now, seq }).entry }
+      const kind = q?.kind ?? 'meaning'; history.push({ kind, ok }); if (history.length > 16) history.shift()
+      const res = recordAnswer(mastery[word.id] ?? introduceEntry(now, seq - 1), { correct: ok, assisted: hinted || (q ? answerRevealed(q) : false), dim: dimensionOf(kind), now, seq })
+      mastery = { ...mastery, [word.id]: res.entry }
+      if (pace) {
+        pace.answers++; pace.outcomes[res.outcome] = (pace.outcomes[res.outcome] ?? 0) + 1
+        const i0 = intro.get(word.id)
+        if (res.outcome === 'familiar' && i0) { pace.toFamiliar.push({ minutes: (now - i0.t) / 60_000, answers: pace.answers - i0.a }); intro.delete(word.id) }
+      }
       peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
     }
     const end: RunLog['end'] = isExpeditionWon(run) ? 'won' : run.phase === 'defeat' ? 'defeat' : 'returned'
@@ -158,6 +181,13 @@ export function report(accuracies = [0.6, 0.75, 0.85, 0.9, 1], seeds = [1, 2, 3,
     const cleared = Array.from({ length: MAX_DEPTH }, (_, d) => f(med(logs.map(l => clearedAt(l, d + 1))), 0)).join(' ')
     const maxed = seeds.map(sd => simulate(acc, 10, sd + 100, { maxed: true }))
     rows.push(`  ${acc.toFixed(2)} | ${cleared}             | ${f(winRate(all) * 100, 0)} | ${f(avg(all.map(l => l.answers)), 0)} ${f(Math.max(...all.map(l => l.answers)), 0)} | ${f(Math.max(...all.map(l => l.longestFight)), 0)}        | ${f(med(maxed.map(l => l[l.length - 1].depthCleared)), 0)}`)
+  }
+  rows.push('')
+  rows.push('learning pace (introduction card to Familiar; spaced scheduling, 12 s per answer, 8% hints): median minutes / median answers (all answers) | words reaching Familiar % | answers that moved a word on %')
+  for (const acc of accuracies) {
+    const pace = newPace(); for (const sd of seeds) simulate(acc, 20, sd, { pace })
+    const moved = (pace.outcomes.spaced ?? 0) + (pace.outcomes.familiar ?? 0) + (pace.outcomes.advanced ?? 0) + (pace.outcomes.relearned ?? 0) + (pace.outcomes.rechecked ?? 0) + (pace.outcomes.maintained ?? 0)
+    rows.push(`  ${acc.toFixed(2)} | ${f(med(pace.toFamiliar.map(x => x.minutes)), 0)} min ${f(med(pace.toFamiliar.map(x => x.answers)), 0)} answers | ${f(pace.toFamiliar.length / Math.max(1, pace.introduced) * 100, 0)}% | ${f(moved / Math.max(1, pace.answers) * 100, 0)}%`)
   }
   return rows.join('\n')
 }

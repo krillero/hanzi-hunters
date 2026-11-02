@@ -1,9 +1,8 @@
 # Vocabulary scheduling
 
-Status: **milestones (a) to (d) are done.** `src/game/schedule.ts` is the scheduler; `src/game/learning.ts` connects it to answers, the new-word
+Status: **milestones (a) to (e) are done.** `src/game/schedule.ts` is the scheduler; `src/game/learning.ts` connects it to answers, the new-word
 card, details and the wordbook; the save is **v2** (`answerSeq`, entries carry scheduling data) and v1 saves and backups are migrated once on load.
-Still to do: (d) richer UI (due lists, time estimates beyond the answer line), (e) a more
-realistic simulator.
+Nothing outstanding in the plan; see the limitations below.
 
 ## Evidence and product defaults
 
@@ -101,3 +100,14 @@ Camp: "N words ready for review (M maintenance)", "Maintenance due: N words", "N
 Wordbook: a tag per word (review / maintenance / practise, or "1/3" while still learning) and a screen-reader line such as "Next check in 3 days".
 Question card: the level badge shows "LEARNING 1/3" during initial learning. After an answer: see the feedback lines in `learningNote`.
 All estimates come from stored timestamps; a late return only shows words as due, never as lost.
+
+## Simulator and measured pace (`tools/simulate.ts`, `node tools/simulate.ts --report`)
+
+The simulator advances a clock (12 s per answer, 8 h between expeditions on one day) and the answer number, asks each word the question kind the game
+would choose (so only promoting dimensions earn credit), and uses a hint on 8% of answers (assisted, no credit, but a right answer is more likely).
+Final report (5 seeds x 20 expeditions): median time from the new-word card to Familiar is about **1 day** (1434-1446 min at 75-100% accuracy, because
+words introduced late in a session finish in the next one), about 80-127 answers counted across all words (about 2 expeditions); 88-95% of words
+introduced reach Familiar within 20 expeditions at 75%+ accuracy (68% at 60%); 38-48% of answers move a word on. Expeditions to clear depth 1-5 are
+unchanged from main at 75%+ accuracy (e.g. 85%: 2/3/4/6/7 against 1/3/4/5/6). The first expedition at 90% accuracy is won in about 83-85% of seeds against
+88% on main (60 seeds), because early mastery damage bonuses now need spaced successes; `tests/balance.test.ts` now uses 20 seeds and a threshold of 16.
+These are model results (a bot with fixed accuracy), not evidence about real learners.

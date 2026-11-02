@@ -12,7 +12,9 @@ test('perfect play always wins, from the very first expedition', () => {
 })
 
 test('win targets: 90% wins the first expedition, 75% within a handful, 60% rarely early but eventually', () => {
-  assert.ok(seeds.filter(sd => simulate(0.9, 1, sd)[0].end === 'won').length >= 4, '90%: the first expedition is (almost) always won without upgrades')
+  // 20 seeds instead of 5: one expedition per seed is noisy, and the simulator now spends random numbers on question kinds and hints.
+  const firstWins = Array.from({ length: 20 }, (_, i) => i + 1).filter(sd => simulate(0.9, 1, sd)[0].end === 'won').length
+  assert.ok(firstWins >= 16, `90%: the first expedition is (almost) always won without upgrades (${firstWins}/20)`)
   const mid = median(seeds.map(sd => firstWin(simulate(0.75, 15, sd))))
   assert.ok(mid >= 2 && mid <= 10, `75%: first win after ${mid} expeditions (target about 4-8)`)
   const weak = seeds.map(sd => simulate(0.6, 30, sd))
