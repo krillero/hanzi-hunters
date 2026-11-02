@@ -1,8 +1,9 @@
 # Vocabulary scheduling
 
-Status: **milestone (a) of the spaced-retrieval work**. `src/game/schedule.ts` (pure, tested in `tests/schedule.test.ts`) is complete.
-It is **not wired into the game yet**: `mastery.ts` and the save format (`SAVE_VERSION` 1) still drive play. The save bump to version 2,
-the evidence API in `App.tsx`, selection priority, UI and the simulator follow in later milestones. Until then nothing below changes behavior.
+Status: **milestones (a) and (b) are done.** `src/game/schedule.ts` is the scheduler; `src/game/learning.ts` connects it to answers, the new-word
+card, details and the wordbook; the save is **v2** (`answerSeq`, entries carry scheduling data) and v1 saves and backups are migrated once on load.
+Still to do: (c) selection priority (relearning, due, initial, other), (d) richer UI (due lists, time estimates beyond the answer line), (e) a more
+realistic simulator. Until (c), question selection still uses the old weights (due words are favoured through `isDue`).
 
 ## Evidence and product defaults
 
@@ -35,6 +36,14 @@ retention milestone, not proof of speaking, listening, writing or permanent know
   is stored per dimension for every answer. Only `PROMOTING_DIMENSIONS` (currently `meaning`) can move the scheduler, including lapses.
   Requiring more dimensions per stage later only needs this constant and one predicate, not a data change.
 - A mode that cannot tell whether the answer was revealed must pass `assisted: true` (conservative).
+- **Promoting dimensions today: `meaning` and `reverse`** (meaning to hanzi, pinyin to hanzi, homophone, look-alike). A meaning-only gate would stall
+  every word at Learning, because the question mix at level 1 has no meaning question (`KIND_WEIGHTS` in questions.ts). Reading (pinyin, with
+  tone-right / tone-wrong evidence), listening and sentence (particle) answers are recorded only. Particles are asked mostly as sentences, so they
+  advance more slowly (through their meaning questions). Revisit when the question mix is reviewed.
+- **Assisted** = a hint removed options, or the question card showed the answer it asks for (`answerRevealed`), or the word had no introduction.
+  Showing pinyin on a meaning question is not assistance. Reveals: new-word card, answer feedback, opening details, opening the wordbook.
+- Boss-trial answers bump the global answer number (they count as answered questions for spacing) but are not tied to a word, so they record no evidence and promote nothing.
+  Events and scenes never promote.
 
 ## State transitions (promoting dimension)
 
@@ -55,9 +64,9 @@ retention milestone, not proof of speaking, listening, writing or permanent know
 
 Late players are never penalised: overdue words stay at their level and are simply due.
 
-## Migration (applied when the save is bumped to v2, a later milestone)
+## Migration (v1 to v2, applied in `sanitizeSave`)
 
-`fromLegacyEntry` converts each v1 entry `{lv, ok, at?}` once; the new shape is then validated by `sanitizeSched` on every load (no re-migration).
+`fromLegacyEntry` converts each v1 entry (also the parked `legacyMastery`) `{lv, ok, at?}` once; the new shape is then validated by `sanitizeSched` on every load (no re-migration).
 
 - Every level is kept. lv 0: 0 successes; lv 1: 1 of 3; lv 2+: initial learning complete. No credit for past answers; gap anchors and the answer counter start at migration time.
 - lv 2+ with a valid date: due = **local noon** of that date + the interval of the level (24 h / 72 h / 168 h / 14 d for 2/3/4/5), clamped to at most one interval from now. Overdue dates are preserved.
@@ -69,3 +78,9 @@ Late players are never penalised: overdue words stay at their level and are simp
 
 Recognition (multiple choice) is not production or speaking; only meaning questions promote for now; the timings are untested defaults.
 Future validation should compare delayed recall after 7 and 30 days and retention per minute of practice, not session accuracy or playtime. No analytics are sent.
+
+## Callers
+
+The old calendar-day API (`updateMastery`, `waitDays`, `daysUntilDue`, `RETENTION_DAYS`, `PROMOTE_AFTER`, `daysBetween`, string-date `isDue`) is gone.
+`App.tsx`, `CampScreen.tsx`, `course.ts` (`ReviewOptions.now`), `progress.ts`, `save.ts`, `backup.ts` and `tools/simulate.ts` use `schedule.ts` / `learning.ts`.
+The simulator advances a clock (12 s per answer, 8 h between expeditions on one day) and the answer number, and answers as an unassisted meaning question.

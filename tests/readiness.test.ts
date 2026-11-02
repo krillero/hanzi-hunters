@@ -6,7 +6,8 @@ import { WORDS } from '../src/data.ts'
 import { normalizeWords } from '../src/content/entries.ts'
 import type { ClozeItem, Curriculum, RawWord } from '../src/content/types.ts'
 import { emptyCourse, entrySatisfied, lessonSatisfied, recordPeaks, selectIntroductions, sentencePrereqsMet, syncCourse, wordMap, type CourseState, type PeakLevels } from '../src/game/course.ts'
-import { updateMastery } from '../src/game/mastery.ts'
+import { learn as learnEntry, levels } from './clock.ts'
+import { entryAtLevel } from '../src/game/schedule.ts'
 import { sanitizeSave, withLearning } from '../src/game/save.ts'
 import { parseBackup, serializeBackup } from '../src/game/backup.ts'
 import type { Mastery, Saved } from '../src/game/types.ts'
@@ -14,7 +15,7 @@ import { MAX_LV } from '../src/game/mastery.ts'
 
 const BY_ID = wordMap(WORDS)
 const ALL = { maxLearning: 99, minKnown: 0, perFight: 99, startingPool: 99 }
-const lv = (n: number, ok = 0) => ({ lv: n, ok })
+const lv = (n: number, _ok = 0) => entryAtLevel(n)
 type Intro = string | { entryId: string; prerequisiteEntries?: string[] }
 const curr = (id: string, version: number, lessons: [string, Intro[], string[]?][], minLevel = 1): Curriculum => ({
   id, version, title: id, readiness: { minLevel },
@@ -26,7 +27,7 @@ const V2 = curr('course', 2, [['a', ['我', '你']], ['b', ['他', { entryId: '�
 const SENTENCE = { prerequisiteEntries: ['你'] } as Pick<ClozeItem, 'prerequisiteEntries'>
 const stateOf = (s: Saved, c: Curriculum): CourseState => ({ curriculum: c, mastery: s.mastery, progress: s.courses[c.id] ?? emptyCourse(), words: BY_ID, peak: s.peak })
 /** A save after learning, as the app keeps it: every mastery change goes through withLearning. */
-const learn = (s: Saved, c: Curriculum, id: string, correct: boolean) => withLearning({ ...s, mastery: updateMastery(s.mastery, id, correct, '2026-11-01') }, c, BY_ID)
+const learn = (s: Saved, c: Curriculum, id: string, correct: boolean) => withLearning({ ...s, mastery: learnEntry(s.mastery, id, correct) }, c, BY_ID)
 const fresh = (): Saved => sanitizeSave(null, WORDS, [])
 
 /** Learner who completed lesson A of version 1 (我 at level 1), then the content updates to version 2. */
@@ -56,14 +57,13 @@ test('2-7: introducing alone is not enough; reaching the threshold satisfies; a 
   let plan = selectIntroductions(stateOf(s, V2), ALL)
   assert.deepEqual(plan.ids, [], '朋友 stays blocked'); assert.equal(plan.reason, 'prerequisites'); assert.match(plan.detail, /朋友.*waits for 你/)
   s = learn(s, V2, '你', true)
-  assert.equal(entrySatisfied(stateOf(s, V2), '你'), false, 'one right answer (practiced) is still below level 1')
-  s = learn(s, V2, '你', true)   // level 1 = the configured threshold
+  // the first spaced success is level 1 = the configured threshold (introduction alone never was)
   assert.equal(s.mastery.你.lv, 1); assert.equal(s.peak.你, 1)
   assert.equal(entrySatisfied(stateOf(s, V2), '你'), true)
   assert.equal(sentencePrereqsMet(SENTENCE, stateOf(s, V2)), true)
   assert.deepEqual(selectIntroductions(stateOf(s, V2), ALL).ids, ['朋友'])
-  s = learn(s, V2, '你', false)   // a mistake: back to level 0
-  assert.equal(s.mastery.你.lv, 0); assert.equal(s.peak.你, 1, 'the peak never goes down')
+  s = learn(s, V2, '你', false)   // a mistake in initial learning keeps the earned spaced success and starts relearning
+  assert.equal(s.mastery.你.lv, 1); assert.equal(s.mastery.你.rel, 'relearn'); assert.equal(s.peak.你, 1, 'the peak never goes down')
   assert.equal(entrySatisfied(stateOf(s, V2), '你'), true, 'earned readiness is not revoked')
   assert.equal(sentencePrereqsMet(SENTENCE, stateOf(s, V2)), true)
   assert.ok(s.courses.course.completed.includes('a'), 'lesson A completed throughout')
@@ -93,8 +93,8 @@ test('9: saves without peak history keep progress and grant no readiness to unse
     courses: { course: { version: 1, completed: ['a'] }, gone: { version: 2, completed: ['x'] } }
   }
   const s = sanitizeSave(v3, WORDS, [V2])
-  assert.equal(s.version, 1)
-  assert.deepEqual(s.mastery, v3.mastery); assert.deepEqual(s.legacyMastery, v3.legacyMastery)
+  assert.equal(s.version, 2)
+  assert.deepEqual(levels(s.mastery), { 我: 0, 他: 2, 大: 1 }); assert.deepEqual(levels(s.legacyMastery), { 龙: 3 })
   assert.deepEqual(s.meta, { ...v3.meta, wins: 0, depthCleared: 0 }); assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 9); assert.equal(s.habit.correct, 40)
   assert.deepEqual(s.courses.gone, { version: 2, completed: ['x'] }, 'recoverable progress for unknown curricula is kept')
   assert.ok(s.courses.course.completed.includes('a'), 'completed lessons are preserved: the course is not relocked')
@@ -138,8 +138,8 @@ test('11: entry aliases move readiness with progress; removed entries park it; b
   const raw = (over: Partial<RawWord> & { hanzi: string; pinyin: string; meaning: string }): RawWord => ({ group: 'g', note: 'n', ...over })
   const renamed = normalizeWords([raw({ id: 'ni-you', hanzi: '你', pinyin: 'nǐ', meaning: 'you', aliases: ['你'] }), raw({ hanzi: '我', pinyin: 'wǒ', meaning: 'I' })])
   const s = sanitizeSave({ version: 1, meta: {}, mastery: { 你: lv(0), 龙: lv(1) }, peak: { 你: 2, 龙: 3 } }, renamed, [])
-  assert.deepEqual(s.mastery, { 'ni-you': lv(0) }); assert.deepEqual(s.peak, { 'ni-you': 2 }, 'the peak follows the alias, like mastery')
-  assert.deepEqual(s.legacyMastery, { 龙: lv(1) }); assert.deepEqual(s.legacyPeak, { 龙: 3 }, 'removed entry: parked, not deleted')
+  assert.deepEqual(levels(s.mastery), { 'ni-you': 0 }); assert.deepEqual(s.peak, { 'ni-you': 2 }, 'the peak follows the alias, like mastery')
+  assert.deepEqual(levels(s.legacyMastery), { 龙: 1 }); assert.deepEqual(s.legacyPeak, { 龙: 3 }, 'removed entry: parked, not deleted')
   const back = normalizeWords([...renamed, raw({ hanzi: '龙', pinyin: 'lóng', meaning: 'dragon' })])
   const again = sanitizeSave(s, back, [])
   assert.equal(again.peak.龙, 3); assert.deepEqual(again.legacyPeak, {}, 'recovered when the entry returns')

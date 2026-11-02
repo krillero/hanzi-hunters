@@ -2,7 +2,7 @@
 // See docs/SCHEDULING.md for the research basis (and its limits), the state-transition table and the migration rules.
 //
 // One scheduler per entry. Levels 0-5 keep their meaning (see LEVEL_NAMES in mastery.ts). Evidence for every tested dimension is
-// recorded, but only PROMOTING_DIMENSIONS can move the scheduler (today: meaning questions).
+// recorded, but only PROMOTING_DIMENSIONS can move the scheduler (today: meaning and written-form questions, see game/learning.ts).
 
 const MIN = 60_000, HOUR = 3_600_000, DAY = 86_400_000
 
@@ -30,7 +30,7 @@ export const MAX_COUNT = 9999
 export const DIMENSIONS = ['meaning', 'reading', 'listening', 'reverse', 'sentence'] as const
 export type Dimension = typeof DIMENSIONS[number]
 /** Dimensions whose answers can change level, due dates or relearning. Everything else is recorded only. */
-export const PROMOTING_DIMENSIONS: readonly Dimension[] = ['meaning']
+export const PROMOTING_DIMENSIONS: readonly Dimension[] = ['meaning', 'reverse']
 
 // ---- Types -------------------------------------------------------------------------------------------------------------------
 /** Anchor of the current spacing requirement: when and at which global answer number it started, and how many answers of THIS entry followed. */
@@ -182,7 +182,7 @@ export function sanitizeSched(raw: unknown, now: number, maxSeq: number): SchedE
     due = typeof raw.due === 'number' && Number.isFinite(raw.due) ? Math.min(latest, Math.max(0, Math.floor(raw.due))) : now
   }
   return {
-    lv, ok, rel: recovery, due,
+    lv, ok, due, ...(recovery ? { rel: recovery } : {}),
     g: { at: past(g.at, now, now), seq: num(g.seq, 0, maxSeq, 0), own: num(g.own, 0, MAX_COUNT, 0) },
     lastSeq: num(raw.lastSeq, 0, maxSeq, 0), adv: past(raw.adv, now, now), reveal: past(raw.reveal, now, 0), dims: cleanDims(raw.dims, now)
   }
@@ -208,4 +208,10 @@ export function fromLegacyEntry(raw: unknown, now: number, seq = 0): SchedEntry 
   const e: SchedEntry = { lv, ok: lv >= 2 ? INITIAL_SUCCESS_TARGET : lv, g: reset(now, seq), lastSeq: 0, adv: noon === null ? now : Math.min(noon, now), due: null, reveal: 0, dims: {} }
   if (lv >= 2) e.due = noon === null ? now : Math.min(noon + intervalFor(lv), now + intervalFor(lv))
   return e
+}
+
+/** An entry at a given level without history, for fixtures, previews and tools: established words (level 2+) are due at `now`. */
+export const entryAtLevel = (lv: number, now = 0, seq = 0): SchedEntry => {
+  const l = num(lv, 0, MAX_LV, 0)
+  return { lv: l, ok: l >= 2 ? INITIAL_SUCCESS_TARGET : l, g: reset(now, seq), lastSeq: 0, adv: now, due: l >= 2 ? now : null, reveal: 0, dims: {} }
 }

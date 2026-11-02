@@ -15,10 +15,11 @@ export type ShortTermProgress = {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
-export function shortTermProgress(m: Mastery, course: CourseStatus, today: string): ShortTermProgress {
+/** `startOfDay`: ms timestamp of local midnight today (a word reached Familiar today when its last advancement is not before it). */
+export function shortTermProgress(m: Mastery, course: CourseStatus, startOfDay: number): ShortTermProgress {
   const entries = Object.values(m)
   const familiar = entries.filter(e => e.lv >= SESSION_LV).length
-  const familiarToday = entries.filter(e => e.lv >= SESSION_LV && e.at === today).length
+  const familiarToday = entries.filter(e => e.lv >= SESSION_LV && e.adv >= startOfDay && e.rel === undefined).length
   const almost = entries.filter(e => e.lv === SESSION_LV - 1).length
   let next: string
   if (course.lesson && course.required > course.ready) next = `${plural(course.required - course.ready, 'more word')} to practise to finish lesson ${course.lesson.number}`

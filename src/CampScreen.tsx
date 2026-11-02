@@ -3,9 +3,9 @@ import { BRANCHES, branchNodes, nodeState, upgradeCost, type UpgradeNode } from 
 import type { CourseStatus } from './game/course'
 import type { Saved } from './game/types'
 import { DEPTHS, MAX_DEPTH, sigilText, unlockedDepth, victoryBonus } from './game/rules'
-import { daysUntilDue, dueCount } from './game/mastery'
+import { dueCount, nextReviewTime } from './game/mastery'
+import { formatWait } from './game/schedule'
 import { shortTermProgress } from './game/progress'
-import { localDay } from './game/habit'
 
 type Props = {
   onReview: () => void                // opens the wordbook (due words first)
@@ -35,11 +35,11 @@ export default function CampScreen({ save, course, onReview, onBuy, onStart, mes
   const chosen = Math.min(depth, maxDepth)
   const info = DEPTHS[chosen - 1]
   // Spaced review: words due for their next step today, or when the next one will be.
-  const today = localDay(), due = dueCount(mastery, today)
-  const waits = Object.values(mastery).map(e => daysUntilDue(e, today)).filter((d): d is number => d !== null && d > 0)
-  const soonest = waits.length ? Math.min(...waits) : null
-  const progress = shortTermProgress(mastery, course, today)
-  const review = due > 0 ? `${due} word${due === 1 ? '' : 's'} ready for review today` : soonest ? `Next word review ${soonest === 1 ? 'tomorrow' : `in ${soonest} days`}` : null
+  const now = Date.now(), due = dueCount(mastery, now)
+  const startOfDay = new Date(new Date(now).setHours(0, 0, 0, 0)).getTime()
+  const progress = shortTermProgress(mastery, course, startOfDay)
+  const nextAt = nextReviewTime(mastery, now)
+  const review = due > 0 ? `${due} word${due === 1 ? '' : 's'} ready for review` : nextAt !== null ? `Next word review ${formatWait(nextAt - now)}` : null
 
   return (
     <section className="camp" aria-label="Base camp">

@@ -1,4 +1,5 @@
-// Save format v1 under SAVE_KEY (restarted with expeditions). Saves from before (other keys) are deleted on start and never read. Never throws.
+// Save format v2 under SAVE_KEY. v1 saves (calendar-day mastery, restarted with expeditions) are migrated once on load (fromLegacyEntry in
+// schedule.ts); saves from before (other keys) are deleted on start and never read. Never throws.
 import { cleanEncounter, cleanHistory } from './encounters.ts'
 import { cleanTrial } from './trials.ts'
 import { cleanRecent } from './recent.ts'
@@ -9,10 +10,12 @@ import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
 import { emptyCourse, recordPeaks, syncCourse, wordMap, type CourseProgress, type PeakLevels } from './course.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
 import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, bossIdFor, enemyStats, hasShield, isBoss, playerStats, shieldFor } from './rules.ts'
-import { MAX_LV } from './mastery.ts'
+import { MAX_LV, fromLegacyEntry, sanitizeSched, type SchedEntry } from './schedule.ts'
 
 export const SAVE_KEY = 'hanzi-hunters-save'
-export const SAVE_VERSION = 1
+export const SAVE_VERSION = 2
+/** Versions sanitizeSave accepts: 1 is migrated to 2 (the stored mastery entries are converted once, then saved as v2). */
+export const SUPPORTED_VERSIONS = [1, 2]
 /** Storage keys of the saves used before expeditions: cleared once (clearOldSaves) and never read. */
 export const OLD_SAVE_KEYS = ['hanzi-hunters-save-v1', 'hanzi-hunters-save-v2']
 
@@ -34,14 +37,11 @@ function validUpgrades(raw: unknown): string[] {
   return out
 }
 
-// An entry from before time-gated levels (no `at`) keeps its level (at most 4, the old maximum) and is due at once, so levels 2-4
-// are re-checked by their next right answer instead of being wiped. Only an entry with a date can be at level 5.
-const cleanEntry = (e: unknown) => {
-  if (!isObj(e)) return null
-  const at = typeof e.at === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.at) ? e.at : undefined
-  return { lv: int(e.lv, 0, at ? MAX_LV : MAX_LV - 1, 0), ok: int(e.ok, 0, 1, 0), ...(at ? { at } : {}) }
-}
-const better = (a: { lv: number; ok: number }, b: { lv: number; ok: number }) => (b.lv > a.lv || (b.lv === a.lv && b.ok > a.ok) ? b : a)
+// v1 entries ({ lv, ok, at? }) are converted once by fromLegacyEntry (levels kept, no credit for imaginary past answers); v2 entries are
+// only validated. The same cleaner is used for the claimed and the legacy (unknown id) maps, so nothing is lost or postponed again.
+type Ctx = { version: number; now: number; maxSeq: number }
+const cleanerFor = (c: Ctx) => (e: unknown): SchedEntry | null => (c.version === 1 ? fromLegacyEntry(e, c.now) : sanitizeSched(e, c.now, c.maxSeq))
+const better = (a: SchedEntry, b: SchedEntry) => (b.lv > a.lv || (b.lv === a.lv && b.ok > a.ok) ? b : a)
 
 /**
  * Progress is stored per entry id (the hanzi, unless the entry declares another id). When the content changes, saved progress is
@@ -51,8 +51,8 @@ const better = (a: { lv: number; ok: number }, b: { lv: number; ok: number }) =>
  *  - anything else (an entry that was removed, or a hanzi that is now shared by several entries without an alias) is kept in `legacy`
  *    so nothing is lost, and is tried again on every load.
  */
-export function migrateMastery(raw: unknown, legacyRaw: unknown, words: Word[] = WORDS): { mastery: Mastery; legacy: Mastery } {
-  const r = migrateById(raw, legacyRaw, words, cleanEntry, better)
+export function migrateMastery(raw: unknown, legacyRaw: unknown, words: Word[] = WORDS, ctx: Ctx = { version: SAVE_VERSION, now: Date.now(), maxSeq: 1e9 }): { mastery: Mastery; legacy: Mastery } {
+  const r = migrateById(raw, legacyRaw, words, cleanerFor(ctx), better)
   return { mastery: r.claimed, legacy: r.legacy }
 }
 
@@ -158,10 +158,12 @@ export function sanitizeCourses(raw: unknown, mastery: Mastery, curricula: Curri
   return out
 }
 
-/** Validates a v1 save; anything else (no object, another version) yields a fresh save. */
-export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Curriculum[] = CURRICULA): Saved {
-  const r = isObj(raw) && raw.version === SAVE_VERSION ? raw : {}
-  const migrated = migrateMastery(r.mastery, r.legacyMastery, words)
+/** Validates a v1 or v2 save (v1 is migrated to v2); anything else (no object, another version) yields a fresh save. `now` is injectable for tests. */
+export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Curriculum[] = CURRICULA, now: number = Date.now()): Saved {
+  const r = isObj(raw) && typeof raw.version === 'number' && SUPPORTED_VERSIONS.includes(raw.version) ? raw : {}
+  const version = r.version === 1 ? 1 : 2
+  const answerSeq = version === 2 ? int(r.answerSeq, 0, 1e9, 0) : 0
+  const migrated = migrateMastery(r.mastery, r.legacyMastery, words, { version, now, maxSeq: answerSeq })
   const peaks = migratePeaks(r.peak, r.legacyPeak, migrated.mastery, words)
   const m = isObj(r.meta) ? r.meta : {}
   const upgrades = validUpgrades(m.upgrades)
@@ -170,7 +172,7 @@ export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Cur
   const result = ls && (ls.result === 'won' || ls.result === 'returned') ? ls.result : 'defeat'
   const lastRun: RunSummary | null = ls ? { floor: int(ls.floor, 1, EXPEDITION_FLOORS, 1), kills: int(ls.kills, 0, 1e9, 0), level: int(ls.level, 1, 999, 1), goldBanked: int(ls.goldBanked, 0, 1e9, 0), bonus: int(ls.bonus, 0, 1e9, 0), result, depth: int(ls.depth, 1, MAX_DEPTH, 1), unlocked: int(ls.unlocked, 0, MAX_DEPTH, 0) } : null
   return {
-    version: SAVE_VERSION, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
+    version: SAVE_VERSION, answerSeq, meta, mastery: migrated.mastery, legacyMastery: migrated.legacy, run: sanitizeRun(r.run, upgrades), lastRun, habit: sanitizeHabit(r.habit),
     peak: peaks.peak, legacyPeak: peaks.legacy,
     encounterHistory: cleanHistory(r.encounterHistory),
     recentEvents: cleanRecent(r.recentEvents),
@@ -179,12 +181,12 @@ export function sanitizeSave(raw: unknown, words: Word[] = WORDS, curricula: Cur
   }
 }
 
-export function loadSave(storage: Pick<Storage, 'getItem'>): Saved {
+export function loadSave(storage: Pick<Storage, 'getItem'>, now: number = Date.now()): Saved {
   try {
     const cur = storage.getItem(SAVE_KEY)
-    if (cur) return sanitizeSave(JSON.parse(cur))
+    if (cur) return sanitizeSave(JSON.parse(cur), WORDS, CURRICULA, now)
   } catch { /* fall through to a fresh save */ }
-  return sanitizeSave(null)
+  return sanitizeSave(null, WORDS, CURRICULA, now)
 }
 
 /** Deletes the saves used before expeditions (the game restarted at save v1; they are never read). */

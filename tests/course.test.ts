@@ -7,14 +7,15 @@ import {
   courseLine, courseStatus, emptyCourse, entrySatisfied, introCardLine, isPracticed, isReady, lessonSatisfied, orphanLessons,
   recordPeaks, selectIntroductions, selectReview, stepsOf, syncCourse, wordMap, type CourseProgress, type CourseState, type PeakLevels
 } from '../src/game/course.ts'
-import { updateMastery } from '../src/game/mastery.ts'
+import { learn, levels } from './clock.ts'
+import { entryAtLevel } from '../src/game/schedule.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import type { Mastery } from '../src/game/types.ts'
 /** Answers in these tests all happen on one day (time-gated mastery levels are tested in mastery.test.ts). */
 const D = '2026-11-01'
 
 const lcg = (seed: number) => { let s = seed; return () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296) }
-const lv = (n: number, ok = 0) => ({ lv: n, ok })
+const lv = (n: number, _ok = 0) => entryAtLevel(n)
 type L = { id: string; entries: (string | Introduction)[]; pre?: string[]; aliases?: string[] }
 /** A small test curriculum: units of lessons, everything else defaulted. */
 function course(units: [string, L[]][], over: Partial<Curriculum> = {}): Curriculum {
@@ -34,12 +35,12 @@ function play(c: Curriculum, words: Word[], seed: number, fights = 120, acc = 0.
   let m: Mastery = {}, p = emptyCourse()
   const order: string[] = []
   for (let f = 0; f < fights; f++) {
-    for (const id of selectIntroductions({ curriculum: c, mastery: m, progress: p, words: byId }).ids) { order.push(id); m = updateMastery(m, id, true, D) }
+    for (const id of selectIntroductions({ curriculum: c, mastery: m, progress: p, words: byId }).ids) { order.push(id); m = learn(m, id, true) }
     for (let q = 0; q < 4; q++) {
       const w = selectReview(words, m, { rng })
       assert.ok(w, 'something is always reviewable after the first introductions')
       assert.ok(m[w!.id], 'review never returns an unseen entry')
-      m = updateMastery(m, w!.id, rng() < acc, D); p = syncCourse(c, m, p, byId)
+      m = learn(m, w!.id, rng() < acc); p = syncCourse(c, m, p, byId)
     }
   }
   return { order, mastery: m, progress: p }
@@ -65,8 +66,8 @@ test('reordering words.json has no effect on the teaching order', () => {
   for (let f = 0; f < 150; f++) {
     const plans = [WORDS, reversed, shuffled].map(ws => selectIntroductions(state(ACTIVE_CURRICULUM, m, p, ws)))
     assert.deepEqual(plans[1], plans[0]); assert.deepEqual(plans[2], plans[0]); checked++
-    for (const id of plans[0].ids) m = updateMastery(m, id, true, D)
-    for (let q = 0; q < 4; q++) { const w = selectReview(WORDS, m, { rng })!; m = updateMastery(m, w.id, rng() < 0.8, D); p = syncCourse(ACTIVE_CURRICULUM, m, p, byId) }
+    for (const id of plans[0].ids) m = learn(m, id, true)
+    for (let q = 0; q < 4; q++) { const w = selectReview(WORDS, m, { rng })!; m = learn(m, w.id, rng() < 0.8); p = syncCourse(ACTIVE_CURRICULUM, m, p, byId) }
   }
   assert.ok(Object.keys(m).length >= Math.min(20, stepsOf(ACTIVE_CURRICULUM).length) && checked === 150)
   // and playing with a reordered file still follows the declared order
@@ -132,7 +133,7 @@ test('entry prerequisites are explicit: a word waits for its authored prerequisi
 })
 
 test('vocabulary states are distinct: introduced, practiced, ready, long-term mastered', () => {
-  assert.equal(isPracticed(lv(0)), false); assert.equal(isPracticed(lv(0, 1)), true); assert.equal(isPracticed(lv(1)), true)
+  assert.equal(isPracticed(lv(0)), false); assert.equal(isPracticed(lv(1)), true)
   assert.equal(isReady(lv(0, 1)), false); assert.equal(isReady(lv(1)), true); assert.equal(isReady(lv(1), { minLevel: 2 }), false)
   const c = course([['u', [{ id: 'l1', entries: ['人', '大'] }]]], { readiness: { minLevel: 2 } })
   assert.equal(lessonSatisfied(state(c, { 人: lv(1), 大: lv(1) }), 'l1'), false, 'the readiness rule is configurable per curriculum')
@@ -144,13 +145,16 @@ test('no relocking: once a lesson is completed, later mistakes send entries to r
   const ready: Mastery = { 人: lv(1), 大: lv(1) }
   const p = syncCourse(c, ready, emptyCourse())
   assert.deepEqual(p.completed, ['a'])
-  let m = updateMastery(ready, '人', false, D); m = updateMastery(m, '大', false, D)
-  assert.deepEqual([m['人'].lv, m['大'].lv], [0, 0])
+  let m = learn(ready, '人', false); m = learn(m, '大', false)
+  assert.deepEqual([m['人'].lv, m['大'].lv], [1, 1], 'a mistake in initial learning keeps earlier spaced successes')
+  assert.deepEqual([m['人'].rel, m['大'].rel], ['relearn', 'relearn'])
   const earned = recordPeaks({}, ready)   // readiness history: 人 and 大 reached level 1 before the mistakes
   assert.deepEqual(syncCourse(c, m, p, undefined, earned).completed, ['a'], 'completion is never removed')
   assert.equal(lessonSatisfied(state(c, m, p, WORDS, earned), 'a'), true)
   assert.equal(entrySatisfied(state(c, m, p, WORDS, earned), '人'), true, 'readiness 人 earned before the mistake is kept')
-  assert.equal(entrySatisfied(state(c, m, p, WORDS, {}), '人'), false, 'lesson membership alone never makes an entry satisfied')
+  const dropped = { ...m, 人: { ...m['人'], lv: 0 } }   // a level below the threshold (an entry that was never practised)
+  assert.equal(entrySatisfied(state(c, dropped, p, WORDS, {}), '人'), false, 'lesson membership alone never makes an entry satisfied')
+  assert.equal(entrySatisfied(state(c, dropped, p, WORDS, earned), '人'), true, 'earned history keeps it satisfied')
   assert.deepEqual(selectIntroductions(state(c, m, p, WORDS, earned), ALL).ids, ['小'], 'lesson b stays unlocked')
   // the weak entries are what review asks most
   const known: Mastery = { ...m, 小: lv(3) }
@@ -214,15 +218,16 @@ test('a save without course progress keeps mastery, gold, gear, runs; known entr
     lastRun: null, habit: { daysPlayed: 3, correct: 50 }
   }
   const s = sanitizeSave(v2, WORDS, [COMPAT])
-  assert.equal(s.version, 1)
+  assert.equal(s.version, 2)
   assert.deepEqual(s.meta, { gold: 321, upgrades: ['W1'], bestFloor: 4, runs: 7, wins: 0, depthCleared: 0 })
-  assert.deepEqual(s.mastery, v2.mastery)
+  assert.deepEqual(levels(s.mastery), { 人: 2, 大: 1, 小: 1, 一: 0, 我: 3 }, 'v1 levels are all kept by the migration')
+  assert.deepEqual([s.mastery.大.ok, s.mastery.小.ok, s.mastery.人.ok], [1, 1, 3], 'one of three initial successes at Learning, initial learning complete from Familiar')
   assert.deepEqual(s.run?.gear, ['Copper Blade']); assert.equal(s.run?.gold, 40); assert.equal(s.habit.correct, 50)
   const p = s.courses.compat
   assert.ok(p.completed.includes('first-1'), '人 大 小 are all at level 1+: lesson 1 is ready')
   assert.ok(!p.completed.includes('first-2'), '一 is still at level 0')
   assert.equal(p.version, COMPAT.version)
-  assert.deepEqual(s.mastery.我, lv(3), 'progress for an entry outside the curriculum is kept')
+  assert.equal(s.mastery.我.lv, 3, 'progress for an entry outside the curriculum is kept')
   const plan = selectIntroductions(state(COMPAT, s.mastery, p), ALL)
   for (const id of Object.keys(v2.mastery)) assert.ok(!plan.ids.includes(id), `${id} is not introduced again`)
   assert.equal(plan.ids[0], '二', 'the first unseen entry in curriculum order comes next')
@@ -237,7 +242,7 @@ test('saves: progress for other curricula, unknown lessons and entries outside t
   assert.deepEqual(s.courses['old-course'], { version: 4, completed: ['x-1', 'x-2'] })
   assert.ok(s.courses[ACTIVE_CURRICULUM.id].completed.includes('removed-lesson'))
   assert.deepEqual(orphanLessons(ACTIVE_CURRICULUM, s.courses[ACTIVE_CURRICULUM.id]), ['removed-lesson'])
-  assert.deepEqual(s.mastery, { 水: lv(2) })
+  assert.deepEqual(levels(s.mastery), { 水: 2 })
   const junk = sanitizeSave({ version: 1, meta: {}, courses: { 'a b': {}, ok: { version: 'x', completed: [1, 'l', 'l', null] } } })
   assert.deepEqual(junk.courses.ok, { version: 0, completed: ['l'] })
 })

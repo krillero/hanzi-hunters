@@ -5,7 +5,8 @@ import { closeTrial, offerTrial, optionKeys, resolveTrial, trialFor, trialKey } 
 import { noteRecent } from '../src/game/recent.ts'
 import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, TUNING, advance, bankRun, bossIdFor, challengeFor, drinkPotion, isBoss, isExpeditionWon, newRun, playerStats, resolveAnswer, sealAsk, unlockedDepth } from '../src/game/rules.ts'
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
-import { MAX_LV, isDue, updateMastery } from '../src/game/mastery.ts'
+import { MAX_LV, isDue } from '../src/game/mastery.ts'
+import { introduce as introduceEntry, recordAnswer } from '../src/game/schedule.ts'
 import { SCENES, eligible, validGeneratedScenes } from '../src/game/encounters.ts'
 import { DUE_PER_FIGHT, emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
 import type { Mastery, Meta } from '../src/game/types.ts'
@@ -44,10 +45,16 @@ export type SimOptions = {
 /** Model assumption: a player plays about two expeditions a day (each about 6-8 minutes). */
 export const SIM_RUNS_PER_DAY = 2
 /** The simulated calendar: expedition n (1-based) is played on this local date. */
+/** Simulated seconds between two answers (reading, tapping, feedback), and hours between two expeditions on the same day. */
+export const SIM_ANSWER_MS = 12_000
+export const SIM_HOURS_BETWEEN_RUNS = 8
 export const simDay = (n: number, perDay = SIM_RUNS_PER_DAY) => new Date(Date.UTC(2026, 0, 1) + Math.floor((n - 1) / perDay) * 86_400_000).toISOString().slice(0, 10)
 
 export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: SimOptions = {}): RunLog[] {
-  let today = simDay(1, opts.runsPerDay)
+  // A simulated clock and answer counter: spaced learning needs elapsed time and other answers in between, so every answer advances both.
+  const perDay = opts.runsPerDay ?? SIM_RUNS_PER_DAY
+  const runStart = (n: number) => Date.UTC(2026, 0, 1) + Math.floor((n - 1) / perDay) * 86_400_000 + ((n - 1) % perDay) * SIM_HOURS_BETWEEN_RUNS * 3_600_000
+  let now = runStart(1), seq = 0
   let s = seed
   const rng = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296)
   let meta: Meta = { gold: 0, upgrades: opts.maxed ? UPGRADES.map(u => u.id) : [], bestFloor: 1, runs: 0, wins: 0, depthCleared: 0 }
@@ -60,13 +67,13 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
   // Like the game: introduction cards (curriculum order) at the start of each fight, then questions about known entries only.
   // The intro question shows the meaning, so it is always answered right; the next question about the word is its protected practice.
   const introduce = () => {
-    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) mastery = updateMastery(mastery, id, true, today)
+    for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) { mastery = { ...mastery, [id]: introduceEntry(now, seq) }; now += SIM_ANSWER_MS }   // reading a card: no credit
   }
   let dueThisFight = 0   // like the game: at most DUE_PER_FIGHT due words per fight
-  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, today, dueCapped: dueThisFight >= DUE_PER_FIGHT })!
+  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, now, dueCapped: dueThisFight >= DUE_PER_FIGHT })!
   const log: RunLog[] = []
   for (let n = 1; n <= runsToPlay; n++) {
-    today = simDay(n, opts.runsPerDay)
+    now = Math.max(now + SIM_ANSWER_MS, runStart(n))
     const b = computeBonuses(meta.upgrades)
     introduce()
     // the bot always plays the deepest depth it has unlocked
@@ -86,7 +93,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       }
       if (run.hearts <= 2) { const p = drinkPotion(run, b, GEAR); if (p) { run = p; stat.potionsUsed++ } }
       const entry = mastery[word.id]
-      if (isDue(entry, today)) dueThisFight++
+      if (isDue(entry, now)) dueThisFight++
       const practice = !practiced.has(word.id)
       // Accuracy rises a little as a word is learned; boss questions are a little harder:
       // tone questions (Golem shield), character questions (Scribe seals), look-alikes (Trickster).
@@ -111,11 +118,13 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
           const right = rng() < (accuracy >= 1 ? 1 : Math.min(0.98, accuracy - (t.boss === 'golem' ? 0.06 : t.boss === 'scribe' ? 0.04 : t.boss === 'trickster' ? 0.08 : 0)))
           const tr = resolveTrial({ run, bonuses: b, enemies: ENEMIES, allGear: GEAR, roll: { drop: rng(), item: rng() }, chosen: right ? t.answer : optionKeys(t).find(o => o !== t.answer)! })
           if (!tr) break
-          run = closeTrial(tr.run); answers++; stat.trials++; stat.trialsRight += tr.correct ? 1 : 0; stat.heartsLost += tr.heartsLost; stat.secondChanceSaves += tr.savedBySecondChance ? 1 : 0
+          run = closeTrial(tr.run); answers++; seq++; now += SIM_ANSWER_MS; stat.trials++; stat.trialsRight += tr.correct ? 1 : 0; stat.heartsLost += tr.heartsLost; stat.secondChanceSaves += tr.savedBySecondChance ? 1 : 0
           if (run.trial?.status === 'pending') recent = noteRecent(recent, trialKey(run.trial.id))
         }
       }
-      mastery = updateMastery(mastery, word.id, ok, today); peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
+      seq++; now += SIM_ANSWER_MS
+      mastery = { ...mastery, [word.id]: recordAnswer(mastery[word.id] ?? introduceEntry(now, seq - 1), { correct: ok, assisted: false, dim: 'meaning', now, seq }).entry }
+      peak = recordPeaks(peak, mastery); course = syncCourse(ACTIVE_CURRICULUM, mastery, course, byId, peak); word = pick(word.id)
     }
     const end: RunLog['end'] = isExpeditionWon(run) ? 'won' : run.phase === 'defeat' ? 'defeat' : 'returned'
     const banked = bankRun(meta, run, end); meta = banked.meta

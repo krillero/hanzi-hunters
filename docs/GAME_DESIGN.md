@@ -35,21 +35,22 @@ The player's health is a row of whole **hearts** (`Run.hearts`, the only player-
 * **Maximum hearts:** 5 + upgrades + worn gear, capped at **8** (`MAX_HEARTS`). Raising the maximum mid-run (gear) adds an empty heart; lowering it clamps the current hearts. New runs start full at their final maximum (starting gear included).
 
 ## Word mastery (per entry, saved; `src/game/mastery.ts`)
-Each word has a level 0-5. Levels 0-2 are learned within a session; levels 3-5 need **time** (spaced repetition):
+Each word has a level 0-5 and one scheduler (`game/schedule.ts`; full rules, research basis and state-transition table in `docs/SCHEDULING.md`):
 
 | Level | Name | Reached by |
 |---|---|---|
-| 0 | New | introduced |
-| 1 | Learning | 2 right answers in a row |
-| 2 | Familiar | 2 more right in a row (same session is fine) |
-| 3 | Remembered | 1 right answer at least **1 day** after reaching Familiar |
-| 4 | Retained | 1 right answer at least **3 days** after Remembered |
-| 5 | Mastered | 1 right answer at least **7 days** after Retained |
+| 0 | New | the new-word card was read (no credit) |
+| 1 | Learning | the 1st of 3 **spaced** successes (2 other answers + 30 s later) |
+| 2 | Familiar | the 3rd spaced success (4 answers + 90 s, then 8 answers + 180 s; a 20 min break also counts) |
+| 3 | Remembered | a correct unassisted answer **24 h** after Familiar |
+| 4 | Retained | the same, **72 h** after Remembered |
+| 5 | Mastered | the same, **168 h** after Retained; then a maintenance check after 14 days, then every 30 days |
 
-* Days are **local calendar days** (`MasteryEntry.at` = date of the last level change; `RETENTION_DAYS`).
-* A right answer before the word is due counts as practice (damage, streak) but does not promote it; the feedback says when the
-  next check is ("Familiar — next level after a check tomorrow"). A long gap still promotes **one** level only.
-* **A miss drops one level** (also from Mastered) and restarts that level's wait.
+* All waits are elapsed time, not calendar days. A right answer before the word is due counts as practice but never moves the due time;
+  help (a hint, or an answer shown on the card) and an answer shown in the last 10 minutes do not count. A late answer promotes **one** stage only.
+* **A miss** keeps the spaced successes of a word still being learned, or drops an established word one level (not below Familiar), and
+  schedules a relearning answer (2 other answers + 30 s); that answer does not promote. An established word is then rechecked 24 h later.
+* Only meaning and written-form questions move the scheduler for now; pronunciation, listening and sentence answers are recorded as evidence only.
 * **Every question kind counts the same.**
 * **Reviews:** a due word is picked far more often (`DUE_WEIGHT` 6) so a session starts by checking yesterday's words, but at most
   **2 due words per fight** (`DUE_PER_FIGHT`), so new and still-learning words keep their slots. Words still being learned (0-1) weigh
@@ -88,7 +89,7 @@ Not yet: per-kind history across sessions, sentence/context questions (see the r
 - **Homophones** (same pinyin, e.g. 木/目 mù, 他/她 tā, 十/石 shí): sound-only kinds (audio→char, pinyin→char, audio→meaning) are not asked for a word whose homophone the learner already knows; the homophone question (pinyin + meaning → character, both homophones offered) is used instead. If the partner is unknown it is never offered as an option.
 - **Look-alikes** come from the `lookalike` field in `words.json`; they are only used once the partner has been met.
 - Tone-change readings (`alt`, e.g. 不 bú, 一 yí/yì) are never offered as wrong pinyin.
-- Session levels: 2 correct answers in a row promote; levels 3-5 need 1/3/7 days (above); a miss drops one level. Level 5 = mastered (asked rarely).
+- Levels and their timings: see the table above and `docs/SCHEDULING.md`. Level 5 = mastered (asked rarely).
 - Harder levels deal bonus damage (+0/10/25/40 %, the full bonus from Remembered on).
 - New entries come in curriculum order (see below); no new entry is introduced while 4 entries are still at level 0, and entries met may exceed entries at level 1+ by at most 6.
 
