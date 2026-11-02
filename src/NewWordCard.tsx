@@ -43,7 +43,7 @@ export default function NewWordCard({ id, index, total, lessonLine, muted, onSpe
             <div className="nw-meaning">{word.meaning}</div>
             {word.variants.length > 0 && <div className="nw-also">also said {word.variants.join(', ')}</div>}
           </div>
-          <p className="nw-note">{ex?.summary ?? word.note}</p>
+          <p className="nw-note">{word.note}</p>
           {breakdown?.type === 'breakdown' && <div className="nw-parts">{breakdown.parts.map((p, k) => <span key={k} className="nw-part"><b lang="zh">{p.char}</b> {p.meaning}</span>)}</div>}
           {examples.length > 0 && <p className="nw-ex-label">Examples</p>}
           {examples.length > 0 && <ul className="nw-examples">{examples.map((e, k) => <li key={k}><span className="ex-zh" lang="zh">{e.zh}</span><span className="ex-py">{e.pinyin}</span><span className="ex-en">{e.en}</span></li>)}</ul>}

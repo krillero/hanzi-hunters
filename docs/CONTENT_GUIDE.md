@@ -162,7 +162,7 @@ Optional popups for entries that need more than the one-line `note`: look-alikes
 {
   "朋友": {
     "title": "朋友 (friend)",
-    "summary": "朋友 has a neutral second syllable: péngyou.",
+"    "summary": "Optional: one extra key idea that the entry's note does not already say.",
     "sections": [
       { "type": "tips", "heading": "Neutral tone", "items": ["A syllable without a tone mark is neutral tone, not a forgotten mark."] },
       { "type": "examples", "heading": "In a sentence", "items": [
@@ -182,7 +182,7 @@ Optional popups for entries that need more than the one-line `note`: look-alikes
 | Field | Notes |
 |---|---|
 | key | An **entry id** from `words.json`. |
-| `title` ≤ 60, `summary` ≤ 300 | `summary` required. |
+| `title` ≤ 60, `summary` ≤ 300 | `summary` is **optional** extra context shown right after the entry's `note`. It must not repeat the note (the validator rejects an exact copy). |
 | `sections` | 1+ blocks, see below. |
 | `related` | Other entry ids (buttons in the popup). |
 | `source`, `review` | Optional provenance of the explanation as a whole (section 4). |
@@ -191,9 +191,9 @@ Section types: `text` (`heading?`, `body` ≤ 700), `tips` (`heading?`, `items` 
 
 **Example fields:** `zh`, `pinyin` (sentence case, standard spacing and punctuation, tone marks), `en` (natural English, not word-for-word), optional `note`, `source`, `review`, and `audio: false` to disable the 🔊 button. The validator warns if the pinyin and the characters have different syllable counts, and if the sentence does not contain the entry it explains.
 
-**What the popup also shows automatically** (nothing to write): the hanzi, pinyin and meaning in the header, the entry's note (or the explanation's `summary`), a neutral-tone remark (only when the note does not already mention neutral tone), accepted `variants`, other readings of the same hanzi (with a link), and the `speech` notes. Entries that are not `human-reviewed` get a small **draft** tag next to the meaning; sources, licenses and review notes are **not** shown in the popup (they stay in the data and in Settings → Credits). Entries without an authored explanation still open this popup from the Wordbook.
+**What the popup also shows automatically** (nothing to write): the hanzi, pinyin and meaning in the header, the entry's `note` (always first, exactly once), then the explanation's optional `summary`, a neutral-tone remark (only when the note does not already mention neutral tone), accepted `variants`, other readings of the same hanzi (with a link), and the `speech` notes. Entries that are not `human-reviewed` get a small **draft** tag next to the meaning; sources, licenses and review notes are **not** shown in the popup (they stay in the data and in Settings → Credits). Entries without an authored explanation still open this popup from the Wordbook.
 
-**Do not repeat what is already shown.** `summary` is the popup's first paragraph, so never add a section that restates it or the entry's `note`; only write an explanation when it adds something (a comparison, an example, a pronunciation detail). Example `note`s are for something specific to that sentence, not general disclaimers ("optional example", "AI draft"): review status belongs in the `review` field.
+**Do not repeat what is already shown.** The entry's `note` is the popup's first paragraph, so never add a `summary` or section that restates it; only write an explanation when it adds something (a comparison, an example, a pronunciation detail). Example `note`s are for something specific to that sentence, not general disclaimers ("optional example", "AI draft"): review status belongs in the `review` field.
 
 ### Writing rules (important)
 

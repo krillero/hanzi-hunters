@@ -205,8 +205,12 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
     if (!isObj(ex)) { err(`${at}: must be an object`); continue }
     for (const k of Object.keys(ex)) if (!['title', 'summary', 'sections', 'related', 'source', 'review'].includes(k)) err(`${at}: unknown field "${k}" (allowed: title, summary, sections, related, source, review)`)
     if (ex.title !== undefined && (!isStr(ex.title) || ex.title.length > LIMITS.title)) err(`${at}.title: must be a string up to ${LIMITS.title} chars`)
-    if (!isStr(ex.summary)) err(`${at}.summary: required non-empty string`)
-    else if (ex.summary.length > LIMITS.summary) err(`${at}.summary: ${ex.summary.length} chars, max ${LIMITS.summary}`)
+    // summary is optional: the popup always shows the entry's note first, so a summary is only for ADDITIONAL key context.
+    if (ex.summary !== undefined) {
+      if (!isStr(ex.summary)) err(`${at}.summary: must be a non-empty string when present (or leave it out)`)
+      else if (ex.summary.length > LIMITS.summary) err(`${at}.summary: ${ex.summary.length} chars, max ${LIMITS.summary}`)
+      else if (isStr(byId.get(key)?.note) && ex.summary.trim() === String(byId.get(key)!.note).trim()) err(`${at}.summary: identical to the entry's note (the note is already shown first; remove the summary)`)
+    }
     if (!Array.isArray(ex.sections) || ex.sections.length === 0) err(`${at}.sections: must be a non-empty array`)
     else ex.sections.forEach((s, i) => checkSection(`${at}.sections[${i}]`, s))
     checkProvenance(at, ex)

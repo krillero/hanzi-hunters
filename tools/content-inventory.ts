@@ -7,7 +7,7 @@ import { curriculaReport } from '../src/content/curriculumReport.ts'
 const read = (f: string) => JSON.parse(readFileSync(new URL(`../src/content/${f}`, import.meta.url), 'utf8'))
 type RawEntry = { id?: string; hanzi: string; pinyin: string; meaning: string; group: string; note: string; kind?: string; neutral?: number[]; variants?: string[]; speech?: unknown[]; wrongPinyin?: string[]; audio?: string; questions?: string[]; aliases?: string[]; confusable?: string[]; lookalike?: string[]; review?: { status: string } }
 const words = read('words.json') as RawEntry[]
-const explanations = read('explanations.json') as Record<string, { title?: string; summary: string; sections: { type: string; heading?: string }[]; related?: string[] }>
+const explanations = read('explanations.json') as Record<string, { title?: string; summary?: string; sections: { type: string; heading?: string }[]; related?: string[] }>
 const cloze = read('cloze.json') as { id: string; answer: string; zh: string; options: string[] }[]
 const sources = read('sources.json') as Record<string, unknown>
 const curricula = read('curricula.json')

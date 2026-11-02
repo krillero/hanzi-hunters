@@ -37,7 +37,9 @@ test('validator catches bad words', () => {
 
 test('validator catches bad explanations with a precise path', () => {
   assert.match(errs(W, { 龙: ok }).join('|'), /key is not an entry id in words.json/)
-  assert.match(errs(W, { 他: { sections: ok.sections } }).join('|'), /\.summary: required/)
+  assert.deepEqual(errs(W, { 他: { sections: ok.sections } }), [], 'summary is optional')
+  const note = (W as { hanzi: string; note: string }[]).find(w => w.hanzi === '他')!.note
+  assert.match(errs(W, { 他: { ...ok, summary: note } }).join('|'), /identical to the entry's note/)
   assert.match(errs(W, { 他: { summary: 's', sections: [] } }).join('|'), /sections: must be a non-empty array/)
   assert.match(errs(W, { 他: { ...ok, sections: [{ type: 'poem', body: 'x' }] } }).join('|'), /not one of text, tips, breakdown, compare, examples/)
   assert.match(errs(W, { 他: { ...ok, sections: [{ type: 'tips', items: [] }] } }).join('|'), /items: 1-6 strings/)

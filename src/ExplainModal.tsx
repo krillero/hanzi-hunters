@@ -66,8 +66,9 @@ export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak }: P
 
   if (!word) return null
   const siblings = homographsOf(word, WORDS)
-  const summary = ex?.summary ?? word.note
-  const neutralLine = word.neutral.length > 0 && !/neutral/i.test(summary)   // skip when the note already explains it
+  // The essential note once, then the explanation's additional summary (only when it says something else).
+  const extra = ex?.summary && ex.summary.trim() !== word.note.trim() ? ex.summary : null
+  const neutralLine = word.neutral.length > 0 && !/neutral/i.test(word.note + (extra ?? ''))   // skip when the note already explains it
   const hasPron = neutralLine || word.variants.length > 0 || word.speech.length > 0 || siblings.length > 0
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
@@ -79,7 +80,8 @@ export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak }: P
           <button className="icon-btn" ref={closeRef} onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="modal-body" ref={bodyRef}>
-          <p className="ex-summary">{summary}</p>
+          <p className="ex-summary">{word.note}</p>
+          {extra && <p className="ex-summary-extra">{extra}</p>}
           {hasPron && (
             <section><h3>Pronunciation</h3>
               {neutralLine && <p>{word.neutral.length === [...word.hanzi].length ? 'Neutral tone: light and short, no tone mark.' : `Syllable ${word.neutral.join(', ')} is neutral tone: light and short, no tone mark.`}</p>}

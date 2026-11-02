@@ -47,8 +47,8 @@ export type Section =
 export type Explanation = {
   /** Popup title. Defaults to "About <hanzi>". */
   title?: string
-  /** One or two sentences: the key idea. Always shown first. */
-  summary: string
+  /** Optional extra key idea shown right after the entry's `note` (which is always shown first). Never a copy of the note. */
+  summary?: string
   sections: Section[]
   /** Other entry ids to link to (shown as buttons; opens their details). */
   related?: string[]
