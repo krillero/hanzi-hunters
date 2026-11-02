@@ -372,10 +372,17 @@ export default function App() {
   }, [enemyKey])
 
   // ---- audio ----------------------------------------------------------------------------
+  // No Mandarin voice: only concluded once the browser has listed its voices (the list is empty for a moment after loading).
+  const noMandarinVoice = () => { try { return window.speechSynthesis.getVoices().length > 0 && !hasChineseVoice() } catch { return false } }
   const speak = (hanzi: string, force = false) => {
     if (settings.muted && !force) return
     if (!('speechSynthesis' in window)) { setToast('Speech playback is not supported in this browser.'); return }
-    if (!hasChineseVoice()) setToast('No Mandarin voice found on this device. Install a Chinese (Simplified) text-to-speech voice in your system settings.')
+    if (noMandarinVoice()) {
+      // The full warning once; then spoken words are turned off (listening questions stop too). A later speaker tap gets a short note.
+      if (!settings.voiceWarned) { setToast('No Mandarin voice found on this device, so spoken words are now off. Install a Chinese (Simplified) text-to-speech voice in your system settings, then turn them on again in ⚙ Settings.'); setSettings(st => ({ ...st, muted: true, voiceWarned: true })) }
+      else if (force) setToast('No Mandarin voice on this device.')
+      return
+    }
     try {
       window.speechSynthesis.cancel()
       const u = new SpeechSynthesisUtterance(hanzi)
@@ -387,7 +394,7 @@ export default function App() {
     } catch { /* speech is optional: never let it break the game */ }
   }
   // The speaker button: when muted, tapping it turns sound back on (and plays the text).
-  const pressSpeaker = (text: string) => { if (settings.muted) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
+  const pressSpeaker = (text: string) => { if (settings.muted && !noMandarinVoice()) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
   // Words are only read aloud when the audio can be trusted to match the displayed word and reading (see audioReliable in content/entries.ts).
   // Only once the question is actually visible: a card prepared behind the new-word card, the boss intro, a loot card or the floor
   // summary stays silent (it is often replaced before it is shown), and each card is read at most once.
