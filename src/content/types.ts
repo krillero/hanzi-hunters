@@ -20,7 +20,15 @@ export type SourceRef = {
   retrieved?: string
   note?: string
 }
-export type SourceInfo = { title: string; url?: string; license: string; attribution: string; usage?: string }
+export type SourceInfo = {
+  title: string; url?: string; license: string; attribution: string; usage?: string
+  /** Importable sources only: the adapter that reads it (tools/sources/adapters), e.g. "anki-apkg". */
+  adapter?: string
+  /** Known reuse terms and decisions, stated honestly ("unknown" when unknown). A shared deck is not automatically openly licensed. */
+  reuse?: string
+  /** Language variety the source teaches, when the source states it. */
+  variety?: string
+}
 export type Sources = Record<string, SourceInfo>
 
 /** One character (or component) with its sound and meaning. Used by `breakdown` and `compare` sections. */
