@@ -18,6 +18,7 @@
 import type { Curriculum, Introduction, Lesson, Readiness, Unit, Word } from '../content/types.ts'
 import type { Mastery, MasteryEntry } from './types.ts'
 import { MAX_LEARNING, MAX_LV, MIN_KNOWN, STARTING_POOL, isDue } from './mastery.ts'
+import { standing, type Standing } from './schedule.ts'
 
 // ---- configuration -----------------------------------------------------------------------------------
 
@@ -246,9 +247,19 @@ export type ReviewOptions = {
   filter?: (w: Word) => boolean
   /** Current time (ms): words due for a delayed / maintenance review are favoured. Without it, levels alone decide. */
   now?: number
+  /** The number the NEXT answer will get (Saved.answerSeq + 1). With `now`, scheduling decides first: see SCHEDULE_PRIORITY. */
+  seq?: number
   /** This fight has already asked DUE_PER_FIGHT due words: due words are not picked (unless nothing else is left). */
   dueCapped?: boolean
 }
+
+/**
+ * Scheduling comes before the review weights: entries whose relearning answer is eligible are asked first, then due delayed / maintenance
+ * reviews (at most DUE_PER_FIGHT per fight), then initial-learning entries whose spacing gap is met, then every other known entry. Within a
+ * tier the usual weights, recent-item penalty, current-item avoidance and filter apply. An empty tier is skipped, so nothing waits for a gap
+ * and the same failing entry cannot repeat (its relearning gap needs other answers first).
+ */
+export const SCHEDULE_PRIORITY: Standing[] = ['relearn', 'due', 'initial', 'other']
 
 /**
  * A previously introduced entry to practise, or null when the learner has met nothing yet. NEVER returns an unseen entry:
@@ -260,12 +271,20 @@ export function selectReview(words: Word[], m: Mastery, o: ReviewOptions = {}): 
   if (!known.length) return null
   const others = known.filter(w => w.id !== o.currentId)
   const pool = others.length ? others : known   // a pool of one entry still works
+  const scheduled = o.now !== undefined && o.seq !== undefined
   const weighted = pool.map(w => {
     const ri = recent.indexOf(w.id)
     const capped = o.dueCapped && o.now !== undefined && isDue(m[w.id], o.now)
     const base = capped ? 0 : Math.max(0, weight(w, m[w.id], o.now))
-    return { w, weight: ri >= 0 && ri < RECENT_PENALTY.length ? base * RECENT_PENALTY[ri] : base }
+    return { w, weight: ri >= 0 && ri < RECENT_PENALTY.length ? base * RECENT_PENALTY[ri] : base, tier: scheduled ? SCHEDULE_PRIORITY.indexOf(standing(m[w.id], o.now!, o.seq!)) : 0 }
   })
+  // The first tier with anything askable decides the pool; if it is empty (e.g. every due word is capped) the next tier is used.
+  if (scheduled) {
+    for (let t = 0; t < SCHEDULE_PRIORITY.length; t++) {
+      const inTier = weighted.filter(x => x.tier === t && x.weight > 0)
+      if (inTier.length) { weighted.splice(0, weighted.length, ...inTier); break }
+    }
+  }
   const total = weighted.reduce((n, x) => n + x.weight, 0)
   if (total <= 0) return pool[Math.floor(rng() * pool.length)]
   let r = rng() * total

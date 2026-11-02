@@ -1,9 +1,9 @@
 # Vocabulary scheduling
 
-Status: **milestones (a) and (b) are done.** `src/game/schedule.ts` is the scheduler; `src/game/learning.ts` connects it to answers, the new-word
+Status: **milestones (a), (b) and (c) are done.** `src/game/schedule.ts` is the scheduler; `src/game/learning.ts` connects it to answers, the new-word
 card, details and the wordbook; the save is **v2** (`answerSeq`, entries carry scheduling data) and v1 saves and backups are migrated once on load.
-Still to do: (c) selection priority (relearning, due, initial, other), (d) richer UI (due lists, time estimates beyond the answer line), (e) a more
-realistic simulator. Until (c), question selection still uses the old weights (due words are favoured through `isDue`).
+Still to do: (d) richer UI (due lists, time estimates beyond the answer line), (e) a more
+realistic simulator.
 
 ## Evidence and product defaults
 
@@ -84,3 +84,13 @@ Future validation should compare delayed recall after 7 and 30 days and retentio
 The old calendar-day API (`updateMastery`, `waitDays`, `daysUntilDue`, `RETENTION_DAYS`, `PROMOTE_AFTER`, `daysBetween`, string-date `isDue`) is gone.
 `App.tsx`, `CampScreen.tsx`, `course.ts` (`ReviewOptions.now`), `progress.ts`, `save.ts`, `backup.ts` and `tools/simulate.ts` use `schedule.ts` / `learning.ts`.
 The simulator advances a clock (12 s per answer, 8 h between expeditions on one day) and the answer number, and answers as an unassisted meaning question.
+
+## Question selection (`selectReview` in `course.ts`)
+
+With `now` and `seq` (the number the next answer will get), the tier decides first, then the existing weights: **relearning** (gap met) >
+**due** delayed / maintenance / recheck reviews (still capped at `DUE_PER_FIGHT` per fight) > **initial learning** (gap met) > **other** known
+entries. Within a tier the recent-item penalty, current-item avoidance and filters are unchanged. A tier with nothing askable is skipped, a
+filter that removes everything returns null, and `App.tsx` already retries other words (at most 8 tries) when one cannot build a valid question,
+so nothing waits for a gap. A just-failed entry cannot come back before 2 other answers, so it cannot occupy every question. Boss-required
+question kinds still override the kind of question, never the credit rules (credit depends on the answer, not on how the word was picked).
+New introductions still come from the curriculum system and the learning-pool limits are unchanged.

@@ -70,7 +70,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
     for (const id of selectIntroductions({ curriculum: ACTIVE_CURRICULUM, mastery, progress: course, words: byId, peak }).ids) { mastery = { ...mastery, [id]: introduceEntry(now, seq) }; now += SIM_ANSWER_MS }   // reading a card: no credit
   }
   let dueThisFight = 0   // like the game: at most DUE_PER_FIGHT due words per fight
-  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, now, dueCapped: dueThisFight >= DUE_PER_FIGHT })!
+  const pick = (cur: string | null) => selectReview(WORDS, mastery, { currentId: cur, rng, now, seq: seq + 1, dueCapped: dueThisFight >= DUE_PER_FIGHT })!
   const log: RunLog[] = []
   for (let n = 1; n <= runsToPlay; n++) {
     now = Math.max(now + SIM_ANSWER_MS, runStart(n))

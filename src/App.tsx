@@ -251,7 +251,7 @@ export default function App() {
       let prevId: string | null = current
       // a known entry (review selection never returns an unseen one); particles only when nothing else is known
       const build = (): Card | null => {
-        const word: Word | null = selectReview(WORDS, mastery, { now: Date.now(), dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: prevId, recent: recentWords.current, filter: w => w.kind !== 'particle' }) ?? selectReview(WORDS, mastery, { currentId: prevId, recent: recentWords.current })
+        const word: Word | null = selectReview(WORDS, mastery, { now: Date.now(), seq: save.answerSeq + 1, dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: prevId, recent: recentWords.current, filter: w => w.kind !== 'particle' }) ?? selectReview(WORDS, mastery, { currentId: prevId, recent: recentWords.current })
         if (!word) return null
         prevId = word.id
         const question = tryBuildQuestion(word, mastery[word.id], WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)]))
@@ -271,7 +271,7 @@ export default function App() {
     }
     const tried = new Set<string>()
     for (let k = 0; k < 8; k++) {
-      const word = selectReview(WORDS, mastery, { now: Date.now(), dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: current, recent: recentWords.current, filter: w => !tried.has(w.id) })
+      const word = selectReview(WORDS, mastery, { now: Date.now(), seq: save.answerSeq + 1, dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: current, recent: recentWords.current, filter: w => !tried.has(w.id) })
       if (!word) break
       tried.add(word.id)
       const question = tryBuildQuestion(word, mastery[word.id], WORDS, opts(echo))
