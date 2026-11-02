@@ -701,6 +701,9 @@ export default function App() {
     {seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}
   </div></div> : null
   const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onReset={() => { setMenuOpen(false); resetAll() }} progress={{ wins: save.meta.wins, bestFloor: save.meta.bestFloor, runs: save.meta.runs, known: Object.keys(save.mastery).length, mastered: masteredCount(save.mastery) }} onClose={() => setMenuOpen(false)} tools={run ? { words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) }, onReturn: run.phase !== 'defeat' ? returnToCamp : undefined } : { words: seenCount(save.mastery), onWords: () => { setMenuOpen(false); setShowWords(true) } }} /> : null
+  // Toasts render on every screen (camp, introduction cards, battle) and above dialogs: a warning raised while a new-word card is
+  // open (the missing-voice one) must not be lost.
+  const toastEl = toast ? <div className="toast toast-global" role="status"><span>{toast}</span><button onClick={() => setToast('')} aria-label="Dismiss">×</button></div> : null
   const topbar = (
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
@@ -740,6 +743,7 @@ export default function App() {
         {wordbook}
       {menu}
       {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+        {toastEl}
       </main>
     )
   }
@@ -763,6 +767,7 @@ export default function App() {
         {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
         {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
         {menu}
+        {toastEl}
       </main>
     )
   }
@@ -1001,7 +1006,7 @@ export default function App() {
                   </button>}
             </div>
           </section>
-          {toast && <div className="toast"><span>{toast}</span><button onClick={() => setToast('')} aria-label="Dismiss">×</button></div>}
+          {toastEl}
           <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear found</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div></section>
         </div>
       </section>

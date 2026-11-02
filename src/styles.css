@@ -1717,3 +1717,6 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 /* The recap never cuts an explanation short (the box scrolls instead); a folded one opens with Why? */
 .in-battle .answer-feedback .result-note{display:block;-webkit-line-clamp:unset;overflow:visible}
 .result-why{align-self:flex-start;min-height:36px;padding:4px 10px;border:1px solid #3c5068;border-radius:8px;background:transparent;color:#cfe0f0;font-size:14px}
+/* Toasts sit above dialogs (e.g. a warning raised while a new-word card is open). */
+.toast.toast-global{position:fixed;left:12px;right:12px;top:calc(max(6px,env(safe-area-inset-top)) + 56px);z-index:1100;margin:0 auto;max-width:600px;box-shadow:0 8px 30px #000a;pointer-events:none}
+.toast.toast-global button{pointer-events:auto;min-width:44px;min-height:44px}

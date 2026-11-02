@@ -68,7 +68,7 @@ export default function CampScreen({ save, course, onReview, onBuy, onStart, mes
           ? <>
               <div className="camp-course-top"><span>LESSON {course.lesson.number} OF {course.lessonsTotal}</span><span>{wordsLine}</span></div>
               <strong>{course.lesson.lesson.title}</strong>
-              <small className="camp-course-unit">{course.lesson.unit.title} · {course.introduced} of {course.total} words met</small>
+              <small className="camp-course-unit">{course.lesson.unit.title !== course.lesson.lesson.title ? `${course.lesson.unit.title} · ` : ''}{course.introduced} of {course.total} words met</small>
             </>
           : <>
               <div className="camp-course-top"><span>COURSE COMPLETE</span><span>{wordsLine}</span></div>
