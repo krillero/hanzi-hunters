@@ -27,14 +27,14 @@
 | mediaUnreferenced | 1 |
 | withPlacement | 4960 |
 | flag_too-long | 8 |
-| flag_long | 59 |
-| flag_pattern | 37 |
+| flag_long | 58 |
+| flag_pattern | 36 |
 | flag_phrase | 7 |
 | flag_name | 260 |
 | flag_erhua | 2 |
-| flag_several-forms | 21 |
-| flag_several-readings | 22 |
-| recordsWithIssues | 7 |
+| flag_several-forms | 22 |
+| flag_several-readings | 23 |
+| recordsWithIssues | 6 |
 
 ## Checks that ran
 
@@ -59,10 +59,10 @@
 - accc-anki:B1L07-I-02: Simplified has no Chinese characters
 - accc-anki:B2L02-I-18: reading "Táiběi 101" is not plain tone-marked pinyin
 - accc-anki:B3L08-II-46: reading "EMBA" is not plain tone-marked pinyin
+- accc-anki:B3L08-II-46: reading "EMBA gāojí guǎnlǐ rényuán gōngshāng guǎnlǐ shuòshì" is not plain tone-marked pinyin
 - accc-anki:B3L08-II-46: Simplified has no Chinese characters
 - accc-anki:B3L08-II-49: reading "X fēn zhī Y" is not plain tone-marked pinyin
 - accc-anki:B3L10-I-32: reading "zhào X guāng" is not plain tone-marked pinyin
-- accc-anki:B6L01-III-T-01: reading "Jiāobù (= Jiāoyùbù)" is not plain tone-marked pinyin
 - accc-anki:B6L06-I-T-02: reading "BBC" is not plain tone-marked pinyin
 - accc-anki:B6L06-I-T-02: Simplified has no Chinese characters
 
