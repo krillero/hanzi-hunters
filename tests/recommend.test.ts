@@ -30,11 +30,12 @@ test('吗: a category label vs a function description is the same meaning; keep 
 test('个: equivalent jargon labels; suggest a plain label; pronunciation is a separate, already-taught difference', () => {
   const rec = recommend(record('B1L02-II-10', '个', 'ge', 'M', 'general measure word'), word('个'), WORDS)
   assert.equal(rec.meaning.verdict, 'same')
-  assert.equal(rec.wording.action, 'edit')
-  assert.equal(rec.wording.suggestion, 'general counting word')
+  assert.equal(rec.wording.action, 'use-source', '"measure word" (textbook term) over "classifier"')
+  assert.match(rec.wording.reason, /beginner textbooks/)
+  assert.equal(rec.wording.suggestion, 'general counting word', 'the plainer alternative stays available')
   assert.equal(rec.pronunciation.relation, 'speech')
   assert.match(rec.pronunciation.reason, /connected-speech form/)
-  assert.equal(rec.summary, 'Same meaning; wording improvement suggested.')
+  assert.equal(rec.summary, 'Same meaning; the source wording may be clearer.')
 })
 
 test('other deck patterns: same wording, regional tones, homograph readings, several senses', () => {
@@ -55,4 +56,17 @@ test('other deck patterns: same wording, regional tones, homograph readings, sev
 
 test('glosses made of common words still compare ("to be" vs "be (identity)")', () => {
   assert.equal(recommend(record('B1L01-I-06', '是', 'shì', 'Vst', 'to be'), word('是'), WORDS).meaning.verdict, 'same')
+})
+
+test('search ranks exact matches first and matches English only from word starts', async () => {
+  const { searchScore } = await import('../src/sources/search.ts')
+  const ge = record('B1L02-II-10', '个', 'ge', 'M', 'general measure word')
+  const gege = record('B1L02-II-06', '哥哥', 'gēge', 'N', 'older brother')
+  const sister = record('B1L02-I-19', '妹妹', 'mèimei', 'N', 'younger sister')
+  const aunt = record('B1L02-II-02', '伯母', 'bómǔ', 'N', 'aunt; a polite term regardless of age')
+  assert.equal(searchScore(sister, 'ge'), 0, '"younger" does not match "ge"')
+  assert.equal(searchScore(aunt, 'ge'), 0, '"age" does not match "ge"')
+  assert.ok(searchScore(ge, 'ge') > searchScore(gege, 'ge') && searchScore(gege, 'ge') > 0)
+  assert.ok(searchScore(ge, 'gè') > 0 && searchScore(ge, '个') > searchScore(gege, '个'))
+  assert.ok(searchScore(sister, 'sister') > 0 && searchScore(ge, 'measure') > 0)
 })

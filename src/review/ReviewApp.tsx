@@ -10,9 +10,10 @@ import sourcesJson from '../content/sources.json'
 import { WORDS } from '../data'
 import { audioReliable } from '../content/entries'
 import { LIMITS } from '../content/validate'
-import { eligibleUses, readingRelation, toneless } from '../content/recordings'
+import { eligibleUses, readingRelation } from '../content/recordings'
 import { suggest, type Suggestion } from '../sources/match'
 import { recommend, type Recommendation } from '../sources/recommend'
+import { searchScore } from '../sources/search'
 import { draftFromRecord, neutralPositions, type RepoState } from '../sources/changeset'
 import type { ContentItem, EntryDraft, FieldSelection, Mapping, RecordingItem, RecordingUse, SelectedRecording, SourceIndex, SourceRecord } from '../sources/types'
 import type { RawWord, Sources, Word } from '../content/types'
@@ -107,9 +108,8 @@ export default function ReviewApp() {
 
   const filtered = useMemo(() => {
     if (!data) return []
-    const query = q.trim().toLowerCase()
-    const tq = query ? toneless(query) : ''
-    return data.records.filter(r => {
+    const scores = new Map<string, number>()
+    const out = data.records.filter(r => {
       const i = info.get(r.key)
       if (!i) return false
       if (book && String(r.placement?.book) !== book) return false
@@ -120,13 +120,12 @@ export default function ReviewApp() {
       if (filter === 'audio' && !i.audio) return false
       if (filter === 'working' && !i.working) return false
       if (['unresolved', 'linked', 'new-candidate', 'excluded'].includes(filter) && i.status !== filter) return false
-      if (!query) return true
-      const c = r.candidate
-      return r.key.toLowerCase().includes(query) || r.originalId.toLowerCase().includes(query)
-        || c.simplified.some(s => s.includes(q.trim())) || c.traditional.some(s => s.includes(q.trim()))
-        || c.readings.some(p => p.toLowerCase().includes(query) || toneless(p).includes(tq.replace(/\s+/g, '')))
-        || c.meanings.some(m => m.toLowerCase().includes(query))
+      const score = searchScore(r, q)
+      scores.set(r.key, score)
+      return score > 0
     })
+    // Best matches first (exact characters / reading / ID), then the source's own order.
+    return q.trim() ? out.sort((a, b) => scores.get(b.key)! - scores.get(a.key)!) : out
   }, [data, info, q, filter, book, lesson])
 
   const counts = useMemo(() => {

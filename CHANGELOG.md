@@ -6,7 +6,8 @@
 - Each record is now reviewed in three steps with a rule-based recommendation and reason (`src/sources/recommend.ts`): same meaning? → which text? → which recording? 吗: “Same meaning; keep the game wording” (category label vs function). 个: “Same meaning; wording improvement suggested” (“general counting word”), pronunciation `ge` explained as the connected-speech form already taught.
 - New decisions: `choice: "edited"` (the reviewer's own wording, labelled as such, not as source text) and `distinctFrom` (“Different meaning”, remembered). Matching evidence moved under a fold and explained as same-word evidence only.
 - Fixes found while checking the whole deck: glosses of common words (“to be”) compared as empty; a trailing parenthesis is another form only when it abbreviates the other side or starts with “=” (忘（了） is 忘 / 忘了, not 了). Re-imported: no record hash changed.
-- Whole deck vs the game's 127 entries: 95 “same meaning, keep the game wording”, 33 “check the meaning” (e.g. 好 “OK” vs “good”, 菜 “cuisine” vs “vegetables / dish”), 1 wording suggestion (个), 1 different meaning (了 liǎo).
+- Follow-up (owner feedback on the live page): search for “ge” returned 405 records with 个 fourth, because English matched mid-word (“younger”, “age”); search is now ranked and matches English from word starts. 个: the source's “general measure word” is now the recommended wording over “general classifier” (textbook vs linguists' term), with “general counting word” kept as the plainer alternative.
+- Whole deck vs the game's 127 entries: 95 “same meaning, keep the game wording”, 33 “check the meaning” (e.g. 好 “OK” vs “good”, 菜 “cuisine” vs “vegetables / dish”), 1 wording suggestion (个: use the source's “general measure word”), 1 different meaning (了 liǎo).
 
 ## 2026-11-02 — New-entry drafts keep pronunciation metadata (branch ccr-b05f2c6d-289vu4)
 

@@ -57,6 +57,9 @@ function judgeWording(r: SourceRecord, w: Word): Recommendation['wording'] {
   const src = srcs.join('; ')
   if (srcs.some(s => norm(s) === norm(w.meaning))) return { action: 'keep-game', reason: 'Same wording.' }
   const plain = plainerLabel(w.meaning)
+  // "classifier" is the linguists' term; beginner textbooks (this one included) say "measure word".
+  const textbook = srcs.find(s => /\bmeasure word\b/i.test(s) && s.length <= LIMITS.meaning)
+  if (/\bclassifier\b/i.test(w.meaning) && textbook) return { action: 'use-source', suggestion: plain, reason: `“${textbook}” uses the term beginner textbooks use; “classifier” is the linguists' term for the same thing.${plain ? ` A plainer alternative: “${plain}”.` : ''} Keep the game's note and explanation.` }
   if (plain && srcs.some(s => GRAMMAR_TERM.test(s))) return { action: 'edit', suggestion: plain, reason: `Both labels use grammar terms (“${w.meaning}”, “${src}”). “${plain}” says what the word does, which helps a beginner. Keep the game's note and explanation.` }
   if (srcs.some(categoryOnly) && !categoryOnly(w.meaning)) return { action: 'keep-game', reason: `“${src}” only names a grammatical category; “${w.meaning}” tells the learner how to use the word.` }
   if (plain) return { action: 'edit', suggestion: plain, reason: `“${w.meaning}” is a grammar term; “${plain}” says what the word does.` }
