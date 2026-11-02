@@ -128,7 +128,7 @@ test('archive safety: unsafe member names are refused and output paths cannot es
   assert.ok(!existsSync(join(s.dir, '..', 'x.mp3')))
 })
 
-test('matching: spelling alone never confirms; readings and meanings are explained', () => {
+test('matching: spelling alone never confirms; readings and meanings are explained', async () => {
   const s = scratch()
   writeFileSync(s.pkg, buildApkg(NOTES, media()))
   const b = readAnkiPackage({ source: 'accc-anki', file: s.pkg, mediaDir: join(s.dir, 'm'), mediaPrefix: 'sources/accc-anki/media' })
@@ -140,6 +140,27 @@ test('matching: spelling alone never confirms; readings and meanings are explain
   const look = kan.find(x => x.entry === '看-look')!, guard = kan.find(x => x.entry === '看-guard')!
   assert.equal(look.reading, 'main'); assert.equal(guard.confidence, 'conflict', '看 kān is a different reading: same spelling is not a match')
   assert.ok(look.score > guard.score)
+  const { neutralToneOnly } = await import('../src/sources/match.ts')
+  assert.ok(neutralToneOnly('péngyǒu', 'péngyou') && !neutralToneOnly('xīngqí', 'xīngqī') && !neutralToneOnly('kān', 'kàn'))
   const shei = suggest(b.records[4], WORDS)
   assert.equal(shei[0]?.entry, '谁')
+})
+
+test('ACCC field formats: part/section IDs, JSON variants, abbreviations, optional parts, phrase commas', async () => {
+  const { parsePlacement, parseCandidate } = await import('../tools/sources/adapters/anki.ts')
+  assert.deepEqual(parsePlacement('B1L01-I-12'), { book: 1, lesson: 1, part: 'I', item: 12, label: 'B1 L01 I #12' })
+  assert.deepEqual(parsePlacement('B5L01-I-0-05'), { book: 5, lesson: 1, part: 'I', section: '0', item: 5, label: 'B5 L01 I-0 #5' })
+  assert.deepEqual(parsePlacement('B6L01-III-T-01'), { book: 6, lesson: 1, part: 'III', section: 'T', item: 1, label: 'B6 L01 III-T #1' })
+  const names = { id: 'ID', traditional: 'Traditional', simplified: 'Simplified', pinyin: 'Pinyin', pos: 'POS', meaning: 'Meaning', audio: 'Audio', variants: 'Variants' }
+  const c = (f: Record<string, string>) => { const issues: string[] = []; return { ...parseCandidate(f, names, issues), issues } }
+  const bus = c({ Simplified: '公共汽车（公车）', Pinyin: 'gōnggòng qìchē', Meaning: 'bus', Variants: '[{"Traditional": "公共汽車", "Simplified": "公共汽车", "Pinyin": "gōnggòng qìchē"}, {"Traditional": "公車", "Simplified": "公车", "Pinyin": "gōngchē"}]' })
+  assert.deepEqual(bus.simplified, ['公共汽车', '公车'], 'a trailing parenthesis is another form, not an optional part')
+  assert.deepEqual(bus.variants.map(v => [v.form, v.reading]), [['公共汽车', 'gōnggòng qìchē'], ['公车', 'gōngchē']])
+  const zhe = c({ Simplified: '这', Pinyin: 'zhè / zhèi', Meaning: 'this' })
+  assert.deepEqual(zhe.readings, ['zhè', 'zhèi'])
+  const jin = c({ Simplified: '(台)斤', Pinyin: '(Tái) jīn', Meaning: 'catty' })
+  assert.deepEqual(jin.simplified, ['斤', '台斤']); assert.deepEqual(jin.readings, ['jīn', 'Tái jīn'])
+  const idiom = c({ Simplified: '身体发肤，受之父母', Pinyin: 'shēntǐ fǎfū, shòuzhī fùmǔ', Meaning: 'x' })
+  assert.deepEqual(idiom.readings, ['shēntǐ fǎfū, shòuzhī fùmǔ'], 'a comma inside a phrase does not split readings')
+  assert.ok(c({ Simplified: '小明', Pinyin: 'Xiǎomíng', Meaning: 'Xiaoming, a nickname' }).flags.includes('name'))
 })

@@ -44,27 +44,55 @@ export function plain(html: string): string {
     .replace(/[ \t　]+/g, ' ').replace(/ *\n */g, '\n').trim()
 }
 
-/** "一點(兒)" -> ["一點", "一點兒"]; only Han-only optional parts are expanded. */
-function expandOptional(s: string, han: boolean): string[] {
-  const m = s.match(/^(.*?)[(（]([^()（）]+)[)）](.*)$/)
+/**
+ * Parenthesised parts, as this deck uses them:
+ *  - erhua, optional:          一點(兒) / yìdiǎn(r)            -> 一點, 一點兒 / yìdiǎn, yìdiǎnr
+ *  - at the start, optional:   (台)斤 / (Tái) jīn              -> 斤, 台斤 / jīn, Tái jīn
+ *  - at the end, another form: 公共汽車（公車）/ Shīdà (Shīfàn Dàxué) -> 公共汽車, 公車 (abbreviation or full form)
+ * Anything else is left as it is (and reported if it does not parse).
+ */
+function parenForms(s: string, han: boolean): string[] {
+  const m = s.match(/^(.*?)\s*[(（]([^()（）]+)[)）]\s*(.*)$/)
   if (!m) return [s]
-  const inner = m[2]
-  if (han ? !ONLY_HAN.test(inner) : !/^[a-zA-Zǜ-ͯÀ-ɏ]+$/u.test(inner.normalize('NFC'))) return [s]
-  return [`${m[1]}${m[3]}`, `${m[1]}${inner}${m[3]}`].flatMap(x => expandOptional(x, han))
+  const [, before, inner, after] = m
+  if (han ? !ONLY_HAN.test(inner) : !/^[\p{L}\p{M}' ]+$/u.test(inner)) return [s]
+  const tidy = (x: string) => x.replace(/\s+/g, ' ').trim()
+  const erhua = han ? inner === '兒' || inner === '儿' : inner === 'r'
+  if (!erhua && before.trim() && !after.trim()) return [...parenForms(before, han), ...parenForms(inner, han)]
+  const without = tidy(`${before} ${after}`)
+  const withIt = erhua ? tidy(`${before}${inner}${after}`) : tidy(s.replace(/[(（)）]/g, ' '))
+  return [...parenForms(without, han), ...parenForms(withIt, han)]
 }
 
-const splitList = (s: string) => s.split(/\s*(?:[\/／;；、,，|]|\n|\bor\b)\s*/).map(x => x.trim()).filter(Boolean)
+/** Alternatives are separated by "/" in this deck; commas belong to phrases ("shēntǐ fǎfū, shòuzhī fùmǔ"). */
+const splitAlternatives = (s: string) => s.split(/\s*[\/／]\s*|\n/).map(x => x.trim()).filter(Boolean)
+
+/** The Variants field: a JSON list of {Traditional, Simplified, Pinyin}, or free text in other decks. */
+function parseVariants(raw: string, issues: string[]): Candidate['variants'] {
+  if (!raw) return []
+  if (raw.startsWith('[')) {
+    try {
+      const list = JSON.parse(raw) as { Traditional?: string; Simplified?: string; Pinyin?: string }[]
+      return list.map(v => ({ raw: JSON.stringify(v), ...(v.Simplified ? { form: v.Simplified.replace(/\s+/g, '') } : {}), ...(v.Pinyin ? { reading: v.Pinyin.normalize('NFC') } : {}) }))
+    } catch { issues.push('parse: Variants looks like JSON but does not parse') }
+  }
+  return splitAlternatives(raw).map(r => {
+    const form = (r.match(/\p{Script=Han}+/gu) ?? []).join('') || undefined
+    const latin = r.replace(/[\p{Script=Han}()（）:：]/gu, ' ').trim().normalize('NFC')
+    return { raw: r, ...(form ? { form } : {}), ...(latin && splitSyllables(latin) ? { reading: latin } : {}) }
+  })
+}
 
 export function parseCandidate(f: Record<string, string>, names: typeof DEFAULT_FIELDS, issues: string[]): Candidate {
   const flags: string[] = []
   const simplifiedRaw = plain(f[names.simplified] ?? '')
   const traditionalRaw = plain(f[names.traditional] ?? '')
-  const forms = (raw: string) => splitList(raw).flatMap(x => expandOptional(x, true)).map(x => x.replace(/\s+/g, ''))
+  const forms = (raw: string) => splitAlternatives(raw).flatMap(x => parenForms(x, true)).map(x => x.replace(/\s+/g, ''))
   const simplified = [...new Set(forms(simplifiedRaw))]
   const traditional = [...new Set(forms(traditionalRaw))]
   if (!simplifiedRaw) issues.push('missing-field: Simplified is empty')
   const pinyinRaw = plain(f[names.pinyin] ?? '')
-  const readings = [...new Set(splitList(pinyinRaw).flatMap(x => expandOptional(x, false)).map(x => x.normalize('NFC')))]
+  const readings = [...new Set(splitAlternatives(pinyinRaw.normalize('NFC')).flatMap(x => parenForms(x, false)))]
   if (!pinyinRaw) issues.push('missing-field: Pinyin is empty')
   for (const r of readings) {
     const plainR = r.replace(/[.,!?。，！？]/g, '')
@@ -77,28 +105,30 @@ export function parseCandidate(f: Record<string, string>, names: typeof DEFAULT_
   if (!meaningRaw) issues.push('missing-field: Meaning is empty')
   const meanings = meaningRaw.split(/\s*(?:[;；]|\n)\s*/).map(x => x.trim()).filter(Boolean)
   const pos = plain(f[names.pos] ?? '').split(/[\s,\/;，、]+/).filter(Boolean)
-  const variantsRaw = plain(f[names.variants] ?? '')
-  const variants = variantsRaw ? splitList(variantsRaw).map(raw => {
-    const form = (raw.match(/\p{Script=Han}+/gu) ?? []).join('') || undefined
-    const latin = raw.replace(/[\p{Script=Han}()（）:：]/gu, ' ').trim()
-    const reading = latin && splitSyllables(latin.normalize('NFC')) ? latin.normalize('NFC') : undefined
-    return { raw, ...(form ? { form } : {}), ...(reading ? { reading } : {}) }
-  }) : []
+  const variants = parseVariants((f[names.variants] ?? '').trim(), issues)
   const main = simplified[0] ?? ''
   const n = [...main].length
   if (n > 8) flags.push('too-long')
   else if (n > 4) flags.push('long')
   if (main && !ONLY_HAN.test(main)) flags.push('pattern')
   if (/\s/.test(simplifiedRaw.replace(/\n/g, ''))) flags.push('phrase')
-  if (pos.some(p => /^(n\.?p|pn|name|proper|專名|专名)$/i.test(p))) flags.push('name')
+  // Proper nouns: the source capitalises their pinyin (Xiǎomíng, Táiwān); a hint for review, not a fact.
+  if (pos.some(p => /^(n\.?p|pn|name|proper|專名|专名)$/i.test(p)) || /^\p{Lu}/u.test(readings[0] ?? '')) flags.push('name')
   if (simplified.length > 1) flags.push('several-forms')
   if (readings.length > 1) flags.push('several-readings')
   if (main && !HAN.test(main)) issues.push('parse: Simplified has no Chinese characters')
   return { simplified, traditional, readings, pos, meanings, variants, flags }
 }
 
-/** "B1-L01-03", "B1L1_3", "1-01-03" -> book/lesson/item. */
+const ROMAN: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6 }
+/** "B1L01-I-12" (book 1, lesson 1, part I, item 12), "B5L01-I-0-05" / "B6L01-III-T-01" (part, section "0" / "T", item); also "B1-L01-03". */
 export function parsePlacement(id: string): Omit<Placement, 'order'> | null {
+  const d = id.match(/^B(\d+)L(\d+)-([IVX]+)-(?:(\d+|[A-Z])-)?(\d+)$/i)
+  if (d) {
+    const [book, lesson, item] = [Number(d[1]), Number(d[2]), Number(d[5])]
+    const part = d[3].toUpperCase(), section = d[4]?.toUpperCase()
+    return { book, lesson, part, ...(section !== undefined ? { section } : {}), item, label: `B${book} L${String(lesson).padStart(2, '0')} ${part}${section !== undefined ? `-${section}` : ''} #${item}` }
+  }
   const m = id.match(/B\s*(\d+)\D*?L\s*(\d+)\D*?(\d+)/i) ?? id.match(/^(\d+)[-_.](\d+)[-_.](\d+)/)
   if (!m) return null
   const [book, lesson, item] = [Number(m[1]), Number(m[2]), Number(m[3])]
@@ -267,8 +297,11 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
           content.push(rec)
         }
       }
-      // Stable order: book, lesson, item, then note id.
-      records.sort((a, b) => (a.placement?.book ?? 1e9) - (b.placement?.book ?? 1e9) || (a.placement?.lesson ?? 1e9) - (b.placement?.lesson ?? 1e9) || (a.placement?.item ?? 1e9) - (b.placement?.item ?? 1e9) || Number(a.native.noteId) - Number(b.native.noteId))
+      // Stable order: book, lesson, part (I, II, III), section (numbered sections such as "0" first, then the main list, then
+      // lettered sections such as "T"), item, note id.
+      const sec = (x?: string) => (x === undefined ? 1e6 : /^\d+$/.test(x) ? Number(x) : 2e6 + x.charCodeAt(0))
+      const pos = (r: SourceRecord) => [r.placement?.book ?? 1e9, r.placement?.lesson ?? 1e9, ROMAN[r.placement?.part ?? ''] ?? 0, sec(r.placement?.section), r.placement?.item ?? 1e9, Number(r.native.noteId)]
+      records.sort((a, b) => { const x = pos(a), y = pos(b); for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0 })
       records.forEach((r, i) => { if (r.placement) r.placement.order = i })
       const keys = new Set<string>()
       for (const r of records) { if (keys.has(r.key)) throw new Error(`internal: duplicate record key ${r.key}`); keys.add(r.key) }

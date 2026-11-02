@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "source": "accc-anki",
+  "adapter": "anki-apkg",
+  "snapshot": {
+    "id": "1291d1b67ae4",
+    "sha256": "1291d1b67ae4815cb97cba8fbaf8e50bc3edbbfe71d542357ef9f3da69c9e105",
+    "file": "A_Course_in_Contemporary_Chinese__B1-B6_Traditional.apkg",
+    "bytes": 135628989,
+    "retrieved": "2026-11-02",
+    "detail": {
+      "collection": "collection.anki21"
+    }
+  },
+  "counts": {
+    "zipMembers": 4965,
+    "notesIn_collection.anki2": 1,
+    "notesIn_collection.anki21": 4960,
+    "notes": 4960,
+    "cards": 4960,
+    "noteTypes": 1,
+    "mediaFiles": 4961,
+    "media_mp3": 4960,
+    "media_ttf": 1,
+    "duplicateIds": 0,
+    "records": 4960,
+    "recordsWithAudio": 4960,
+    "recordings": 4960,
+    "mediaExtracted": 4960,
+    "mediaUnreferenced": 1,
+    "withPlacement": 4960,
+    "flag_too-long": 8,
+    "flag_long": 59,
+    "flag_pattern": 37,
+    "flag_phrase": 7,
+    "flag_name": 260,
+    "flag_erhua": 2,
+    "flag_several-forms": 21,
+    "flag_several-readings": 22,
+    "recordsWithIssues": 7
+  }
+}

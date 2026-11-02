@@ -81,6 +81,11 @@ npm run source:import -- --source accc-anki --file ~/Downloads/A_Course_in_Conte
 - Checks that run on media: present in the map and archive, CRC, non-empty, sha256, audio signature (ID3/MPEG/Ogg/WAV).
   **Not checked:** that a clip says the record's text or reading. That needs a person (the review screen asks “What do you hear?”).
 - Phrases, names, patterns, erhua and long items are kept as valid records with `flags`; they need adaptation before play.
+- ACCC import (2026-11-02, snapshot `1291d1b67ae4…`): 4,960 records, 4,960 recordings, 0 duplicate IDs, all placed; see
+  `public/sources/accc-anki/report.md` for counts, the 10 parse notes and the one unimported font.
+- ACCC IDs: `B<book>L<lesson>-<part>-<item>`, sometimes with a section (`B5L01-I-0-05`, `B6L01-III-T-01`). Its pinyin follows
+  Taiwan Mandarin (full tones where the game teaches neutral tone: péngyǒu / péngyou); the matcher reports these as
+  neutral-tone-only differences, and such clips are not used for listening questions unless a person verifies the reading.
 - **Reimporting** the same package changes nothing (keys are stable, files deterministic, media named by hash). A changed or
   removed record appears in `diff.json`; every committed decision about it gets `reassess` set (never deleted or reset). The game
   ignores a recording flagged for reassessment until someone decides again.

@@ -3,6 +3,7 @@
 // enough for a strong suggestion; reading (with tones) and meaning must agree too.
 import type { Word } from '../content/types.ts'
 import { readingRelation, type ReadingRelation } from '../content/recordings.ts'
+import { splitSyllables } from '../content/pinyin.ts'
 import type { SourceRecord } from './types.ts'
 
 export type EvidenceLevel = 'match' | 'partial' | 'mismatch' | 'unknown'
@@ -32,6 +33,18 @@ export function meaningOverlap(a: string, b: string[]): { shared: string[]; leve
   const shared = [...left].filter(w => right.has(w))
   if (shared.length === 0) return { shared, level: 'mismatch' }
   return { shared, level: shared.length >= Math.min(left.size, right.size) ? 'match' : 'partial' }
+}
+
+/** Same syllables and the only differences are neutral tone on one side (péngyǒu vs péngyou): a regional or style difference. */
+export function neutralToneOnly(a: string, b: string): boolean {
+  const x = splitSyllables(a.normalize('NFC').toLowerCase()), y = splitSyllables(b.normalize('NFC').toLowerCase())
+  if (!x || !y || x.length !== y.length) return false
+  let diff = 0
+  for (let i = 0; i < x.length; i++) {
+    if (x[i].base !== y[i].base) return false
+    if (x[i].tone !== y[i].tone) { if (x[i].tone !== 0 && y[i].tone !== 0) return false; diff++ }
+  }
+  return diff > 0
 }
 
 /** Source parts of speech that correspond to the game's `kind`s (only where the correspondence is clear). */
@@ -64,7 +77,11 @@ export function suggest(record: SourceRecord, words: Word[]): Suggestion[] {
       different: `source reading ${readings.join(' / ')} differs from game ${w.pinyin}`,
       unknown: 'the source gives no usable reading'
     }
-    evidence.push({ aspect: 'reading', level: rd[rel], detail: readingText[rel] })
+    const neutralOnly = rel === 'tone-differs' && readings.some(r => [w.pinyin, ...w.variants].some(p => neutralToneOnly(r, p)))
+    evidence.push(neutralOnly
+      ? { aspect: 'reading', level: 'partial', detail: `source reading ${readings.join(' / ')} differs from game ${w.pinyin} only in neutral tone (a regional or style difference, e.g. Taiwan Mandarin keeps full tones)` }
+      : { aspect: 'reading', level: rd[rel], detail: readingText[rel] })
+    if (rel === 'tone-differs') warnings.push(`Tones differ from the game's ${w.pinyin}: a recording from this record is not used for any listening question unless a person verifies a reading the game accepts.`)
     if (rel === 'speech') warnings.push('A recording from this record must not be used for pinyin listening questions unless a person verifies it says the dictionary reading.')
 
     const m = meaningOverlap(w.meaning, record.candidate.meanings)
@@ -84,7 +101,9 @@ export function suggest(record: SourceRecord, words: Word[]): Suggestion[] {
     // Confidence from the combination; spelling alone never reaches "probable".
     let confidence: Confidence
     const readOk = rel === 'main' || rel === 'variant'
-    if (rel === 'different' || rel === 'tone-differs') confidence = 'conflict'
+    if (rel === 'different') confidence = 'conflict'
+    // Other tones: often a regional reading of the same word (星期 xīngqí / xīngqī), sometimes a different word (看 kān / kàn).
+    else if (rel === 'tone-differs') confidence = m.level === 'mismatch' || m.level === 'unknown' ? 'conflict' : neutralOnly ? 'probable' : 'weak'
     else if (readOk && exact && (m.level === 'match' || m.level === 'partial')) confidence = 'strong'
     else if ((readOk || rel === 'speech') && m.level !== 'mismatch') confidence = 'probable'
     else confidence = 'weak'
@@ -93,8 +112,15 @@ export function suggest(record: SourceRecord, words: Word[]): Suggestion[] {
     const score = { strong: 3, probable: 2, weak: 1, conflict: 0 }[confidence] + (exact ? 0.5 : 0) + (m.shared.length * 0.1)
     out.push({ entry: w.id, confidence, score, reading: rel, evidence, warnings })
   }
+  // When the source's reading is exactly one entry's reading, other entries with the same characters are a different reading.
+  const exactReading = out.find(x => x.reading === 'main' || x.reading === 'variant')
+  if (exactReading) for (const x of out) if (x !== exactReading && (x.reading === 'tone-differs' || x.reading === 'different') && WORD_HANZI(words, x.entry) === WORD_HANZI(words, exactReading.entry)) {
+    x.confidence = 'conflict'; x.score = 0
+    x.warnings.unshift(`The source reading is exactly that of ${exactReading.entry}; this is another reading of the same characters.`)
+  }
   return out.sort((a, b) => b.score - a.score)
 }
+const WORD_HANZI = (words: Word[], id: string) => words.find(w => w.id === id)?.hanzi
 
 /** A suggestion list is "conflicting" when the best one conflicts, or several are equally good. */
 export function isConflicting(s: Suggestion[]): boolean {

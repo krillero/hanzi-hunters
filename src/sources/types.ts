@@ -21,8 +21,12 @@ export type Placement = {
   course?: string
   book?: number
   lesson?: number
+  /** Part of the lesson's vocabulary list, as the source names it ("I", "II"). */
+  part?: string
+  /** Section inside a part, when the source has one (ACCC "B5L01-I-0-05" -> "0", "B6L01-III-T-01" -> "T"). */
+  section?: string
   item?: number
-  /** Human-readable position, e.g. "B1 L01 #3". */
+  /** Human-readable position, e.g. "B1 L01 I #3". */
   label?: string
   /** Global order within the source (0-based), for sorting. */
   order: number
