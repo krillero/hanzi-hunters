@@ -14,9 +14,10 @@ test('habit: sanitising never throws and drops junk', () => {
   }
   const h = sanitizeHabit({ daysPlayed: 3.9, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, badges: ['known-10', 'known-10', 'bogus'] })
   // Milestone badges were removed; the saved list is kept (unique strings) so older saves round-trip unchanged.
-  assert.deepEqual(h, { daysPlayed: 3, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, bosses: 0, bossesMet: [], seed: 0, tipsSeen: [], badges: ['known-10', 'bogus'] })
+  assert.deepEqual(h, { daysPlayed: 3, lastPlayed: '2026-10-31', warmupDay: '2026-10-30', correct: 12, bosses: 0, bossesMet: [], seed: 0, tipsSeen: [], notesSeen: [], badges: ['known-10', 'bogus'] })
   assert.deepEqual(sanitizeHabit({ bosses: 2.7, tipsSeen: ['石', '石', 5, '', 'toolongword', '好'] }).tipsSeen, ['石', '好'], 'tip list: unique short strings only')
   assert.equal(sanitizeHabit({ bosses: 2.7 }).bosses, 2)
+  assert.deepEqual(sanitizeHabit({ notesSeen: ['人', '人', 'cloze:le-1', 7, ''] }).notesSeen, ['人', 'cloze:le-1'], 'explanations seen: unique strings')
   assert.deepEqual(sanitizeHabit({ bossesMet: ['golem', 'golem', 7, 'Bad Name', 'wraith'] }).bossesMet, ['golem', 'wraith'], 'boss ids: unique lowercase words')
 })
 

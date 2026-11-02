@@ -18,7 +18,7 @@ import trialsJson from '../content/trials.json' with { type: 'json' }
 import { WORDS } from '../data.ts'
 import { TRICKSTER_LOW, TUNING, WARDEN_SEALS, WRAITH_ECHO_AT, bossIdFor, enemyStats, isBoss, resolveAnswer, shieldFor, type AnswerInput } from './rules.ts'
 import type { Mastery, Run } from './types.ts'
-import { GEN_PREFIX, noteTrials, toneTrials } from './trialgen.ts'
+import { GEN_PREFIX, noteTrials, toneTrials, truthTrials } from './trialgen.ts'
 import { freshFirst } from './recent.ts'
 
 type TrialBase = { id: string; requires: string[]; zh: string; en: string; answer: string; note: string }
@@ -30,7 +30,8 @@ export type ReplyTrial = TrialBase & { boss: 'wraith'; py: string; options: Repl
 /** `zh` has exactly one blank (＿); options are characters (or short words); `answer` is the one that completes the note. */
 export type NoteTrial = TrialBase & { boss: 'scribe'; py: string; options: string[] }
 /** `picture` (emoji) is what the statements describe; `en` describes it; options are statements, exactly one true. No `zh` line. */
-export type TruthTrial = Omit<TrialBase, 'zh'> & { boss: 'trickster'; zh?: undefined; picture: string; options: ReplyOption[] }
+/** The scene is either a `picture` (emoji, e.g. a man for 他/她) or `tiles`: a tray of nouns written as characters (generated). */
+export type TruthTrial = Omit<TrialBase, 'zh'> & { boss: 'trickster'; zh?: undefined; picture?: string; tiles?: string[]; options: ReplyOption[] }
 export type Trial = ToneTrial | ReplyTrial | NoteTrial | TruthTrial
 export const BLANK = '＿'
 export type TrialBoss = Trial['boss']
@@ -87,14 +88,17 @@ function trialErrors(t: Trial, wordIds: string[]): string[] {
   if (!isStr(t.id) || !(/^[a-z][a-z0-9-]*$/.test(t.id) || t.id.startsWith(GEN_PREFIX))) out.push('id must be lower-case letters, digits or dashes')
   if (!BOSSES.includes(t.boss)) out.push(`boss must be one of ${BOSSES.join(', ')}`)
   for (const f of ['en', 'answer', 'note'] as const) if (!isStr(t[f])) out.push(`${f} is required`)
-  if (t.boss === 'trickster') { if (!isStr(t.picture)) out.push('picture is required') }
+  if (t.boss === 'trickster') {
+    const tiles = Array.isArray(t.tiles) ? t.tiles : null
+    if (!isStr(t.picture) && !(tiles && tiles.length > 0 && tiles.every(isStr))) out.push('picture (or tiles) is required')
+  }
   else if (!isStr(t.zh)) out.push('zh is required')
   const requires = Array.isArray(t.requires) ? t.requires : []
   if (!requires.length) out.push('requires must list the words the trial uses')
   for (const id of requires) if (!wordIds.includes(id)) out.push(`requires "${id}", which is not in words.json`)
   // No untaught vocabulary: every character shown (the line and, for replies, every option) belongs to a required word.
   const known = new Set(requires.join(''))
-  const shown = [t.zh ?? '', ...((t.boss === 'wraith' || t.boss === 'trickster') && Array.isArray(t.options) ? (t.options as ReplyOption[]).map(o => o?.zh ?? '') : []), ...(t.boss === 'scribe' && Array.isArray(t.options) ? t.options : [])].join('')
+  const shown = [t.zh ?? '', ...(t.boss === 'trickster' && Array.isArray(t.tiles) ? t.tiles : []), ...((t.boss === 'wraith' || t.boss === 'trickster') && Array.isArray(t.options) ? (t.options as ReplyOption[]).map(o => o?.zh ?? '') : []), ...(t.boss === 'scribe' && Array.isArray(t.options) ? t.options : [])].join('')
   for (const ch of new Set(shown)) if (HANZI.test(ch) && !known.has(ch)) out.push(`"${ch}" is shown but no required word contains it`)
   const options = Array.isArray(t.options) ? t.options : []
   const keys = BOSSES.includes(t.boss) ? optionKeys({ ...t, options } as Trial) : []
@@ -134,7 +138,7 @@ export function trialFor(state: Pick<TrialState, 'id' | 'data'> | undefined): Tr
 }
 /** Generated trials for this boss from the player's words (golem: tones, scribe: torn notes), all passing the validator. */
 export function generatedTrials(boss: TrialBoss, mastery: Mastery, rng = Math.random): Trial[] {
-  const made: Trial[] = boss === 'golem' ? toneTrials(mastery, rng) : boss === 'scribe' ? noteTrials(mastery, rng) : []
+  const made: Trial[] = boss === 'golem' ? toneTrials(mastery, rng) : boss === 'scribe' ? noteTrials(mastery, rng) : boss === 'trickster' ? truthTrials(mastery, rng) : []
   return made.filter(t => trialErrors(t, WORD_IDS).length === 0)
 }
 

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { KIND_TEXT, choose, isCorrect, isSingle, optionPinyin, sceneById, type EncounterState } from './game/encounters'
+import { KIND_TEXT, choose, isCorrect, isSingle, optionPinyin, sceneFor, type EncounterState } from './game/encounters'
 import { pinyinFor, showPinyin, type LevelOf } from './game/support'
 
 /**
  * `level`: the player's word levels, which decide the help shown (game/support.ts). `onSubmit`: checks the choice (the first one
- * decides Blessing / Shaken, game/encounters.ts). `onHelp`: buys the help once (a hint from the next fight), then shows / hides it.
+ * may earn a Blessing, game/encounters.ts). `onHelp`: shows / hides the free translation (opening it means no Blessing).
  * `hintsLeft`: hints the next fight has (null = free, previews). `preview`: opened from /?encounter=… — nothing is saved.
  */
-export default function EncounterScreen({ state, level, onChange, onSubmit, onHelp, hintsLeft, onLeave, preview = false }: { state: EncounterState; level: LevelOf; onChange: (e: EncounterState) => void; onSubmit: () => void; onHelp: () => void; hintsLeft: number | null; onLeave: () => void; preview?: boolean }) {
-  const scene = sceneById(state.id)
+export default function EncounterScreen({ state, level, onChange, onSubmit, onHelp, onLeave, preview = false }: { state: EncounterState; level: LevelOf; onChange: (e: EncounterState) => void; onSubmit: () => void; onHelp: () => void; onLeave: () => void; preview?: boolean }) {
+  const scene = sceneFor(state)
   const box = useRef<HTMLDivElement>(null)
   const [error, setError] = useState('')
   useEffect(() => { const old = document.activeElement as HTMLElement | null; box.current?.focus(); return () => old?.focus() }, [])
@@ -19,6 +19,7 @@ export default function EncounterScreen({ state, level, onChange, onSubmit, onHe
   const help = state.help
   const linePinyin = help || (!!scene.zh && pinyinFor(scene.zh, scene.requires, level))
   // The help button only offers what is missing: when every pinyin is already shown, it is just the translation.
+  const blessed = state.first === 'right' && !state.helped
   const allPinyinShown = (!scene.zh || pinyinFor(scene.zh, scene.requires, level)) && scene.options.every(o => o.picture || showPinyin(level(o.id)))
   const onKey = (e: KeyboardEvent) => {
     e.stopPropagation()
@@ -33,14 +34,11 @@ export default function EncounterScreen({ state, level, onChange, onSubmit, onHe
   }
   const submit = () => {
     const right = isCorrect(scene, state.selected)
-    if (!right) setError(`${state.first ? '' : '🌧 Shaken: your next mistake on the next floor costs 2 hearts. '}Not quite. ${scene.note} Change your ${isSingle(scene.kind) ? 'choice' : 'selection'} and finish the scene.`)
+    if (!right) setError(`Not quite. ${scene.note} Change your ${isSingle(scene.kind) ? 'choice' : 'selection'} and finish the scene.`)
     onSubmit()
   }
-  // Help: bought once for a hint from the next fight (free in previews), then shown / hidden freely.
-  const helpLabel = allPinyinShown ? 'Translation' : 'Pinyin & translation'
-  const helpButton = state.paid || hintsLeft === null
-    ? <button className="bar-btn ghost" onClick={onHelp}>{state.help ? 'Hide help' : helpLabel}</button>
-    : <button className="bar-btn ghost" onClick={onHelp} disabled={hintsLeft < 1}>{helpLabel} · {hintsLeft < 1 ? 'no hints left' : '💡 1 hint from the next fight'}</button>
+  // The translation is free; opening it before answering means no Blessing for this scene.
+  const helpButton = <button className="bar-btn ghost" onClick={onHelp}>{state.help ? 'Hide translation' : allPinyinShown ? 'Translation' : 'Pinyin & translation'}</button>
   return <div className="modal-backdrop encounter-backdrop"><div ref={box} tabIndex={-1} className="modal encounter" role="dialog" aria-modal="true" aria-labelledby="enc-title" onKeyDown={onKey}>
     <div className="modal-head"><h2 id="enc-title">{text.title}</h2></div>
     <div className="enc-body">
@@ -51,19 +49,21 @@ export default function EncounterScreen({ state, level, onChange, onSubmit, onHe
         {scene.grammar && <p>{scene.grammar}</p>}
         {scene.closing && <><h3 lang="zh">{scene.closing.zh}</h3><p>{scene.closing.py} — {scene.closing.en}</p></>}
         <p>{scene.result}</p>
-        <strong className={`enc-omen ${state.first === 'wrong' ? 'bad' : 'good'}`}>{state.first === 'wrong' ? '🌧 Shaken: your next mistake on the next floor costs 2 hearts.' : '✨ Blessing: your next mistake on the next floor costs no heart.'}{preview ? ' (Preview · nothing saved)' : ''}</strong>
+        <strong className={`enc-omen ${blessed ? 'good' : 'plain'}`}>{blessed ? '✨ Blessing: your next mistake on the next floor costs no heart.' : state.first === 'wrong' ? 'Well fixed. Answer right on the first try for a Blessing.' : 'Well done. Answer without the translation for a Blessing.'}{preview ? ' (Preview · nothing saved)' : ''}</strong>
       </div> : <>
         {scene.situation && <p className="enc-situation">{scene.situation}</p>}
         {scene.zh && <div className="enc-request"><p lang="zh">{scene.zh}</p>{linePinyin && <p>{scene.py}</p>}{help && <p>{scene.en}</p>}</div>}
         {helpButton}
         <p>{text.instruction}</p>
-        {!state.first && <p className="enc-stakes">Right on the first try: ✨ your next mistake on the next floor costs no heart. Wrong: 🌧 it costs 2 hearts.</p>}
+        {!state.first && !state.helped && <p className="enc-stakes">Answer from the Chinese on the first try: ✨ your next mistake on the next floor costs no heart. The translation is free, but then there is no Blessing.</p>}
         <div className="enc-items">{state.order.map(id => {
           const item = scene.options.find(x => x.id === id)
           if (!item) return null
           return <button key={id} aria-pressed={state.selected.includes(id)} onClick={() => { setError(''); onChange(choose(state, scene, id)) }}>
             {item.picture
-              ? <><span className="enc-picture" role="img" aria-label={help ? item.en : `Picture ${state.order.indexOf(id) + 1}`}>{item.icon}</span>{help && <small>{item.en}</small>}</>
+              ? <>{item.tiles
+                  ? <span className="enc-tiles" lang="zh" role="img" aria-label={item.tiles.join(' ')}>{item.tiles.map((t, k) => <span key={k} className="tray-tile">{t}</span>)}</span>
+                  : <span className="enc-picture" role="img" aria-label={help ? item.en : `Picture ${state.order.indexOf(id) + 1}`}>{item.icon}</span>}{help && <small>{item.en}</small>}</>
               : <><b lang="zh">{id}</b>{(help || showPinyin(level(id))) && <small>{optionPinyin(id)}</small>}{help && <small>{item.en}</small>}</>}
           </button>
         })}</div>

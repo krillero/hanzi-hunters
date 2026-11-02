@@ -94,6 +94,13 @@ export type RawWord = {
   confusable?: string[]
   /** Ids of same-length entries that look similar (look-alike questions). */
   lookalike?: string[]
+  /**
+   * A concrete noun that reads naturally in generated sentences such as 这里有 X ("there is X here") and 我要 X ("I would like X"):
+   * food, objects, animals, places, people. Abstract words, body parts and literary single characters are left out.
+   */
+  noun?: boolean
+  /** The measure word used when counting this noun (an entry id, e.g. "个"): 三个人. Only set when it is the usual one. */
+  measure?: string
   source?: SourceRef[]
   review?: Review
 }

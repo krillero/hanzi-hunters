@@ -35,7 +35,9 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true,
+    "measure": "个"
   },
   {
     "hanzi": "大",
@@ -348,7 +350,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "火",
@@ -383,7 +386,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "山",
@@ -418,7 +422,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "木",
@@ -1414,7 +1419,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "车",
@@ -1445,7 +1451,8 @@
       "homophone",
       "lookalike"
     ],
-    "audio": "none"
+    "audio": "none",
+    "noun": true
   },
   {
     "hanzi": "马",
@@ -1480,7 +1487,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "鸟",
@@ -1511,7 +1519,8 @@
       "homophone",
       "lookalike"
     ],
-    "audio": "none"
+    "audio": "none",
+    "noun": true
   },
   {
     "hanzi": "鱼",
@@ -1546,7 +1555,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "米",
@@ -1582,7 +1592,8 @@
     ],
     "confusable": [
       "米饭"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "父",
@@ -1907,7 +1918,9 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true,
+    "measure": "个"
   },
   {
     "hanzi": "今天",
@@ -1973,7 +1986,9 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true,
+    "measure": "个"
   },
   {
     "hanzi": "喜欢",
@@ -2051,7 +2066,8 @@
     ],
     "confusable": [
       "母"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "谁",
@@ -2814,7 +2830,8 @@
     ],
     "confusable": [
       "父"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "哥哥",
@@ -2850,7 +2867,8 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "姐姐",
@@ -2886,7 +2904,8 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "弟弟",
@@ -2922,7 +2941,8 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "妹妹",
@@ -2958,7 +2978,8 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "孩子",
@@ -2997,7 +3018,9 @@
     ],
     "confusable": [
       "子"
-    ]
+    ],
+    "noun": true,
+    "measure": "个"
   },
   {
     "hanzi": "想",
@@ -3168,7 +3191,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "咖啡",
@@ -3201,7 +3225,8 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "米饭",
@@ -3237,7 +3262,8 @@
     ],
     "confusable": [
       "米"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "菜",
@@ -3272,7 +3298,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "来",
@@ -3932,7 +3959,9 @@
     ],
     "variants": [
       "xuéshēng"
-    ]
+    ],
+    "noun": true,
+    "measure": "个"
   },
   {
     "hanzi": "老师",
@@ -3965,7 +3994,9 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true,
+    "measure": "个"
   },
   {
     "hanzi": "学习",
@@ -4196,7 +4227,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "字",
@@ -4231,7 +4263,9 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true,
+    "measure": "个"
   },
   {
     "hanzi": "这",
@@ -4337,7 +4371,8 @@
       "listen2meaning",
       "meaning2pinyin",
       "listen2pinyin"
-    ]
+    ],
+    "noun": true
   },
   {
     "hanzi": "买",
@@ -4440,7 +4475,9 @@
       "pinyin",
       "listen",
       "listen2meaning"
-    ]
+    ],
+    "noun": true,
+    "measure": "个"
   },
   {
     "hanzi": "块",
