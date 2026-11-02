@@ -164,7 +164,7 @@ test('the Trickster offers its mirrors once below half HP; the validator needs a
   assert.equal(trialFor(t)!.boss, 'trickster')
   const her = trialsJson.trials.find(x => x.id === 'trickster-her')!
   const bad = (patch: object) => validateTrials({ trials: [{ ...her, ...patch }] }, wordIds).join()
-  assert.match(bad({ picture: '' }), /picture is required/)
+  assert.match(bad({ picture: '' }), /picture \(or tiles\) is required/)
   assert.match(bad({ options: [her.options[0], her.options[1], { zh: '这是你。' }] }), /needs zh, py and en/)
   assert.match(bad({ options: [her.options[0], her.options[1], { zh: '这是猫。', py: 'Zhè shì māo.', en: 'This is a cat.' }] }), /"猫" is shown/)
 })

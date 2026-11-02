@@ -1704,3 +1704,19 @@ button.wordbook-word{background:#192638;border-radius:7px;min-height:44px}
 .result-chosen .chosen-gloss{font-size:14px;color:#e9c6c4}
 .enc-stakes{font-size:13px;color:#b9c8d6;margin:-4px 0 8px}
 .enc-omen{display:block;margin-top:8px;padding:8px 10px;border-radius:8px}.enc-omen.good{background:#1f3324;color:#bfe8c8}.enc-omen.bad{background:#33201f;color:#f2c3bf}
+/* A tray of nouns written as characters (generated Trickster scenes, counting events): reading them is the task. */
+.trial-tray,.enc-tiles{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:4px 0}
+.tray-tile{display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;padding:2px 8px;border:1px solid #5b6f86;border-radius:6px;background:#1d2d40;color:#f1e7cf;font-size:22px;line-height:1}
+/* Tiles inside an option group: smaller, so groups of up to six two-character words stay compact at 360 px. */
+.enc-tiles{gap:4px}.enc-tiles .tray-tile{min-width:0;min-height:0;padding:3px 5px;font-size:16px}
+/* Camp: short-term learning progress. */
+.camp-course-unit{font-size:13px;color:#93a2b6;margin-top:-6px}
+.camp-familiar{margin:0;font-size:15px;color:#dbe6f0}.camp-familiar b{font-size:18px;color:#8ee0a9}.camp-familiar em{font-style:normal;color:#8ee0a9}.camp-familiar span{color:#93a2b6}
+.camp-next{margin:0;padding:8px 10px;border-radius:8px;background:#1d2d40;color:#f1e7cf;font-size:14px}
+.wordbook-summary{margin:0 0 8px;font-size:13px;color:#93a2b6}
+/* The recap never cuts an explanation short (the box scrolls instead); a folded one opens with Why? */
+.in-battle .answer-feedback .result-note{display:block;-webkit-line-clamp:unset;overflow:visible}
+.result-why{align-self:flex-start;min-height:36px;padding:4px 10px;border:1px solid #3c5068;border-radius:8px;background:transparent;color:#cfe0f0;font-size:14px}
+/* Toasts sit above dialogs (e.g. a warning raised while a new-word card is open). */
+.toast.toast-global{position:fixed;left:12px;right:12px;top:calc(max(6px,env(safe-area-inset-top)) + 56px);z-index:1100;margin:0 auto;max-width:600px;box-shadow:0 8px 30px #000a;pointer-events:none}
+.toast.toast-global button{pointer-events:auto;min-width:44px;min-height:44px}

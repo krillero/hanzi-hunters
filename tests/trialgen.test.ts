@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { toneTrials, noteTrials, EXAMPLE_LINES, GEN_PREFIX } from '../src/game/trialgen.ts'
+import { toneTrials, noteTrials, truthTrials, EXAMPLE_LINES, GEN_PREFIX } from '../src/game/trialgen.ts'
 import { validateTrials, offerTrial, trialFor, trialKey, cleanTrial, generatedTrials, TRIALS, optionKeys } from '../src/game/trials.ts'
 import { noteRecent, freshFirst, cleanRecent, RECENT_MAX } from '../src/game/recent.ts'
 import { offer, sceneKey } from '../src/game/encounters.ts'
@@ -113,4 +113,27 @@ test('encounter offers skip recently offered scenes and remember the new one', (
   assert.equal(first.recentEvents![0], sceneKey(id))
   const again = offer({ ...s, recentEvents: [sceneKey(id)] }, seeded(1))
   assert.notEqual(again.run!.encounter!.id, id)
+})
+
+test('generated Trickster trays: exactly one statement is true, read against the tiles, for every noun the course has', () => {
+  const NUM: Record<string, number> = { 三: 3, 四: 4, 五: 5, 六: 6 }
+  const truth = (zh: string, tiles: string[]) => {
+    let m = zh.match(/^这里有([三四五六])个(.+)。$/u)
+    if (m) return tiles.filter(t => t === m![2]).length === NUM[m[1]]
+    if ((m = zh.match(/^这里没有(.+)。$/u))) return !tiles.includes(m[1])
+    if ((m = zh.match(/^这里有(.+)。$/u))) return tiles.includes(m[1])
+    throw new Error(`unknown pattern: ${zh}`)
+  }
+  for (const seed of [1, 2, 3, 4]) {
+    const made = truthTrials(everything, seeded(seed))
+    assert.ok(made.length >= 10, `only ${made.length}`)
+    assert.deepEqual(validateTrials({ trials: made }, wordIds), [])
+    for (const t of made) {
+      const trues = t.options.filter(o => truth(o.zh, t.tiles!))
+      assert.equal(trues.length, 1, `${t.id}: ${t.options.map(o => o.zh).join(' / ')} vs ${t.tiles!.join('')}`)
+      assert.equal(trues[0].zh, t.answer)
+      assert.ok(t.tiles!.length <= 6 && t.tiles!.every(x => WORDS.find(w => w.hanzi === x)?.noun), 'tiles are nouns, at most six')
+    }
+  }
+  assert.equal(truthTrials(knowing(['茶', '水', '书'])).length, 0, 'needs 这里 / 有 / 没有')
 })

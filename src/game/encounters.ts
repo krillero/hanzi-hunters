@@ -3,11 +3,10 @@
 // offer/completion transitions and save sanitizers (how much help is shown: game/support.ts). Pure functions, no React.
 import type { Saved, Mastery } from './types.ts'
 import encountersJson from '../content/encounters.json' with { type: 'json' }
-import { GEAR, WORDS } from '../data.ts'
-import { playerStats } from './rules.ts'
-import { computeBonuses } from './upgrades.ts'
+import { WORDS } from '../data.ts'
 import { freshFirst, noteRecent } from './recent.ts'
 import { SESSION_LV } from './mastery.ts'
+import { SCENE_GEN_PREFIX, WORD_IDS, generatedScenes } from './scenegen.ts'
 
 /**
  * gather: pick every item the traveler asked for (several). reply: pick the one right thing to say.
@@ -16,7 +15,8 @@ import { SESSION_LV } from './mastery.ts'
 export type EncounterKind = 'gather' | 'reply' | 'point'
 /** A word option's id is its word id; a picture option (`picture: true`) has a free id and no Chinese label. */
 /** `icon`: picture options only (a word option never shows a picture: it would give the answer away). */
-export type EncounterOption = { id: string; en: string; icon?: string; picture?: boolean }
+/** `tiles`: a picture option drawn as a group of character tiles (generated counting scenes) instead of an emoji `icon`. */
+export type EncounterOption = { id: string; en: string; icon?: string; picture?: boolean; tiles?: string[] }
 export type Line = { zh: string; py: string; en: string }
 export type Scene = {
   id: string; kind: EncounterKind
@@ -42,7 +42,7 @@ export type Scene = {
 export const KIND_TEXT: Record<EncounterKind, { title: string; action: string; instruction: string }> = {
   gather: { title: 'A traveler’s request', action: 'Prepare', instruction: 'Choose what the traveler asked for, then tap Prepare. You can change your selection.' },
   reply: { title: 'A traveler on the road', action: 'Say it', instruction: 'Choose what to say, then tap Say it. You can change your choice.' },
-  point: { title: 'A traveler at the campfire', action: 'Point', instruction: 'Choose the picture that matches what the traveler says, then tap Point. You can change your choice.' },
+  point: { title: 'A traveler at the campfire', action: 'Point', instruction: 'Choose the one that matches what the traveler says, then tap Point. You can change your choice.' },
 }
 /** Kinds with exactly one right option (tapping another option replaces the choice). */
 export const isSingle = (kind: EncounterKind) => kind !== 'gather'
@@ -61,6 +61,7 @@ export function validateEncounters(raw: unknown, wordIds: string[]): string[] {
     const where = `encounters.json scene ${isStr(s?.id) ? s.id : `#${i + 1}`}`
     for (const e of sceneErrors(s, wordIds)) errors.push(`${where}: ${e}`)
     if (isStr(s?.id)) { if (seen.has(s.id)) errors.push(`${where}: duplicate id`); seen.add(s.id) }
+    if (isStr(s?.id) && s.id.startsWith(SCENE_GEN_PREFIX)) errors.push(`${where}: the "${SCENE_GEN_PREFIX}" prefix is reserved for generated scenes`)
   })
   return errors
 }
@@ -68,7 +69,8 @@ export function validateEncounters(raw: unknown, wordIds: string[]): string[] {
 function sceneErrors(s: Scene, wordIds: string[]): string[] {
   const out: string[] = []
   if (!s || typeof s !== 'object') return ['must be an object']
-  if (!isStr(s.id) || !/^[a-z][a-z0-9-]*$/.test(s.id)) out.push('id must be lower-case letters, digits or dashes')
+  // Authored ids are lower-case Latin; generated ones (gen-…) name their words.
+  if (!isStr(s.id) || !(/^[a-z][a-z0-9-]*$/.test(s.id) || s.id.startsWith(SCENE_GEN_PREFIX))) out.push('id must be lower-case letters, digits or dashes')
   if (!KINDS.includes(s.kind)) out.push(`kind must be one of ${KINDS.join(', ')}`)
   for (const f of ['speaker', 'note', 'result', 'resultIcon'] as const) if (!isStr(s[f])) out.push(`${f} is required`)
   const requires = Array.isArray(s.requires) ? s.requires : []
@@ -82,7 +84,8 @@ function sceneErrors(s: Scene, wordIds: string[]): string[] {
     if (o?.picture === true) { if (!isStr(o.id) || HANZI.test(o.id)) out.push(`picture option "${o?.id}" needs a plain id without Chinese`) }
     else if (!isStr(o?.id) || !requires.includes(o.id)) out.push(`option "${o?.id}" must be listed in requires (the player must know it)`)
     if (!isStr(o?.en)) out.push(`option "${o?.id}" needs en`)
-    if (o?.picture === true && !isStr(o.icon)) out.push(`picture option "${o?.id}" needs an icon`)
+    if (o?.picture === true && !isStr(o.icon) && !(Array.isArray(o.tiles) && o.tiles.length > 0 && o.tiles.every(isStr))) out.push(`picture option "${o?.id}" needs an icon or tiles`)
+    if (o?.picture !== true && o?.tiles !== undefined) out.push(`word option "${o?.id}" must not have tiles`)
     if (o?.picture !== true && o?.icon !== undefined) out.push(`word option "${o?.id}" must not have an icon (it would give the answer away)`)
   }
   // A point scene shows pictures only; the other kinds show words (the Chinese is what is being practised).
@@ -97,20 +100,29 @@ function sceneErrors(s: Scene, wordIds: string[]): string[] {
   if (s.closing && (!isStr(s.closing.zh) || !isStr(s.closing.py) || !isStr(s.closing.en))) out.push('closing needs zh, py and en')
   // No untaught vocabulary: every character of the Chinese lines must belong to a required word.
   const known = new Set(requires.join(''))
-  for (const text of [s.zh, s.closing?.zh]) for (const ch of text ?? '') if (HANZI.test(ch) && !known.has(ch)) out.push(`"${ch}" appears in a Chinese line but no required word contains it`)
+  for (const text of [s.zh, s.closing?.zh, ...options.flatMap(o => o?.tiles ?? [])]) for (const ch of text ?? '') if (HANZI.test(ch) && !known.has(ch)) out.push(`"${ch}" appears in a Chinese line but no required word contains it`)
   return out
 }
 
-export const SCENES: Scene[] = ((encountersJson as { scenes?: Scene[] }).scenes ?? []).filter(s => sceneErrors(s, WORDS.map(w => w.id)).length === 0)
+export const SCENES: Scene[] = ((encountersJson as { scenes?: Scene[] }).scenes ?? []).filter(s => !s.id?.startsWith(SCENE_GEN_PREFIX) && sceneErrors(s, WORDS.map(w => w.id)).length === 0)
 export const sceneById = (id: string | undefined) => SCENES.find(s => s.id === id)
+/** The scene a state refers to: an authored one by id, or the generated one stored in the state (re-validated). */
+export function sceneFor(state: Pick<EncounterState, 'id' | 'data'> | undefined): Scene | undefined {
+  if (!state) return undefined
+  const d = state.data
+  if (d && typeof d === 'object' && d.id === state.id && state.id.startsWith(SCENE_GEN_PREFIX)) return sceneErrors(d, WORD_IDS).length ? undefined : d
+  return sceneById(state.id)
+}
+/** Generated scenes from the player's Familiar words (scenegen.ts), each passing the validator. */
+export const validGeneratedScenes = (m: Mastery, rng = Math.random) => generatedScenes(m, rng).filter(sc => sceneErrors(sc, WORD_IDS).length === 0)
 /** Pinyin of an option comes from words.json, the single source of tone marks. */
 export const optionPinyin = (id: string) => WORDS.find(w => w.id === id)?.pinyin ?? ''
 export const isCorrect = (scene: Scene, selected: string[]) => selected.length === scene.answer.length && scene.answer.every(a => selected.includes(a))
 
 export type History = Record<string, { dates: string[] }>
 /** How much help is shown follows the player's word levels (game/support.ts), not anything stored here. */
-/** `paid`: the help was bought (a hint from the next fight); `help`: it is shown. `first`: how the first choice went (decides the omen). */
-export type EncounterState = { id: string; status: 'active' | 'complete' | 'closed'; selected: string[]; order: string[]; help: boolean; paid?: boolean; first?: 'right' | 'wrong' }
+/** `help`: the free translation is shown; `helped`: it was opened before answering (no Blessing). `first`: how the first choice went. */
+export type EncounterState = { data?: Scene; id: string; status: 'active' | 'complete' | 'closed'; selected: string[]; order: string[]; help: boolean; helped?: boolean; first?: 'right' | 'wrong' }
 /** Key of a scene in Saved.recentEvents. */
 export const sceneKey = (id: string) => `scene:${id}`
 export const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -123,41 +135,37 @@ export function offer(s: Saved, random = Math.random): Saved {
   const r = s.run
   if (!r || r.encounter || r.phase !== 'victory' || r.kill !== 3 || r.floor >= 5) return s
   const days = (id: string) => s.encounterHistory?.[id]?.dates.length ?? 0
-  // Recently offered scenes wait while others are available; then the one completed on the fewest days (file order breaks ties).
-  const scene = freshFirst(SCENES.filter(x => eligible(s.mastery, x)), x => sceneKey(x.id), s.recentEvents).sort((a, b) => days(a.id) - days(b.id))[0]
-  if (!scene) return s
+  // Authored and generated scenes are drawn half and half (a source with something not recently offered is preferred). Authored:
+  // recently offered ones wait, then the one completed on the fewest days (file order breaks ties). Generated: a random fresh one.
+  const isNew = (x: Scene) => !(s.recentEvents ?? []).includes(sceneKey(x.id))
+  const sources = [SCENES.filter(x => eligible(s.mastery, x)), validGeneratedScenes(s.mastery, random)].filter(l => l.length)
+  const from = sources.some(l => l.some(isNew)) ? sources.filter(l => l.some(isNew)) : sources
+  if (!from.length) return s
+  const pool = freshFirst(from[Math.min(from.length - 1, Math.floor(random() * from.length))], x => sceneKey(x.id), s.recentEvents)
+  const scene = pool[0].id.startsWith(SCENE_GEN_PREFIX) ? pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))] : [...pool].sort((a, b) => days(a.id) - days(b.id))[0]
   const order = scene.options.map(x => x.id)
   for (let i = order.length - 1; i > 0; i--) { const j = Math.max(0, Math.min(i, Math.floor(random() * (i + 1)))); [order[i], order[j]] = [order[j], order[i]] }
-  return { ...s, recentEvents: noteRecent(s.recentEvents, sceneKey(scene.id)), run: { ...r, encounter: { id: scene.id, status: 'active', selected: [], order, help: false } } }
+  return { ...s, recentEvents: noteRecent(s.recentEvents, sceneKey(scene.id)), run: { ...r, encounter: { id: scene.id, status: 'active', selected: [], order, help: false, ...(scene.id.startsWith(SCENE_GEN_PREFIX) ? { data: scene } : {}) } } }
 }
 
 /**
- * Submit the current choice. The FIRST submission decides the omen for the next floor (the scene is offered after a floor boss):
- * right first time = Blessing (the next mistake on that floor costs no heart); wrong first = Shaken (the next mistake on that floor
- * cannot be saved by a calm charge or a second chance). A wrong choice keeps the scene open to fix (it still teaches); fixing it
- * completes the scene without a Blessing. Completion records today's date. Anything else (or a repeat) is a no-op.
+ * Submit the current choice. Events are welcoming: a wrong choice explains the answer and can be fixed, at no cost. A right choice
+ * on the FIRST try made from the Chinese (the free translation never opened, `helped`) earns a Blessing for the next floor (the
+ * scene is offered after a floor boss): the next mistake on that floor costs no heart. Completion records today's date. Anything
+ * else (or a repeat) is a no-op.
  */
 export function submitEncounter(s: Saved, date: string): Saved {
-  const e = s.run?.encounter, scene = sceneById(e?.id)
+  const e = s.run?.encounter, scene = sceneFor(e)
   if (!s.run || !e || !scene || e.status !== 'active') return s
-  const floor = s.run.floor + 1
-  if (!isCorrect(scene, e.selected)) {
-    if (e.first) return s
-    return { ...s, run: { ...s.run, omen: { kind: 'shaken', floor }, encounter: { ...e, first: 'wrong' } } }
-  }
+  if (!isCorrect(scene, e.selected)) return e.first ? s : { ...s, run: { ...s.run, encounter: { ...e, first: 'wrong' } } }
   const dates = [...new Set([...(s.encounterHistory?.[e.id]?.dates ?? []), date])].sort().slice(-30)
-  const first = e.first ?? 'right'
-  return { ...s, encounterHistory: { ...s.encounterHistory, [e.id]: { dates } }, run: { ...s.run, ...(first === 'right' ? { omen: { kind: 'blessing' as const, floor } } : {}), encounter: { ...e, status: 'complete', first } } }
+  const first = e.first ?? 'right', blessed = first === 'right' && !e.helped
+  return { ...s, encounterHistory: { ...s.encounterHistory, [e.id]: { dates } }, run: { ...s.run, ...(blessed ? { omen: { kind: 'blessing' as const, floor: s.run.floor + 1 } } : {}), encounter: { ...e, status: 'complete', first } } }
 }
 
-/** Hints the next fight would start with (help costs one of them). */
-export const helpHintsLeft = (s: Saved) => (s.run ? playerStats(s.run, computeBonuses(s.meta.upgrades), GEAR).hints - (s.run.hintDebt ?? 0) : 0)
-
-/** Buy the help once: one hint from the next fight. Showing / hiding it afterwards is free. No hint left: no-op. */
-export function payHelp(s: Saved): Saved {
-  const e = s.run?.encounter
-  if (!s.run || !e || e.status !== 'active' || e.paid || helpHintsLeft(s) < 1) return s
-  return { ...s, run: { ...s.run, hintDebt: (s.run.hintDebt ?? 0) + 1, encounter: { ...e, paid: true, help: true } } }
+/** The free translation: show / hide it. Opening it once (before answering) means no Blessing for this scene. */
+export function toggleHelp(e: EncounterState): EncounterState {
+  return { ...e, help: !e.help, ...(!e.help && e.status === 'active' ? { helped: true } : {}) }
 }
 
 /** Toggle an option: reply/point scenes keep one choice, a gather scene any number. */
@@ -179,7 +187,7 @@ export function cleanHistory(raw: unknown): History {
 
 export function cleanEncounter(raw: unknown): EncounterState | undefined {
   if (!raw || typeof raw !== 'object') return undefined
-  const e = raw as EncounterState, scene = sceneById(e.id)
+  const e = raw as EncounterState, scene = sceneFor(e)
   // A scene that no longer exists: keep the expedition's encounter used up, but never show it.
   if (!scene) return { id: typeof e.id === 'string' ? e.id : '', status: 'closed', selected: [], order: [], help: false }
   const ids = scene.options.map(x => x.id)
@@ -187,8 +195,9 @@ export function cleanEncounter(raw: unknown): EncounterState | undefined {
   const order = Array.isArray(e.order) && e.order.length === ids.length && new Set(e.order).size === ids.length && e.order.every(x => ids.includes(x)) ? e.order : ids
   // 'offer' (an intro step, removed once encounters became mandatory) opens straight into the scene.
   const status = (e.status as string) === 'offer' ? 'active' : ['active', 'complete', 'closed'].includes(e.status) ? e.status : 'closed'
-  const extra = { ...(e.paid === true ? { paid: true } : {}), ...(e.first === 'right' || e.first === 'wrong' ? { first: e.first } : {}) }
-  return { ...extra, id: e.id, status, selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
+  // An old save's bought help (`paid`) counts as opened.
+  const extra = { ...(e.helped === true || (e as { paid?: boolean }).paid === true ? { helped: true } : {}), ...(e.first === 'right' || e.first === 'wrong' ? { first: e.first } : {}) }
+  return { ...extra, ...(scene.id.startsWith(SCENE_GEN_PREFIX) ? { data: scene } : {}), id: e.id, status, selected: isSingle(scene.kind) ? selected.slice(0, 1) : selected, order, help: e.help === true }
 }
 
 /** Preview aid for /?encounter=<scene id> (the word level to show it at comes from &level=, see App): a ready-to-play scene. */

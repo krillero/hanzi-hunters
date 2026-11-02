@@ -176,141 +176,6 @@
       "resultIcon": "🔥"
     },
     {
-      "id": "count-three",
-      "kind": "point",
-      "requires": [
-        "这里",
-        "有",
-        "个",
-        "人",
-        "三",
-        "四",
-        "五"
-      ],
-      "speaker": "🧙",
-      "situation": "The traveler is looking for their group at the camp.",
-      "zh": "这里有三个人。",
-      "py": "Zhèlǐ yǒu sān ge rén.",
-      "en": "There are three people here.",
-      "grammar": "这里有… means “here there is / there are…”. 个 goes between a number and the noun: 三个人, three people.",
-      "options": [
-        {
-          "id": "three",
-          "en": "three people",
-          "icon": "🧑🧑🧑",
-          "picture": true
-        },
-        {
-          "id": "four",
-          "en": "four people",
-          "icon": "🧑🧑🧑🧑",
-          "picture": true
-        },
-        {
-          "id": "five",
-          "en": "five people",
-          "icon": "🧑🧑🧑🧑🧑",
-          "picture": true
-        }
-      ],
-      "answer": [
-        "three"
-      ],
-      "note": "三个人 means three people. 三 is three, 四 is four and 五 is five. 个 is the counting word for people.",
-      "result": "You lead the traveler to their group.",
-      "resultIcon": "🔥"
-    },
-    {
-      "id": "count-four",
-      "kind": "point",
-      "requires": [
-        "这里",
-        "有",
-        "个",
-        "人",
-        "三",
-        "四",
-        "五"
-      ],
-      "speaker": "🧙",
-      "situation": "The traveler is looking for their group at the camp.",
-      "zh": "这里有四个人。",
-      "py": "Zhèlǐ yǒu sì ge rén.",
-      "en": "There are four people here.",
-      "grammar": "这里有… means “here there is / there are…”. 个 goes between a number and the noun: 三个人, three people.",
-      "options": [
-        {
-          "id": "three",
-          "en": "three people",
-          "icon": "🧑🧑🧑",
-          "picture": true
-        },
-        {
-          "id": "four",
-          "en": "four people",
-          "icon": "🧑🧑🧑🧑",
-          "picture": true
-        },
-        {
-          "id": "five",
-          "en": "five people",
-          "icon": "🧑🧑🧑🧑🧑",
-          "picture": true
-        }
-      ],
-      "answer": [
-        "four"
-      ],
-      "note": "四个人 means four people. 三 is three, 四 is four and 五 is five. 个 is the counting word for people.",
-      "result": "You lead the traveler to their group.",
-      "resultIcon": "🔥"
-    },
-    {
-      "id": "count-five",
-      "kind": "point",
-      "requires": [
-        "这里",
-        "有",
-        "个",
-        "人",
-        "三",
-        "四",
-        "五"
-      ],
-      "speaker": "🧙",
-      "situation": "The traveler is looking for their group at the camp.",
-      "zh": "这里有五个人。",
-      "py": "Zhèlǐ yǒu wǔ ge rén.",
-      "en": "There are five people here.",
-      "grammar": "这里有… means “here there is / there are…”. 个 goes between a number and the noun: 三个人, three people.",
-      "options": [
-        {
-          "id": "three",
-          "en": "three people",
-          "icon": "🧑🧑🧑",
-          "picture": true
-        },
-        {
-          "id": "four",
-          "en": "four people",
-          "icon": "🧑🧑🧑🧑",
-          "picture": true
-        },
-        {
-          "id": "five",
-          "en": "five people",
-          "icon": "🧑🧑🧑🧑🧑",
-          "picture": true
-        }
-      ],
-      "answer": [
-        "five"
-      ],
-      "note": "五个人 means five people. 三 is three, 四 is four and 五 is five. 个 is the counting word for people.",
-      "result": "You lead the traveler to their group.",
-      "resultIcon": "🔥"
-    },
-    {
       "id": "tea",
       "kind": "gather",
       "requires": [
@@ -330,7 +195,7 @@
       "options": [
         {
           "id": "茶",
-          "en": "tea leaves"
+          "en": "tea"
         },
         {
           "id": "水",
@@ -346,11 +211,10 @@
         }
       ],
       "answer": [
-        "茶",
-        "水"
+        "茶"
       ],
-      "note": "茶 names tea leaves here. Water and tea leaves make the drink.",
-      "result": "You prepare tea with the leaves and water.",
+      "note": "我要茶 asks for tea only: bring the 茶. 水 is water, 米饭 is cooked rice and 菜 is dishes.",
+      "result": "You bring the traveler a cup of tea.",
       "resultIcon": "🍵",
       "closing": {
         "zh": "谢谢！",
@@ -378,7 +242,7 @@
       "options": [
         {
           "id": "茶",
-          "en": "tea leaves"
+          "en": "tea"
         },
         {
           "id": "水",

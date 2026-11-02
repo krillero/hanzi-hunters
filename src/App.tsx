@@ -5,7 +5,7 @@ import EncounterScreen from './EncounterScreen'
 import TrialScreen from './TrialScreen'
 import { noteRecent } from './game/recent'
 import { TRIALS, closeTrial, offerTrial, optionKeys, resolveTrial, trialById, trialFor, trialKey, type TrialState } from './game/trials'
-import { offer, submitEncounter, payHelp, helpHintsLeft, isCorrect, sceneById, localDate, previewEncounter, type EncounterState } from './game/encounters'
+import { offer, submitEncounter, toggleHelp, isCorrect, sceneFor, localDate, previewEncounter, type EncounterState } from './game/encounters'
 import { fixedLevel, levelOf } from './game/support'
 import CampScreen from './CampScreen'
 import ExplainModal from './ExplainModal'
@@ -26,7 +26,7 @@ import { parseBackup, serializeBackup } from './game/backup'
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
 import { audioReliable, homographsOf } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
-import { LEVEL_NAMES, MAX_LV, daysUntilDue, dueCount, isDue, masteredCount, seenCount, updateMastery, waitDays } from './game/mastery'
+import { LEVEL_NAMES, MAX_LV, SESSION_LV, daysUntilDue, dueCount, isDue, masteredCount, seenCount, updateMastery, waitDays } from './game/mastery'
 import { DEFAULT_LIMITS, DUE_PER_FIGHT, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, tryBuildQuestion, isCharacterQuestion, isToneQuestion, pickSealCard, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
@@ -43,7 +43,9 @@ import { buyUpgrade, computeBonuses, nodeById, UPGRADES } from './game/upgrades'
 type Card = { word: Word; question: Question; sealFallback?: boolean }
 type CombatExchange = { damage: number; heartsLost: number; saved: 'practice' | 'second' | 'calm' | 'blessing' | null; heartsRestored: number; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
 type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal' | 'shield' | 'hurt'; text: string }
-type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; masteredNow: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange }
+type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; masteredNow: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange
+  /** Show the explanation open: always after a mistake, and the first time after a right answer (later ones fold behind Why?). */
+  noteOpen: boolean }
 
 /** Streak badge in the arena: pips until the combo bonus starts (needs the Combo Strikes upgrade), a flame while it is active. */
 function ComboBadge({ streak, bonusPct }: { streak: number; bonusPct: number }) {
@@ -162,6 +164,7 @@ export default function App() {
   const [card, setCard] = useState<Card | null>(null)
   const [eliminated, setEliminated] = useState<string[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [noteShown, setNoteShown] = useState(true)   // a folded explanation opened with Why?
   const [toast, setToast] = useState('')
   const [campMsg, setCampMsg] = useState('')
   const [showBag, setShowBag] = useState(false)
@@ -369,10 +372,17 @@ export default function App() {
   }, [enemyKey])
 
   // ---- audio ----------------------------------------------------------------------------
+  // No Mandarin voice: only concluded once the browser has listed its voices (the list is empty for a moment after loading).
+  const noMandarinVoice = () => { try { return window.speechSynthesis.getVoices().length > 0 && !hasChineseVoice() } catch { return false } }
   const speak = (hanzi: string, force = false) => {
     if (settings.muted && !force) return
     if (!('speechSynthesis' in window)) { setToast('Speech playback is not supported in this browser.'); return }
-    if (!hasChineseVoice()) setToast('No Mandarin voice found on this device. Install a Chinese (Simplified) text-to-speech voice in your system settings.')
+    if (noMandarinVoice()) {
+      // The full warning once; then spoken words are turned off (listening questions stop too). A later speaker tap gets a short note.
+      if (!settings.voiceWarned) { setToast('No Mandarin voice found on this device, so spoken words are now off. Install a Chinese (Simplified) text-to-speech voice in your system settings, then turn them on again in ⚙ Settings.'); setSettings(st => ({ ...st, muted: true, voiceWarned: true })) }
+      else if (force) setToast('No Mandarin voice on this device.')
+      return
+    }
     try {
       window.speechSynthesis.cancel()
       const u = new SpeechSynthesisUtterance(hanzi)
@@ -384,7 +394,7 @@ export default function App() {
     } catch { /* speech is optional: never let it break the game */ }
   }
   // The speaker button: when muted, tapping it turns sound back on (and plays the text).
-  const pressSpeaker = (text: string) => { if (settings.muted) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
+  const pressSpeaker = (text: string) => { if (settings.muted && !noMandarinVoice()) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
   // Words are only read aloud when the audio can be trusted to match the displayed word and reading (see audioReliable in content/entries.ts).
   // Only once the question is actually visible: a card prepared behind the new-word card, the boss intro, a loot card or the floor
   // summary stays silent (it is often replaced before it is shown), and each card is read at most once.
@@ -425,7 +435,7 @@ export default function App() {
     if (isCorrect) sceneRef.current?.playHit('monster')
     if (r.shieldBroken && r.run.shield === 0) setCaption({ side: 'monster', kind: 'shield', text: foe?.boss === 'scribe' ? '💥 SEALS BROKEN' : '💥 SHIELD DOWN' })
     if (r.outcome === 'victory') sceneRef.current?.hideMonster(!!foe?.boss)
-    else if (r.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: r.shakenHit ? '🌧 Shaken · −2 ♥' : '−1 ♥' }) }
+    else if (r.heartsLost > 0) { sceneRef.current?.playHit('hero'); setCaption({ side: 'hero', kind: 'hurt', text: '−1 ♥' }) }
     else if (r.savedByBlessing) setCaption({ side: 'hero', kind: 'block', text: '✨ Blessing · heart saved' })
     else if (r.savedByCalm) setCaption({ side: 'hero', kind: 'block', text: '👻 Calmed Wraith · heart saved' })
     else if (r.savedBySecondChance) setCaption({ side: 'hero', kind: 'block', text: 'Second chance · heart saved' })
@@ -496,10 +506,17 @@ export default function App() {
           : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : wait !== null ? `${LEVEL_NAMES[after]} — next level after a check ${days(wait)}` : 'One more correct in a row to level up') : 'Review this one — it will come back'
     const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedByBlessing ? 'blessing' : r.savedByCalm ? 'calm' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
     if (plan) setReveal({ chosen: option, plan, exchange })
-    else setFeedback({
-      correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, masteredNow, lv: after, chosen: option, answer: question.answer,
-      title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster', exchange
-    })
+    else {
+      // A right answer shows a word's explanation in full once; afterwards it folds behind "Why?" (no repeated reading).
+      const noteKey = question.cloze ? `cloze:${question.cloze.itemId}` : word.id
+      const noteOpen = !isCorrect || !save.habit.notesSeen.includes(noteKey)
+      if (isCorrect && noteOpen) patch(s => (s.habit.notesSeen.includes(noteKey) ? s : { ...s, habit: { ...s.habit, notesSeen: [...s.habit.notesSeen, noteKey].slice(-1000) } }))
+      setNoteShown(noteOpen)
+      setFeedback({
+        correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, masteredNow, lv: after, chosen: option, answer: question.answer,
+        title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster', exchange, noteOpen
+      })
+    }
     if (r.outcome === 'victory') {
       // Rewards sit in the fixed arena strip (no layout change); the counters tick up.
       const rw = r.run.reward
@@ -666,7 +683,9 @@ export default function App() {
   // Wordbook (battle screen and camp): due words first, then by level. During a question its own word is hidden (no peeking).
   const wordbookToday = localDay()
   const hiddenWord = run && run.phase === 'fighting' && !feedback ? card?.word.id : undefined
-  const wordbook = showWords ? <div className="drawer wordbook-drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><div className="wordbook-grid">
+  // Long-term mastery lives here: how many words have held up over days.
+  const longTerm = [3, 4, 5].map(lv => `${Object.values(save.mastery).filter(e => e.lv === lv).length} ${LEVEL_NAMES[lv]}`).join(' · ')
+  const wordbook = showWords ? <div className="drawer wordbook-drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><p className="wordbook-summary">{longTerm}</p><div className="wordbook-grid">
     {WORDS.filter(w => save.mastery[w.id] && w.id !== hiddenWord)
       .map(w => ({ w, e: save.mastery[w.id], due: isDue(save.mastery[w.id], wordbookToday) }))
       .sort((a, b) => Number(b.due) - Number(a.due) || b.e.lv - a.e.lv)
@@ -682,6 +701,9 @@ export default function App() {
     {seenCount(save.mastery) === 0 && <p className="hint-text">Words you meet in battle appear here with their mastery level.</p>}
   </div></div> : null
   const menu = menuOpen ? <MenuSheet settings={settings} onChange={setSettings} hasVoice={hasVoice} fullscreen={fs} outdated={isOutdated(latestBuild)} onUpdate={refreshApp} onExport={exportProgress} onImport={importProgress} onReset={() => { setMenuOpen(false); resetAll() }} progress={{ wins: save.meta.wins, bestFloor: save.meta.bestFloor, runs: save.meta.runs, known: Object.keys(save.mastery).length, mastered: masteredCount(save.mastery) }} onClose={() => setMenuOpen(false)} tools={run ? { words: seenCount(save.mastery), onGear: () => { setMenuOpen(false); toggleGear() }, onWords: () => { setMenuOpen(false); setShowWords(true); setShowBag(false) }, onReturn: run.phase !== 'defeat' ? returnToCamp : undefined } : { words: seenCount(save.mastery), onWords: () => { setMenuOpen(false); setShowWords(true) } }} /> : null
+  // Toasts render on every screen (camp, introduction cards, battle) and above dialogs: a warning raised while a new-word card is
+  // open (the missing-voice one) must not be lost.
+  const toastEl = toast ? <div className="toast toast-global" role="status"><span>{toast}</span><button onClick={() => setToast('')} aria-label="Dismiss">×</button></div> : null
   const topbar = (
     <header className="topbar">
       <div className="brand"><span className="brand-mark">HH</span><div><strong>HANZI HUNTERS</strong><small>THE FIRST DESCENT</small></div></div>
@@ -707,8 +729,8 @@ export default function App() {
     return (
       <main className="app-shell in-camp">
         {topbar}
-        <EncounterScreen state={encounterPreview} level={previewLevel} onChange={setEncounterPreview} hintsLeft={null} onHelp={() => setEncounterPreview(e => e && { ...e, help: !e.help })}
-          onSubmit={() => setEncounterPreview(e => { const sc = e && sceneById(e.id); if (!e || !sc || e.status !== 'active') return e; return isCorrect(sc, e.selected) ? { ...e, status: 'complete', first: e.first ?? 'right' } : { ...e, first: e.first ?? 'wrong' } })} onLeave={closePreview} preview />
+        <EncounterScreen state={encounterPreview} level={previewLevel} onChange={setEncounterPreview} onHelp={() => setEncounterPreview(e => e && toggleHelp(e))}
+          onSubmit={() => setEncounterPreview(e => { const sc = e && sceneFor(e); if (!e || !sc || e.status !== 'active') return e; return isCorrect(sc, e.selected) ? { ...e, status: 'complete', first: e.first ?? 'right' } : { ...e, first: e.first ?? 'wrong' } })} onLeave={closePreview} preview />
       </main>
     )
   }
@@ -721,6 +743,7 @@ export default function App() {
         {wordbook}
       {menu}
       {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+        {toastEl}
       </main>
     )
   }
@@ -744,6 +767,7 @@ export default function App() {
         {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
         {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
         {menu}
+        {toastEl}
       </main>
     )
   }
@@ -775,7 +799,7 @@ export default function App() {
 
       <section className="hero-strip">
         <div><p className="eyebrow">DEPTH {run.depth} · FLOOR {run.floor}/{EXPEDITION_FLOORS} · ENEMY {run.kill + 1}/{ENEMIES_PER_FLOOR}{foe.boss ? ' · BOSS' : ''}</p><h1>{depthName(run.depth)}</h1><p className="subtitle">Every word is a weapon. Every run makes you stronger.</p></div>
-        <div className="progress-chip"><span>📖</span><strong>{masteredCount(save.mastery)}<small> / {WORDS.length} mastered</small></strong></div>
+        <div className="progress-chip"><span>📖</span><strong>{Object.values(save.mastery).filter(e => e.lv >= SESSION_LV).length}<small> Familiar</small></strong></div>
       </section>
 
       <header className="compact-header" aria-label="Dungeon progress">
@@ -809,7 +833,7 @@ export default function App() {
             </div>
             <div className="combatant-row arena-combatants">
               <div className="combatant player-card">
-                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}{run.omen && run.omen.floor === run.floor && <span className="second-chip" aria-label={run.omen.kind === 'blessing' ? 'Blessing: your next mistake on this floor costs no heart' : 'Shaken: your next mistake on this floor costs 2 hearts'} title={run.omen.kind === 'blessing' ? 'Blessing: your next mistake on this floor costs no heart' : 'Shaken: your next mistake on this floor costs 2 hearts'}>{run.omen.kind === 'blessing' ? '✨' : '🌧'}</span>}{(run.calm ?? 0) > 0 && <span className="second-chip" aria-label="Calmed Wraith: your next mistake costs no heart" title="Calmed Wraith: your next mistake costs no heart">👻</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
+                <div className="bar-label"><span>Lv {run.level}</span>{run.secondLeft > 0 && <span className="second-chip" aria-label={`${run.secondLeft} second chance${run.secondLeft === 1 ? '' : 's'} left this floor`}>🔁{run.secondLeft}</span>}{run.omen && run.omen.floor === run.floor && <span className="second-chip" aria-label="Blessing: your next mistake on this floor costs no heart" title="Blessing: your next mistake on this floor costs no heart">✨</span>}{(run.calm ?? 0) > 0 && <span className="second-chip" aria-label="Calmed Wraith: your next mistake costs no heart" title="Calmed Wraith: your next mistake costs no heart">👻</span>}</div><Hearts hearts={run.hearts} max={stats.maxHearts} /><div className="xp-mini" aria-label="experience"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div>
               </div>
               <div className="combatant enemy-card">
                 <div className="bar-label"><span>{foe.enemy.name}</span><span>{run.enemyHp} / {foe.hp}</span></div><div className="health-track"><div className="health-fill enemy-fill" style={{ width: `${Math.max(0, run.enemyHp) / foe.hp * 100}%` }} /></div>
@@ -941,7 +965,7 @@ export default function App() {
                   <div className="result-line">
                     <strong>{feedback.correct ? '✓ Correct' : 'Not quite'}{feedback.correct && feedback.word.variants.length > 0 && <small className="result-also"> also {feedback.word.variants.join(', ')}</small>}</strong>
                   </div>
-                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−${feedback.exchange.heartsLost} heart${feedback.exchange.heartsLost > 1 ? 's (Shaken)' : ''} · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : feedback.exchange.saved === 'blessing' ? '✨ Blessing · heart saved' : 'Practice · no heart lost'}</p>}
+                  {!feedback.correct && <p className={`result-hearts ${feedback.exchange.heartsLost ? 'lost' : 'saved'}`}>{feedback.exchange.heartsLost ? `−${feedback.exchange.heartsLost} heart${feedback.exchange.heartsLost > 1 ? 's' : ''} · ${run.hearts} of ${stats.maxHearts} left` : feedback.exchange.saved === 'second' ? 'Second chance · heart saved' : feedback.exchange.saved === 'calm' ? 'The calmed Wraith lets it pass · heart saved' : feedback.exchange.saved === 'blessing' ? '✨ Blessing · heart saved' : 'Practice · no heart lost'}</p>}
                   {!feedback.correct && (() => {
                     // The right answer is on the card above; this box shows what was picked, big and clear. Its size follows its
                     // length (one character, a word, a phrase or sentence), and a known word picked by mistake gets its own gloss.
@@ -953,7 +977,9 @@ export default function App() {
                       {mixedUp && <span className="chosen-gloss">{mixedUp.pinyin} · {mixedUp.meaning}</span>}
                     </div>
                   })()}
-                  <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
+                  {noteShown
+                    ? <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
+                    : <button className="result-why" onClick={() => setNoteShown(true)}>Why? ›</button>}
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
@@ -980,14 +1006,14 @@ export default function App() {
                   </button>}
             </div>
           </section>
-          {toast && <div className="toast"><span>{toast}</span><button onClick={() => setToast('')} aria-label="Dismiss">×</button></div>}
+          {toastEl}
           <section className="build-panel"><div className="build-title"><div><span className="eyebrow">THIS RUN</span><h3>Build & Progress</h3></div><span className="level-badge">LV {run.level}</span></div><div className="xp-line"><span>Experience</span><span>{run.xp} / {xpForLevel(run.level)} XP</span></div><div className="xp-track"><div style={{ width: `${Math.min(100, run.xp / xpForLevel(run.level) * 100)}%` }} /></div><div className="build-grid"><div><span className="build-icon">⚔️</span><small>Attack</small><strong>{stats.attack}</strong></div><div><span className="build-icon">🛡️</span><small>Gear found</small><strong>{run.gear.length}</strong></div><div><span className="build-icon">📖</span><small>Words mastered</small><strong>{masteredCount(save.mastery)}</strong></div></div></section>
         </div>
       </section>
       <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
       {isOutdated(latestBuild) && !updateDismissed && <div className="update-banner" role="status"><span>A new version is available. Your progress is kept.</span><button onClick={refreshApp}>Update</button><button className="x" onClick={() => setUpdateDismissed(true)} aria-label="Dismiss">×</button></div>}
         {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen key={`${trialState.id}:${trialState.step ?? 1}`} warden={foe?.boss === 'warden'} level={levelOf(save.mastery)} trial={t} state={trialState} onAnswer={answerTrial} onClose={leaveTrial} /> : null })()}
-        {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} level={levelOf(save.mastery)} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} hintsLeft={helpHintsLeft(save)} onHelp={() => patch(s => (s.run?.encounter?.paid ? { ...s, run: { ...s.run, encounter: { ...s.run.encounter, help: !s.run.encounter.help } } } : payHelp(s)))} onSubmit={() => patch(s => submitEncounter(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
+        {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} level={levelOf(save.mastery)} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onHelp={() => patch(s => (s.run?.encounter ? { ...s, run: { ...s.run, encounter: toggleHelp(s.run.encounter) } } : s))} onSubmit={() => patch(s => submitEncounter(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} sigil={run.depth > save.meta.depthCleared ? { level: run.depth, text: sigilText(run.depth) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
       {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}

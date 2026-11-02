@@ -55,3 +55,14 @@ test('characters outside the vocabulary only warn', () => {
   const { errors, warnings } = validateContent(W, { 他: { ...ok, sections: [{ type: 'text', body: '也 is shared' }] } })
   assert.deepEqual(errors, []); assert.match(warnings.join('|'), /outside the vocabulary \(也\)/)
 })
+
+test('noun / measure fields: a noun is true or absent; a measure word is an entry id, only on nouns', () => {
+  const base = { hanzi: '人', pinyin: 'rén', meaning: 'person', group: 'people', note: 'n' }, ge = { hanzi: '个', pinyin: 'gè', meaning: 'classifier', group: 'grammar', note: 'n' }
+  assert.deepEqual(errs([{ ...base, noun: true, measure: '个' }, ge], {}), [])
+  assert.match(errs([{ ...base, noun: 'yes' }, ge], {}).join(), /"noun" is either true/)
+  assert.match(errs([{ ...base, measure: '个' }, ge], {}).join(), /only for nouns/)
+  assert.match(errs([{ ...base, noun: true, measure: '本' }, ge], {}).join(), /measure "本" is not an entry id/)
+  const shipped = (wordsJson as { hanzi: string; noun?: boolean; measure?: string }[])
+  assert.ok(shipped.filter(w => w.noun).length >= 20, 'enough nouns for generated events')
+  assert.ok(shipped.filter(w => w.measure).every(w => w.noun && shipped.some(x => x.hanzi === w.measure)))
+})

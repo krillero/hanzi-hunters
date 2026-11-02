@@ -8,7 +8,8 @@ export const AUTO_DELAYS: Record<Exclude<AutoContinue, 'off' | 'learning'>, { qu
 }
 
 export const AUTO_MASTERY_LEVEL = 2
-export const LEARNING_AUTO_DELAY = 500
+/** Long enough to read the revealed answer of a Familiar word before the game moves on (0.5 s hid it too quickly). */
+export const LEARNING_AUTO_DELAY = 1000
 
 /**
  * The default learning mode pauses after every answer until the current word reaches level 2.

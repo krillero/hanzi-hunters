@@ -16,7 +16,7 @@ type Props = {
 }
 
 const SPEEDS: { id: AutoContinue; label: string; hint: string }[] = [
-  { id: 'learning', label: 'Learn first', hint: 'Lv 2 · 0.5 s' }, { id: 'quick', label: 'Quick', hint: '0.5 s' }, { id: 'relaxed', label: 'Relaxed', hint: '2.5 s' }, { id: 'off', label: 'Off', hint: 'tap' }
+  { id: 'learning', label: 'Learn first', hint: 'Familiar · 1 s' }, { id: 'quick', label: 'Quick', hint: '0.5 s' }, { id: 'relaxed', label: 'Relaxed', hint: '2.5 s' }, { id: 'off', label: 'Off', hint: 'tap' }
 ]
 
 /** Settings sheet: your stats, sound, auto-continue, fullscreen, credits, backups and reset. */

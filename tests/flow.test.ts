@@ -39,11 +39,17 @@ test('Off never auto-continues', () => {
 })
 
 test('settings: Learn first is the default; sanitising and loading never throw', () => {
-  assert.deepEqual(DEFAULT_SETTINGS, { muted: false, sfx: true, haptics: true, autoContinue: 'learning' })
-  assert.deepEqual(sanitizeSettings({ muted: true, autoContinue: 'off' }), { muted: true, sfx: true, haptics: true, autoContinue: 'off' }, 'old saved settings gain the new switches, on')
+  assert.deepEqual(DEFAULT_SETTINGS, { muted: false, sfx: true, haptics: true, autoContinue: 'learning', voiceWarned: false })
+  assert.deepEqual(sanitizeSettings({ muted: true, autoContinue: 'off' }), { muted: true, sfx: true, haptics: true, autoContinue: 'off', voiceWarned: false }, 'old saved settings gain the new switches, on')
   assert.deepEqual(sanitizeSettings({ sfx: false, haptics: false }), { ...DEFAULT_SETTINGS, sfx: false, haptics: false })
   assert.deepEqual(sanitizeSettings({ muted: false, autoContinue: 'quick' }), { ...DEFAULT_SETTINGS, autoContinue: 'quick' }, 'existing preferences remain supported')
   for (const bad of [null, undefined, 5, 'x', [], { muted: 'yes', autoContinue: 'fast' }]) assert.deepEqual(sanitizeSettings(bad), DEFAULT_SETTINGS)
   assert.deepEqual(loadSettings({ getItem: () => '{bad json' }), DEFAULT_SETTINGS)
   assert.deepEqual(loadSettings({ getItem: () => JSON.stringify({ muted: true }) }), { ...DEFAULT_SETTINGS, muted: true })
+})
+
+test('the missing-voice warning is remembered (shown once) and survives as a setting', () => {
+  assert.equal(sanitizeSettings({ voiceWarned: true }).voiceWarned, true)
+  assert.equal(sanitizeSettings({ voiceWarned: 'yes' }).voiceWarned, false)
+  assert.equal(loadSettings({ getItem: () => JSON.stringify({ muted: true, voiceWarned: true }) }).voiceWarned, true)
 })
