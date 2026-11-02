@@ -1,5 +1,15 @@
 # Changelog / test log
 
+## 2026-11-02 — Source imports, review screen, recorded audio (branch ccr-b05f2c6d-289vu4)
+
+- **Note shown once:** all 60 explanation summaries were exact copies of the entry note; removed. `summary` is optional extra context; the validator rejects a copy of the note. The popup and new-word card show the note first.
+- **Source layer** (`docs/SOURCES.md`): typed records/content/exercises/mappings/changesets (schema 1); Anki `.apkg` adapter (reads `collection.anki21`, JSON media map, safe ZIP reader, hash-named media, no template execution); `sentences-json` adapter fixture for sentences + exercises; idempotent `npm run source:import` with diff and reassessment flags; matcher with evidence (spelling alone never confirms).
+- **Review screen** at `<site>/review/` (separate entry, not precached, not linked): search/filters/pagination, side-by-side comparison, playback, link/exclude/draft/recording/meaning decisions saved in the browser, changeset export. `npm run source:apply` (all-or-nothing, stale detection, validated result) and `npm run source:promote` (no course activation).
+- **Recorded audio:** `recordings.json` (empty until decisions are applied). TTS policy (`audio`) is separate; an entry with a selected recording always uses it; listening kinds follow the clip's reading (connected-speech clips never back pinyin questions); failures drop the clip for the session and convert an open listening question.
+- Validator: same hanzi + same pinyin as another entry is refused (explicit engine limitation).
+- **Not done yet:** the real ACCC import. ankiweb.net is blocked by this environment's network policy, so `public/sources/accc-anki` is not in the repo; all import behaviour is tested with generated fixture packages.
+- Checks: `npm run test:brief` 281 pass (262 before), `npm run build` pass, `npm run validate:content` 0 errors; one 360 px browser check of `/review/` with a fixture import (list, filter, link, reload keeps the decision, no horizontal scroll, no console errors) and the game page loading without errors.
+
 ## 2026-11-01 — No question audio behind the new-word card (branch ccr-2aecd5ae-3v8bz2)
 
 - Bug: when a fight started with new-word cards, the next question was prepared first and its word was read aloud behind the card; after "Got it" a different question was shown (rebuilt so the new word can be asked), so the sound never matched anything on screen.

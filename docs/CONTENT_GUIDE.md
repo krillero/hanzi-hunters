@@ -13,6 +13,12 @@ No code changes are needed to add content. Read this whole file before editing.
 | `src/content/types.ts` | TypeScript shapes for all of the above (reference). |
 | `src/content/validate.ts`, `pinyin.ts` | The rules the validator enforces. |
 
+**Field contract** (what each piece of teaching content is for, identities, imported sources, recordings): `docs/SOURCES.md` §1–2.
+In short: `meaning` = short answer label; `note` = the essential guidance, shown once and first; an explanation's `summary` is
+optional extra context and must not repeat the note; `pinyin` = the one dictionary/teaching reading; `variants` = other accepted
+readings; `speech` = connected-speech guidance; `audio` = TTS policy only. Imported material is never edited here directly: it
+is compared and adopted through the review screen (`docs/SOURCES.md`).
+
 ## The 3-step loop
 
 ```bash
@@ -60,7 +66,7 @@ An entry is **one word, character or particle with one meaning and one reading**
 | `variants` | **Accepted alternative pronunciations of the same word and meaning** (谁 *shéi* / *shuí*). Never offered as wrong answers. |
 | `speech` | **Connected-speech guidance**, not a dictionary reading: `[{ "pinyin": "ní hǎo", "context": "when two third-tone syllables meet…", "note": "optional" }]`. Never offered as a wrong answer, never the answer. |
 | `wrongPinyin` | Reviewed **wrong readings** for pinyin questions (needed for multi-syllable or neutral-tone entries, see 1.4). Must not be a valid reading (the validator checks variants and speech forms). |
-| `audio` | `"ok"` (default) or `"none"` (see 1.8). |
+| `audio` | Text-to-speech policy only: `"ok"` (default) or `"none"` (see 1.8). A selected **recording** (`recordings.json`, see `docs/SOURCES.md` §6) is separate and can still be used when TTS is `"none"`. |
 | `questions` | Allowlist of question kinds for this entry (see 1.9). |
 | `aliases` | Earlier ids of this same entry, so saved progress moves to it (see 1.7). |
 | `confusable` | Ids of entries too close in meaning to be a fair wrong answer for this one. |

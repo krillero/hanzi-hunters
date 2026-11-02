@@ -27,6 +27,7 @@ You are continuing an existing prototype. Read `README.md`, `DEVELOPMENT_BRIEF.m
 10. **Document asset rights.** Use original artwork, commissioned art, or assets with a license compatible with the project. Keep source/credits/license information for third-party assets.
 
 11. **Content tasks (words, explanations) follow `docs/CONTENT_GUIDE.md`.** Edit only `src/content/*.json`, run `npm run validate:content` and `npm test`, and report anything you were unsure about for human review.
+12. **Imported sources follow `docs/SOURCES.md`.** Never edit `public/sources/` by hand (re-run the import), never mark imported or AI-produced content as human-reviewed, and adopt source content only through mappings/selections (review screen changeset or the same files).
 
 ## Definition of done for a change
 - The requested behavior is implemented, not only represented in a mockup.

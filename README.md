@@ -87,6 +87,9 @@ The game caches itself for offline use, so a normal reload can show an old versi
 ## Adding words and explanations
 Vocabulary (single characters, multi-character words, grammar particles), example sentences, sentence questions and their sources are JSON files in `src/content/`. **The teaching order is a separate curriculum file** (`src/content/curricula.json`, see **`docs/CURRICULUM.md`**); the order of `words.json` does not matter. The shipped curriculum is a provisional compatibility course; `docs/CURRICULUM.md` §7 explains how to install the reviewed 100-word course. `npm run curriculum` prints the effective teaching order. See **`docs/CONTENT_GUIDE.md`** (format, rules, checklist and a ready-made prompt for another agent). Validate with `npm run validate:content`; preview any word with `/?word=她`. To hand content work to another agent use `docs/AGENT_PROMPT.md`; `npm run inventory` regenerates `docs/content-inventory.json` (what exists now).
 
+## Importing sources and the review screen
+External material (first: the *A Course in Contemporary Chinese* Anki deck) is imported into `public/sources/` with `npm run source:import`, compared with the game on the review screen at **`<site>/review/`** (not linked from the game; decisions are saved in the reviewer's browser and exported as a changeset), and applied with `npm run source:apply`. Importing or linking never makes anything playable by itself. See **`docs/SOURCES.md`**.
+
 ## Playing on a phone
 Use the ⛶ button (top right) for fullscreen. For the best experience install it: Android Chrome/Brave menu → *Install app* / *Add to Home screen*; iPhone Safari Share → *Add to Home Screen*. The installed app runs without browser bars.
 

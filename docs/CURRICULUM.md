@@ -106,6 +106,13 @@ as long as pinyin and translation are given. The introduction card labels them "
 
 ---
 
+### Imported sources never change a course
+
+A source's own book/lesson order is imported as `public/sources/<source>/placement.json`, a **draft proposal** of source-record
+keys. Courses reference game entry ids only, so an unresolved source record can never be in a lesson. New entries from a source
+are promoted to `words.json` deliberately (`npm run source:promote`) and taught only once someone adds their id here. See
+`docs/SOURCES.md` §8.
+
 ## 2. How the game picks what to teach
 
 **Introductions** (`selectIntroductions`): deterministic, the same for every player, no randomness.
