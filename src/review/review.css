@@ -68,7 +68,7 @@ code{font-family:ui-monospace,monospace;font-size:.9em;color:var(--gold)}
 .rv-ev .lv-match b{color:var(--green)}
 .rv-ev .lv-partial b{color:var(--amber)}
 .rv-ev .lv-mismatch b{color:var(--red)}
-.rv-ev .lv-unknown b{color:var(--muted)}
+.rv-ev .lv-unknown b,.rv-ev .lv-neutral b{color:var(--muted)}
 .rv-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:8px}
 .rv-conf{font-size:12px;margin-right:auto}
 .rv-draft{margin-top:10px}
@@ -79,14 +79,23 @@ code{font-family:ui-monospace,monospace;font-size:.9em;color:var(--gold)}
 .rv-uses input{min-height:0;width:20px;height:20px}
 .rv-ops{list-style:none;padding:0;margin:6px 0;display:flex;flex-direction:column;gap:6px}
 .rv-ops li{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:13px;border-bottom:1px solid var(--line);padding:4px 0}
-.v-same{color:var(--green)}
-.v-check{color:var(--amber)}
-.v-different{color:var(--red)}
-.rv-tags em.v-same,.rv-tags em.v-check,.rv-tags em.v-different{font-style:normal}
+/* Assessment states. Pending is neutral (not a warning, not an approval); only reviewer/assessor verdicts get colour. */
+.m-same-confirmed,.m-likely-equivalent{color:var(--green)}
+.m-uncertain{color:var(--amber)}
+.m-different{color:var(--red)}
+.m-not-assessed,.m-none,.w-not-assessed,.tx-exact,.tx-formatting,.tx-different,.tx-missing{color:var(--muted)}
+.w-edited,.w-prefer-source{color:var(--gold)}
+.rv-tags em[class^="m-"]{font-style:normal}
 .rv-rec{border-left:4px solid var(--line)}
-.rv-rec.v-same{border-left-color:var(--green)}
-.rv-rec.v-check{border-left-color:var(--amber)}
-.rv-rec.v-different{border-left-color:var(--red)}
+.rv-rec h2{color:var(--text)}
+.rv-headline{font-weight:600;margin:4px 0 8px}
+.rv-prov{border-top:1px dashed var(--line);padding-top:6px}
+.rv-cov{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:8px 0}
+.rv-cov p{margin:2px 0}
+.rv-note{border:1px solid #2e4a5b;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rv-note p{margin:0;flex:1 1 100%}
+.rv-warn button{margin:4px 6px 0 0}
+button.rv-link{min-height:32px;background:none;border-style:dashed;font-size:12px;color:var(--gold)}
 .rv-rec h2{color:var(--text)}
 .rv-reasons{margin:6px 0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .rv-reasons b{color:var(--gold);margin-right:4px}

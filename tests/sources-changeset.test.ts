@@ -76,8 +76,8 @@ test('review decisions survive a reload and export to a changeset that applies',
   assert.equal(res.state.selections.selections[0].choice, 'game')
   const v = validateDecisions(res.state.words, res.state.mappings, res.state.recordings, res.state.selections, SOURCES, src.records)
   assert.deepEqual(v.errors, [])
-  // Corrupt storage starts empty instead of crashing.
-  storage.setItem('hanzi-hunters-review-v1:accc-anki', '{oops')
+  // Corrupt storage starts empty instead of crashing, and keeps a backup of what it could not read.
+  storage.setItem('hanzi-hunters-review-v2:accc-anki', '{oops')
   assert.deepEqual(loadWorking(storage, 'accc-anki', src.snapshot).ops, {})
 })
 

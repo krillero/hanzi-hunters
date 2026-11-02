@@ -16,7 +16,8 @@
     "test:brief": "node --test --test-reporter=./tools/brief-reporter.mjs",
     "source:import": "node tools/source-import.ts",
     "source:apply": "node tools/source-apply.ts",
-    "source:promote": "node tools/source-promote.ts"
+    "source:promote": "node tools/source-promote.ts",
+    "source:assess": "node tools/source-assess.ts"
   },
   "dependencies": {
     "phaser": "^3.90.0",

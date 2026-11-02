@@ -1,32 +1,77 @@
 // Working decisions of the review screen: saved in the reviewer's browser (separate from game saves), exported as a changeset,
 // applied to the repository with `npm run source:apply`. Pure apart from the Storage object passed in.
+// Drafts hold only the reviewer's decisions (ops). Evidence and assessments are never stored here.
 import { opTarget, recordingOfEntry, same, selectionOf, type RepoState } from '../sources/changeset.ts'
 import {
   SOURCE_SCHEMA_VERSION, type ChangeOp, type Changeset, type Decision, type FieldSelection, type Mapping, type SelectedRecording,
   type SourceRecord
 } from '../sources/types.ts'
 
-export const REVIEW_KEY_PREFIX = 'hanzi-hunters-review-v1:'
-export type WorkingState = { schemaVersion: typeof SOURCE_SCHEMA_VERSION; source: string; snapshot: string; ops: Record<string, ChangeOp> }
-type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
-
-export const emptyWorking = (source: string, snapshot: string): WorkingState => ({ schemaVersion: SOURCE_SCHEMA_VERSION, source, snapshot, ops: {} })
-
-/** Load the saved working decisions; anything unreadable or of another schema starts empty (and is left in storage untouched). */
-export function loadWorking(storage: StorageLike | null, source: string, snapshot: string): WorkingState {
-  try {
-    const raw = storage?.getItem(REVIEW_KEY_PREFIX + source)
-    if (!raw) return emptyWorking(source, snapshot)
-    const w = JSON.parse(raw) as WorkingState
-    if (w?.schemaVersion !== SOURCE_SCHEMA_VERSION || w.source !== source || typeof w.ops !== 'object') return emptyWorking(source, snapshot)
-    return w   // keeps its own snapshot: a newer deploy is detected per op (see opStatus)
-  } catch { return emptyWorking(source, snapshot) }
+/** Browser drafts, version 2 (evidence/assessment review screen). Version 1 drafts are migrated, never overwritten. */
+export const REVIEW_KEY_PREFIX = 'hanzi-hunters-review-v2:'
+export const LEGACY_KEY_PREFIX = 'hanzi-hunters-review-v1:'
+/** The reviewer's name is shared by both versions (it is not a draft). */
+const REVIEWER_KEY = LEGACY_KEY_PREFIX + 'reviewer'
+export const REVIEW_STATE_VERSION = 2
+export type WorkingState = {
+  schemaVersion: typeof SOURCE_SCHEMA_VERSION; reviewVersion: typeof REVIEW_STATE_VERSION; source: string; snapshot: string
+  ops: Record<string, ChangeOp>
+  /** Set when these drafts were carried over from an older review screen. */
+  migratedFrom?: 'v1'
 }
+type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+/** Shown once after loading: drafts migrated from v1, or drafts that could not be read (kept in a backup key, never deleted). */
+export type LoadNotice = { kind: 'migrated' | 'incompatible'; message: string; backupKey?: string; raw?: string }
+
+export const emptyWorking = (source: string, snapshot: string): WorkingState => ({ schemaVersion: SOURCE_SCHEMA_VERSION, reviewVersion: REVIEW_STATE_VERSION, source, snapshot, ops: {} })
+
+const OP_KINDS = new Set(['mapping', 'recording', 'field'])
+const validOp = (op: unknown): op is ChangeOp => !!op && typeof op === 'object' && OP_KINDS.has((op as ChangeOp).op) && 'after' in (op as object)
+
+/**
+ * Load the saved working decisions.
+ *  - v2 drafts load as they are.
+ *  - v1 drafts (the earlier review screen) are migrated: their ops are the reviewer's own decisions (links, exclusions, chosen
+ *    texts, recordings) and are kept with their decision provenance. v1 stored no recommendations, so none is turned into an
+ *    assessment. The v1 key is left untouched as a backup.
+ *  - Anything unreadable starts empty, but the raw text is copied to a backup key first and returned for download.
+ */
+export function loadWorkingWithNotice(storage: StorageLike | null, source: string, snapshot: string): { state: WorkingState; notice?: LoadNotice } {
+  const backup = (raw: string, why: string): { state: WorkingState; notice: LoadNotice } => {
+    const backupKey = `${REVIEW_KEY_PREFIX}${source}:unreadable-${new Date().toISOString().replace(/[:.]/g, '')}`
+    try { storage?.setItem(backupKey, raw) } catch { /* the raw text is still returned for download */ }
+    return { state: emptyWorking(source, snapshot), notice: { kind: 'incompatible', backupKey, raw, message: `Saved review drafts could not be read (${why}). They were not deleted: a copy is kept in this browser (${backupKey}) and can be downloaded below. Starting with no drafts.` } }
+  }
+  let raw: string | null | undefined
+  try { raw = storage?.getItem(REVIEW_KEY_PREFIX + source) } catch { return { state: emptyWorking(source, snapshot) } }
+  if (raw) {
+    try {
+      const w = JSON.parse(raw) as WorkingState
+      if (w?.reviewVersion !== REVIEW_STATE_VERSION || w.schemaVersion !== SOURCE_SCHEMA_VERSION || w.source !== source || !w.ops || typeof w.ops !== 'object') return backup(raw, 'unknown format or version')
+      return { state: w }   // keeps its own snapshot: a newer deploy is detected per op (see opStatus)
+    } catch { return backup(raw, 'not valid JSON') }
+  }
+  let legacy: string | null | undefined
+  try { legacy = storage?.getItem(LEGACY_KEY_PREFIX + source) } catch { legacy = null }
+  if (!legacy) return { state: emptyWorking(source, snapshot) }
+  try {
+    const v1 = JSON.parse(legacy) as { schemaVersion?: number; source?: string; snapshot?: string; ops?: Record<string, unknown> }
+    if (v1?.schemaVersion !== 1 || v1.source !== source || !v1.ops || typeof v1.ops !== 'object') return backup(legacy, 'drafts from the earlier review screen in an unknown format')
+    const ops: Record<string, ChangeOp> = {}
+    let dropped = 0
+    for (const [k, op] of Object.entries(v1.ops)) if (validOp(op)) ops[opTarget(op)] = op; else { dropped++; void k }
+    const state: WorkingState = { schemaVersion: SOURCE_SCHEMA_VERSION, reviewVersion: REVIEW_STATE_VERSION, source, snapshot: v1.snapshot ?? snapshot, ops, migratedFrom: 'v1' }
+    const n = Object.keys(ops).length
+    try { storage?.setItem(REVIEW_KEY_PREFIX + source, JSON.stringify(state)) } catch { /* still usable in memory */ }
+    return { state, notice: { kind: 'migrated', message: `${n} decision${n === 1 ? '' : 's'} from the earlier review screen ${n === 1 ? 'was kept as your own decision' : 'were kept as your own decisions'}${dropped ? ` (${dropped} unreadable item${dropped === 1 ? '' : 's'} skipped; the original drafts are still in this browser)` : ''}. The earlier screen's automatic recommendations were never decisions and are not carried over; comparisons now show evidence and assessments instead.` } }
+  } catch { return backup(legacy, 'drafts from the earlier review screen are not valid JSON') }
+}
+export const loadWorking = (storage: StorageLike | null, source: string, snapshot: string): WorkingState => loadWorkingWithNotice(storage, source, snapshot).state
 export function saveWorking(storage: StorageLike | null, w: WorkingState): boolean {
   try { storage?.setItem(REVIEW_KEY_PREFIX + w.source, JSON.stringify(w)); return !!storage } catch { return false }
 }
-export const loadReviewer = (storage: StorageLike | null) => { try { return storage?.getItem(REVIEW_KEY_PREFIX + 'reviewer') ?? '' } catch { return '' } }
-export const saveReviewer = (storage: StorageLike | null, name: string) => { try { storage?.setItem(REVIEW_KEY_PREFIX + 'reviewer', name) } catch { /* ignore */ } }
+export const loadReviewer = (storage: StorageLike | null) => { try { return storage?.getItem(REVIEWER_KEY) ?? '' } catch { return '' } }
+export const saveReviewer = (storage: StorageLike | null, name: string) => { try { storage?.setItem(REVIEWER_KEY, name) } catch { /* ignore */ } }
 
 /** Add or replace an op (one per target). An op equal to the committed state is dropped: nothing would change. */
 export function putOp(w: WorkingState, op: ChangeOp): WorkingState {

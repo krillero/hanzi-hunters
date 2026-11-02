@@ -128,17 +128,17 @@ test('archive safety: unsafe member names are refused and output paths cannot es
   assert.ok(!existsSync(join(s.dir, '..', 'x.mp3')))
 })
 
-test('matching: spelling alone never confirms; readings and meanings are explained', async () => {
+test('matching: spelling alone never confirms; readings are explained as evidence', async () => {
   const s = scratch()
   writeFileSync(s.pkg, buildApkg(NOTES, media()))
   const b = readAnkiPackage({ source: 'accc-anki', file: s.pkg, mediaDir: join(s.dir, 'm'), mediaPrefix: 'sources/accc-anki/media' })
   const ge = suggest(b.records[0], WORDS)
   assert.equal(ge[0].entry, '个'); assert.equal(ge[0].reading, 'speech', 'Anki "ge" is the game\'s connected-speech form of gè')
-  assert.notEqual(ge[0].confidence, 'strong')
+  assert.notEqual(ge[0].strength, 'strong')
   assert.ok(ge[0].warnings.some(w => /pinyin listening/.test(w)))
   const kan = suggest(b.records[1], WORDS)
   const look = kan.find(x => x.entry === '看-look')!, guard = kan.find(x => x.entry === '看-guard')!
-  assert.equal(look.reading, 'main'); assert.equal(guard.confidence, 'conflict', '看 kān is a different reading: same spelling is not a match')
+  assert.equal(look.reading, 'main'); assert.equal(guard.strength, 'unlikely', '看 kān is a different reading: same spelling is not a match')
   assert.ok(look.score > guard.score)
   const { neutralToneOnly } = await import('../src/sources/match.ts')
   assert.ok(neutralToneOnly('péngyǒu', 'péngyou') && !neutralToneOnly('xīngqí', 'xīngqī') && !neutralToneOnly('kān', 'kàn'))
