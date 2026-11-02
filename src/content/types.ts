@@ -20,7 +20,15 @@ export type SourceRef = {
   retrieved?: string
   note?: string
 }
-export type SourceInfo = { title: string; url?: string; license: string; attribution: string; usage?: string }
+export type SourceInfo = {
+  title: string; url?: string; license: string; attribution: string; usage?: string
+  /** Importable sources only: the adapter that reads it (tools/sources/adapters), e.g. "anki-apkg". */
+  adapter?: string
+  /** Known reuse terms and decisions, stated honestly ("unknown" when unknown). A shared deck is not automatically openly licensed. */
+  reuse?: string
+  /** Language variety the source teaches, when the source states it. */
+  variety?: string
+}
 export type Sources = Record<string, SourceInfo>
 
 /** One character (or component) with its sound and meaning. Used by `breakdown` and `compare` sections. */
@@ -47,8 +55,8 @@ export type Section =
 export type Explanation = {
   /** Popup title. Defaults to "About <hanzi>". */
   title?: string
-  /** One or two sentences: the key idea. Always shown first. */
-  summary: string
+  /** Optional extra key idea shown right after the entry's `note` (which is always shown first). Never a copy of the note. */
+  summary?: string
   sections: Section[]
   /** Other entry ids to link to (shown as buttons; opens their details). */
   related?: string[]

@@ -1,10 +1,14 @@
 // npm run validate:content  -> checks src/content/*.json (words, explanations, cloze, sources, curricula). Exit code 1 on errors.
 // Also prints how much of the content has NOT been reviewed by a person yet, and curriculum information (reports, not errors).
 // Structural validation only: it cannot tell whether the Mandarin, the translations or the teaching order are good.
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { needsReview, validateContent } from '../src/content/validate.ts'
 import { validateEncounters } from '../src/game/encounters.ts'
 import { validateTrialsFile } from '../src/game/trials.ts'
+import { join } from 'node:path'
+import { validateDecisions } from '../src/sources/validate.ts'
+import type { SourceRecord } from '../src/sources/types.ts'
+import { PUBLIC, readIndex, readStoredSource } from './sources/files.ts'
 
 const read = (f: string) => {
   try { return JSON.parse(readFileSync(new URL(`../src/content/${f}`, import.meta.url), 'utf8')) } catch (e) { console.error(`${f} is not valid JSON:`, (e as Error).message); process.exit(1) }
@@ -17,6 +21,14 @@ const wordIds = Array.isArray(words) ? words.map((w: { id?: string; hanzi: strin
 errors.push(...validateEncounters(encounters, wordIds))
 const trials = read('trials.json')
 errors.push(...validateTrialsFile(trials, wordIds))
+// Source layer: committed decisions (mappings, selected recordings, field selections) against words.json and the imported records.
+const records = new Map<string, SourceRecord>()
+for (const src of readIndex().sources) for (const r of readStoredSource(src.id)?.records ?? []) records.set(r.key, r)
+const recordings = read('recordings.json')
+const decisions = validateDecisions(words, read('sourceMappings.json'), recordings, read('selections.json'), sources, records.size ? records : undefined)
+errors.push(...decisions.errors); warnings.push(...decisions.warnings)
+// Selected recordings must exist on disk: they are shipped with the game.
+for (const r of recordings?.recordings ?? []) { const f = join(PUBLIC, String(r.file)); if (!existsSync(f) || statSync(f).size === 0) errors.push(`recordings.json (${r.id}): file ${r.file} is missing or empty`) }
 const nTrials = Array.isArray(trials?.trials) ? trials.trials.length : 0
 const nScenes = Array.isArray(encounters?.scenes) ? encounters.scenes.length : 0
 const nWords = Array.isArray(words) ? words.length : 0

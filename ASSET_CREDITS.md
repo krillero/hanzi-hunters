@@ -12,3 +12,12 @@ Not art, but loaded at runtime: the page requests *DM Mono* and *Manrope* from G
 (SIL Open Font License). Self-host them before any offline/PWA claims are made.
 
 The concept mockup mentioned in `DEVELOPMENT_BRIEF.md` is **not** used as a source for any asset.
+
+## Imported source media (`public/sources/`)
+
+| Files | Source | License |
+|---|---|---|
+| `public/sources/accc-anki/media/*.mp3` | Word recordings of *A Course in Contemporary Chinese* (當代中文課程, National Taiwan Normal University Mandarin Training Center), extracted from the shared Anki deck `A_Course_in_Contemporary_Chinese__B1-B6_Traditional.apkg` (https://ankiweb.net/shared/info/1466478713) by `npm run source:import`. | **Not openly licensed; reuse terms unknown.** Included by decision of the project owner (2026-11-02); no permission from the rights holder is documented here. See `src/content/sources.json` → `accc-anki`. |
+
+Each file is named by its content hash; `public/sources/accc-anki/records.json` maps every file to its source record, and
+`src/content/recordings.json` lists the recordings the game actually uses. The deck's font file is not imported.

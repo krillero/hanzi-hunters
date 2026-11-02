@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { WORDS } from './data'
 import { getExplanation, hasExplanation, type Example, type Part, type Section } from './content'
-import { audioReliable, homographsOf } from './content/entries'
+import { homographsOf } from './content/entries'
+import { hasWordAudio } from './wordAudio'
 import { isHumanReviewed } from './content/provenance'
 
-type Props = { id: string; hidden?: string; onClose: () => void; onOpen: (id: string) => void; onSpeak: (text: string) => void }
+type Props = { id: string; hidden?: string; onClose: () => void; onOpen: (id: string) => void; onSpeak: (text: string) => void; onSpeakWord: (id: string) => void }
 
 const PartCard = ({ p }: { p: Part }) => (
   <div className="ex-part">
@@ -50,7 +51,7 @@ function renderSection(s: Section, i: number, onSpeak: (text: string) => void) {
 
 /** Popup with everything known about an entry: the note, pronunciation details the note does not already give, the explanation's sections and related entries.
  *  Provenance is not repeated here: unreviewed entries get a small "draft" tag; sources and licenses are in Settings → Credits & content review. */
-export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak }: Props) {
+export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak, onSpeakWord }: Props) {
   const word = WORDS.find(w => w.id === id)
   const ex = getExplanation(id)
   const closeRef = useRef<HTMLButtonElement | null>(null)
@@ -66,8 +67,9 @@ export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak }: P
 
   if (!word) return null
   const siblings = homographsOf(word, WORDS)
-  const summary = ex?.summary ?? word.note
-  const neutralLine = word.neutral.length > 0 && !/neutral/i.test(summary)   // skip when the note already explains it
+  // The essential note once, then the explanation's additional summary (only when it says something else).
+  const extra = ex?.summary && ex.summary.trim() !== word.note.trim() ? ex.summary : null
+  const neutralLine = word.neutral.length > 0 && !/neutral/i.test(word.note + (extra ?? ''))   // skip when the note already explains it
   const hasPron = neutralLine || word.variants.length > 0 || word.speech.length > 0 || siblings.length > 0
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
@@ -75,11 +77,12 @@ export default function ExplainModal({ id, hidden, onClose, onOpen, onSpeak }: P
         <div className="modal-head">
           <span className={`ex-hanzi ex-len${[...word.hanzi].length}`} lang="zh">{word.hanzi}</span>
           <div className="ex-titles"><h2 id="ex-title">{word.pinyin}</h2><small>{word.meaning}{!isHumanReviewed(word.review) && <span className="draft-tag" title="Not yet checked by a teacher">draft</span>}</small></div>
-          {audioReliable(word, WORDS) && <button className="icon-btn" onClick={() => onSpeak(word.hanzi)} aria-label="Hear pronunciation">🔊</button>}
+          {hasWordAudio(word) && <button className="icon-btn" onClick={() => onSpeakWord(word.id)} aria-label="Hear pronunciation">🔊</button>}
           <button className="icon-btn" ref={closeRef} onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="modal-body" ref={bodyRef}>
-          <p className="ex-summary">{summary}</p>
+          <p className="ex-summary">{word.note}</p>
+          {extra && <p className="ex-summary-extra">{extra}</p>}
           {hasPron && (
             <section><h3>Pronunciation</h3>
               {neutralLine && <p>{word.neutral.length === [...word.hanzi].length ? 'Neutral tone: light and short, no tone mark.' : `Syllable ${word.neutral.join(', ')} is neutral tone: light and short, no tone mark.`}</p>}

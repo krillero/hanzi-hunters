@@ -29,7 +29,7 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
   else for (const [name, info] of Object.entries(sources)) {
     sourceNames.add(name)
     if (!isObj(info)) { err(`sources.json["${name}"]: must be an object`); continue }
-    for (const k of Object.keys(info)) if (!['title', 'url', 'license', 'attribution', 'usage'].includes(k)) err(`sources.json["${name}"]: unknown field "${k}"`)
+    for (const k of Object.keys(info)) if (!['title', 'url', 'license', 'attribution', 'usage', 'adapter', 'reuse', 'variety'].includes(k)) err(`sources.json["${name}"]: unknown field "${k}"`)
     for (const k of ['title', 'license', 'attribution']) if (!isStr(info[k])) err(`sources.json["${name}"].${k}: required non-empty string`)
     if (info.url !== undefined && (!isStr(info.url) || !/^https?:\/\//.test(info.url))) err(`sources.json["${name}"].url: must start with http:// or https://`)
   }
@@ -67,6 +67,16 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
   else {
     const hanziCount = new Map<string, number>()
     for (const w of words) if (isObj(w) && isStr(w.hanzi)) hanziCount.set(w.hanzi, (hanziCount.get(w.hanzi) ?? 0) + 1)
+    // Known engine limitation, handled explicitly: entries with the same hanzi are told apart by READING (questions, "another reading"
+    // labels, sound-alike checks). Two entries with the same hanzi AND the same reading (好 hǎo "good" vs another hǎo meaning) would
+    // produce ambiguous questions, so they are refused until the engine supports meaning-only distinctions. Link such a source record
+    // to the existing entry instead of promoting a second one.
+    const spelledSounds = new Map<string, string>()
+    for (const w of words) if (isObj(w) && isStr(w.hanzi) && isStr(w.pinyin)) {
+      const k = `${w.hanzi}|${soundKey(w.pinyin)}`, id = String(w.id ?? w.hanzi), first = spelledSounds.get(k)
+      if (first !== undefined) err(`words.json["${id}"]: same hanzi and pinyin as entry "${first}" (${w.hanzi} ${w.pinyin}). Distinct meanings with the same spelling and reading are not supported yet: they would make ambiguous questions`)
+      else spelledSounds.set(k, id)
+    }
     const idOf = (w: Record<string, unknown>) => (isStr(w.id) ? w.id : isStr(w.hanzi) ? w.hanzi : '')
     words.forEach((w, i) => {
       const at = `words.json[${i}]${isObj(w) && isStr(w.hanzi) ? ` (${w.hanzi}${isStr(w.id) ? ` #${w.id}` : ''})` : ''}`
@@ -205,8 +215,12 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
     if (!isObj(ex)) { err(`${at}: must be an object`); continue }
     for (const k of Object.keys(ex)) if (!['title', 'summary', 'sections', 'related', 'source', 'review'].includes(k)) err(`${at}: unknown field "${k}" (allowed: title, summary, sections, related, source, review)`)
     if (ex.title !== undefined && (!isStr(ex.title) || ex.title.length > LIMITS.title)) err(`${at}.title: must be a string up to ${LIMITS.title} chars`)
-    if (!isStr(ex.summary)) err(`${at}.summary: required non-empty string`)
-    else if (ex.summary.length > LIMITS.summary) err(`${at}.summary: ${ex.summary.length} chars, max ${LIMITS.summary}`)
+    // summary is optional: the popup always shows the entry's note first, so a summary is only for ADDITIONAL key context.
+    if (ex.summary !== undefined) {
+      if (!isStr(ex.summary)) err(`${at}.summary: must be a non-empty string when present (or leave it out)`)
+      else if (ex.summary.length > LIMITS.summary) err(`${at}.summary: ${ex.summary.length} chars, max ${LIMITS.summary}`)
+      else if (isStr(byId.get(key)?.note) && ex.summary.trim() === String(byId.get(key)!.note).trim()) err(`${at}.summary: identical to the entry's note (the note is already shown first; remove the summary)`)
+    }
     if (!Array.isArray(ex.sections) || ex.sections.length === 0) err(`${at}.sections: must be a non-empty array`)
     else ex.sections.forEach((s, i) => checkSection(`${at}.sections[${i}]`, s))
     checkProvenance(at, ex)

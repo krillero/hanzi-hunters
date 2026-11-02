@@ -38,5 +38,15 @@
     "license": "Official reference; full syllabus not redistributed",
     "attribution": "Center for Language Education and Cooperation; official syllabus linked by Chinese Testing International.",
     "usage": "Individual factual level/page references only. Distinct from the 2021 proficiency standards and older HSK editions."
+  },
+  "accc-anki": {
+    "title": "A Course in Contemporary Chinese (當代中文課程) B1–B6, Traditional: vocabulary Anki deck shared on AnkiWeb",
+    "url": "https://ankiweb.net/shared/info/1466478713",
+    "license": "Not openly licensed (reuse terms unknown)",
+    "attribution": "Vocabulary and recordings from A Course in Contemporary Chinese (當代中文課程), National Taiwan Normal University Mandarin Training Center, as packaged in the shared Anki deck \"A_Course_in_Contemporary_Chinese__B1-B6_Traditional.apkg\" (AnkiWeb 1466478713).",
+    "usage": "Imported into the source layer (public/sources/accc-anki) for comparison. Nothing from it is playable until a person maps and selects it. Its pinyin and recordings follow the textbook's standard, which can differ from the game's dictionary readings.",
+    "adapter": "anki-apkg",
+    "reuse": "Unknown: the deck page states no license, and the textbook material is copyrighted. The project owner decided on 2026-11-02 to include the recordings in this repository; no permission from the rights holder is documented here.",
+    "variety": "Taiwan Mandarin (the textbook's own standard; not stated per recording)"
   }
 }

@@ -50,6 +50,11 @@ export type KindResult = { kind: QKind; ok: boolean }
 
 export type QuestionOptions = {
   canListen?: boolean
+  /**
+   * Can this entry be heard for this listening kind? Decides per entry and kind (a selected recording may allow listen2meaning but
+   * not listen2pinyin; TTS needs a voice and a reliable entry). Without it: `canListen` and text-to-speech reliability.
+   */
+  audioFor?: (word: Word, kind: QKind) => boolean
   rng?: () => number
   /** Force a kind (tests, previews). Falls back to a feasible kind when it cannot be built for this word. */
   kind?: QKind
@@ -226,7 +231,7 @@ const hasPrereqs = (c: ClozeItem) => !!(c.prerequisiteEntries?.length || c.prere
 export const clozeFor = (word: Word, opts: Pick<QuestionOptions, 'cloze' | 'clozeEligible'>) =>
   (opts.cloze ?? []).filter(c => c.answer === word.id && (opts.clozeEligible ? opts.clozeEligible(c) : !hasPrereqs(c)))
 
-type FeasibilityOptions = Pick<QuestionOptions, 'canListen' | 'known' | 'cloze' | 'clozeEligible'>
+type FeasibilityOptions = Pick<QuestionOptions, 'canListen' | 'audioFor' | 'known' | 'cloze' | 'clozeEligible'>
 
 /** A kind the entry's own `questions` list does not allow is never asked (the first exposure, `intro`, is always allowed). */
 export const kindAllowed = (kind: QKind, word: Word) => kind === 'intro' || !word.questions || word.questions.includes(kind)
@@ -238,7 +243,7 @@ export function isFeasible(kind: QKind, word: Word, all: Word[], opts: Feasibili
   if (kind === 'particle') return word.kind === 'particle' && clozeFor(word, opts).length > 0
   if (word.kind === 'particle' && kind !== 'meaning') return false
   // Audio is only used when it is reliable for this entry; sound-only questions also need that no known word sounds the same.
-  if (AUDIO.includes(kind) && (!opts.canListen || !audioReliable(word, all))) return false
+  if (AUDIO.includes(kind) && !(opts.audioFor ? opts.audioFor(word, kind) : opts.canListen && audioReliable(word, all))) return false
   if (SOUND_ONLY.includes(kind) && soundAlikesOf(word, all).some(w => isKnown(opts.known, w))) return false
   if (kind === 'homophone') return usableHomophones(word, all, opts.known).length > 0
   if (kind === 'lookalike') return usableLookalikes(word, all, opts.known).length > 0

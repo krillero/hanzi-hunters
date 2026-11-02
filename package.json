@@ -13,7 +13,10 @@
     "inventory": "node tools/content-inventory.ts",
     "curriculum": "node tools/curriculum-report.ts",
     "vocab:candidates": "node tools/vocab-candidates.ts",
-    "test:brief": "node --test --test-reporter=./tools/brief-reporter.mjs"
+    "test:brief": "node --test --test-reporter=./tools/brief-reporter.mjs",
+    "source:import": "node tools/source-import.ts",
+    "source:apply": "node tools/source-apply.ts",
+    "source:promote": "node tools/source-promote.ts"
   },
   "dependencies": {
     "phaser": "^3.90.0",
