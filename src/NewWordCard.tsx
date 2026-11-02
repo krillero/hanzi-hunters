@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { WORDS } from './data'
 import { getExplanation, hasExplanation } from './content'
-import { audioReliable } from './content/entries'
+import { hasWordAudio } from './wordAudio'
 import { lenClass } from './entryUi'
 
 type Props = {
@@ -10,7 +10,8 @@ type Props = {
   total: number
   lessonLine?: string | null            // "Lesson 1 · Greetings" (null for entries outside the course, e.g. previews)
   muted: boolean
-  onSpeak: (text: string) => void
+  /** Plays the entry's own sound (its selected recording, or reliable text-to-speech). */
+  onSpeakWord: (id: string) => void
   onMore: (id: string) => void          // open the full details popup
   onGotIt: () => void
 }
@@ -19,14 +20,14 @@ type Props = {
  * The introduction card for a word that has just unlocked: everything needed to read and learn it, no question, no pressure.
  * The word only starts appearing in questions after "Got it". Shown between enemies, never in the middle of a fight.
  */
-export default function NewWordCard({ id, index, total, lessonLine, muted, onSpeak, onMore, onGotIt }: Props) {
+export default function NewWordCard({ id, index, total, lessonLine, muted, onSpeakWord, onMore, onGotIt }: Props) {
   const word = WORDS.find(w => w.id === id)
   const ex = getExplanation(id)
   const go = useRef<HTMLButtonElement | null>(null)
-  const canSpeak = word ? audioReliable(word, WORDS) : false
+  const canSpeak = word ? hasWordAudio(word) : false
   useEffect(() => { go.current?.focus() }, [id])
   // say the word once when the card opens (the browser only allows this after a tap; every card follows one)
-  useEffect(() => { if (word && canSpeak && !muted) onSpeak(word.hanzi) /* eslint-disable-next-line */ }, [id])
+  useEffect(() => { if (word && canSpeak && !muted) onSpeakWord(word.id) /* eslint-disable-next-line */ }, [id])
   if (!word) return null
   const breakdown = ex?.sections.find(s => s.type === 'breakdown')
   const examples = ex?.sections.flatMap(s => (s.type === 'examples' ? s.items : [])).slice(0, 2) ?? []
@@ -39,7 +40,7 @@ export default function NewWordCard({ id, index, total, lessonLine, muted, onSpe
         <div className="modal-body">
           <div className="nw-hero">
             <div className={`nw-hanzi len${lenClass(word.hanzi)}`} lang="zh">{word.hanzi}</div>
-            <div className="nw-pinyin">{word.pinyin}{canSpeak && <button className="nw-speak" onClick={() => onSpeak(word.hanzi)} aria-label="Hear the word">🔊</button>}</div>
+            <div className="nw-pinyin">{word.pinyin}{canSpeak && <button className="nw-speak" onClick={() => onSpeakWord(word.id)} aria-label="Hear the word">🔊</button>}</div>
             <div className="nw-meaning">{word.meaning}</div>
             {word.variants.length > 0 && <div className="nw-also">also said {word.variants.join(', ')}</div>}
           </div>

@@ -4,6 +4,7 @@
 import type { RecordingUse, RecordingsFile, SelectedRecording } from '../sources/types.ts'
 import type { Word } from './types.ts'
 import { soundKey } from './pinyin.ts'
+import { audioReliable } from './entries.ts'
 
 /** How a reading relates to an entry's readings. */
 export type ReadingRelation =
@@ -73,4 +74,17 @@ export function playableRecording(word: Word, index: RecordingIndex): SelectedRe
 export function recordingAllows(word: Word, index: RecordingIndex, kind: string): boolean {
   const r = index.get(word.id)
   return !!r && eligibleUses(r, word).has(kind as RecordingUse)
+}
+
+/**
+ * May a listening question of `kind` be asked about this entry right now?
+ *  - muted: never
+ *  - the entry has a selected recording: only the uses its reading and a person allow, and only if it has not failed to play;
+ *    never text-to-speech instead (one voice and one reading per entry)
+ *  - no recording: text-to-speech, when a Mandarin voice exists and TTS is reliable for the entry (audio "ok", no homograph)
+ */
+export function canHearEntry(w: Word, kind: string, all: Word[], index: RecordingIndex, o: { muted: boolean; ttsVoice: boolean; failed?: Set<string> }): boolean {
+  if (o.muted) return false
+  if (playableRecording(w, index)) return !o.failed?.has(w.id) && recordingAllows(w, index, kind)
+  return o.ttsVoice && audioReliable(w, all)
 }

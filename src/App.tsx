@@ -25,6 +25,7 @@ import { fetchLatestBuild, isOutdated, refreshApp, type BuildInfo } from './appI
 import { parseBackup, serializeBackup } from './game/backup'
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
 import { audioReliable, homographsOf } from './content/entries'
+import { canHear, hasSelectedRecording, hasWordAudio, recordingUrl, wordRecording } from './wordAudio'
 import { fillBlank, lenClass } from './entryUi'
 import { LEVEL_NAMES, MAX_LV, SESSION_LV, isDue, masteredCount, seenCount } from './game/mastery'
 import { answerRevealed, applyAnswer, applyIntroduce, applyReveal, learningNote } from './game/learning'
@@ -151,7 +152,11 @@ export default function App() {
   const encounterOpen = !!save.run?.encounter && save.run.encounter.status !== 'closed'
   const [settings, setSettings] = useState<Settings>(() => { try { return loadSettings(window.localStorage) } catch { return { ...DEFAULT_SETTINGS } } })
   const [hasVoice, setHasVoice] = useState(hasChineseVoice)
-  const canListen = hasVoice && !settings.muted          // muted => listening questions are never asked
+  // Muted => listening questions are never asked. Whether a particular entry can be heard (its selected recording, or a reliable
+  // TTS reading with a Mandarin voice) is decided per entry and question kind by canHear (wordAudio.ts).
+  const canListen = !settings.muted
+  /** Entries whose recording failed to play this session: no listening questions for them, and no silent TTS substitute. */
+  const failedRecs = useRef<Set<string>>(new Set())
   const [lootReveal, setLootReveal] = useState<{ name: string; current: string | null; choice: boolean } | null>(null)
   const [tipPulse, setTipPulse] = useState<string | null>(null)   // 💡 pulses once per word, right after the first right answer
   const [bossIntro, setBossIntro] = useState<BossId | null>(() => { const j = previewStart(); return j && isBoss(j.floor, j.kill) ? bossIdFor(j.floor) : null })
@@ -236,7 +241,7 @@ export default function App() {
     const clozeEligible = sentenceCheck(mastery)
     // Deeper depths and floors lean the question mix toward recall kinds (only kinds each word is already eligible for).
     const challenge = forRun ? challengeFor(forRun.depth, forRun.floor) : 0
-    const opts = (kind?: QKind) => ({ canListen: listen, known: new Set(Object.keys(mastery)), history: kindHistory.current, kind, cloze: CLOZE, clozeEligible, challenge })
+    const opts = (kind?: QKind) => ({ canListen: listen, audioFor: (w: Word, k: QKind) => listen && canHear(w, k, { muted: settings.muted, ttsVoice: hasVoice, failed: failedRecs.current }), known: new Set(Object.keys(mastery)), history: kindHistory.current, kind, cloze: CLOZE, clozeEligible, challenge })
     const bossFoe = forRun && isBoss(forRun.floor, forRun.kill) ? enemyStats(ENEMIES, forRun.floor, forRun.kill, forRun.depth) : null
     // Some bosses need a particular kind of question: tone questions break the Golem's shield, character questions the Scribe's seals,
     // and the Trickster only asks the easy-to-confuse kinds. They ask about words you already know.
@@ -408,6 +413,40 @@ export default function App() {
   }
   // The speaker button: when muted, tapping it turns sound back on (and plays the text).
   const pressSpeaker = (text: string) => { if (settings.muted && !noMandarinVoice()) setSettings(st => ({ ...st, muted: false })); speak(text, true) }
+  // One entry's own sound: its selected recording when it has one (never TTS instead), otherwise TTS when that is reliable.
+  const audioEl = useRef<HTMLAudioElement | null>(null)
+  const recordingFailed = (word: Word) => {
+    if (failedRecs.current.has(word.id)) return
+    failedRecs.current.add(word.id)
+    setToast(`The recording of ${word.hanzi} could not be played, so it is not used for listening questions this session.`)
+    // A listening question about this word that is still open becomes a normal question: never ask what cannot be heard.
+    setCard(c => {
+      if (!c || c.word.id !== word.id || !c.question.audio) return c
+      const question = tryBuildQuestion(c.word, save.mastery[c.word.id], WORDS, { canListen: false, known: new Set(Object.keys(save.mastery)), history: kindHistory.current, cloze: CLOZE, clozeEligible: sentenceCheck(save.mastery) })
+      return question ? { word: c.word, question } : c
+    })
+  }
+  const playWord = (word: Word, force = false) => {
+    if (settings.muted && !force) return
+    if (!hasSelectedRecording(word)) { if (audioReliable(word, WORDS)) speak(word.hanzi, force); return }
+    const rec = wordRecording(word, failedRecs.current)
+    if (!rec) { if (force) setToast(`The recording of ${word.hanzi} could not be played.`); return }
+    try {
+      window.speechSynthesis?.cancel?.()
+      audioEl.current?.pause()
+      const a = new Audio(recordingUrl(rec))   // fetched only when played: nothing is preloaded at startup
+      audioEl.current = a
+      a.addEventListener('error', () => recordingFailed(word), { once: true })
+      // NotAllowedError = the browser blocked autoplay (a tap fixes it); anything else means the file cannot be played.
+      void a.play().catch((err: unknown) => { const n = (err as { name?: string })?.name; if (n !== 'NotAllowedError' && n !== 'AbortError') recordingFailed(word) })
+    } catch { recordingFailed(word) }
+  }
+  const pressWord = (id: string) => {
+    const word = WORDS.find(w => w.id === id)
+    if (!word) return
+    if (settings.muted && (hasSelectedRecording(word) || !noMandarinVoice())) setSettings(st => ({ ...st, muted: false }))
+    playWord(word, true)
+  }
   // Words are only read aloud when the audio can be trusted to match the displayed word and reading (see audioReliable in content/entries.ts).
   // Only once the question is actually visible: a card prepared behind the new-word card, the boss intro, a loot card or the floor
   // summary stays silent (it is often replaced before it is shown), and each card is read at most once.
@@ -420,7 +459,7 @@ export default function App() {
   useEffect(() => {
     if (!card || questionCovered || introPending.current || spokenCard.current === card) return
     spokenCard.current = card
-    if (card.question.audio && !feedback && !reveal && audioReliable(card.word, WORDS)) speak(card.word.hanzi)
+    if (card.question.audio && !feedback && !reveal && hasWordAudio(card.word, failedRecs.current)) playWord(card.word)
     /* eslint-disable-next-line */
   }, [card, questionCovered])
 
@@ -753,7 +792,7 @@ export default function App() {
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
         {wordbook}
       {menu}
-      {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} onSpeakWord={pressWord} />}
         {toastEl}
       </main>
     )
@@ -775,8 +814,8 @@ export default function App() {
           <p className="hint-text">This is a content or configuration problem, not something you did. Your progress is safe. If you maintain this game: run <code>npm run validate:content</code> and check <code>src/content/curricula.json</code> and <code>words.json</code>. ({plan.reason}: {plan.detail})</p>
           <button className="bar-btn main" onClick={() => endRun('returned')}>Back to camp</button>
         </section>}
-        {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={openExplain} onGotIt={introGotIt} />}
-        {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} />}
+        {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeakWord={id => { const w = WORDS.find(x => x.id === id); if (w) playWord(w, true) }} onMore={openExplain} onGotIt={introGotIt} />}
+        {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} onSpeakWord={pressWord} />}
         {menu}
         {toastEl}
       </main>
@@ -784,7 +823,7 @@ export default function App() {
   }
   const { word, question } = card
   const entry = save.mastery[word.id]
-  const canSpeak = audioReliable(word, WORDS)
+  const canSpeak = hasWordAudio(word, failedRecs.current)
   const revealed = !!feedback
   const fighting = run.phase === 'fighting'
   const revealing = !!reveal   // a right answer is being shown in place before the game moves on
@@ -957,7 +996,7 @@ export default function App() {
                 <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : LEVEL_NAMES[pips].toUpperCase()}{entry && entry.ok < 3 && <small className="stage-count"> {entry.ok}/3</small>}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
                   {hasDetails(word) && (question.cloze ? revealed || revealing : show.hanzi && show.pinyin && show.meaning) && <button className={`speak-btn tip-btn ${tipPulse === word.id ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); openExplain(word.id) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
-                  {canSpeak && <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>}
+                  {canSpeak && <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressWord(word.id) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>}
                 </div>
                 </div>
                 {ceremony === word.id && (feedback || revealing) && <div className="confetti" aria-hidden="true">{Array.from({ length: 22 }, (_, k) => <i key={k} style={{ left: `${4 + ((k * 37) % 92)}%`, animationDelay: `${(k % 7) * 60}ms`, background: ['#ffd166', '#8ee0a9', '#6fb5e8', '#ff8a3d'][k % 4] }} />)}</div>}
@@ -1026,11 +1065,11 @@ export default function App() {
         {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen key={`${trialState.id}:${trialState.step ?? 1}`} warden={foe?.boss === 'warden'} level={levelOf(save.mastery)} trial={t} state={trialState} onAnswer={answerTrial} onClose={leaveTrial} /> : null })()}
         {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} level={levelOf(save.mastery)} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onHelp={() => patch(s => (s.run?.encounter ? { ...s, run: { ...s.run, encounter: toggleHelp(s.run.encounter) } } : s))} onSubmit={() => patch(s => submitEncounter(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} sigil={run.depth > save.meta.depthCleared ? { level: run.depth, text: sigilText(run.depth) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
-      {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={openExplain} onGotIt={introGotIt} />}
+      {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeakWord={id => { const w = WORDS.find(x => x.id === id); if (w) playWord(w, true) }} onMore={openExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
       {menu}
-      {explain !== null && <ExplainModal id={explain} hidden={fighting && !feedback && !revealing ? card?.word.id : undefined} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal id={explain} hidden={fighting && !feedback && !revealing ? card?.word.id : undefined} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} onSpeakWord={pressWord} />}
     </main>
   )
 }
