@@ -11,9 +11,9 @@ const v1 = (o: Record<string, unknown>) => ({ version: SAVE_VERSION, ...o })
 test('garbage never crashes and yields a valid fresh save', () => {
   for (const bad of [null, undefined, 5, 'x', [], {}, v1({ meta: 'x', mastery: 5, run: 'x' }), v1({ meta: { gold: 'a', upgrades: 'W1' }, run: { floor: 'x', hearts: NaN } })]) {
     const s = sanitizeSave(bad)
-    assert.equal(s.version, 1); assert.equal(s.meta.gold, 0); assert.deepEqual(s.meta.upgrades, []); assert.ok(s.run === null || s.run.hearts > 0)
+    assert.equal(s.version, 2); assert.equal(s.meta.gold, 0); assert.deepEqual(s.meta.upgrades, []); assert.ok(s.run === null || s.run.hearts > 0)
   }
-  for (const raw of ['{not json', 'null', '[]']) assert.equal(loadSave(store({ [SAVE_KEY]: raw })).version, 1)
+  for (const raw of ['{not json', 'null', '[]']) assert.equal(loadSave(store({ [SAVE_KEY]: raw })).version, 2)
   assert.equal(loadSave(store({})).run, null)
 })
 
@@ -35,7 +35,7 @@ test('upgrades are validated: unknown ids dropped, tiers need their prerequisite
 
 test('mastery is validated and unknown words dropped', () => {
   const s = sanitizeSave(v1({ mastery: { 人: { lv: 9, ok: 7 }, 大: { lv: 2, ok: 1 }, 龍: { lv: 1, ok: 0 }, 小: 'x' } }))
-  assert.deepEqual(s.mastery, { 人: { lv: 4, ok: 1 }, 大: { lv: 2, ok: 1 } })
+  assert.deepEqual(Object.fromEntries(Object.entries(s.mastery).map(([k, e]) => [k, e.lv])), { 人: 5, 大: 2 })   // a wild level is clamped; 龍 and the string are dropped
 })
 
 test('a saved expedition round-trips; impossible values are clamped', () => {

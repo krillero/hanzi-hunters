@@ -1,12 +1,10 @@
-/**
- * lv 0-5 (see game/mastery.ts), ok = right answers in a row toward the next session level, at = local date (YYYY-MM-DD) of the
- * last level change: time-gated levels wait from it. Entries saved before time-gated levels have no `at` and count as due.
- */
-export type MasteryEntry = { lv: number; ok: number; at?: string }
+/** One entry's scheduling state (lv 0-5 and the spacing data): see game/schedule.ts and docs/SCHEDULING.md. */
+export type MasteryEntry = SchedEntry
 /** Per-word mastery keyed by hanzi. A word with no entry has never been shown. */
 export type Mastery = Record<string, MasteryEntry>
 
 import type { Habit } from './habit.ts'
+import type { SchedEntry } from './schedule.ts'
 
 /** `wins`: expeditions won (final boss beaten); `depthCleared`: the deepest depth won (0 = none), which unlocks the next. */
 export type Meta = { gold: number; upgrades: string[]; bestFloor: number; runs: number; wins: number; depthCleared: number }
@@ -55,8 +53,10 @@ export type RunSummary = { floor: number; kills: number; level: number; goldBank
 import type { CourseProgress, PeakLevels } from './course.ts'
 
 export type Saved = {
-  /** Save format version under SAVE_KEY. Restarted at 1 with expeditions; earlier formats (other keys) are not read. */
-  version: 1
+  /** Save format version under SAVE_KEY. v1 saves (calendar-day mastery) are migrated on load; earlier formats (other keys) are not read. */
+  version: 2
+  /** Global number of submitted battle / trial answers (never reset by a run). Drives the "other answers" gaps in game/schedule.ts. */
+  answerSeq: number
   meta: Meta
   mastery: Mastery
   /** Progress under ids that no current entry claims (removed entries, or a hanzi that became ambiguous). Kept so nothing is lost; retried on every load. */

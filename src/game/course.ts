@@ -18,6 +18,7 @@
 import type { Curriculum, Introduction, Lesson, Readiness, Unit, Word } from '../content/types.ts'
 import type { Mastery, MasteryEntry } from './types.ts'
 import { MAX_LEARNING, MAX_LV, MIN_KNOWN, STARTING_POOL, isDue } from './mastery.ts'
+import { standing, type Standing } from './schedule.ts'
 
 // ---- configuration -----------------------------------------------------------------------------------
 
@@ -223,7 +224,7 @@ export function selectIntroductions(s: CourseState, limits: IntroLimits = DEFAUL
  * 0.6 introduces more words (95) but 0.75-accuracy players then clear depths about 2 expeditions later.
  */
 export const LEVEL_WEIGHT = [3, 3, 0.8, 0.8, 0.8, 0.4]
-/** A word whose time-gated step is due (game/mastery.ts isDue) is reviewed far more often: a session starts by checking it. */
+/** A word whose delayed review is due (game/mastery.ts isDue) is reviewed far more often: a session starts by checking it. */
 export const DUE_WEIGHT = 6
 /** At most this many due words are asked per fight, so new and still-learning words always keep slots (ReviewOptions.dueCapped). */
 export const DUE_PER_FIGHT = 2
@@ -234,8 +235,8 @@ export const RECENT_PENALTY = [0.1, 0.2, 0.3, 0.4, 0.6, 0.6]
  * How much an introduced entry should be reviewed now. This is the seam for a future scheduler: a spaced-repetition policy can supply
  * its own weight from review dates without touching curriculum order or introduction selection.
  */
-export type ReviewWeight = (word: Word, entry: MasteryEntry, today?: string) => number
-export const levelWeight: ReviewWeight = (_w, e, today) => (today && isDue(e, today) ? DUE_WEIGHT : LEVEL_WEIGHT[Math.min(e.lv, LEVEL_WEIGHT.length - 1)])
+export type ReviewWeight = (word: Word, entry: MasteryEntry, now?: number) => number
+export const levelWeight: ReviewWeight = (_w, e, now) => (now !== undefined && isDue(e, now) ? DUE_WEIGHT : LEVEL_WEIGHT[Math.min(e.lv, LEVEL_WEIGHT.length - 1)])
 
 export type ReviewOptions = {
   currentId?: string | null
@@ -244,11 +245,21 @@ export type ReviewOptions = {
   weight?: ReviewWeight
   /** Extra filter (e.g. no particles for boss questions). */
   filter?: (w: Word) => boolean
-  /** Local date (YYYY-MM-DD): words due for a time-gated step are favoured. Without it, levels alone decide. */
-  today?: string
+  /** Current time (ms): words due for a delayed / maintenance review are favoured. Without it, levels alone decide. */
+  now?: number
+  /** The number the NEXT answer will get (Saved.answerSeq + 1). With `now`, scheduling decides first: see SCHEDULE_PRIORITY. */
+  seq?: number
   /** This fight has already asked DUE_PER_FIGHT due words: due words are not picked (unless nothing else is left). */
   dueCapped?: boolean
 }
+
+/**
+ * Scheduling comes before the review weights: entries whose relearning answer is eligible are asked first, then due delayed / maintenance
+ * reviews (at most DUE_PER_FIGHT per fight), then initial-learning entries whose spacing gap is met, then every other known entry. Within a
+ * tier the usual weights, recent-item penalty, current-item avoidance and filter apply. An empty tier is skipped, so nothing waits for a gap
+ * and the same failing entry cannot repeat (its relearning gap needs other answers first).
+ */
+export const SCHEDULE_PRIORITY: Standing[] = ['relearn', 'due', 'initial', 'other']
 
 /**
  * A previously introduced entry to practise, or null when the learner has met nothing yet. NEVER returns an unseen entry:
@@ -260,12 +271,20 @@ export function selectReview(words: Word[], m: Mastery, o: ReviewOptions = {}): 
   if (!known.length) return null
   const others = known.filter(w => w.id !== o.currentId)
   const pool = others.length ? others : known   // a pool of one entry still works
+  const scheduled = o.now !== undefined && o.seq !== undefined
   const weighted = pool.map(w => {
     const ri = recent.indexOf(w.id)
-    const capped = o.dueCapped && o.today && isDue(m[w.id], o.today)
-    const base = capped ? 0 : Math.max(0, weight(w, m[w.id], o.today))
-    return { w, weight: ri >= 0 && ri < RECENT_PENALTY.length ? base * RECENT_PENALTY[ri] : base }
+    const capped = o.dueCapped && o.now !== undefined && isDue(m[w.id], o.now)
+    const base = capped ? 0 : Math.max(0, weight(w, m[w.id], o.now))
+    return { w, weight: ri >= 0 && ri < RECENT_PENALTY.length ? base * RECENT_PENALTY[ri] : base, tier: scheduled ? SCHEDULE_PRIORITY.indexOf(standing(m[w.id], o.now!, o.seq!)) : 0 }
   })
+  // The first tier with anything askable decides the pool; if it is empty (e.g. every due word is capped) the next tier is used.
+  if (scheduled) {
+    for (let t = 0; t < SCHEDULE_PRIORITY.length; t++) {
+      const inTier = weighted.filter(x => x.tier === t && x.weight > 0)
+      if (inTier.length) { weighted.splice(0, weighted.length, ...inTier); break }
+    }
+  }
   const total = weighted.reduce((n, x) => n + x.weight, 0)
   if (total <= 0) return pool[Math.floor(rng() * pool.length)]
   let r = rng() * total

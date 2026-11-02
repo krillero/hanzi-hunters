@@ -148,7 +148,7 @@ allow-list is never bypassed.
 | **Lesson ready** | Every *required* entry of the lesson is ready. Recorded as **completed** the first time it happens. | `courses[id].completed` |
 | **Long-term mastery** | Separate concept (level 4, "mastered"). Lesson completion never claims it. | `lv = 4` |
 
-Mastery levels are unchanged: two correct answers in a row raise the level by one, a miss lowers it by one.
+Mastery levels keep their meaning and the lesson readiness threshold is unchanged (level 1, the first spaced success); how levels are earned is in `docs/SCHEDULING.md`.
 
 ### Lesson completion vs entry readiness (two separate persistent facts)
 

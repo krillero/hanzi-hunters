@@ -4,6 +4,7 @@ import type { Curriculum, Word } from './types.ts'
 import { selectIntroductions, stepsOf, wordMap } from '../game/course.ts'
 import { MAX_LV } from '../game/mastery.ts'
 import type { Mastery } from '../game/types.ts'
+import { entryAtLevel } from '../game/schedule.ts'
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const isStr = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
@@ -38,7 +39,7 @@ export function simulatedOrder(c: Curriculum, entryIds: Set<string>): string[] {
   for (let guard = 0; guard < 100000; guard++) {
     const plan = selectIntroductions({ curriculum: c, mastery: m, progress: { version: c.version, completed: [] }, words, peak: {} }, undefined, 1)
     if (!plan.ids.length) break
-    for (const id of plan.ids) { out.push(id); m[id] = { lv: MAX_LV, ok: 0 } }
+    for (const id of plan.ids) { out.push(id); m[id] = entryAtLevel(MAX_LV) }
   }
   return out
 }

@@ -26,7 +26,10 @@ import { parseBackup, serializeBackup } from './game/backup'
 import { ACTIVE_CURRICULUM, ENEMIES, GEAR, WORDS, type BossId, type Word } from './data'
 import { audioReliable, homographsOf } from './content/entries'
 import { fillBlank, lenClass } from './entryUi'
-import { LEVEL_NAMES, MAX_LV, SESSION_LV, daysUntilDue, dueCount, isDue, masteredCount, seenCount, updateMastery, waitDays } from './game/mastery'
+import { LEVEL_NAMES, MAX_LV, SESSION_LV, isDue, masteredCount, seenCount } from './game/mastery'
+import { answerRevealed, applyAnswer, applyIntroduce, applyReveal, learningNote } from './game/learning'
+import { entryAtLevel } from './game/schedule'
+import { entryStatus } from './game/status'
 import { DEFAULT_LIMITS, DUE_PER_FIGHT, courseStatus, emptyCourse, introCapacity, introCardLine, recordPeaks, selectIntroductions, selectReview, sentencePrereqsMet, wordMap, type CourseState, type IntroPlan } from './game/course'
 import { CHARACTER_KINDS, TONE_KINDS, TRICK_KINDS, tryBuildQuestion, isCharacterQuestion, isToneQuestion, pickSealCard, shuffle, type KindResult, type QKind, type Question } from './game/questions'
 import BossIntro from './BossIntro'
@@ -174,6 +177,15 @@ export default function App() {
   const [explain, setExplain] = useState<string | null>(null)
   const [latestBuild, setLatestBuild] = useState<BuildInfo | null>(null)
   const [updateDismissed, setUpdateDismissed] = useState(false)
+  /** Opening an entry's details shows its answer: recorded so the answer cannot count as a delayed memory for a while. */
+  const openExplain = (id: string | null) => { if (id) { const now = Date.now(); setSave(s => applyReveal(s, [id], now)) } setExplain(id) }
+  // The wordbook lists every met word with its meaning: that shows their answers (the word of the open question is hidden from it).
+  useEffect(() => {
+    if (!showWords) return
+    const now = Date.now(), hidden = run && run.phase === 'fighting' && !feedback ? card?.word.id : undefined
+    setSave(s => applyReveal(s, Object.keys(s.mastery).filter(id => id !== hidden), now))
+    /* eslint-disable-next-line */
+  }, [showWords])
   const closeExplain = useMemo(() => () => setExplain(null), [])
   useEffect(() => {
     if (!toast) return
@@ -240,7 +252,7 @@ export default function App() {
       let prevId: string | null = current
       // a known entry (review selection never returns an unseen one); particles only when nothing else is known
       const build = (): Card | null => {
-        const word: Word | null = selectReview(WORDS, mastery, { today: localDay(), dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: prevId, recent: recentWords.current, filter: w => w.kind !== 'particle' }) ?? selectReview(WORDS, mastery, { currentId: prevId, recent: recentWords.current })
+        const word: Word | null = selectReview(WORDS, mastery, { now: Date.now(), seq: save.answerSeq + 1, dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: prevId, recent: recentWords.current, filter: w => w.kind !== 'particle' }) ?? selectReview(WORDS, mastery, { currentId: prevId, recent: recentWords.current })
         if (!word) return null
         prevId = word.id
         const question = tryBuildQuestion(word, mastery[word.id], WORDS, opts(kinds[Math.floor(Math.random() * kinds.length)]))
@@ -254,13 +266,13 @@ export default function App() {
     const echo = !forced && forRun && bossFoe && ((bossFoe.boss === 'wraith' && bossPhase(forRun, bossFoe.hp) === 2) || (bossFoe.boss === 'warden' && bossPhase(forRun, bossFoe.hp) === 3)) ? [...kindHistory.current].reverse().find(h => !h.ok)?.kind : undefined
     if (forced) {
       // Preview aid: with ?word=…&kind=…, an entry you have not met yet is asked as if you already knew it, so the requested question kind is shown
-      const asked = forcedKind.current && !mastery[forced.id] ? { lv: 1, ok: 0 } : mastery[forced.id]
+      const asked = forcedKind.current && !mastery[forced.id] ? entryAtLevel(1) : mastery[forced.id]
       const question = tryBuildQuestion(forced, asked, WORDS, opts(forcedKind.current ?? undefined))
       if (question) return { word: forced, question, sealFallback: shieldUp }
     }
     const tried = new Set<string>()
     for (let k = 0; k < 8; k++) {
-      const word = selectReview(WORDS, mastery, { today: localDay(), dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: current, recent: recentWords.current, filter: w => !tried.has(w.id) })
+      const word = selectReview(WORDS, mastery, { now: Date.now(), seq: save.answerSeq + 1, dueCapped: dueThisFight.current >= DUE_PER_FIGHT, currentId: current, recent: recentWords.current, filter: w => !tried.has(w.id) })
       if (!word) break
       tried.add(word.id)
       const question = tryBuildQuestion(word, mastery[word.id], WORDS, opts(echo))
@@ -297,8 +309,9 @@ export default function App() {
   const introGotIt = () => {
     const id = introQueue[0]
     if (!id) return
-    const mastery = updateMastery(save.mastery, id, true, localDay())   // creates the entry at level 0: from now on it is asked about
-    patch(s => ({ ...s, mastery: updateMastery(s.mastery, id, true, localDay()) }))
+    const now = Date.now()
+    const mastery = applyIntroduce(save, id, now).mastery   // creates the entry at level 0 with no retrieval credit: from now on it is asked about
+    patch(s => applyIntroduce(s, id, now))
     setFloorStats(s => recordIntro(s, id)); setRunStats(s => recordIntro(s, id))
     const rest = introQueue.slice(1)
     setIntroQueue(rest)
@@ -425,9 +438,13 @@ export default function App() {
       sealQuestion: !!card.sealFallback || (foe?.boss ? (sealAsk(foe.boss, run.shield) === 'hanzi' ? isCharacterQuestion(question) : isToneQuestion(question)) : false),
       roll: { drop: Math.random(), item: Math.random() }
     })
-    const today = localDay()
-    if (isDue(entry, today)) dueThisFight.current += 1
-    const mastery = updateMastery(save.mastery, word.id, isCorrect, today)
+    const now = Date.now()
+    if (isDue(entry, now)) dueThisFight.current += 1
+    // One shared scheduling API. Help = a hint removed options, or the card showed the answer. Same answer number on replay = no second update.
+    const seq = save.answerSeq + 1
+    const submission = { id: word.id, kind: question.kind, correct: isCorrect, assisted: eliminated.length > 0 || answerRevealed(question), now, chosen: option, answer: question.answer }
+    const learned = applyAnswer(save, submission, seq)
+    const mastery = learned.save.mastery
     recentWords.current = [word.id, ...recentWords.current.filter(h => h !== word.id)].slice(0, 8)
     if (question.kind !== 'intro') kindHistory.current = [...kindHistory.current, { kind: question.kind, ok: isCorrect }].slice(-16)
     const before = entry?.lv ?? -1, after = mastery[word.id].lv
@@ -454,7 +471,7 @@ export default function App() {
     // Recently seen trials are skipped while others exist; a new offer joins the recent list.
     const runAfter = offerTrial(r.run, mastery, ENEMIES, Math.random, save.recentEvents)
     const offered = runAfter.trial && runAfter.trial !== r.run.trial ? trialKey(runAfter.trial.id) : null
-    patch(s => ({ ...s, run: runAfter, mastery, habit, recentEvents: offered ? noteRecent(s.recentEvents, offered) : s.recentEvents, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
+    patch(s => ({ ...applyAnswer(s, submission, seq).save, run: runAfter, habit, recentEvents: offered ? noteRecent(s.recentEvents, offered) : s.recentEvents, practiced: question.kind !== 'intro' && !s.practiced.includes(word.id) ? [...s.practiced, word.id] : s.practiced }))
 
     // Learning summary for the floor-clear / defeat cards
     const rec = { id: word.id, isCorrect, streakAfter: r.run.streak, levelBefore: before, levelAfter: after, gold: r.outcome === 'victory' ? r.run.reward.gold : 0 }
@@ -497,13 +514,7 @@ export default function App() {
       }, 380)
     }
     const plan = autoContinuePlan({ isCorrect, outcome: r.outcome, floorCleared: r.outcome === 'victory' && isFinalFight(run.kill), setting: settings.autoContinue, masteryLevel: after })
-    // Time-gated levels: say when the word can take its next step, so a right answer that does not promote still makes sense.
-    const days = (n: number) => (n <= 1 ? 'tomorrow' : `in ${n} days`)
-    const wait = daysUntilDue(mastery[word.id], today)
-    const masteryNote = !entry ? 'New word — added to your wordbook'
-      : after > before ? (after >= MAX_LV ? 'Mastered!' : `Level up! Now ${LEVEL_NAMES[after]}${waitDays(after) ? ` · next check ${days(waitDays(after)!)}` : ''}`)
-        : after < before ? `Back to ${LEVEL_NAMES[after]} — it will return for review`
-          : isCorrect ? (after >= MAX_LV ? 'Mastered — keep it sharp' : wait !== null ? `${LEVEL_NAMES[after]} — next level after a check ${days(wait)}` : 'One more correct in a row to level up') : 'Review this one — it will come back'
+    const masteryNote = learningNote(learned.outcome, mastery[word.id], before, isCorrect, now)
     const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedByBlessing ? 'blessing' : r.savedByCalm ? 'calm' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else {
@@ -538,7 +549,7 @@ export default function App() {
     const res = resolveTrial({ run, bonuses, enemies: ENEMIES, allGear: GEAR, roll: { drop: Math.random(), item: Math.random() }, chosen })
     if (!res) return
     trialLock.current = true
-    patch(s => ({ ...s, run: res.run }))
+    patch(s => ({ ...s, run: res.run, answerSeq: s.answerSeq + 1 }))   // a boss-trial answer counts as an answered question for spacing; it earns no word credit
     if (res.correct && foe?.boss === 'warden') { setCaption({ side: 'monster', kind: 'shield', text: trialFor(run.trial)?.boss === 'golem' ? '💥 WARD BROKEN' : '💥 SEALS BROKEN' }); feel('combo', { streak: 9 }) }
     else if (res.correct && trialFor(run.trial)?.boss === 'wraith') { setCaption({ side: 'hero', kind: 'block', text: '👻 Wraith calmed · next mistake free' }); feel('combo', { streak: 7 }) }
     else if (res.correct && trialFor(run.trial)?.boss === 'trickster') { sceneRef.current?.playHit('monster'); setCaption({ side: 'monster', kind: 'shield', text: '🪞 TRUE STRIKE · next mistake free' }); feel('combo', { streak: 9 }) }
@@ -681,20 +692,20 @@ export default function App() {
 
   // ---- camp -----------------------------------------------------------------------------
   // Wordbook (battle screen and camp): due words first, then by level. During a question its own word is hidden (no peeking).
-  const wordbookToday = localDay()
+  const wordbookNow = Date.now()
   const hiddenWord = run && run.phase === 'fighting' && !feedback ? card?.word.id : undefined
   // Long-term mastery lives here: how many words have held up over days.
   const longTerm = [3, 4, 5].map(lv => `${Object.values(save.mastery).filter(e => e.lv === lv).length} ${LEVEL_NAMES[lv]}`).join(' · ')
   const wordbook = showWords ? <div className="drawer wordbook-drawer"><div className="drawer-title">WORDBOOK <button onClick={() => setShowWords(false)} aria-label="Close wordbook">×</button></div><p className="wordbook-summary">{longTerm}</p><div className="wordbook-grid">
     {WORDS.filter(w => save.mastery[w.id] && w.id !== hiddenWord)
-      .map(w => ({ w, e: save.mastery[w.id], due: isDue(save.mastery[w.id], wordbookToday) }))
-      .sort((a, b) => Number(b.due) - Number(a.due) || b.e.lv - a.e.lv)
-      .map(({ w, e, due }) => {
+      .map(w => ({ w, e: save.mastery[w.id], st: entryStatus(save.mastery[w.id], wordbookNow) }))
+      .sort((a, b) => Number(!!b.st.tag) - Number(!!a.st.tag) || b.e.lv - a.e.lv)
+      .map(({ w, e, st }) => {
         const lv = e.lv, rich = hasDetails(w)
-        return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => setExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. Open details`}>
+        return <button className={`wordbook-word has-tip lv${lv}`} key={w.id} onClick={() => openExplain(w.id)} aria-label={`${w.hanzi}, ${w.pinyin}, ${w.meaning}. ${st.text}. Open details`}>
           <strong className={`wb-len${lenClass(w.hanzi)}`}>{w.hanzi}</strong><span>{w.pinyin}</span><small>{w.meaning}</small>
-          {w.kind === 'particle' && <u className="kind-tag">particle</u>}{due && <u className="kind-tag due-tag">review</u>}
-          <i className="pips" aria-label={`${LEVEL_NAMES[lv]}${due ? ', due for review' : ''}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>
+          {w.kind === 'particle' && <u className="kind-tag">particle</u>}{st.tag && <u className="kind-tag due-tag">{st.tag === 'maintenance' ? 'maintenance' : st.tag === 'practise' ? 'practise' : 'review'}</u>}{!st.tag && e.ok < 3 && <u className="kind-tag">{e.ok}/3</u>}
+          <i className="pips" aria-label={`${LEVEL_NAMES[lv]}. ${st.text}`}>{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < lv ? 'on' : ''} />)}</i>
           {rich && <em className="tip-badge" aria-hidden>💡</em>}
         </button>
       })}
@@ -742,7 +753,7 @@ export default function App() {
         <footer className="footer"><span>HANZI HUNTERS <b>·</b> PROTOTYPE 0.2</span><span>Die. Learn. Return stronger.</span></footer>
         {wordbook}
       {menu}
-      {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} />}
         {toastEl}
       </main>
     )
@@ -764,8 +775,8 @@ export default function App() {
           <p className="hint-text">This is a content or configuration problem, not something you did. Your progress is safe. If you maintain this game: run <code>npm run validate:content</code> and check <code>src/content/curricula.json</code> and <code>words.json</code>. ({plan.reason}: {plan.detail})</p>
           <button className="bar-btn main" onClick={() => endRun('returned')}>Back to camp</button>
         </section>}
-        {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
-        {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+        {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={openExplain} onGotIt={introGotIt} />}
+        {explain !== null && <ExplainModal id={explain} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} />}
         {menu}
         {toastEl}
       </main>
@@ -943,9 +954,9 @@ export default function App() {
             {showCard && <>
               <div className={`stage stage-card ${revealing ? 'ok' : feedback ? (feedback.correct ? 'ok' : 'wrong') : ''}`} onClick={revealing ? advanceAuto : undefined}>
                 <div className="card-strip">
-                <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : LEVEL_NAMES[pips].toUpperCase()}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
+                <span className="stage-badge">{pips < 0 ? 'NEW WORD' : pips >= MAX_LV ? 'MASTERED' : LEVEL_NAMES[pips].toUpperCase()}{entry && entry.ok < 3 && <small className="stage-count"> {entry.ok}/3</small>}<i className="pips">{Array.from({ length: MAX_LV }, (_, k) => <u key={k} className={k < pips ? 'on' : ''} />)}</i></span>
                 <div className="corner-btns">
-                  {hasDetails(word) && (question.cloze ? revealed || revealing : show.hanzi && show.pinyin && show.meaning) && <button className={`speak-btn tip-btn ${tipPulse === word.id ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); setExplain(word.id) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
+                  {hasDetails(word) && (question.cloze ? revealed || revealing : show.hanzi && show.pinyin && show.meaning) && <button className={`speak-btn tip-btn ${tipPulse === word.id ? 'pulse' : ''}`} onClick={e => { e.stopPropagation(); openExplain(word.id) }} aria-label={`More about ${word.hanzi}`}>💡</button>}
                   {canSpeak && <button className={`speak-btn ${question.audio && !settings.muted ? 'cue' : ''} ${settings.muted ? 'muted' : ''}`} onClick={e => { e.stopPropagation(); pressSpeaker(word.hanzi) }} aria-label={settings.muted ? 'Sound is off: tap to turn on' : 'Hear the word'}>{settings.muted ? '🔇' : '🔊'}</button>}
                 </div>
                 </div>
@@ -1015,11 +1026,11 @@ export default function App() {
         {trialOpen && trialState && (() => { const t = trialFor(trialState); return t ? <TrialScreen key={`${trialState.id}:${trialState.step ?? 1}`} warden={foe?.boss === 'warden'} level={levelOf(save.mastery)} trial={t} state={trialState} onAnswer={answerTrial} onClose={leaveTrial} /> : null })()}
         {encounterOpen && run.encounter && <EncounterScreen state={run.encounter} level={levelOf(save.mastery)} onChange={e => patch(s => s.run ? {...s, run: {...s.run, encounter:e}} : s)} onHelp={() => patch(s => (s.run?.encounter ? { ...s, run: { ...s.run, encounter: toggleHelp(s.run.encounter) } } : s))} onSubmit={() => patch(s => submitEncounter(s, localDate()))} onLeave={() => nextEnemy({ ...run, encounter: { ...run.encounter!, status: 'closed' } })} />}
         {summary && <SummaryModal kind={summary} floor={run.floor} stats={summary === 'floor' ? floorStats : runStats} gold={run.gold} hearts={{ restored: run.reward.hearts, now: run.hearts, max: stats.maxHearts }} onClose={() => setSummary(null)} final={summary === 'floor' && isExpeditionWon(run)} bonus={victoryBonus(run.depth)} unlocks={run.depth > save.meta.depthCleared && run.depth < DEPTHS.length ? { depth: run.depth + 1, name: depthName(run.depth + 1) } : null} sigil={run.depth > save.meta.depthCleared ? { level: run.depth, text: sigilText(run.depth) } : null} onContinue={() => { if (summary === 'floor') { setSummary(null); if (isExpeditionWon(run)) endRun('won'); else if (offer(save) !== save) patch(s => offer(s)); else nextEnemy() } else endRun('defeat') }} />}
-      {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={setExplain} onGotIt={introGotIt} />}
+      {introQueue.length > 0 && <NewWordCard id={introQueue[0]} index={introTotal - introQueue.length + 1} total={introTotal} lessonLine={introCardLine(courseFor(), introQueue[0])} muted={settings.muted} onSpeak={h => speak(h, true)} onMore={openExplain} onGotIt={introGotIt} />}
       {bossIntro && <BossIntro boss={bossIntro} floor={run.floor} onClose={() => setBossIntro(null)} />}
       {lootReveal && (() => { const item = GEAR.find(g => g.name === lootReveal.name); return item ? <LootReveal item={item} current={GEAR.find(g => g.name === lootReveal.current) ?? null} choice={lootReveal.choice} onEquip={() => equipItem(item.name)} onClose={() => setLootReveal(null)} /> : null })()}
       {menu}
-      {explain !== null && <ExplainModal id={explain} hidden={fighting && !feedback && !revealing ? card?.word.id : undefined} onClose={closeExplain} onOpen={setExplain} onSpeak={pressSpeaker} />}
+      {explain !== null && <ExplainModal id={explain} hidden={fighting && !feedback && !revealing ? card?.word.id : undefined} onClose={closeExplain} onOpen={openExplain} onSpeak={pressSpeaker} />}
     </main>
   )
 }

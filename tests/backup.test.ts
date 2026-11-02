@@ -7,7 +7,11 @@ const sample = sanitizeSave({ version: 1, meta: { gold: 120, upgrades: ['W1', 'G
 
 test('export then import restores the save exactly', () => {
   assert.deepEqual(parseBackup(serializeBackup(sample)), sample)
-  assert.deepEqual(parseBackup(JSON.stringify(sample)), sample, 'a bare v1 save is accepted too')
+  assert.deepEqual(parseBackup(JSON.stringify(sample)), sample, 'a bare save is accepted too')
+  assert.equal(sample.version, 2)
+  // an old v1 backup file still imports, migrated to v2 with its levels
+  const old = parseBackup(JSON.stringify({ format: 'hanzi-hunters-backup', save: { version: 1, meta: {}, mastery: { 人: { lv: 3, ok: 0, at: '2026-11-01' } } } }))!
+  assert.equal(old.version, 2); assert.equal(old.mastery['人'].lv, 3)
 })
 
 test('files from before expeditions and garbage are rejected', () => {
