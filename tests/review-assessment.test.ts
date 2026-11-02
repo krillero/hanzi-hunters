@@ -120,7 +120,7 @@ test('AI-assisted assessments are never labelled human-reviewed or reviewer-conf
   const d = pair(REGRESSION.jiaoBark, '叫', { mapping: sep })
   assert.equal(d.meaning.state, 'different'); assert.equal(d.meaning.basis, 'reviewer'); assert.equal(d.wording.state, 'not-applicable')
   // The committed dataset: every assessment is AI-assisted and unreviewed; none claims confirmation.
-  const committed = JSON.parse(readFileSync(new URL('../src/content/sourceAssessments.json', import.meta.url), 'utf8')) as AssessmentsFile
+  const committed = JSON.parse(readFileSync(new URL('../src/content/assessments/accc-anki.json', import.meta.url), 'utf8')) as AssessmentsFile
   assert.ok(committed.assessments.length > 0)
   assert.ok(committed.assessments.every(a => a.method === 'ai-assisted' && a.review === 'unreviewed' && a.meaning.verdict !== 'same-confirmed'))
 })
@@ -151,7 +151,7 @@ test('assessments never change mappings, wording, recordings or curricula', () =
   const ctx = { records: new Map([[r.key, r]]), words: WORDS, explanations: EXPLANATIONS }
   const res = mergeAssessments(emptyAssessments(), { ...emptyAssessments(), assessments: [{ ...assessment(r, '来'), context: { note: 'stripped on import' } }] }, ctx)
   assert.ok(res.ok, res.errors.join('; '))
-  assert.deepEqual(Object.keys(res.file), ['kind', 'schemaVersion', 'assessments'], 'only an assessments file is produced')
+  assert.deepEqual(Object.keys(res.file), ['kind', 'schemaVersion', 'assessments', 'records', 'examples'], 'only an assessments file is produced')
   assert.ok(!('context' in res.file.assessments[0]))
   candidateComparisons([r], WORDS, EXPLANATIONS, res.file)
   assert.equal(JSON.stringify(files) + JSON.stringify(WORDS), before, 'no content object was mutated')
@@ -178,7 +178,7 @@ test('coverage counts candidate pairs and states what was not assessed', () => {
 
 test('the committed assessments cover every current candidate pair of the imported source, and are current', () => {
   const records = (JSON.parse(readFileSync(new URL('../public/sources/accc-anki/records.json', import.meta.url), 'utf8')) as { records: SourceRecord[] }).records
-  const file = JSON.parse(readFileSync(new URL('../src/content/sourceAssessments.json', import.meta.url), 'utf8')) as AssessmentsFile
+  const file = JSON.parse(readFileSync(new URL('../src/content/assessments/accc-anki.json', import.meta.url), 'utf8')) as AssessmentsFile
   assert.deepEqual(checkAssessmentsFile(file, { records: new Map(records.map(r => [r.key, r])), words: WORDS, explanations: EXPLANATIONS }), [])
   const cmp = [...candidateComparisons(records, WORDS, EXPLANATIONS, file).values()].flatMap(x => x.comparisons)
   const c = coverage(cmp)

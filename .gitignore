@@ -5,3 +5,6 @@ dist/
 # CC-CEDICT snapshot for vocabulary research (fetch with docs/vocabulary-toolkit/tools/fetch-cedict.sh)
 docs/vocabulary-toolkit/reference/cedict.gz
 docs/vocabulary-toolkit/reference/cedict.gz.part
+
+# Source media that must not be published (sources.json "media": "local-only"): extracted on a local import for preview only.
+public/sources/xiehanzi-new-hsk-2025-v24/media/

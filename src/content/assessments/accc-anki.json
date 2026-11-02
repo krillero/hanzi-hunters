@@ -1,6 +1,7 @@
 {
   "kind": "hanzi-hunters-assessments",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "source": "accc-anki",
   "assessments": [
     {
       "id": "accc-anki:B1L01-I-04|你",
@@ -3660,5 +3661,7 @@
         }
       ]
     }
-  ]
+  ],
+  "records": [],
+  "examples": []
 }

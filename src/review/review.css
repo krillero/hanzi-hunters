@@ -112,3 +112,14 @@ details.rv-card>summary{font-weight:600}
   .rv-back{display:none}
   .rv-detail{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}
 }
+.rv-def{margin:6px 0}
+.rv-def ol{margin:2px 0 4px;padding-left:22px;font-size:13px}
+.rv-examples{list-style:none;padding:0;margin:6px 0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.rv-examples li{border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:2px}
+.ex-suitable b{color:var(--green)}
+.ex-needs-editing b{color:var(--gold)}
+.ex-other-sense b,.ex-not-beginner b{color:var(--amber)}
+.rv-rec.d-new-candidate{border-left-color:var(--gold)}
+.rv-rec.d-match{border-left-color:var(--green)}
+.rv-rec.d-excluded,.rv-rec.d-uncertain{border-left-color:var(--amber)}
+.rv-tags em[class^="d-"]{font-style:normal;color:var(--gold)}

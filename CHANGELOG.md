@@ -1,5 +1,26 @@
 # Changelog / test log
 
+## 2026-11-02 — Second source: Anki-xiehanzi HSK 1 compared, assessed and proposed (branch ccr-d8ccb49c-6plu3f)
+
+- Verified package: Anki-xiehanzi v2.4 `Anki-xiehanzi-New-HSK-2025.apkg` (sha256 `4b0bea5d…a37a`): 10,900 notes; HSK 1 subdeck
+  321 notes by card membership (20 have an empty `HskLevel`), 180 short meanings, 301 with examples (896 sentences), 321 audio
+  references, all resolving and decoding.
+- Importer: `AnkiProfile` hooks in the Anki adapter (deck scope, GUID keys, field parser, sentences, ffprobe decoding, recording
+  origin); field profile `xiehanzi.ts` with a small structural HTML reader. ACCC behaviour unchanged. Source registered as
+  `xiehanzi-new-hsk-2025-v24` with `media: local-only` (owner decision, option b): audio not committed or deployed and not
+  selectable; validator enforces it.
+- Matching: readings found only in a source's per-reading definitions are reported as evidence (了: declared liǎo, definitions
+  list le), never as the reading.
+- Assessments: per-source files `src/content/assessments/<source>.json`, schema 2 (pairs + record dispositions with drafts +
+  example assessments; schema 1 readable; ACCC file moved unchanged). Freshness covers example Chinese/pinyin/translation and the
+  related entries. `source:assess` gains `--source`, `--kind records|examples` and `report`.
+- AI-assisted, unreviewed assessment of the whole subset: 108 pairs (106 likely equivalent, 1 different, 1 uncertain; 1 wording
+  proposal: 个 terminology), 321 dispositions (106 match, 1 uncertain, 186 new candidates, 28 excluded), 396 example
+  assessments. Draft first expansion: 25 entries in six lessons (`docs/proposals/xiehanzi-hsk1.md`); nothing applied.
+- Review screen: source content panel, record proposal, examples with verdicts and proposed edits, other-source evidence on
+  request, curriculum status, record filters; audio of local-only sources explained and not selectable.
+- Fixed while testing: ffprobe messages contain memory addresses, which made reimports non-deterministic; stripped.
+
 ## 2026-11-02 — Review screen: evidence, assessments and decisions kept apart (branch ccr-d8ccb49c-6plu3f)
 
 - Problem: rule-based matching was presented as meaning and wording judgments (“Same meaning” from one shared English word,

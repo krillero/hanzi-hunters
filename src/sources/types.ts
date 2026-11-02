@@ -61,7 +61,24 @@ export type Candidate = {
   variants: { form?: string; reading?: string; raw: string }[]
   /** Facts that may need adaptation before the record could become a playable entry, e.g. "phrase", "name", "too-long". */
   flags: string[]
+  /**
+   * The source's short-meaning field exists in this source but is empty for this record (kept explicitly missing: `meanings` is
+   * then empty, and any short label proposed later is an editorial proposal, not the source's).
+   */
+  meaningMissing?: boolean
+  /**
+   * Fuller dictionary definitions, one block per reading, as the source structures them. Never merged into `meanings`: a
+   * definition under another reading is another word or sense, not the record's main meaning.
+   */
+  definitions?: DefinitionBlock[]
+  /** Part of speech the source marks as dominant (others stay in `pos`). */
+  posDominant?: string
+  /** Source metadata used as evidence only, e.g. { frequency: "Top 100", level: "HSK 1" }. Never a teaching order. */
+  meta?: Record<string, string>
 }
+
+/** One reading's definitions in a source dictionary field. `senses` keep the source's numbering order and qualifiers. */
+export type DefinitionBlock = { reading: string; zhuyin?: string; senses: string[]; classifiers?: { form: string; reading?: string }[] }
 
 export type SourceRecord = {
   /** Stable source-record key: "<source>:<original id>". Unique within the source (validated on import). */
@@ -122,6 +139,13 @@ export type RecordingItem = ContentBase & {
   declaredReading?: string
   /** Language variety, only when the source states it. */
   variety?: string
+  /**
+   * Where the recording comes from, when known (speaker, collection, or text-to-speech). "unknown" when the source does not say
+   * per file; an included file is never assumed to be a human recording.
+   */
+  origin?: { status: 'known' | 'unknown'; note?: string }
+  /** unverified = nobody has listened and confirmed what it says. Imported recordings always start unverified. */
+  pronunciation?: 'unverified'
 }
 export type SentenceItem = ContentBase & { type: 'sentence'; zh: string; en: string; pinyin?: string; /** Recording item id. */ audio?: string }
 export type DefinitionItem = ContentBase & { type: 'definition'; text: string; pos?: string }

@@ -7,7 +7,8 @@ import { validateEncounters } from '../src/game/encounters.ts'
 import { validateTrialsFile } from '../src/game/trials.ts'
 import { join } from 'node:path'
 import { validateDecisions } from '../src/sources/validate.ts'
-import { checkAssessmentsFile, freshness, FRESHNESS_LABEL, type SourceAssessment } from '../src/sources/assessment.ts'
+import { checkAssessmentsFile, exampleFreshness, freshness, recordFreshness } from '../src/sources/assessment.ts'
+import { assessedSources, readAssessments, sourceContext } from './sources/assessments.ts'
 import { normalizeWords } from '../src/content/entries.ts'
 import type { SourceRecord } from '../src/sources/types.ts'
 import { PUBLIC, readIndex, readStoredSource } from './sources/files.ts'
@@ -29,17 +30,23 @@ for (const src of readIndex().sources) for (const r of readStoredSource(src.id)?
 const recordings = read('recordings.json')
 const decisions = validateDecisions(words, read('sourceMappings.json'), recordings, read('selections.json'), sources, records.size ? records : undefined)
 errors.push(...decisions.errors); warnings.push(...decisions.warnings)
-// Editorial assessments (advice only): valid shape and rules are errors; outdated ones are warnings (they stop counting as advice).
+// Editorial assessments (advice only), one file per source: valid shape and rules are errors; outdated ones are warnings (they stop
+// counting as advice and are shown as outdated on the review screen).
 {
-  const words2 = normalizeWords(words), file = read('sourceAssessments.json')
-  const ctx = { records, words: words2, explanations }
-  if (records.size) {
-    errors.push(...checkAssessmentsFile(file, ctx).map(e => `sourceAssessments.json: ${e}`))
-    for (const a of (file?.assessments ?? []) as SourceAssessment[]) {
-      const f = freshness(a, records.get(a.record), words2.find(w => w.id === a.entry), explanations?.[a.entry])
-      if (f !== 'current') warnings.push(`sourceAssessments.json (${a.id}): ${FRESHNESS_LABEL[f]} Reassess it (npm run source:assess -- template).`)
-    }
-  } else errors.push(...checkAssessmentsFile(file).map(e => `sourceAssessments.json: ${e}`))
+  const words2 = normalizeWords(words)
+  for (const source of assessedSources()) {
+    const file = readAssessments(source)
+    const ctx = sourceContext(source, words2, explanations)
+    errors.push(...checkAssessmentsFile(file, ctx ?? undefined).map(e => `assessments/${source}.json: ${e}`))
+    if (!ctx) continue
+    const outdated = [
+      ...file.assessments.filter(a => freshness(a, ctx.records.get(a.record), words2.find(w => w.id === a.entry), explanations?.[a.entry]) !== 'current').map(a => a.id),
+      ...(file.records ?? []).filter(a => recordFreshness(a, ctx.records.get(a.record), words2, explanations) !== 'current').map(a => a.id),
+      ...(file.examples ?? []).filter(a => exampleFreshness(a, ctx.sentences.get(a.sentence), words2, explanations) !== 'current').map(a => a.id)
+    ]
+    for (const id of outdated.slice(0, 20)) warnings.push(`assessments/${source}.json (${id}): outdated, the content changed. Reassess it (npm run source:assess -- template --source ${source}).`)
+    if (outdated.length > 20) warnings.push(`assessments/${source}.json: ${outdated.length - 20} more outdated assessments`)
+  }
 }
 // Selected recordings must exist on disk: they are shipped with the game.
 for (const r of recordings?.recordings ?? []) { const f = join(PUBLIC, String(r.file)); if (!existsSync(f) || statSync(f).size === 0) errors.push(`recordings.json (${r.id}): file ${r.file} is missing or empty`) }

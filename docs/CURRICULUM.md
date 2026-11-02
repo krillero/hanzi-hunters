@@ -108,6 +108,9 @@ as long as pinyin and translation are given. The introduction card labels them "
 
 ### Imported sources never change a course
 
+Draft proposals built from imported sources live in `docs/proposals/` (first: `xiehanzi-hsk1.md`, six draft lessons after
+`b100-lesson-20`). They are not read by the game; adopting one means promoting entries and editing this file by hand.
+
 A source's own book/lesson order is imported as `public/sources/<source>/placement.json`, a **draft proposal** of source-record
 keys. Courses reference game entry ids only, so an unresolved source record can never be in a lesson. New entries from a source
 are promoted to `words.json` deliberately (`npm run source:promote`) and taught only once someone adds their id here. See
