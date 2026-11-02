@@ -97,13 +97,24 @@ Open `https://<pages host>/hanzi-hunters/review/` (or `http://localhost:5173/rev
 the game, is not precached by the service worker, and loads the source data only when opened.
 
 - Source selector, search (simplified, pinyin with or without tones, English, record id), filters (unresolved, linked,
-  conflicting, new candidates, excluded, needs reassessment, has audio, changed here), book/lesson filters, 40 records per page.
-- A record shows its original fields verbatim, plays its recording, and lists game candidates side by side with **evidence**
-  (spelling, reading incl. tones and connected speech, meaning words, kind) and warnings. The confidence (strong / probable /
-  weak / conflict) is a suggestion, not a review; exact spelling alone never makes a strong suggestion.
-- Actions: link (to a suggestion or any entry id), leave unresolved, exclude (reason), prepare a new-entry draft. For a linked
-  entry, independently: use this recording (with “What do you hear?” and allowed uses), remove or keep the current recording,
-  keep the game's meaning or use the source text (verbatim or edited = adapted).
+  check meaning, wording suggestion, new candidates, excluded, needs reassessment, has audio, changed here), book/lesson
+  filters, 40 records per page. Search ranks exact characters, readings (with or without tones) and IDs first and matches
+  English from word starts only (“ge” finds 个 and 哥哥, not “younger”). Each row shows the recommendation, e.g. “个: Same meaning; wording improvement suggested.”
+- A record is reviewed as **three separate decisions**, each with a recommendation and its reason
+  (`src/sources/recommend.ts`, fixed rules, no external service; a suggestion, never a decision or a review):
+  1. **Do these teach the same meaning?** Same → link. Different → “Different meaning” (remembered as `distinctFrom`, so the
+     suggestion is not raised again). Unsure → leave unresolved. A grammatical category label (“sentence final particle”)
+     against a function description (“marks a yes/no question”) counts as a wording difference, not a meaning conflict.
+  2. **Which text teaches it best?** Keep the game text (default; recommended unless the source corrects an error or explains
+     the meaning better), use the source text, or use an edited text (the reviewer's own wording, `choice: "edited"`,
+     recorded as written by the reviewer after comparing with the record). Wording rules are an explicit list: a source
+     “measure word” label is recommended over the game's “classifier” (the textbook term vs the linguists' term), and a
+     plainer “counting word” label is offered as an alternative for either. The note and explanation are unchanged.
+  3. **Is the recording useful?** Pronunciation differences (connected speech, regional tones, variants) are explained
+     separately from meaning; the reviewer listens, records what they hear and allows uses (see §6).
+- “Matching evidence” (spelling, reading, meaning words, kind; same-word evidence strong / probable / weak / conflict) is kept
+  under a fold: it says how sure the matcher is that two records are the same word, not which definition is better.
+- Other actions: link to any entry id, exclude (not wanted, optional reason), prepare a new-entry draft.
 - **Saved in this browser** (localStorage `hanzi-hunters-review-v1:<source>`, separate from game saves) vs **applied in the
   game** (the committed files of the deployed build) are labelled everywhere. Each record lists its proposed changes.
 - “Proposed changes” → **Export changeset** (needs the reviewer's name) → send the file to the maintainer.
@@ -150,8 +161,11 @@ exercises without touching the Anki adapter. No exercise mechanic reads these ye
 1. Import → records exist only in `public/sources`. Nothing is playable.
 2. Link / select → mapping, recordings and field choices are applied via a reviewed changeset. A selected recording is used for
    an entry that is **already** in the game. No new entry, no lesson change.
-3. New entry → a `new-candidate` draft, then `npm run source:promote -- <record key> [--group <group>]`, which adds the entry to
+3. New entry → a `new-candidate` draft (proposed in the game's conventions: lowercase pinyin, the source's other readings as
+   `variants`, `kind: "particle"` when the source says so; all editable), then `npm run source:promote -- <record key> [--group <group>]`, which adds the entry to
    `words.json` (review status `imported`) only if it passes the playable-entry validation. It is still in no course.
+   Promotion copies `kind`, `variants` and `speech`, and derives `neutral` from the pinyin (the syllables without a tone mark,
+   exactly what the validator requires), so neutral-tone words such as 东西 dōngxi promote without hand-editing.
 4. Course → a person adds the entry id to a lesson in `curricula.json` (see `docs/CURRICULUM.md`). Courses reference game entry
    ids only; `placement.json` is a proposal to consult, not a course.
 

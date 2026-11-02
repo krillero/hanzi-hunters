@@ -10,9 +10,11 @@ import sourcesJson from '../content/sources.json'
 import { WORDS } from '../data'
 import { audioReliable } from '../content/entries'
 import { LIMITS } from '../content/validate'
-import { eligibleUses, readingRelation, toneless } from '../content/recordings'
-import { isConflicting, suggest, type Suggestion } from '../sources/match'
-import { proposeEntryId, type RepoState } from '../sources/changeset'
+import { eligibleUses, readingRelation } from '../content/recordings'
+import { suggest, type Suggestion } from '../sources/match'
+import { recommend, type Recommendation } from '../sources/recommend'
+import { searchScore } from '../sources/search'
+import { draftFromRecord, neutralPositions, type RepoState } from '../sources/changeset'
 import type { ContentItem, EntryDraft, FieldSelection, Mapping, RecordingItem, RecordingUse, SelectedRecording, SourceIndex, SourceRecord } from '../sources/types'
 import type { RawWord, Sources, Word } from '../content/types'
 import {
@@ -28,8 +30,8 @@ const WORD_BY_ID = new Map(WORDS.map(w => [w.id, w]))
 const PAGE = 40
 const storage = (() => { try { return window.localStorage } catch { return null } })()
 
-type Filter = 'all' | 'unresolved' | 'linked' | 'new-candidate' | 'excluded' | 'conflicting' | 'reassess' | 'audio' | 'working'
-const FILTERS: [Filter, string][] = [['all', 'All'], ['unresolved', 'Unresolved'], ['linked', 'Linked'], ['conflicting', 'Conflicting'], ['new-candidate', 'New candidates'], ['excluded', 'Excluded'], ['reassess', 'Needs reassessment'], ['audio', 'Has audio'], ['working', 'Changed here']]
+type Filter = 'all' | 'unresolved' | 'linked' | 'new-candidate' | 'excluded' | 'conflicting' | 'wording' | 'reassess' | 'audio' | 'working'
+const FILTERS: [Filter, string][] = [['all', 'All'], ['unresolved', 'Unresolved'], ['linked', 'Linked'], ['conflicting', 'Check meaning'], ['wording', 'Wording suggestion'], ['new-candidate', 'New candidates'], ['excluded', 'Excluded'], ['reassess', 'Needs reassessment'], ['audio', 'Has audio'], ['working', 'Changed here']]
 const USE_LABEL: Record<RecordingUse, string> = { display: 'Play on word cards', listen: 'Listening: hear → pick the characters', listen2meaning: 'Listening: hear → pick the meaning', listen2pinyin: 'Listening: hear → pick the pinyin' }
 const LEVEL_ICON = { match: '✓', partial: '≈', mismatch: '✗', unknown: '?' } as const
 
@@ -79,16 +81,21 @@ export default function ReviewApp() {
   }, [data])
 
   const info = useMemo(() => {
-    const out = new Map<string, { status: Mapping['status']; working: boolean; conflicting: boolean; reassess: boolean; audio: boolean }>()
+    const out = new Map<string, { status: Mapping['status']; working: boolean; conflicting: boolean; wording: boolean; rec: Recommendation | null; reassess: boolean; audio: boolean }>()
     if (!data || !working) return out
     for (const r of data.records) {
       const { mapping, working: w } = effectiveMapping(working, REPO, r.key)
       const s = suggestions.get(r.key) ?? []
-      const linkedTo = mapping?.status === 'linked' ? s.find(x => x.entry === mapping.entry) : undefined
+      // The entry this record is compared with: the linked one, else the best suggestion not marked as a different meaning.
+      const focus = mapping?.status === 'linked' ? mapping.entry : s.find(x => !mapping?.distinctFrom?.includes(x.entry))?.entry
+      const fw = focus ? WORD_BY_ID.get(focus) : undefined
+      const rec = fw ? recommend(r, fw, WORDS, { distinctFrom: mapping?.distinctFrom }) : null
       const ops = Object.values(working.ops).filter(op => (op.op === 'field' ? op.after.provenance?.record === r.key : op.record === r.key))
       out.set(r.key, {
         status: mapping?.status ?? 'unresolved', working: w || ops.length > 0,
-        conflicting: mapping?.status === 'linked' ? !linkedTo || linkedTo.confidence === 'conflict' || linkedTo.confidence === 'weak' : mapping?.status !== 'excluded' && isConflicting(s),
+        // "Check meaning": the rules could not tell whether the meaning is the same (or think it differs) and nobody excluded it.
+        conflicting: !!rec && mapping?.status !== 'excluded' && rec.meaning.verdict !== 'same', rec,
+        wording: !!rec && mapping?.status !== 'excluded' && rec.meaning.verdict !== 'different' && rec.wording.action !== 'keep-game',
         reassess: !!REPO.mappings.mappings[r.key]?.reassess || ops.some(op => opStatus(op, REPO, data.byKey) !== 'ok'),
         audio: r.media.some(m => m.path)
       })
@@ -101,30 +108,29 @@ export default function ReviewApp() {
 
   const filtered = useMemo(() => {
     if (!data) return []
-    const query = q.trim().toLowerCase()
-    const tq = query ? toneless(query) : ''
-    return data.records.filter(r => {
+    const scores = new Map<string, number>()
+    const out = data.records.filter(r => {
       const i = info.get(r.key)
       if (!i) return false
       if (book && String(r.placement?.book) !== book) return false
       if (lesson && String(r.placement?.lesson) !== lesson) return false
       if (filter === 'conflicting' && !i.conflicting) return false
+      if (filter === 'wording' && !i.wording) return false
       if (filter === 'reassess' && !i.reassess) return false
       if (filter === 'audio' && !i.audio) return false
       if (filter === 'working' && !i.working) return false
       if (['unresolved', 'linked', 'new-candidate', 'excluded'].includes(filter) && i.status !== filter) return false
-      if (!query) return true
-      const c = r.candidate
-      return r.key.toLowerCase().includes(query) || r.originalId.toLowerCase().includes(query)
-        || c.simplified.some(s => s.includes(q.trim())) || c.traditional.some(s => s.includes(q.trim()))
-        || c.readings.some(p => p.toLowerCase().includes(query) || toneless(p).includes(tq.replace(/\s+/g, '')))
-        || c.meanings.some(m => m.toLowerCase().includes(query))
+      const score = searchScore(r, q)
+      scores.set(r.key, score)
+      return score > 0
     })
+    // Best matches first (exact characters / reading / ID), then the source's own order.
+    return q.trim() ? out.sort((a, b) => scores.get(b.key)! - scores.get(a.key)!) : out
   }, [data, info, q, filter, book, lesson])
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: 0, unresolved: 0, linked: 0, 'new-candidate': 0, excluded: 0, conflicting: 0, reassess: 0, audio: 0, working: 0 }
-    for (const i of info.values()) { c.all++; c[i.status]++; if (i.conflicting) c.conflicting++; if (i.reassess) c.reassess++; if (i.audio) c.audio++; if (i.working) c.working++ }
+    const c: Record<string, number> = { all: 0, unresolved: 0, linked: 0, 'new-candidate': 0, excluded: 0, conflicting: 0, wording: 0, reassess: 0, audio: 0, working: 0 }
+    for (const i of info.values()) { c.all++; c[i.status]++; if (i.conflicting) c.conflicting++; if (i.wording) c.wording++; if (i.reassess) c.reassess++; if (i.audio) c.audio++; if (i.working) c.working++ }
     return c
   }, [info])
   const applied = useMemo(() => {
@@ -173,11 +179,11 @@ export default function ReviewApp() {
             </div>}
             <p className="rv-small">{filtered.length} record{filtered.length === 1 ? '' : 's'}</p>
             <ul className="rv-items">{shown.map(r => {
-              const i = info.get(r.key)!, s = suggestions.get(r.key)?.[0]
+              const i = info.get(r.key)!
               return <li key={r.key}><button className={selected === r.key ? 'on' : ''} onClick={() => setSelected(r.key)}>
                 <span className="rv-zh" lang="zh-CN">{r.candidate.simplified[0] ?? '—'}</span>
                 <span className="rv-mid"><b>{r.candidate.readings.join(' / ')}</b><small>{r.candidate.meanings.join('; ')}</small></span>
-                <span className="rv-tags"><em className={`st-${i.status}`}>{i.status}</em>{s && <em className={`cf-${s.confidence}`}>{s.confidence} {s.entry}</em>}{i.working && <em className="st-working">changed</em>}{i.reassess && <em className="cf-conflict">reassess</em>}<small>{r.placement?.label ?? r.originalId}</small></span>
+                <span className="rv-tags"><em className={`st-${i.status}`}>{i.status}</em>{i.rec && <em className={`v-${i.rec.meaning.verdict}`}>{i.rec.entry}: {i.rec.summary}</em>}{i.working && <em className="st-working">changed</em>}{i.reassess && <em className="cf-conflict">reassess</em>}<small>{r.placement?.label ?? r.originalId}</small></span>
               </button></li>
             })}</ul>
             <div className="rv-row rv-pager"><button disabled={page === 0} onClick={() => setPage(p => p - 1)}>‹ Prev</button><span>Page {page + 1} / {pages}</span><button disabled={page + 1 >= pages} onClick={() => setPage(p => p + 1)}>Next ›</button></div>
@@ -193,60 +199,102 @@ function Audio({ path }: { path: string }) {
   return <audio className="rv-audio" controls preload="none" src={`${BASE}${path}`} />
 }
 
-/** One record: original fields, game candidates with evidence, and the decisions. */
+/** One record, reviewed in three separate steps: same meaning? which text? which recording? Each with a recommendation. */
 function RecordDetail({ record: r, data, suggestions, working, reviewer, update, onClose }: {
   record: SourceRecord; data: Loaded; suggestions: Suggestion[]; working: WorkingState; reviewer: string
   update: (fn: (w: WorkingState) => WorkingState) => void; onClose: () => void
 }) {
   const { mapping, working: mappingWorking } = effectiveMapping(working, REPO, r.key)
   const committed = REPO.mappings.mappings[r.key] ?? null
+  const distinct = mapping?.distinctFrom ?? []
+  const linkedId = mapping?.status === 'linked' ? mapping.entry : undefined
+  const [focusId, setFocusId] = useState<string | undefined>(() => linkedId ?? suggestions.find(s => !distinct.includes(s.entry))?.entry ?? suggestions[0]?.entry)
+  const focus = focusId ? WORD_BY_ID.get(focusId) : undefined
   const [other, setOther] = useState('')
   const [reason, setReason] = useState(mapping?.reason ?? '')
-  const [draft, setDraft] = useState<EntryDraft>(() => mapping?.draft ?? { id: proposeEntryId(r.candidate.simplified[0] ?? '', r.candidate.readings[0] ?? '', WORDS), hanzi: r.candidate.simplified[0] ?? '', pinyin: r.candidate.readings[0] ?? '', meaning: r.candidate.meanings[0] ?? '', note: '', group: '' })
+  const [draft, setDraft] = useState<EntryDraft>(() => mapping?.draft ?? draftFromRecord(r, WORDS))
+  const keep = (m: Mapping | null) => ({ ...(m?.distinctFrom?.length ? { distinctFrom: m.distinctFrom } : {}) })
   const setMapping = (after: Omit<Mapping, 'recordHash' | 'decision'>) => update(w => putOp(w, mappingOp(REPO, r, after, reviewer)))
-  const linkedEntry = mapping?.status === 'linked' && mapping.entry ? WORD_BY_ID.get(mapping.entry) : undefined
-  const ops = Object.entries(working.ops).filter(([, op]) => (op.op === 'field' ? op.after.provenance?.record === r.key || (linkedEntry && op.entry === linkedEntry.id) : op.record === r.key || (op.op === 'recording' && linkedEntry && op.entry === linkedEntry.id)))
+  const rec = focus ? recommend(r, focus, WORDS, { distinctFrom: distinct }) : null
+  const s = suggestions.find(x => x.entry === focusId)
+  const ops = Object.entries(working.ops).filter(([, op]) => (op.op === 'field' ? op.after.provenance?.record === r.key || op.entry === linkedId : op.record === r.key || (op.op === 'recording' && op.entry === linkedId)))
   const media = r.media.find(m => m.path)
+  const state = mapping?.status === 'linked' ? `linked to ${mapping.entry}` : mapping?.status === 'excluded' ? `excluded${mapping.reason ? ` (${mapping.reason})` : ''}` : mapping?.status === 'new-candidate' ? 'new-entry candidate' : 'unresolved'
   return (
     <section className="rv-detail" aria-label={`Record ${r.key}`}>
       <button className="rv-back" onClick={onClose}>‹ Back to the list</button>
       <div className="rv-card">
         <div className="rv-title"><span className="rv-big" lang="zh-CN">{r.candidate.simplified[0] ?? '—'}</span>
-          <div><b>{r.candidate.readings.join(' / ') || 'no reading'}</b><div>{r.candidate.meanings.join('; ')}</div><small>{r.key} · {r.placement?.label ?? 'no placement'} · hash {r.hash}</small></div></div>
-        {r.media.map(m => <div key={m.id} className="rv-media">{m.path ? <Audio path={m.path} /> : <span className="rv-warn">Audio missing: {m.problems.join(', ')}</span>}<small>{m.original} · checks: {m.checks.join(', ') || 'none'}{m.problems.length ? ` · problems: ${m.problems.join(', ')}` : ''}</small></div>)}
-        <p className="rv-small">File checks show the clip exists and looks like audio. Only listening tells whether it says the right word and reading.</p>
+          <div><b>{r.candidate.readings.join(' / ') || 'no reading'}</b><div>{r.candidate.meanings.join('; ')}</div><small>{r.key} · {r.placement?.label ?? 'no placement'}</small></div></div>
+        {r.media.map(m => <div key={m.id} className="rv-media">{m.path ? <Audio path={m.path} /> : <span className="rv-warn">Audio missing: {m.problems.join(', ')}</span>}</div>)}
+        <p>Decision now: <b>{state}</b>{distinct.length > 0 && <> · different meaning from {distinct.join(', ')}</>} {mappingWorking ? <em className="st-working">changed in this browser</em> : <em className="rv-pill">applied</em>}{committed?.reassess && <em className="cf-conflict">needs reassessment: {committed.reassess}</em>}</p>
         <details><summary>Original fields (verbatim)</summary>
-          <table className="rv-fields"><tbody>{Object.entries(r.fields).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v || <i>empty</i>}</td></tr>)}{Object.entries(r.native).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v}</td></tr>)}</tbody></table>
+          <table className="rv-fields"><tbody>{Object.entries(r.fields).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v || <i>empty</i>}</td></tr>)}{Object.entries(r.native).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v}</td></tr>)}<tr><th>hash</th><td>{r.hash}</td></tr>{r.media.map(m => <tr key={m.id}><th>audio file</th><td>{m.original} · checks: {m.checks.join(', ') || 'none'}{m.problems.length ? ` · problems: ${m.problems.join(', ')}` : ''}</td></tr>)}</tbody></table>
         </details>
         {(r.candidate.flags.length > 0 || r.issues.length > 0) && <p className="rv-warn">{[...r.candidate.flags.map(f => `flag: ${f}`), ...r.issues].join(' · ')}</p>}
       </div>
 
-      <div className="rv-card">
-        <h2>Mapping</h2>
-        <p>Now: <b>{mapping?.status ?? 'unresolved'}</b>{mapping?.entry ? ` → ${mapping.entry}` : ''} {mappingWorking ? <em className="st-working">changed in this browser</em> : <em className="rv-pill">applied</em>}{committed?.reassess && <em className="cf-conflict">needs reassessment: {committed.reassess}</em>}</p>
-        <p className="rv-small">Linking only says “this record is about that entry”. It does not change the game's text, select audio or add anything to a lesson.</p>
-        {suggestions.length === 0 && <p>No game entry is written {r.candidate.simplified.join(' / ')}.</p>}
-        {suggestions.map(s => <Candidate key={s.entry} s={s} record={r} linked={mapping?.status === 'linked' && mapping.entry === s.entry} onLink={() => setMapping({ status: 'linked', entry: s.entry })} />)}
+      {suggestions.length === 0 ? <div className="rv-card"><p>No game entry is written {r.candidate.simplified.join(' / ')}. Link it to another entry, prepare a new entry, or leave it unresolved (below).</p></div> : <>
+        {suggestions.length > 1 && <div className="rv-card rv-row" role="group" aria-label="Game entry to compare with"><span className="rv-small">Compare with:</span>{suggestions.map(x => { const w = WORD_BY_ID.get(x.entry)!; return <button key={x.entry} className={x.entry === focusId ? 'on' : ''} onClick={() => setFocusId(x.entry)}>{w.hanzi} {w.pinyin} · {w.meaning}{distinct.includes(x.entry) ? ' (different)' : ''}</button> })}</div>}
+        {focus && rec && <>
+          <div className={`rv-card rv-rec v-${rec.meaning.verdict}`}>
+            <h2>Recommendation: {rec.summary}</h2>
+            <ul className="rv-reasons">
+              <li><b>Meaning</b> {rec.meaning.reason}</li>
+              <li><b>Wording</b> {rec.wording.reason}{rec.wording.suggestion ? <> Suggested label: <b>“{rec.wording.suggestion}”</b>.</> : null}</li>
+              <li><b>Pronunciation</b> {rec.pronunciation.reason}</li>
+            </ul>
+            <p className="rv-small">A suggestion from fixed rules, not a decision. You decide each step below.</p>
+          </div>
+
+          <div className="rv-card">
+            <h2>1 · Do these teach the same meaning?</h2>
+            <div className="rv-cmp">
+              <div><small>Source · {r.originalId}</small><b lang="zh-CN">{r.candidate.simplified.join(' / ')}</b><span>{r.candidate.readings.join(' / ')}</span><span>“{r.candidate.meanings.join('; ')}”</span><span>{r.candidate.pos.join(', ') || '—'}</span></div>
+              <div><small>Game · {focus.id}</small><b lang="zh-CN">{focus.hanzi}</b><span>{focus.pinyin}{focus.variants.length ? ` (also ${focus.variants.join(', ')})` : ''}</span><span>“{focus.meaning}”</span><span>{focus.kind}</span></div>
+            </div>
+            <p className="rv-small">Game note: {focus.note}</p>
+            <div className="rv-actions">
+              <button className={linkedId === focus.id ? 'on' : ''} onClick={() => setMapping({ status: 'linked', entry: focus.id, ...(distinct.filter(e => e !== focus.id).length ? { distinctFrom: distinct.filter(e => e !== focus.id) } : {}) })}>Same meaning → link</button>
+              <button className={distinct.includes(focus.id) ? 'on' : ''} onClick={() => setMapping({ ...(mapping && mapping.status !== 'linked' ? { status: mapping.status, reason: mapping.reason, draft: mapping.draft } : { status: 'unresolved' as const }), distinctFrom: [...new Set([...distinct, focus.id])] })}>Different meaning</button>
+              <button onClick={() => setMapping({ status: 'unresolved', ...keep(mapping) })}>Not sure → leave unresolved</button>
+            </div>
+            <p className="rv-small">Linking only says “this record has the meaning of that entry”. It changes no text, selects no audio and adds nothing to a lesson.</p>
+            {s && <details><summary>Matching evidence (same-word evidence: {s.confidence})</summary>
+              <p className="rv-small">How sure the matcher is that these are the same word. It says nothing about which definition is better.</p>
+              <ul className="rv-ev">{s.evidence.map((e, i) => <li key={i} className={`lv-${e.level}`}><b>{LEVEL_ICON[e.level]} {e.aspect}</b> {e.detail}</li>)}</ul>
+              {s.warnings.map((x, i) => <p key={i} className="rv-warn">⚠ {x}</p>)}
+            </details>}
+          </div>
+
+          {linkedId === focus.id
+            ? <EntryContent record={r} word={focus} data={data} media={media} working={working} reviewer={reviewer} update={update} rec={rec} />
+            : <div className="rv-card rv-muted"><h2>2 · Which text teaches it best?</h2><p className="rv-small">Link the record first (step 1). Then choose the wording and any recording, each on its own.</p></div>}
+        </>}
+      </>}
+
+      <details className="rv-card"><summary>Other actions: link to another entry, exclude, prepare a new entry</summary>
         <div className="rv-actions">
           <label>Link to another entry <input list="rv-entries" value={other} onChange={e => setOther(e.target.value)} placeholder="entry id" /></label>
-          <button disabled={!WORD_BY_ID.has(other)} onClick={() => setMapping({ status: 'linked', entry: other })}>Link</button>
+          <button disabled={!WORD_BY_ID.has(other)} onClick={() => { setMapping({ status: 'linked', entry: other }); setFocusId(other) }}>Link</button>
           <datalist id="rv-entries">{WORDS.map(w => <option key={w.id} value={w.id}>{w.hanzi} {w.pinyin} {w.meaning}</option>)}</datalist>
         </div>
         <div className="rv-actions">
-          <button onClick={() => setMapping({ status: 'unresolved' })}>Leave unresolved</button>
           <input value={reason} onChange={e => setReason(e.target.value)} placeholder="reason (optional)" />
-          <button onClick={() => setMapping({ status: 'excluded', reason: reason.trim() || undefined })}>Exclude</button>
+          <button onClick={() => setMapping({ status: 'excluded', reason: reason.trim() || undefined, ...keep(mapping) })}>Exclude (not wanted)</button>
         </div>
-        <details className="rv-draft" open={mapping?.status === 'new-candidate'}><summary>Prepare a new game entry (draft)</summary>
+        <div className="rv-draft">
+          <h3>Prepare a new game entry (draft)</h3>
           <p className="rv-small">A draft is not playable. It becomes an entry only through <code>npm run source:promote</code> and validation, and joins a lesson only when someone adds it to a course.</p>
           {(['id', 'hanzi', 'pinyin', 'meaning', 'note', 'group'] as const).map(k => <label key={k}>{k} <input value={draft[k] ?? ''} onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))} /></label>)}
+          <p className="rv-small">Neutral tone: {neutralPositions(draft.pinyin).length ? `syllable ${neutralPositions(draft.pinyin).join(', ')} (no tone mark)` : 'none'}. Write the pinyin as the game teaches it (lowercase, tone marks; leave neutral syllables unmarked).</p>
+          <label>kind <select value={draft.kind ?? ''} onChange={e => setDraft(d => ({ ...d, kind: (e.target.value || undefined) as EntryDraft['kind'] }))}><option value="">automatic</option><option value="word">word</option><option value="character">character</option><option value="particle">particle</option></select></label>
+          <label>variants (other accepted readings, comma-separated) <input value={(draft.variants ?? []).join(', ')} onChange={e => setDraft(d => ({ ...d, variants: e.target.value.split(/\s*,\s*/).filter(Boolean) }))} /></label>
           {draft.meaning.length > LIMITS.meaning && <p className="rv-warn">The meaning has {draft.meaning.length} characters; answer buttons allow {LIMITS.meaning}.</p>}
           {WORD_BY_ID.has(draft.id) && <p className="rv-warn">The id “{draft.id}” is already used.</p>}
-          <button disabled={!draft.id.trim() || WORD_BY_ID.has(draft.id) || !draft.hanzi.trim()} onClick={() => setMapping({ status: 'new-candidate', draft: Object.fromEntries(Object.entries(draft).filter(([, v]) => v !== '')) as EntryDraft })}>Save as new-entry candidate</button>
-        </details>
-      </div>
-
-      {linkedEntry && <EntryContent record={r} word={linkedEntry} data={data} media={media} working={working} reviewer={reviewer} update={update} />}
+          <button disabled={!draft.id.trim() || WORD_BY_ID.has(draft.id) || !draft.hanzi.trim()} onClick={() => setMapping({ status: 'new-candidate', ...keep(mapping), draft: Object.fromEntries(Object.entries({ ...draft, neutral: neutralPositions(draft.pinyin) }).filter(([, v]) => v !== '' && v !== undefined && !(Array.isArray(v) && v.length === 0))) as EntryDraft })}>Save as new-entry candidate</button>
+        </div>
+      </details>
 
       <div className="rv-card">
         <h2>Proposed changes for this record</h2>
@@ -256,27 +304,10 @@ function RecordDetail({ record: r, data, suggestions, working, reviewer, update,
   )
 }
 
-function Candidate({ s, record, linked, onLink }: { s: Suggestion; record: SourceRecord; linked: boolean; onLink: () => void }) {
-  const w = WORD_BY_ID.get(s.entry)!
-  const rec = REPO.recordings.recordings.find(x => x.entry === w.id)
-  return (
-    <div className={`rv-cand cf-${s.confidence}`}>
-      <div className="rv-cmp">
-        <div><small>Source</small><b lang="zh-CN">{record.candidate.simplified.join(' / ')}</b><span>{record.candidate.readings.join(' / ')}</span><span>{record.candidate.meanings.join('; ')}</span><span>{record.candidate.pos.join(', ')}</span><span>{record.media.some(m => m.path) ? '🔊 recording' : 'no recording'}</span></div>
-        <div><small>Game · {w.id}</small><b lang="zh-CN">{w.hanzi}</b><span>{w.pinyin}{w.variants.length ? ` (also ${w.variants.join(', ')})` : ''}{w.speech.length ? ` · speech: ${w.speech.map(x => x.pinyin).join(', ')}` : ''}</span><span>{w.meaning}</span><span>{w.kind}</span><span>{rec ? '🔊 recording selected' : audioReliable(w, WORDS) ? 'text-to-speech' : 'no audio (TTS off)'}</span></div>
-      </div>
-      <p className="rv-small">{w.note}</p>
-      <ul className="rv-ev">{s.evidence.map((e, i) => <li key={i} className={`lv-${e.level}`}><b>{LEVEL_ICON[e.level]} {e.aspect}</b> {e.detail}</li>)}</ul>
-      {s.warnings.map((x, i) => <p key={i} className="rv-warn">⚠ {x}</p>)}
-      <div className="rv-actions"><span className={`rv-conf cf-${s.confidence}`}>Suggestion: {s.confidence} (not a review)</span><button disabled={linked} onClick={onLink}>{linked ? 'Linked' : `Link to ${w.id}`}</button></div>
-    </div>
-  )
-}
-
-/** Field-specific choices for the linked entry: which recording, which definition. Independent of each other. */
-function EntryContent({ record: r, word, data, media, working, reviewer, update }: {
+/** Steps 2 and 3 for the linked entry: wording and recording, each decided on its own. */
+function EntryContent({ record: r, word, data, media, working, reviewer, update, rec }: {
   record: SourceRecord; word: Word; data: Loaded; media: SourceRecord['media'][number] | undefined; working: WorkingState; reviewer: string
-  update: (fn: (w: WorkingState) => WorkingState) => void
+  update: (fn: (w: WorkingState) => WorkingState) => void; rec: Recommendation
 }) {
   const { recording: current, working: recWorking } = effectiveRecording(working, REPO, word.id)
   const item = data.recItems.get(r.key)
@@ -294,15 +325,42 @@ function EntryContent({ record: r, word, data, media, working, reviewer, update 
   const eligible = proposal ? eligibleUses(proposal, word) : new Set<RecordingUse>()
   const rel = readingRelation(heard.trim() || declared, word)
   const { selection, working: selWorking } = effectiveSelection(working, REPO, word.id, 'meaning')
-  const [meaning, setMeaning] = useState(selection?.choice === 'source' && selection.provenance?.record === r.key ? selection.value ?? '' : r.candidate.meanings[0] ?? '')
+  const [srcText, setSrcText] = useState(r.candidate.meanings.find(m => m.length <= LIMITS.meaning) ?? r.candidate.meanings[0] ?? '')
+  const [edited, setEdited] = useState(selection?.choice === 'edited' ? selection.value ?? '' : rec.wording.suggestion ?? word.meaning)
   const sel = (after: FieldSelection) => update(w => putOp(w, fieldOp(REPO, word.id, 'meaning', word.meaning, after)))
-  return (
+  const prov = (mode: 'verbatim' | 'adapted' | 'authored') => ({ source: r.source, record: r.key, recordHash: r.hash, mode })
+  const chosen = selection?.choice ?? null
+  const recLabel = { 'keep-game': 'keep the game text', 'use-source': 'use the source text', edit: 'use an edited text' }[rec.wording.action]
+  return (<>
     <div className="rv-card">
-      <h2>Content for {word.hanzi} <small>({word.id})</small></h2>
-      <h3>Recording</h3>
+      <h2>2 · Which text teaches it best?</h2>
+      <p className="rv-small">The meaning label on answer buttons and word cards (≤ {LIMITS.meaning} characters). Recommended: <b>{recLabel}</b>. {rec.wording.reason}</p>
+      <div className="rv-choices">
+        <button className={chosen === 'game' ? 'on' : ''} onClick={() => sel({ entry: word.id, field: 'meaning', choice: 'game', decision: decision(reviewer) })}><small>Keep the game text (default)</small><b>“{word.meaning}”</b></button>
+        <div className={`rv-choice ${chosen === 'source' ? 'on' : ''}`}>
+          <small>Use the source text{r.candidate.meanings.length > 1 ? ' (pick one)' : ''}</small>
+          {r.candidate.meanings.length > 1 ? <select value={srcText} onChange={e => setSrcText(e.target.value)}>{r.candidate.meanings.map(m => <option key={m} value={m}>{m}</option>)}</select> : <b>“{srcText}”</b>}
+          {srcText.length > LIMITS.meaning && <span className="rv-warn">Too long for an answer button ({srcText.length}/{LIMITS.meaning}): use an edited text.</span>}
+          <button disabled={!srcText.trim() || srcText.length > LIMITS.meaning} onClick={() => sel({ entry: word.id, field: 'meaning', choice: 'source', value: srcText.trim(), provenance: prov('verbatim'), decision: decision(reviewer) })}>Use this</button>
+        </div>
+        <div className={`rv-choice ${chosen === 'edited' ? 'on' : ''}`}>
+          <small>Use an edited text (your own wording){rec.wording.suggestion ? ' · prefilled with the suggestion' : ''}</small>
+          <input value={edited} onChange={e => setEdited(e.target.value)} aria-label="Edited meaning" />
+          {edited.length > LIMITS.meaning && <span className="rv-warn">{edited.length}/{LIMITS.meaning} characters: shorten it.</span>}
+          <button disabled={!edited.trim() || edited.length > LIMITS.meaning || edited.trim() === word.meaning} onClick={() => sel({ entry: word.id, field: 'meaning', choice: 'edited', value: edited.trim(), provenance: prov('authored'), decision: decision(reviewer) })}>Use this</button>
+        </div>
+      </div>
+      {selection && <p>Chosen: <b>{selection.choice === 'game' ? 'keep the game text' : `“${selection.value}”`}</b> <em className={selWorking ? 'st-working' : 'rv-pill'}>{selWorking ? 'in this browser' : 'applied'}</em></p>}
+      <p className="rv-small">The game's note and explanation stay as they are: “{word.note}”</p>
+    </div>
+
+    <div className="rv-card">
+      <h2>3 · Is the recording useful?</h2>
+      <p className="rv-small">{rec.pronunciation.reason}</p>
       <p>Selected now: {current ? <>{current.provenance.record} {current.file && <Audio path={current.file} />} {recWorking ? <em className="st-working">changed in this browser</em> : <em className="rv-pill">applied</em>}</> : 'none'} · TTS for this entry: {word.audio === 'none' ? 'off (unreliable)' : audioReliable(word, WORDS) ? 'on' : 'off (shared characters)'}</p>
       {!proposal ? <p className="rv-small">This record has no usable recording.</p> : <>
-        <p>This record's clip declares <b>{declared ?? '?'}</b>; the game teaches <b>{word.pinyin}</b>{word.speech.length ? ` (connected speech: ${word.speech.map(s => s.pinyin).join(', ')})` : ''}.</p>
+        {media?.path && <Audio path={media.path} />}
+        <p>The clip is declared as <b>{declared ?? '?'}</b>; the game teaches <b>{word.pinyin}</b>{word.speech.length ? ` (connected speech: ${word.speech.map(x => x.pinyin).join(', ')})` : ''}.</p>
         <label>What do you hear? <input value={heard} placeholder={`e.g. ${word.pinyin}${word.speech[0] ? ` or ${word.speech[0].pinyin}` : ''}`} onChange={e => setHeard(e.target.value)} /></label>
         <p className="rv-small">Leave empty if you did not listen carefully. Reading used for the checks: {heard.trim() || declared || '?'} → {({ main: 'the dictionary reading', variant: 'an accepted variant', speech: 'a connected-speech form', 'tone-differs': 'other tones than the game', different: 'a different reading', unknown: 'unknown' } as const)[rel]}.</p>
         <fieldset className="rv-uses"><legend>Allowed uses</legend>{(Object.keys(USE_LABEL) as RecordingUse[]).map(u => (
@@ -314,17 +372,8 @@ function EntryContent({ record: r, word, data, media, working, reviewer, update 
           {recWorking && <button onClick={() => update(w => dropOp(w, `recording:${word.id}`))}>Keep what the game has</button>}
         </div>
       </>}
-      <h3>Definition (meaning on answer buttons)</h3>
-      <p>Game: <b>{word.meaning}</b> · source: {r.candidate.meanings.join('; ') || '—'} {selection && <em className={selWorking ? 'st-working' : 'rv-pill'}>{selection.choice === 'game' ? 'keep game' : `source: ${selection.value}`}{selWorking ? ' (this browser)' : ' (applied)'}</em>}</p>
-      <div className="rv-actions">
-        <button onClick={() => sel({ entry: word.id, field: 'meaning', choice: 'game', decision: decision(reviewer) })}>Keep the game's meaning</button>
-        <input value={meaning} onChange={e => setMeaning(e.target.value)} />
-        <button disabled={!meaning.trim() || meaning.length > LIMITS.meaning} onClick={() => sel({ entry: word.id, field: 'meaning', choice: 'source', value: meaning.trim(), provenance: { source: r.source, record: r.key, recordHash: r.hash, mode: r.candidate.meanings.includes(meaning.trim()) ? 'verbatim' : 'adapted' }, decision: decision(reviewer) })}>Use this text</button>
-      </div>
-      {meaning.length > LIMITS.meaning && <p className="rv-warn">Too long for an answer button ({meaning.length}/{LIMITS.meaning}): shorten it (it then counts as adapted).</p>}
-      <p className="rv-small">The note, explanations and examples are not changed from here.</p>
     </div>
-  )
+  </>)
 }
 
 function OpLine({ op, data }: { op: WorkingState['ops'][string]; data: Loaded }) {

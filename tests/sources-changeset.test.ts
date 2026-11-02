@@ -11,7 +11,7 @@ import curriculaJson from '../src/content/curricula.json' with { type: 'json' }
 import { buildApkg, fakeMp3, note } from './helpers/apkg.ts'
 import { readAnkiPackage } from '../tools/sources/adapters/anki.ts'
 import { readSentencesJson } from '../tools/sources/adapters/sentencesJson.ts'
-import { applyChangeset, emptyMappings, emptyRecordings, emptySelections, promoteDraft, proposeEntryId, type RepoState, type SourceState } from '../src/sources/changeset.ts'
+import { applyChangeset, draftFromRecord, emptyMappings, emptyRecordings, emptySelections, promoteDraft, proposeEntryId, type RepoState, type SourceState } from '../src/sources/changeset.ts'
 import { validateBundle } from '../src/sources/bundle.ts'
 import { validateDecisions } from '../src/sources/validate.ts'
 import { validateContent } from '../src/content/validate.ts'
@@ -25,7 +25,11 @@ const dir = mkdtempSync(join(tmpdir(), 'hh-cs-'))
 writeFileSync(join(dir, 'deck.apkg'), buildApkg([
   note('B1-L01-01', '个', 'ge', 'measure word for people and things'),
   note('B1-L01-02', '人', 'rén', 'person; people'),
-  note('B1-L03-07', '得', 'děi', 'must; to have to')
+  note('B1-L03-07', '得', 'děi', 'must; to have to'),
+  note('B1L04-I-01', '东西', 'dōngxi', 'thing, stuff', { Audio: '' }),
+  note('B1L04-I-02', '吧', 'ba', 'suggestion particle', { POS: 'Ptc', Audio: '' }),
+  note('B1L04-I-03', '台湾', 'Táiwān', 'Taiwan', { Audio: '' }),
+  note('B1L04-I-04', '那边', 'nàbiān / nèibiān', 'there', { POS: 'N', Audio: '', Variants: '[{"Traditional": "那邊", "Simplified": "那边", "Pinyin": "nàbiān"}, {"Traditional": "那邊", "Simplified": "那边", "Pinyin": "nèibiān"}]' })
 ], { 'B1-L01-01.mp3': fakeMp3('a'), 'B1-L01-02.mp3': fakeMp3('b'), 'B1-L03-07.mp3': fakeMp3('c') }))
 const bundle = readAnkiPackage({ source: 'accc-anki', file: join(dir, 'deck.apkg'), mediaDir: join(dir, 'media'), mediaPrefix: 'sources/accc-anki/media' })
 const src: SourceState = { source: 'accc-anki', snapshot: bundle.snapshot.sha256, records: new Map(bundle.records.map(r => [r.key, r])) }
@@ -151,4 +155,51 @@ test('a second adapter contributes sentences and exercises through the same mode
   const bad = { ...b, exercises: [{ ...b.exercises[0], answer: { accept: ['个', '的'], choices: ['个', '的', '很'] } }], content: [{ ...s, links: [{ entry: 'nope', role: 'contains' as const }] }] }
   const errs = validateBundle(bad, ids).join('|')
   assert.match(errs, /accepted alternative/); assert.match(errs, /unknown entry "nope"/)
+})
+
+test('drafts carry the game\'s pronunciation conventions and promote cleanly: neutral tone, particle, names, variants', () => {
+  const promote = (key: string, group = 'test') => {
+    const s = repo()
+    const d = { ...draftFromRecord(rec(key), s.words), note: 'Draft note for tests.', group }
+    s.mappings.mappings[rec(key).key] = { status: 'new-candidate', draft: d, recordHash: rec(key).hash, decision: decision(by) }
+    const p = promoteDraft(s, rec(key).key, src)
+    assert.ok(p.ok, p.error)
+    assert.deepEqual(validateContent(p.state.words, explanationsJson, clozeJson, sourcesJson, curriculaJson).errors, [], `${key} must pass the playable-entry validation`)
+    return { d, e: p.state.words.find(w => (w.id ?? w.hanzi) === p.id)! }
+  }
+  const dx = promote('B1L04-I-01')
+  assert.deepEqual(dx.d.neutral, [2]); assert.deepEqual(dx.e.neutral, [2], 'dōngxi: the unmarked second syllable is declared neutral')
+  const ba = promote('B1L04-I-02')
+  assert.equal(ba.e.kind, 'particle'); assert.deepEqual(ba.e.neutral, [1])
+  const tw = promote('B1L04-I-03')
+  assert.equal(tw.e.pinyin, 'táiwān', 'the game requires lowercase pinyin; the source capitalises names')
+  const na = promote('B1L04-I-04')
+  assert.equal(na.e.pinyin, 'nàbiān'); assert.deepEqual(na.e.variants, ['nèibiān'], 'the other reading is kept as an accepted variant (never a wrong answer)')
+  // A stale or missing neutral list in a hand-edited draft cannot break promotion: it is recomputed from the pinyin.
+  const s = repo()
+  s.mappings.mappings[rec('B1L04-I-01').key] = { status: 'new-candidate', draft: { id: '东西', hanzi: '东西', pinyin: 'dōngxi', meaning: 'thing', note: 'n', group: 'g' }, recordHash: rec('B1L04-I-01').hash, decision: decision(by) }
+  assert.deepEqual(promoteDraft(s, rec('B1L04-I-01').key, src).state.words.at(-1)!.neutral, [2])
+})
+
+test('an edited wording is written as the reviewer\'s own text; "different meaning" is a recorded decision', () => {
+  const s = repo()
+  const ge = s.words.find(w => (w.id ?? w.hanzi) === '个')!
+  let w = emptyWorking('accc-anki', src.snapshot)
+  w = putOp(w, mappingOp(s, rec('B1-L01-01'), { status: 'linked', entry: '个' }, by))
+  w = putOp(w, fieldOp(s, '个', 'meaning', ge.meaning, { entry: '个', field: 'meaning', choice: 'edited', value: 'general counting word', provenance: { source: 'accc-anki', record: rec('B1-L01-01').key, recordHash: rec('B1-L01-01').hash, mode: 'authored' }, decision: decision(by) }))
+  // 人 record: a person says it is not the meaning of 人 (kept unresolved, but remembered).
+  w = putOp(w, mappingOp(s, rec('B1-L01-02'), { status: 'unresolved', distinctFrom: ['人'] }, by))
+  assert.equal(Object.keys(w.ops).length, 3, '"different meaning" on an unresolved record is a real decision, not a no-op')
+  const res = applyChangeset(s, toChangeset(w, by, src.snapshot), src)
+  assert.ok(res.ok, res.conflicts.join('; '))
+  const after = res.state.words.find(x => (x.id ?? x.hanzi) === '个')!
+  assert.equal(after.meaning, 'general counting word')
+  assert.ok(after.source?.some(x => x.ref === rec('B1-L01-01').key && /written by a reviewer \(tester\)/.test(x.note ?? '')), 'labelled as the reviewer\'s wording, not as source text')
+  assert.equal(after.review?.status, ge.review?.status, 'the entry\'s review status is not changed')
+  assert.deepEqual(res.state.mappings.mappings[rec('B1-L01-02').key].distinctFrom, ['人'])
+  assert.deepEqual(validateDecisions(res.state.words, res.state.mappings, res.state.recordings, res.state.selections, SOURCES, src.records).errors, [])
+  assert.deepEqual(validateContent(res.state.words, explanationsJson, clozeJson, sourcesJson, curriculaJson).errors, [])
+  // Linking to an entry that is also marked "different meaning" is refused.
+  const bad = putOp(emptyWorking('accc-anki', src.snapshot), mappingOp(s, rec('B1-L01-02'), { status: 'linked', entry: '人', distinctFrom: ['人'] }, by))
+  assert.match(applyChangeset(s, toChangeset(bad, by, src.snapshot), src).conflicts.join('|'), /also marked as a different meaning/)
 })

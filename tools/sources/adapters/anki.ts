@@ -48,20 +48,31 @@ export function plain(html: string): string {
  * Parenthesised parts, as this deck uses them:
  *  - erhua, optional:          一點(兒) / yìdiǎn(r)            -> 一點, 一點兒 / yìdiǎn, yìdiǎnr
  *  - at the start, optional:   (台)斤 / (Tái) jīn              -> 斤, 台斤 / jīn, Tái jīn
- *  - at the end, another form: 公共汽車（公車）/ Shīdà (Shīfàn Dàxué) -> 公共汽車, 公車 (abbreviation or full form)
+ *  - at the end, another form, when one side abbreviates the other or it starts with "=":
+ *      公共汽車（公車）/ Shīdà (Shīfàn Dàxué) / 教部（＝教育部）      -> 公共汽車, 公車
+ *  - at the end, otherwise an optional companion: 忘（了）/ cóng (lái) / 提不起（勇氣） -> 忘, 忘了
  * Anything else is left as it is (and reported if it does not parse).
  */
 function parenForms(s: string, han: boolean): string[] {
   const m = s.match(/^(.*?)\s*[(（]([^()（）]+)[)）]\s*(.*)$/)
   if (!m) return [s]
-  const [, before, inner, after] = m
+  const [, before] = m, after = m[3]
+  const equals = /^\s*[=＝]/.test(m[2])
+  const inner = m[2].replace(/^\s*[=＝]\s*/, '')
   if (han ? !ONLY_HAN.test(inner) : !/^[\p{L}\p{M}' ]+$/u.test(inner)) return [s]
   const tidy = (x: string) => x.replace(/\s+/g, ' ').trim()
   const erhua = han ? inner === '兒' || inner === '儿' : inner === 'r'
-  if (!erhua && before.trim() && !after.trim()) return [...parenForms(before, han), ...parenForms(inner, han)]
+  if (!erhua && before.trim() && !after.trim() && (equals || abbreviates(before, inner, han))) return [...parenForms(before, han), ...parenForms(inner, han)]
   const without = tidy(`${before} ${after}`)
   const withIt = erhua ? tidy(`${before}${inner}${after}`) : tidy(s.replace(/[(（)）]/g, ' '))
   return [...parenForms(without, han), ...parenForms(withIt, han)]
+}
+
+/** Does one side abbreviate the other? Every character (Han) or syllable (pinyin) of the shorter one occurs in the longer. */
+function abbreviates(a: string, b: string, han: boolean): boolean {
+  const units = (x: string) => (han ? [...x.replace(/\s+/g, '')] : (splitSyllables(x.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{M}' ]/gu, '')) ?? []).map(s => s.base))
+  const [short, long] = [units(a), units(b)].sort((x, y) => x.length - y.length)
+  return short.length >= 2 && long.length > short.length && short.every(u => long.includes(u))
 }
 
 /** Alternatives are separated by "/" in this deck; commas belong to phrases ("shēntǐ fǎfū, shòuzhī fùmǔ"). */

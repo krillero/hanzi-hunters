@@ -1,5 +1,20 @@
 # Changelog / test log
 
+## 2026-11-03 — Review screen: three decisions with explained recommendations (branch ccr-b05f2c6d-289vu4)
+
+- Reviewer feedback (吗, 个): the screen judged whether two records are the same word, but left meaning, wording and pronunciation to the reviewer, and its “weak” label read like a quality verdict.
+- Each record is now reviewed in three steps with a rule-based recommendation and reason (`src/sources/recommend.ts`): same meaning? → which text? → which recording? 吗: “Same meaning; keep the game wording” (category label vs function). 个: “Same meaning; wording improvement suggested” (“general counting word”), pronunciation `ge` explained as the connected-speech form already taught.
+- New decisions: `choice: "edited"` (the reviewer's own wording, labelled as such, not as source text) and `distinctFrom` (“Different meaning”, remembered). Matching evidence moved under a fold and explained as same-word evidence only.
+- Fixes found while checking the whole deck: glosses of common words (“to be”) compared as empty; a trailing parenthesis is another form only when it abbreviates the other side or starts with “=” (忘（了） is 忘 / 忘了, not 了). Re-imported: no record hash changed.
+- Follow-up (owner feedback on the live page): search for “ge” returned 405 records with 个 fourth, because English matched mid-word (“younger”, “age”); search is now ranked and matches English from word starts. 个: the source's “general measure word” is now the recommended wording over “general classifier” (textbook vs linguists' term), with “general counting word” kept as the plainer alternative.
+- Whole deck vs the game's 127 entries: 95 “same meaning, keep the game wording”, 33 “check the meaning” (e.g. 好 “OK” vs “good”, 菜 “cuisine” vs “vegetables / dish”), 1 wording suggestion (个: use the source's “general measure word”), 1 different meaning (了 liǎo).
+
+## 2026-11-02 — New-entry drafts keep pronunciation metadata (branch ccr-b05f2c6d-289vu4)
+
+- Bug: drafts and `npm run source:promote` dropped `neutral`, so any word with a neutral-tone syllable (东西 dōngxi, 吧 ba) failed validation and could not be promoted; `kind` and accepted variants were lost too, and capitalised source pinyin (Táiwān) was copied although the game requires lowercase.
+- Fix: `EntryDraft` gains `neutral`, `kind`, `variants`, `speech`; `draftFromRecord` proposes them (lowercase pinyin, other readings as variants, particle from POS); promotion copies them and derives `neutral` from the pinyin. The review screen's draft form shows the neutral syllables and edits kind and variants.
+- Checks: see the end of the entry in the commit message / PR.
+
 ## 2026-11-02 — Source imports, review screen, recorded audio (branch ccr-b05f2c6d-289vu4)
 
 - **Note shown once:** all 60 explanation summaries were exact copies of the entry note; removed. `summary` is optional extra context; the validator rejects a copy of the note. The popup and new-word card show the note first.

@@ -8,7 +8,7 @@
 //   course / lesson   teaching order                                 ids in curricula.json
 //
 // Chinese text is a matching aid, never an identity: the same characters can be different readings, meanings, words or names.
-import type { Review } from '../content/types.ts'
+import type { Review, SpeechChange, WordKind } from '../content/types.ts'
 
 /** Bumped when the shape of the files below changes; readers refuse unknown versions instead of guessing. */
 export const SOURCE_SCHEMA_VERSION = 1
@@ -205,7 +205,20 @@ export type ImportDiff = {
 export type Decision = { by: string; on: string; how: 'person' | 'tool' }
 
 /** A proposed new game entry prepared from a record. Not playable until promoted (npm run source:promote) and placed in a course. */
-export type EntryDraft = { id: string; hanzi: string; pinyin: string; meaning: string; note?: string; group?: string }
+export type EntryDraft = {
+  id: string; hanzi: string
+  /** Lowercase dictionary pinyin with tone marks, as the game requires. */
+  pinyin: string
+  meaning: string; note?: string; group?: string
+  /** 1-based neutral-tone positions. Always equal to the syllables without a tone mark; promotion recomputes it from `pinyin`. */
+  neutral?: number[]
+  /** word / character / particle; omitted = automatic (by length). */
+  kind?: WordKind
+  /** Other accepted readings of the same word and meaning (ACCC "zhè / zhèi"). */
+  variants?: string[]
+  /** Connected-speech guidance, if a person adds it. */
+  speech?: SpeechChange[]
+}
 
 /**
  * Mapping between ONE source record and the game. Review status (`status` + `decision`) is separate from match confidence, which
@@ -220,6 +233,8 @@ export type Mapping = {
   entry?: string
   reason?: string
   draft?: EntryDraft
+  /** Entries a person decided this record does NOT mean (same characters, different meaning). Kept with any status. */
+  distinctFrom?: string[]
   recordHash: string
   decision: Decision
   /** Set by the importer when the record changed or disappeared after this decision. Cleared by the next decision. */
@@ -262,13 +277,16 @@ export type SelectedRecording = {
 export type RecordingsFile = { schemaVersion: typeof SOURCE_SCHEMA_VERSION; recordings: SelectedRecording[] }
 
 /**
- * A field-specific content choice for one entry. `choice: "game"` records a deliberate "keep the game's own text".
- * `choice: "source"` adopted the source's text (`mode` says verbatim or adapted); applying it writes the value into words.json.
+ * A field-specific content choice for one entry, written into words.json when applied:
+ *  game    a deliberate "keep the game's own text" (nothing changes)
+ *  source  the source's text, verbatim or shortened (`provenance.mode` verbatim / adapted)
+ *  edited  a reviewer's own wording, written after comparing with a record (`provenance.mode` authored; the record is the
+ *          one consulted, not the origin of the text)
  */
 export type FieldSelection = {
   entry: string
   field: 'meaning' | 'note'
-  choice: 'game' | 'source'
+  choice: 'game' | 'source' | 'edited'
   value?: string
   provenance?: Provenance
   decision: Decision
