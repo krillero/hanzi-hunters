@@ -1,9 +1,9 @@
 // Changesets: validate and apply review decisions to the repository's content files, and flag decisions whose source changed.
 // Pure (no fs): tools/source-apply.ts reads and writes the files; the review screen builds changesets with the same types.
 import type { RawWord, SourceRef } from '../content/types.ts'
-import { splitSyllables } from '../content/pinyin.ts'
+import { soundKey, splitSyllables } from '../content/pinyin.ts'
 import {
-  SOURCE_SCHEMA_VERSION, type ChangeOp, type Changeset, type FieldSelection, type MappingsFile, type RecordingsFile,
+  SOURCE_SCHEMA_VERSION, type ChangeOp, type EntryDraft, type Changeset, type FieldSelection, type MappingsFile, type RecordingsFile,
   type SelectedRecording, type SelectionsFile, type SourceRecord
 } from './types.ts'
 
@@ -181,6 +181,30 @@ export function proposeEntryId(hanzi: string, pinyin: string, words: { id?: stri
   for (let n = 2; ; n++) if (!taken.has(`${id}-${n}`)) return `${id}-${n}`
 }
 
+/** 1-based positions of the syllables without a tone mark: exactly what the game's `neutral` must list (péngyou -> [2]). */
+export function neutralPositions(pinyin: string): number[] {
+  return (splitSyllables(pinyin.normalize('NFC')) ?? []).flatMap((s, i) => (s.tone === 0 ? [i + 1] : []))
+}
+
+/**
+ * A new-entry proposal from a source record, in the game's conventions: lowercase pinyin (sources capitalise names: Táiwān),
+ * neutral-tone positions, the source's other readings of the same item as variants, and "particle" when the source says so.
+ * Only a proposal: a person edits it on the review screen, and promotion still runs the full validation.
+ */
+export function draftFromRecord(r: SourceRecord, words: { id?: string; hanzi: string }[]): EntryDraft {
+  const hanzi = r.candidate.simplified[0] ?? ''
+  const norm = (p: string) => p.normalize('NFC').toLowerCase().trim()
+  const pinyin = norm(r.candidate.readings[0] ?? '')
+  const others = [...r.candidate.readings.slice(1), ...r.candidate.variants.filter(v => v.form === hanzi && v.reading).map(v => v.reading!)]
+  const variants = [...new Map(others.map(norm).filter(p => splitSyllables(p) && soundKey(p) !== soundKey(pinyin)).map(p => [soundKey(p), p])).values()]
+  const neutral = neutralPositions(pinyin)
+  const particle = r.candidate.pos.some(p => /^(ptc|particle|助詞|助词)$/i.test(p))
+  return {
+    id: proposeEntryId(hanzi, pinyin, words), hanzi, pinyin, meaning: r.candidate.meanings[0] ?? '', note: '', group: '',
+    ...(neutral.length ? { neutral } : {}), ...(particle ? { kind: 'particle' as const } : {}), ...(variants.length ? { variants } : {})
+  }
+}
+
 /**
  * Promote a new-entry draft to a game entry: the entry joins words.json (not any course) and the mapping becomes "linked".
  * Validation of the playable fields happens afterwards on the whole content (validateContent), so promotion cannot bypass it.
@@ -198,8 +222,13 @@ export function promoteDraft(state: RepoState, recordKey: string, src: SourceSta
   if (missing.length) return { ok: false, error: `the draft is missing required fields: ${missing.join(', ')}`, state }
   const next = clone(state)
   if (next.words.some(w => entryIdOf(w) === d.id)) return { ok: false, error: `entry id "${d.id}" already exists`, state }
+  // Pronunciation metadata travels with the entry. `neutral` is derived from the pinyin (the validator requires exactly the
+  // unmarked syllables), so a draft cannot carry a stale or missing list.
+  const neutral = neutralPositions(d.pinyin)
   const entry: RawWord = {
     hanzi: d.hanzi, pinyin: d.pinyin, meaning: d.meaning, group: g!, note: d.note!,
+    ...(d.kind ? { kind: d.kind } : {}), ...(neutral.length ? { neutral } : {}),
+    ...(d.variants?.length ? { variants: d.variants } : {}), ...(d.speech?.length ? { speech: d.speech } : {}),
     source: [{ name: src.source, ref: recordKey, note: 'promoted from a review draft' }],
     review: { status: 'imported', note: 'Promoted from a source-record draft. Not reviewed by a teacher.' }
   }

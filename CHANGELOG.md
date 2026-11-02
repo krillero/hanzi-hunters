@@ -1,5 +1,11 @@
 # Changelog / test log
 
+## 2026-11-02 — New-entry drafts keep pronunciation metadata (branch ccr-b05f2c6d-289vu4)
+
+- Bug: drafts and `npm run source:promote` dropped `neutral`, so any word with a neutral-tone syllable (东西 dōngxi, 吧 ba) failed validation and could not be promoted; `kind` and accepted variants were lost too, and capitalised source pinyin (Táiwān) was copied although the game requires lowercase.
+- Fix: `EntryDraft` gains `neutral`, `kind`, `variants`, `speech`; `draftFromRecord` proposes them (lowercase pinyin, other readings as variants, particle from POS); promotion copies them and derives `neutral` from the pinyin. The review screen's draft form shows the neutral syllables and edits kind and variants.
+- Checks: see the end of the entry in the commit message / PR.
+
 ## 2026-11-02 — Source imports, review screen, recorded audio (branch ccr-b05f2c6d-289vu4)
 
 - **Note shown once:** all 60 explanation summaries were exact copies of the entry note; removed. `summary` is optional extra context; the validator rejects a copy of the note. The popup and new-word card show the note first.

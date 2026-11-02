@@ -12,7 +12,7 @@ import { audioReliable } from '../content/entries'
 import { LIMITS } from '../content/validate'
 import { eligibleUses, readingRelation, toneless } from '../content/recordings'
 import { isConflicting, suggest, type Suggestion } from '../sources/match'
-import { proposeEntryId, type RepoState } from '../sources/changeset'
+import { draftFromRecord, neutralPositions, type RepoState } from '../sources/changeset'
 import type { ContentItem, EntryDraft, FieldSelection, Mapping, RecordingItem, RecordingUse, SelectedRecording, SourceIndex, SourceRecord } from '../sources/types'
 import type { RawWord, Sources, Word } from '../content/types'
 import {
@@ -202,7 +202,7 @@ function RecordDetail({ record: r, data, suggestions, working, reviewer, update,
   const committed = REPO.mappings.mappings[r.key] ?? null
   const [other, setOther] = useState('')
   const [reason, setReason] = useState(mapping?.reason ?? '')
-  const [draft, setDraft] = useState<EntryDraft>(() => mapping?.draft ?? { id: proposeEntryId(r.candidate.simplified[0] ?? '', r.candidate.readings[0] ?? '', WORDS), hanzi: r.candidate.simplified[0] ?? '', pinyin: r.candidate.readings[0] ?? '', meaning: r.candidate.meanings[0] ?? '', note: '', group: '' })
+  const [draft, setDraft] = useState<EntryDraft>(() => mapping?.draft ?? draftFromRecord(r, WORDS))
   const setMapping = (after: Omit<Mapping, 'recordHash' | 'decision'>) => update(w => putOp(w, mappingOp(REPO, r, after, reviewer)))
   const linkedEntry = mapping?.status === 'linked' && mapping.entry ? WORD_BY_ID.get(mapping.entry) : undefined
   const ops = Object.entries(working.ops).filter(([, op]) => (op.op === 'field' ? op.after.provenance?.record === r.key || (linkedEntry && op.entry === linkedEntry.id) : op.record === r.key || (op.op === 'recording' && linkedEntry && op.entry === linkedEntry.id)))
@@ -240,9 +240,12 @@ function RecordDetail({ record: r, data, suggestions, working, reviewer, update,
         <details className="rv-draft" open={mapping?.status === 'new-candidate'}><summary>Prepare a new game entry (draft)</summary>
           <p className="rv-small">A draft is not playable. It becomes an entry only through <code>npm run source:promote</code> and validation, and joins a lesson only when someone adds it to a course.</p>
           {(['id', 'hanzi', 'pinyin', 'meaning', 'note', 'group'] as const).map(k => <label key={k}>{k} <input value={draft[k] ?? ''} onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))} /></label>)}
+          <p className="rv-small">Neutral tone: {neutralPositions(draft.pinyin).length ? `syllable ${neutralPositions(draft.pinyin).join(', ')} (no tone mark)` : 'none'}. Write the pinyin as the game teaches it (lowercase, tone marks; leave neutral syllables unmarked).</p>
+          <label>kind <select value={draft.kind ?? ''} onChange={e => setDraft(d => ({ ...d, kind: (e.target.value || undefined) as EntryDraft['kind'] }))}><option value="">automatic</option><option value="word">word</option><option value="character">character</option><option value="particle">particle</option></select></label>
+          <label>variants (other accepted readings, comma-separated) <input value={(draft.variants ?? []).join(', ')} onChange={e => setDraft(d => ({ ...d, variants: e.target.value.split(/\s*,\s*/).filter(Boolean) }))} /></label>
           {draft.meaning.length > LIMITS.meaning && <p className="rv-warn">The meaning has {draft.meaning.length} characters; answer buttons allow {LIMITS.meaning}.</p>}
           {WORD_BY_ID.has(draft.id) && <p className="rv-warn">The id “{draft.id}” is already used.</p>}
-          <button disabled={!draft.id.trim() || WORD_BY_ID.has(draft.id) || !draft.hanzi.trim()} onClick={() => setMapping({ status: 'new-candidate', draft: Object.fromEntries(Object.entries(draft).filter(([, v]) => v !== '')) as EntryDraft })}>Save as new-entry candidate</button>
+          <button disabled={!draft.id.trim() || WORD_BY_ID.has(draft.id) || !draft.hanzi.trim()} onClick={() => setMapping({ status: 'new-candidate', draft: Object.fromEntries(Object.entries({ ...draft, neutral: neutralPositions(draft.pinyin) }).filter(([, v]) => v !== '' && v !== undefined && !(Array.isArray(v) && v.length === 0))) as EntryDraft })}>Save as new-entry candidate</button>
         </details>
       </div>
 

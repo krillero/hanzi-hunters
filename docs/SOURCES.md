@@ -150,8 +150,11 @@ exercises without touching the Anki adapter. No exercise mechanic reads these ye
 1. Import → records exist only in `public/sources`. Nothing is playable.
 2. Link / select → mapping, recordings and field choices are applied via a reviewed changeset. A selected recording is used for
    an entry that is **already** in the game. No new entry, no lesson change.
-3. New entry → a `new-candidate` draft, then `npm run source:promote -- <record key> [--group <group>]`, which adds the entry to
+3. New entry → a `new-candidate` draft (proposed in the game's conventions: lowercase pinyin, the source's other readings as
+   `variants`, `kind: "particle"` when the source says so; all editable), then `npm run source:promote -- <record key> [--group <group>]`, which adds the entry to
    `words.json` (review status `imported`) only if it passes the playable-entry validation. It is still in no course.
+   Promotion copies `kind`, `variants` and `speech`, and derives `neutral` from the pinyin (the syllables without a tone mark,
+   exactly what the validator requires), so neutral-tone words such as 东西 dōngxi promote without hand-editing.
 4. Course → a person adds the entry id to a lesson in `curricula.json` (see `docs/CURRICULUM.md`). Courses reference game entry
    ids only; `placement.json` is a proposal to consult, not a course.
 
