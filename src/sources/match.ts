@@ -1,19 +1,29 @@
 // Candidate matching between source records and game entries. Pure, no external services.
-// The matcher only SUGGESTS: it explains its evidence and uncertainty, and never decides a mapping. Exact spelling alone is never
-// enough for a strong suggestion; reading (with tones) and meaning must agree too.
+// The matcher FINDS CANDIDATES worth comparing and lists the observable evidence (spelling, reading, English-word overlap, part of
+// speech). It never concludes that two definitions mean the same thing or differ: that is a meaning assessment
+// (src/sources/assessment.ts), made by a person or recorded as an AI-assisted editorial assessment, never by these rules.
+// `strength` says how worth comparing a candidate is (spelling + reading), not whether its definition is correct or equivalent.
 import type { Word } from '../content/types.ts'
 import { readingRelation, type ReadingRelation } from '../content/recordings.ts'
 import { splitSyllables } from '../content/pinyin.ts'
 import type { SourceRecord } from './types.ts'
 
-export type EvidenceLevel = 'match' | 'partial' | 'mismatch' | 'unknown'
-export type Evidence = { aspect: 'spelling' | 'reading' | 'meaning' | 'kind'; level: EvidenceLevel; detail: string }
-export type Confidence = 'strong' | 'probable' | 'weak' | 'conflict'
-export type Suggestion = { entry: string; confidence: Confidence; score: number; reading: ReadingRelation; evidence: Evidence[]; warnings: string[] }
+/** match / partial / mismatch describe an observation; `neutral` = observed, but says nothing either way (e.g. no shared words). */
+export type EvidenceLevel = 'match' | 'partial' | 'mismatch' | 'neutral' | 'unknown'
+export type Evidence = { aspect: 'spelling' | 'reading' | 'english' | 'kind' | 'mapping'; level: EvidenceLevel; detail: string }
+/**
+ * How worth comparing a candidate is, from spelling and reading only:
+ *  strong    same main spelling and the game's reading (or an accepted variant)
+ *  possible  same spelling, reading differs only by connected speech / neutral tone, or another of the source's forms
+ *  weak      same spelling, other tones
+ *  unlikely  same spelling, but other syllables, or the reading belongs to another entry written the same way
+ * Never a statement about meaning.
+ */
+export type CandidateStrength = 'strong' | 'possible' | 'weak' | 'unlikely'
+export type Suggestion = { entry: string; strength: CandidateStrength; score: number; reading: ReadingRelation; neutralToneOnly: boolean; sharedWords: string[]; evidence: Evidence[]; warnings: string[] }
+export const STRENGTH_LABEL: Record<CandidateStrength, string> = { strong: 'strong candidate', possible: 'possible candidate', weak: 'weak candidate', unlikely: 'unlikely candidate' }
 
 const STOP = new Set(['a', 'an', 'the', 'to', 'of', 'be', 'is', 'for', 'and', 'or', 'in', 'on', 'at', 'with', 'one', "one's", 'sb', 'sth', 'someone', 'something', 'etc', 'used', 'as', 'by', 'it', 'up', 'out'])
-/** A few gloss words that dictionaries use interchangeably (kept small and explicit). */
-const SYNONYM: Record<string, string> = { classifier: 'measure', mw: 'measure', cl: 'measure', father: 'dad', mother: 'mom', mum: 'mom' }
 /** Lower-case content words of an English gloss ("to like / be fond of" -> like, fond). */
 export function glossWords(text: string): Set<string> {
   const out = new Set<string>()
@@ -21,11 +31,13 @@ export function glossWords(text: string): Set<string> {
     const w = raw.replace(/^'+|'+$/g, '')
     if (w.length < 2 || STOP.has(w)) continue
     const base = w.endsWith('s') && w.length > 3 && !w.endsWith('ss') ? w.slice(0, -1) : w
-    out.add(SYNONYM[base] ?? base)
+    out.add(base)
   }
   return out
 }
 
+/** Literal English-word overlap (no synonyms). Evidence for ranking candidates only: sharing a word does not make two senses the same,
+ *  and sharing none does not make them different. */
 export function meaningOverlap(a: string, b: string[]): { shared: string[]; level: EvidenceLevel } {
   let left = glossWords(a)
   let right = new Set<string>(); for (const m of b) for (const w of glossWords(m)) right.add(w)
@@ -36,11 +48,12 @@ export function meaningOverlap(a: string, b: string[]): { shared: string[]; leve
   }
   if (left.size === 0 || right.size === 0) return { shared: [], level: 'unknown' }
   const shared = [...left].filter(w => right.has(w))
-  if (shared.length === 0) return { shared, level: 'mismatch' }
+  if (shared.length === 0) return { shared, level: 'neutral' }
   return { shared, level: shared.length >= Math.min(left.size, right.size) ? 'match' : 'partial' }
 }
 
-/** Same syllables and the only differences are neutral tone on one side (péngyǒu vs péngyou): a regional or style difference. */
+/** Same syllables and the only differences are a neutral tone on one side (péngyǒu vs péngyou). An observation only: it may be a
+ *  regional standard, a citation form or another word; the cause is not established by this check. */
 export function neutralToneOnly(a: string, b: string): boolean {
   const x = splitSyllables(a.normalize('NFC').toLowerCase()), y = splitSyllables(b.normalize('NFC').toLowerCase())
   if (!x || !y || x.length !== y.length) return false
@@ -52,7 +65,8 @@ export function neutralToneOnly(a: string, b: string): boolean {
   return diff > 0
 }
 
-/** A gloss that only names a grammatical category ("sentence final particle", "general measure word", "modification marker"). */
+/** A gloss that only names a grammatical category ("sentence final particle", "general measure word", "modification marker").
+ *  Descriptive evidence only: a category label is not evidence that two records teach the same use. */
 export function categoryOnly(gloss: string): boolean {
   return /^(an? )?(general |sentence[- ]final |verbal |adverbial |aspect(ual)? |modal |structural |question |modification |complement |disposal )?(particle|marker|measure word|classifier)$/i.test(gloss.trim())
 }
@@ -61,85 +75,97 @@ export function categoryOnly(gloss: string): boolean {
 const POS_PARTICLE = /^(ptc|particle|助詞|助词)$/i
 
 /** All game entries a record could be about, best first. Records whose spelling matches no entry get no suggestion. */
-export function suggest(record: SourceRecord, words: Word[]): Suggestion[] {
+/** The record's readings, main ones first, then variant readings. */
+export const recordReadings = (r: SourceRecord) => [...r.candidate.readings, ...r.candidate.variants.flatMap(v => (v.reading ? [v.reading] : []))]
+const ORDER: ReadingRelation[] = ['main', 'variant', 'speech', 'tone-differs', 'different', 'unknown']
+/** Best relation between any of the record's readings and the entry's readings (main, variants, connected speech). */
+export function bestReading(r: SourceRecord, w: Word): { relation: ReadingRelation; reading: string; neutralToneOnly: boolean } {
+  const readings = recordReadings(r)
+  let relation: ReadingRelation = 'unknown', reading = ''
+  for (const x of readings) { const y = readingRelation(x, w); if (ORDER.indexOf(y) < ORDER.indexOf(relation)) { relation = y; reading = x } }
+  const neutralOnly = relation === 'tone-differs' && readings.some(x => [w.pinyin, ...w.variants].some(p => neutralToneOnly(x, p)))
+  return { relation, reading, neutralToneOnly: neutralOnly }
+}
+
+/**
+ * All game entries a record could be about, most worth comparing first. Records whose spelling matches no entry get none.
+ * `linkedTo`: an entry a person already linked this record to (an existing mapping), reported as evidence.
+ */
+export function suggest(record: SourceRecord, words: Word[], opts: { linkedTo?: string } = {}): Suggestion[] {
   const forms = new Set(record.candidate.simplified)
   for (const v of record.candidate.variants) if (v.form) forms.add(v.form)
   const main = record.candidate.simplified[0]
-  const hits = words.filter(w => forms.has(w.hanzi))
+  const hits = words.filter(w => forms.has(w.hanzi) || w.id === opts.linkedTo)
+  const readings = recordReadings(record)
   const out: Suggestion[] = []
   for (const w of hits) {
     const evidence: Evidence[] = []
     const warnings: string[] = []
     const exact = w.hanzi === main
-    evidence.push({ aspect: 'spelling', level: exact ? 'match' : 'partial', detail: exact ? `same simplified spelling ${w.hanzi}` : `${w.hanzi} matches one of the source's other forms, not its main form ${main ?? '?'}` })
+    const spelled = forms.has(w.hanzi)
+    evidence.push(exact ? { aspect: 'spelling', level: 'match', detail: `same simplified spelling ${w.hanzi}` }
+      : spelled ? { aspect: 'spelling', level: 'partial', detail: `${w.hanzi} matches one of the source's other forms (${[...forms].join(', ')}), not its main form ${main ?? '?'}` }
+      : { aspect: 'spelling', level: 'mismatch', detail: `${w.hanzi} is not one of the source's forms (${[...forms].join(', ')})` })
 
-    // Reading: the best relation among the record's readings (and variant readings).
-    const readings = [...record.candidate.readings, ...record.candidate.variants.flatMap(v => (v.reading ? [v.reading] : []))]
-    const order: ReadingRelation[] = ['main', 'variant', 'speech', 'tone-differs', 'different', 'unknown']
-    let rel: ReadingRelation = 'unknown', relReading = ''
-    for (const r of readings) { const x = readingRelation(r, w); if (order.indexOf(x) < order.indexOf(rel)) { rel = x; relReading = r } }
-    const rd = { main: 'match', variant: 'match', speech: 'partial', 'tone-differs': 'mismatch', different: 'mismatch', unknown: 'unknown' } as const
-    const readingText: Record<ReadingRelation, string> = {
-      main: `source reading ${relReading} = game pinyin ${w.pinyin}`,
-      variant: `source reading ${relReading} is an accepted variant of ${w.pinyin}`,
-      speech: `source reading ${relReading} is the game's connected-speech form, not its dictionary reading ${w.pinyin}`,
-      'tone-differs': `source reading ${readings.join(' / ')} has other tones than game ${w.pinyin}: another reading, or a different word`,
-      different: `source reading ${readings.join(' / ')} differs from game ${w.pinyin}`,
-      unknown: 'the source gives no usable reading'
+    const { relation: rel, reading: relReading, neutralToneOnly: neutralOnly } = bestReading(record, w)
+    const all = readings.join(' / ') || '—'
+    const readingText: Record<ReadingRelation, [EvidenceLevel, string]> = {
+      main: ['match', `source reading ${relReading} = game pinyin ${w.pinyin}`],
+      variant: ['match', `source reading ${relReading} is a variant the game already accepts for ${w.pinyin}`],
+      speech: ['partial', `source reading ${relReading} is the game's connected-speech form; the game's dictionary reading is ${w.pinyin}`],
+      'tone-differs': neutralOnly
+        ? ['partial', `source reading ${all} vs game ${w.pinyin}: same syllables; the source marks a full tone where the game teaches a neutral tone (observed difference; its cause is not established here)`]
+        : ['mismatch', `source reading ${all} vs game ${w.pinyin}: same syllables, other tones`],
+      different: ['mismatch', `source reading ${all} vs game ${w.pinyin}: other syllables`],
+      unknown: ['unknown', 'the source gives no usable reading']
     }
-    const neutralOnly = rel === 'tone-differs' && readings.some(r => [w.pinyin, ...w.variants].some(p => neutralToneOnly(r, p)))
-    evidence.push(neutralOnly
-      ? { aspect: 'reading', level: 'partial', detail: `source reading ${readings.join(' / ')} differs from game ${w.pinyin} only in neutral tone (a regional or style difference, e.g. Taiwan Mandarin keeps full tones)` }
-      : { aspect: 'reading', level: rd[rel], detail: readingText[rel] })
+    evidence.push({ aspect: 'reading', level: readingText[rel][0], detail: readingText[rel][1] })
     if (rel === 'tone-differs') warnings.push(`Tones differ from the game's ${w.pinyin}: a recording from this record is not used for any listening question unless a person verifies a reading the game accepts.`)
     if (rel === 'speech') warnings.push('A recording from this record must not be used for pinyin listening questions unless a person verifies it says the dictionary reading.')
 
-    let m = meaningOverlap(w.meaning, record.candidate.meanings)
-    // A category label ("sentence final particle") against a function description ("marks a yes/no question") is a wording
-    // difference, not evidence of another meaning.
-    const category = m.level === 'mismatch' && record.candidate.meanings.some(categoryOnly) && (w.kind === 'particle' || /\b(classifier|measure word|particle|marker)\b/i.test(w.meaning) || record.candidate.pos.some(p => /^(ptc|m)$/i.test(p)))
-    if (category) m = { shared: [], level: 'partial' }
-    if (category) evidence.push({ aspect: 'meaning', level: 'partial', detail: `the source names a grammatical category (“${record.candidate.meanings.join('; ')}”); the game describes the use (“${w.meaning}”)` })
-    else evidence.push({ aspect: 'meaning', level: m.level, detail: m.level === 'unknown' ? 'no meaning to compare' : m.shared.length ? `shared meaning words: ${m.shared.join(', ')}` : `no shared meaning words ("${w.meaning}" vs "${record.candidate.meanings.join('; ')}")` })
+    const m = meaningOverlap(w.meaning, record.candidate.meanings)
+    evidence.push({ aspect: 'english', level: m.level === 'unknown' ? 'unknown' : m.shared.length ? 'partial' : 'neutral',
+      detail: m.level === 'unknown' ? 'no English text to compare'
+        : m.shared.length ? `English words in common: ${m.shared.join(', ')} (overlap only; not evidence that the senses are the same)`
+        : 'no English words in common (not evidence that the senses differ)' })
+    if (record.candidate.meanings.some(categoryOnly)) evidence.push({ aspect: 'english', level: 'neutral', detail: `the source gloss names a grammatical category (“${record.candidate.meanings.join('; ')}”), which does not say which use it teaches` })
 
     const pos = record.candidate.pos
     if (pos.length > 0) {
       const srcParticle = pos.some(p => POS_PARTICLE.test(p))
       if (srcParticle !== (w.kind === 'particle')) evidence.push({ aspect: 'kind', level: 'partial', detail: `source part of speech ${pos.join('/')} vs game kind ${w.kind}` })
-      else if (srcParticle) evidence.push({ aspect: 'kind', level: 'match', detail: 'both are particles' })
+      else evidence.push({ aspect: 'kind', level: 'neutral', detail: `source part of speech ${pos.join('/')}; game kind ${w.kind}` })
     }
+    if (opts.linkedTo === w.id) evidence.push({ aspect: 'mapping', level: 'match', detail: 'a person linked this record to this entry (existing mapping)' })
 
     const sameSpelling = words.filter(x => x.hanzi === w.hanzi)
-    if (sameSpelling.length > 1) warnings.push(`The game has ${sameSpelling.length} entries written ${w.hanzi} (${sameSpelling.map(x => `${x.id}: ${x.pinyin} ${x.meaning}`).join('; ')}). Check which meaning the source means.`)
+    if (sameSpelling.length > 1) warnings.push(`The game has ${sameSpelling.length} entries written ${w.hanzi} (${sameSpelling.map(x => `${x.id}: ${x.pinyin} ${x.meaning}`).join('; ')}). Check which one the source means.`)
     if (record.candidate.flags.length) warnings.push(`Source flags: ${record.candidate.flags.join(', ')}`)
 
-    // Confidence from the combination; spelling alone never reaches "probable".
-    let confidence: Confidence
+    // Strength from spelling and reading only. English overlap only orders candidates of equal strength.
     const readOk = rel === 'main' || rel === 'variant'
-    if (rel === 'different') confidence = 'conflict'
-    // Other tones: often a regional reading of the same word (星期 xīngqí / xīngqī), sometimes a different word (看 kān / kàn).
-    else if (rel === 'tone-differs') confidence = m.level === 'mismatch' || m.level === 'unknown' ? 'conflict' : neutralOnly ? 'probable' : 'weak'
-    else if (readOk && exact && (m.level === 'match' || m.level === 'partial')) confidence = 'strong'
-    else if ((readOk || rel === 'speech') && m.level !== 'mismatch') confidence = 'probable'
-    else confidence = 'weak'
-    if (m.level === 'mismatch') warnings.push('Meanings do not overlap: this may be a different meaning written with the same characters.')
-    if (confidence === 'strong' && sameSpelling.length > 1) confidence = 'probable'
-    const score = { strong: 3, probable: 2, weak: 1, conflict: 0 }[confidence] + (exact ? 0.5 : 0) + (m.shared.length * 0.1)
-    out.push({ entry: w.id, confidence, score, reading: rel, evidence, warnings })
+    let strength: CandidateStrength
+    if (!spelled) strength = opts.linkedTo === w.id ? 'possible' : 'weak'
+    else if (rel === 'different') strength = 'unlikely'
+    else if (rel === 'tone-differs') strength = neutralOnly ? 'possible' : 'weak'
+    else if (readOk && exact) strength = 'strong'
+    else strength = 'possible'
+    const score = { strong: 3, possible: 2, weak: 1, unlikely: 0 }[strength] + (exact ? 0.5 : 0) + (m.shared.length * 0.1) + (opts.linkedTo === w.id ? 1 : 0)
+    out.push({ entry: w.id, strength, score, reading: rel, neutralToneOnly: neutralOnly, sharedWords: m.shared, evidence, warnings })
   }
-  // When the source's reading is exactly one entry's reading, other entries with the same characters are a different reading.
+  // When the source's reading is exactly one entry's reading, other entries with the same characters are another reading.
   const exactReading = out.find(x => x.reading === 'main' || x.reading === 'variant')
   if (exactReading) for (const x of out) if (x !== exactReading && (x.reading === 'tone-differs' || x.reading === 'different') && WORD_HANZI(words, x.entry) === WORD_HANZI(words, exactReading.entry)) {
-    x.confidence = 'conflict'; x.score = 0
-    x.warnings.unshift(`The source reading is exactly that of ${exactReading.entry}; this is another reading of the same characters.`)
+    x.strength = 'unlikely'; x.score = Math.min(x.score, 0.5)
+    x.warnings.unshift(`The source reading is exactly that of ${exactReading.entry}; this entry is another reading of the same characters.`)
   }
   return out.sort((a, b) => b.score - a.score)
 }
 const WORD_HANZI = (words: Word[], id: string) => words.find(w => w.id === id)?.hanzi
 
-/** A suggestion list is "conflicting" when the best one conflicts, or several are equally good. */
-export function isConflicting(s: Suggestion[]): boolean {
+/** Several candidates of equal strength, or none strong: a person has to pick which entry (if any) the record is about. */
+export function isAmbiguous(s: Suggestion[]): boolean {
   if (s.length === 0) return false
-  if (s[0].confidence === 'conflict' || s[0].confidence === 'weak') return true
-  return s.length > 1 && s[1].confidence === s[0].confidence
+  if (s[0].strength === 'unlikely' || s[0].strength === 'weak') return true
+  return s.length > 1 && s[1].strength === s[0].strength
 }

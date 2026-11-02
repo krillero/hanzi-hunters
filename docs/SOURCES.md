@@ -65,6 +65,7 @@ public/sources/index.json                     the sources the review screen offe
 - Raw data (`fields`), normalisation (`candidate`), decisions (`src/content/*.json`) and game editorial text stay separate.
 - The game bundle never loads `public/sources`; it loads only `recordings.json` (small) and plays a file when asked.
 - Code: types `src/sources/types.ts`; matcher `src/sources/match.ts`; changesets and reassessment `src/sources/changeset.ts`;
+  comparison evidence `src/sources/compare.ts`; assessments `src/sources/assessment.ts` + `src/content/sourceAssessments.json`;
   validation `src/sources/validate.ts`, `src/sources/bundle.ts`; recording rules `src/content/recordings.ts`;
   importer `tools/sources/` (`zip.ts`, `importer.ts`, `adapters/`); review screen `src/review/`, `review/index.html`.
 
@@ -83,9 +84,10 @@ npm run source:import -- --source accc-anki --file ~/Downloads/A_Course_in_Conte
 - Phrases, names, patterns, erhua and long items are kept as valid records with `flags`; they need adaptation before play.
 - ACCC import (2026-11-02, snapshot `1291d1b67ae4…`): 4,960 records, 4,960 recordings, 0 duplicate IDs, all placed; see
   `public/sources/accc-anki/report.md` for counts, the 10 parse notes and the one unimported font.
-- ACCC IDs: `B<book>L<lesson>-<part>-<item>`, sometimes with a section (`B5L01-I-0-05`, `B6L01-III-T-01`). Its pinyin follows
-  Taiwan Mandarin (full tones where the game teaches neutral tone: péngyǒu / péngyou); the matcher reports these as
-  neutral-tone-only differences, and such clips are not used for listening questions unless a person verifies the reading.
+- ACCC IDs: `B<book>L<lesson>-<part>-<item>`, sometimes with a section (`B5L01-I-0-05`, `B6L01-III-T-01`). Its pinyin often
+  has full tones where the game teaches a neutral tone (péngyǒu / péngyou), consistent with Taiwan Mandarin usage; the matcher
+  reports each such case as an observed neutral-tone difference without claiming its cause, and such clips are not used for
+  listening questions unless a person verifies the reading.
 - **Reimporting** the same package changes nothing (keys are stable, files deterministic, media named by hash). A changed or
   removed record appears in `diff.json`; every committed decision about it gets `reassess` set (never deleted or reset). The game
   ignores a recording flagged for reassessment until someone decides again.
@@ -96,33 +98,114 @@ npm run source:import -- --source accc-anki --file ~/Downloads/A_Course_in_Conte
 Open `https://<pages host>/hanzi-hunters/review/` (or `http://localhost:5173/review/` with `npm run dev`). It is not linked from
 the game, is not precached by the service worker, and loads the source data only when opened.
 
-- Source selector, search (simplified, pinyin with or without tones, English, record id), filters (unresolved, linked,
-  check meaning, wording suggestion, new candidates, excluded, needs reassessment, has audio, changed here), book/lesson
-  filters, 40 records per page. Search ranks exact characters, readings (with or without tones) and IDs first and matches
-  English from word starts only (“ge” finds 个 and 哥哥, not “younger”). Each row shows the recommendation, e.g. “个: Same meaning; wording improvement suggested.”
-- A record is reviewed as **three separate decisions**, each with a recommendation and its reason
-  (`src/sources/recommend.ts`, fixed rules, no external service; a suggestion, never a decision or a review):
-  1. **Do these teach the same meaning?** Same → link. Different → “Different meaning” (remembered as `distinctFrom`, so the
-     suggestion is not raised again). Unsure → leave unresolved. A grammatical category label (“sentence final particle”)
-     against a function description (“marks a yes/no question”) counts as a wording difference, not a meaning conflict.
-  2. **Which text teaches it best?** Keep the game text (default; recommended unless the source corrects an error or explains
-     the meaning better), use the source text, or use an edited text (the reviewer's own wording, `choice: "edited"`,
-     recorded as written by the reviewer after comparing with the record). Wording rules are an explicit list: a source
-     “measure word” label is recommended over the game's “classifier” (the textbook term vs the linguists' term), and a
-     plainer “counting word” label is offered as an alternative for either. The note and explanation are unchanged.
-  3. **Is the recording useful?** Pronunciation differences (connected speech, regional tones, variants) are explained
-     separately from meaning; the reviewer listens, records what they hear and allows uses (see §6).
-- “Matching evidence” (spelling, reading, meaning words, kind; same-word evidence strong / probable / weak / conflict) is kept
-  under a fold: it says how sure the matcher is that two records are the same word, not which definition is better.
-- Other actions: link to any entry id, exclude (not wanted, optional reason), prepare a new-entry draft.
-- **Saved in this browser** (localStorage `hanzi-hunters-review-v1:<source>`, separate from game saves) vs **applied in the
-  game** (the committed files of the deployed build) are labelled everywhere. Each record lists its proposed changes.
+### Four things kept apart
+
+| Layer | What it is | Where | Who/what produces it |
+|---|---|---|---|
+| **Matching evidence** | Observable facts: spelling, readings (main, accepted variants, connected speech), text equality, English-word overlap, part of speech, an existing mapping | computed, never stored (`src/sources/match.ts`, `compare.ts`) | deterministic rules |
+| **Meaning assessment** | Do the two records teach the same sense? | `src/content/sourceAssessments.json` | an assessor (AI-assisted or a person), with reason, provenance, uncertainty |
+| **Wording assessment** | Which description teaches that sense more clearly? | same file | same |
+| **Reviewer decisions** | Link / keep separate / exclude / new-entry draft; which text; which recording | browser drafts → changeset → `sourceMappings.json`, `selections.json`, `recordings.json` | a person on the review screen |
+
+Evidence never becomes an assessment, an assessment never becomes a decision, and a decision never activates content (§8).
+“Assessment exists”, “mapping confirmed” and “content selected” are independent.
+
+**Evidence is not meaning.** Same spelling and reading, a single game entry with those characters, one shared English word, or
+a gloss that names a grammatical category do **not** establish the same sense; no shared English words does **not** establish a
+different sense. The evidence line says so: “Same spelling and reading. Definitions differ; meaning assessment needed.”
+*Candidate strength* (strong / possible / weak / unlikely; spelling and reading only) says how worth comparing a candidate is,
+not whether either definition is correct. A neutral-tone or other tone difference is described as observed; its cause is not
+claimed.
+
+**Text comparison** (between the source's definition and the game's short meaning): *exact* (“Exact text match—not a
+linguistic review”), *formatting-only* (case, whitespace and punctuation only; never dropped words, synonyms, qualifiers or
+negations), *different wording*, *missing*. Equal text does not show that the definition is right.
+
+**Meaning states:** not assessed · likely equivalent (an assessment, with reason) · same sense confirmed by a reviewer (a person
+linked the record) · different sense (assessment or a reviewer's “keep separate”) · uncertain. **Wording states:** not assessed
+(shown as «No change proposed. This wording has not been assessed.») · keep game wording (with a substantive reason) · prefer
+source wording · edited wording proposed (text + reason) · not applicable because the senses differ. A reviewer's own
+“keep the game text” is a *decision* and is shown apart from the application's default of changing nothing.
+
+**Terminology suggestions** (`terminologySuggestion`, keyed by English terms such as “classifier” / “measure word” → “counting
+word”, never by Chinese words) are offered as a labelled wording option. They do not establish equivalence and are not proof that
+the replacement is better everywhere.
+
+### The screen
+
+- Source selector, search (simplified, pinyin with or without tones, English, record id; exact characters, readings and IDs
+  rank first; English matches from word starts only), book/lesson filters, 40 records per page.
+- **Coverage line** in candidate pairs, e.g. “1 wording change proposed · 0 comparisons not yet assessed”, with the units spelled
+  out (pairs, source records, game entries, records with no matching entry) and counts per meaning/wording state.
+- **Filters** count *source records* (a record matches when any of its candidate pairs does): decision filters (unresolved,
+  linked, new candidates, excluded, needs reassessment, has audio, changed here) and comparison filters (no matching game entry,
+  exact or formatting-only text, different wording, meaning assessment pending, different sense, wording assessment pending,
+  wording change proposed, uncertain or outdated, pronunciation differs).
+- Each candidate pair shows: the original Anki definition, the game's short meaning, teaching note and (folded) explanation and
+  examples, the pronunciation difference, then **Text / Meaning / Wording** as separate rows, the assessment's provenance
+  (method, assessor, date, reviewed or not, uncertainty, references) and freshness. An outdated assessment is shown only as
+  “Assessment outdated—content changed”, never as current advice. Matching evidence is under a fold.
+- Three decisions: **1. Are these the same teaching sense?** (link / keep separate (`distinctFrom`) / leave unresolved; when the
+  senses differ, “keep separate and save as new-entry candidate”). **2. Which wording should be used?** (keep the game text, use
+  the source text, or an edited text, `choice: "edited"`; prefilled with an assessment's proposal when there is one). Never
+  offered as a replacement when the senses differ. **3. Which additional content (audio) should be selected?** (see §6; an
+  assessor's remark on a recording is metadata, not proof of what the clip says).
+- Other actions: link to any entry id, exclude (optional reason), prepare a new-entry draft.
+- **Saved in this browser** (localStorage `hanzi-hunters-review-v2:<source>`, separate from game saves) vs **applied in the
+  game** (the committed files of the deployed build) are labelled everywhere. Drafts hold only decisions.
+  Drafts from the earlier screen (`hanzi-hunters-review-v1:<source>`) are migrated once: their ops are the reviewer's own
+  decisions and keep their provenance; the old screen's automatic recommendations were never stored and are not carried over.
+  The v1 key is left as a backup. Drafts that cannot be read are copied to a backup key and offered for download, never
+  silently discarded.
 - “Proposed changes” → **Export changeset** (needs the reviewer's name) → send the file to the maintainer.
 
 **Applying:** `npm run source:apply -- changeset.json --dry-run`, then without `--dry-run`. Every op carries what it was made
 against (record hash, previous decision, current game text). If anything changed since — a newer import, another decision, a
 hand edit — the whole changeset is refused and nothing is written. The result must also pass the content validator.
 Then review `git diff src/content`, run `npm run validate:content` and `npm test`, commit, deploy.
+
+### 5a. Assessments: data and workflow
+
+`src/content/sourceAssessments.json` (`kind: "hanzi-hunters-assessments"`, `schemaVersion: 1`), one record per candidate pair:
+
+| Field | Meaning |
+|---|---|
+| `id` | `<source record key>\|<game entry id>` (stable ids; Chinese text is never the key) |
+| `record`, `recordHash` | the source record and its hash when assessed |
+| `entry`, `gameFingerprint` | the game entry and a hash of the fields considered: hanzi, pinyin, variants, connected speech, kind, meaning, note and the entry's explanation text/examples |
+| `meaning` | `verdict` (likely-equivalent / same-confirmed / different / uncertain), optional `scope` (same, source-broader, source-narrower, overlapping, distinct), `reason` |
+| `wording` | optional; absent = not assessed. `verdict` (keep-game / prefer-source / edited / not-applicable), `reason`, `proposed`, `terminology` |
+| `recording` | optional remark on recording suitability (never a verification) |
+| `method`, `assessor`, `on` | heuristic / ai-assisted / human; the person or tool; date |
+| `review`, `uncertainty`, `references` | `unreviewed` or `human-reviewed` (method `human` only); low / medium / high; pointers to references consulted |
+
+Rules enforced by `checkAssessment` (also run by `npm run validate:content`): only `human` can be `human-reviewed` or
+`same-confirmed`; a heuristic can only record `uncertain` and never wording; reasons must be substantive (placeholders such as
+“No clear improvement” are refused); different senses require wording `not-applicable`; proposals fit the answer-button limit.
+An assessment is **outdated** when the record hash or the game fingerprint changes (`validate:content` warns; the screen shows
+it as outdated, not as advice).
+
+```bash
+npm run source:assess -- check                      # validate, report coverage (pairs / records / entries) and outdated ones
+npm run source:assess -- template --out todo.json   # pairs without a current assessment (--all: every pair), with hashes,
+                                                    # fingerprints and a read-only `context` (definitions, note, explanation)
+npm run source:assess -- import todo.json --dry-run # validate; refused as a whole if any record is invalid or outdated, or
+npm run source:assess -- import todo.json           # would replace a person's assessment with a non-human one
+```
+
+Import writes **only** `sourceAssessments.json`. It never links records, changes game wording, selects recordings or touches
+curricula; adopting a recommendation still goes through a reviewer's decision and a changeset. No AI service or API key is used
+by the browser or the tools: AI-assisted assessments are produced offline, recorded as `ai-assisted` / `unreviewed`, and checked
+by a person before anyone treats them as more than advice. A person's own assessment is recorded with `method: "human"`.
+
+**Initial assessment (2026-11-02, ACCC):** all 131 candidate pairs (130 source records, 101 game entries; the other 4,830
+records have no matching game entry and were not assessed). AI-assisted editorial review against the same criteria for every
+pair: accuracy for the intended sense, clear natural English, beginner suitability, the answer-button length, scope,
+complementarity of short meaning / note / explanation, and unambiguous quiz answers. Each sense was checked against CC-CEDICT
+(as packaged by the npm package `cc-cedict` 1.1.1, data processed 2026-01-04), recorded per assessment. Result: 99 likely
+equivalent, 27 different sense, 5 uncertain (中 “medium”, 了 “certainty”, 请 “treat”, 叫 “call for attention”, 生 “give
+birth”); wording: 98 keep game wording (with reasons), 1 edited proposal (个 “general counting word”, a terminology change with a
+consistency caveat), 27 not applicable, 5 not assessed (their meaning is uncertain). None of it is applied.
 
 ## 6. Recorded audio: selection and assessment
 

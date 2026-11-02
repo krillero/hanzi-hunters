@@ -1,5 +1,26 @@
 # Changelog / test log
 
+## 2026-11-02 — Review screen: evidence, assessments and decisions kept apart (branch ccr-d8ccb49c-6plu3f)
+
+- Problem: rule-based matching was presented as meaning and wording judgments (“Same meaning” from one shared English word,
+  “Probably the same meaning” from identical spelling and reading — e.g. 叫 “to bark” vs “be called / call” — and “No clear
+  improvement” as the fallback), so only 个 looked as if it needed attention.
+- `src/sources/recommend.ts` removed. Matching (`match.ts`) now only finds candidates and reports evidence; candidate strength
+  (strong / possible / weak / unlikely) uses spelling and reading only. The synonym table and the category-label upgrade are gone;
+  no shared English words is neutral evidence, not a conflict. Neutral-tone differences are described, not explained.
+- New `compare.ts` (text comparison: exact / formatting-only / different / missing; pronunciation; generic terminology
+  suggestion) and `assessment.ts` (versioned assessment records with record hash and game fingerprint, freshness, validation,
+  merge, resolution with reviewer decisions, coverage counts). New `src/content/sourceAssessments.json` and
+  `npm run source:assess -- check | template | import`; `validate:content` validates assessments and warns about outdated ones.
+- Initial AI-assisted editorial assessment of all 131 ACCC candidate pairs (130 records, 101 entries), each checked against
+  CC-CEDICT: 99 likely equivalent, 27 different sense, 5 uncertain; wording 98 keep (with reasons), 1 edited proposal (个
+  “general counting word”, terminology, with a consistency caveat), 27 not applicable, 5 not assessed. Nothing applied.
+- Review screen: per pair, Anki definition, game meaning, note, explanation/examples, pronunciation, and Text / Meaning / Wording
+  rows with provenance and freshness; coverage line in pairs; record filters for each state; “keep separate and save as
+  new-entry candidate” when senses differ; the reviewer's “keep the game text” is shown apart from the default of no change.
+- Browser drafts move to `hanzi-hunters-review-v2:`; v1 drafts are migrated (decisions kept, v1 key untouched), unreadable
+  drafts are backed up and offered for download.
+
 ## 2026-11-03 — Review screen: three decisions with explained recommendations (branch ccr-b05f2c6d-289vu4)
 
 - Reviewer feedback (吗, 个): the screen judged whether two records are the same word, but left meaning, wording and pronunciation to the reviewer, and its “weak” label read like a quality verdict.
