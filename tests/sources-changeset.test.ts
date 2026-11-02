@@ -180,3 +180,26 @@ test('drafts carry the game\'s pronunciation conventions and promote cleanly: ne
   s.mappings.mappings[rec('B1L04-I-01').key] = { status: 'new-candidate', draft: { id: '东西', hanzi: '东西', pinyin: 'dōngxi', meaning: 'thing', note: 'n', group: 'g' }, recordHash: rec('B1L04-I-01').hash, decision: decision(by) }
   assert.deepEqual(promoteDraft(s, rec('B1L04-I-01').key, src).state.words.at(-1)!.neutral, [2])
 })
+
+test('an edited wording is written as the reviewer\'s own text; "different meaning" is a recorded decision', () => {
+  const s = repo()
+  const ge = s.words.find(w => (w.id ?? w.hanzi) === '个')!
+  let w = emptyWorking('accc-anki', src.snapshot)
+  w = putOp(w, mappingOp(s, rec('B1-L01-01'), { status: 'linked', entry: '个' }, by))
+  w = putOp(w, fieldOp(s, '个', 'meaning', ge.meaning, { entry: '个', field: 'meaning', choice: 'edited', value: 'general counting word', provenance: { source: 'accc-anki', record: rec('B1-L01-01').key, recordHash: rec('B1-L01-01').hash, mode: 'authored' }, decision: decision(by) }))
+  // 人 record: a person says it is not the meaning of 人 (kept unresolved, but remembered).
+  w = putOp(w, mappingOp(s, rec('B1-L01-02'), { status: 'unresolved', distinctFrom: ['人'] }, by))
+  assert.equal(Object.keys(w.ops).length, 3, '"different meaning" on an unresolved record is a real decision, not a no-op')
+  const res = applyChangeset(s, toChangeset(w, by, src.snapshot), src)
+  assert.ok(res.ok, res.conflicts.join('; '))
+  const after = res.state.words.find(x => (x.id ?? x.hanzi) === '个')!
+  assert.equal(after.meaning, 'general counting word')
+  assert.ok(after.source?.some(x => x.ref === rec('B1-L01-01').key && /written by a reviewer \(tester\)/.test(x.note ?? '')), 'labelled as the reviewer\'s wording, not as source text')
+  assert.equal(after.review?.status, ge.review?.status, 'the entry\'s review status is not changed')
+  assert.deepEqual(res.state.mappings.mappings[rec('B1-L01-02').key].distinctFrom, ['人'])
+  assert.deepEqual(validateDecisions(res.state.words, res.state.mappings, res.state.recordings, res.state.selections, SOURCES, src.records).errors, [])
+  assert.deepEqual(validateContent(res.state.words, explanationsJson, clozeJson, sourcesJson, curriculaJson).errors, [])
+  // Linking to an entry that is also marked "different meaning" is refused.
+  const bad = putOp(emptyWorking('accc-anki', src.snapshot), mappingOp(s, rec('B1-L01-02'), { status: 'linked', entry: '人', distinctFrom: ['人'] }, by))
+  assert.match(applyChangeset(s, toChangeset(bad, by, src.snapshot), src).conflicts.join('|'), /also marked as a different meaning/)
+})

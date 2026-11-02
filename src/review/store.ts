@@ -45,7 +45,7 @@ export function mappingOp(repo: RepoState, r: SourceRecord, after: Omit<Mapping,
   const clean = Object.fromEntries(Object.entries(after).filter(([, v]) => v !== undefined && v !== '')) as Omit<Mapping, 'recordHash' | 'decision'>
   const next: Mapping = { ...clean, recordHash: r.hash, decision: decision(by) }
   // "unresolved" with nothing committed is the default: no op needed.
-  if (!before && next.status === 'unresolved') return { op: 'mapping', record: r.key, recordHash: r.hash, before, after: before as unknown as Mapping }
+  if (!before && next.status === 'unresolved' && !next.distinctFrom?.length && !next.reason) return { op: 'mapping', record: r.key, recordHash: r.hash, before, after: before as unknown as Mapping }
   return { op: 'mapping', record: r.key, recordHash: r.hash, before, after: next }
 }
 
@@ -102,8 +102,9 @@ export function describeOp(op: ChangeOp): string {
   if (op.op === 'mapping') {
     const a = op.after
     const what = a.status === 'linked' ? `link to ${a.entry}` : a.status === 'excluded' ? `exclude${a.reason ? ` (${a.reason})` : ''}` : a.status === 'new-candidate' ? `new entry draft ${a.draft?.hanzi ?? ''} ${a.draft?.pinyin ?? ''} “${a.draft?.meaning ?? ''}”` : 'leave unresolved'
-    return `${op.record}: ${op.before ? `${op.before.status}${op.before.entry ? ` ${op.before.entry}` : ''} → ` : ''}${what}`
+    const distinct = a.distinctFrom?.length ? `; different meaning from ${a.distinctFrom.join(', ')}` : ''
+    return `${op.record}: ${op.before ? `${op.before.status}${op.before.entry ? ` ${op.before.entry}` : ''} → ` : ''}${what}${distinct}`
   }
   if (op.op === 'recording') return op.after ? `${op.entry}: use recording from ${op.record} (${op.after.uses.join(', ') || 'no uses'}${op.after.reading.verified ? `; heard “${op.after.reading.verified}”` : ''})` : `${op.entry}: remove the selected recording`
-  return op.after.choice === 'game' ? `${op.entry}: keep the game's ${op.field} “${op.currentValue}”` : `${op.entry}: ${op.field} “${op.currentValue}” → “${op.after.value}” (${op.after.provenance?.mode})`
+  return op.after.choice === 'game' ? `${op.entry}: keep the game's ${op.field} “${op.currentValue}”` : `${op.entry}: ${op.field} “${op.currentValue}” → “${op.after.value}” (${op.after.choice === 'edited' ? 'your wording' : op.after.provenance?.mode === 'verbatim' ? 'source text' : 'shortened source text'})`
 }

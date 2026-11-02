@@ -233,6 +233,8 @@ export type Mapping = {
   entry?: string
   reason?: string
   draft?: EntryDraft
+  /** Entries a person decided this record does NOT mean (same characters, different meaning). Kept with any status. */
+  distinctFrom?: string[]
   recordHash: string
   decision: Decision
   /** Set by the importer when the record changed or disappeared after this decision. Cleared by the next decision. */
@@ -275,13 +277,16 @@ export type SelectedRecording = {
 export type RecordingsFile = { schemaVersion: typeof SOURCE_SCHEMA_VERSION; recordings: SelectedRecording[] }
 
 /**
- * A field-specific content choice for one entry. `choice: "game"` records a deliberate "keep the game's own text".
- * `choice: "source"` adopted the source's text (`mode` says verbatim or adapted); applying it writes the value into words.json.
+ * A field-specific content choice for one entry, written into words.json when applied:
+ *  game    a deliberate "keep the game's own text" (nothing changes)
+ *  source  the source's text, verbatim or shortened (`provenance.mode` verbatim / adapted)
+ *  edited  a reviewer's own wording, written after comparing with a record (`provenance.mode` authored; the record is the
+ *          one consulted, not the origin of the text)
  */
 export type FieldSelection = {
   entry: string
   field: 'meaning' | 'note'
-  choice: 'game' | 'source'
+  choice: 'game' | 'source' | 'edited'
   value?: string
   provenance?: Provenance
   decision: Decision

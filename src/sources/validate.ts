@@ -26,6 +26,8 @@ export function validateDecisions(
     if (!STATUSES.includes(m.status)) errors.push(`${at}: unknown status "${m.status}"`)
     if (m.status === 'linked' && !(m.entry && ids.has(m.entry))) errors.push(`${at}: linked to unknown entry "${m.entry ?? ''}"`)
     if (m.status !== 'linked' && m.entry) errors.push(`${at}: only a linked mapping has an "entry"`)
+    for (const e of m.distinctFrom ?? []) if (!ids.has(e)) errors.push(`${at}: distinctFrom names unknown entry "${e}"`)
+    if (m.status === 'linked' && m.entry && m.distinctFrom?.includes(m.entry)) errors.push(`${at}: linked to an entry it is also marked distinct from`)
     if (m.status === 'new-candidate' && !m.draft) errors.push(`${at}: a new-entry candidate needs a "draft"`)
     if (!isStr(m.recordHash)) errors.push(`${at}: recordHash is required`)
     if (!m.decision || !isStr(m.decision.by) || !isStr(m.decision.on)) errors.push(`${at}: decision.by and decision.on are required`)
@@ -58,9 +60,10 @@ export function validateDecisions(
     const at = `selections.json[${i}] (${s.entry}.${s.field})`
     if (!ids.has(s.entry)) errors.push(`${at}: unknown entry`)
     if (!['meaning', 'note'].includes(s.field)) errors.push(`${at}: unknown field`)
-    if (!['game', 'source'].includes(s.choice)) errors.push(`${at}: choice must be "game" or "source"`)
+    if (!['game', 'source', 'edited'].includes(s.choice)) errors.push(`${at}: choice must be "game", "source" or "edited"`)
+    if (s.choice === 'edited' && !isStr(s.value)) errors.push(`${at}: an edited choice needs a value`)
     if (s.choice === 'source' && !(isStr(s.value) && s.provenance?.record)) errors.push(`${at}: a source choice needs value and provenance.record`)
-    if (s.choice === 'source') {
+    if (s.choice !== 'game') {
       const w = words.find(x => (x.id ?? x.hanzi) === s.entry)
       if (w && w[s.field] !== s.value) warnings.push(`${at}: words.json no longer has the selected text (edited by hand since?)`)
     }

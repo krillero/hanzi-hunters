@@ -27,8 +27,13 @@ export function glossWords(text: string): Set<string> {
 }
 
 export function meaningOverlap(a: string, b: string[]): { shared: string[]; level: EvidenceLevel } {
-  const left = glossWords(a)
-  const right = new Set<string>(); for (const m of b) for (const w of glossWords(m)) right.add(w)
+  let left = glossWords(a)
+  let right = new Set<string>(); for (const m of b) for (const w of glossWords(m)) right.add(w)
+  // Glosses made only of common words ("to be") are compared with only the articles removed.
+  if (left.size === 0 || right.size === 0) {
+    const loose = (t: string) => new Set(t.toLowerCase().replace(/\([^)]*\)/g, ' ').split(/[^a-z']+/).filter(x => x && !['a', 'an', 'the', 'to'].includes(x)))
+    left = loose(a); right = new Set(b.flatMap(m => [...loose(m)]))
+  }
   if (left.size === 0 || right.size === 0) return { shared: [], level: 'unknown' }
   const shared = [...left].filter(w => right.has(w))
   if (shared.length === 0) return { shared, level: 'mismatch' }
@@ -45,6 +50,11 @@ export function neutralToneOnly(a: string, b: string): boolean {
     if (x[i].tone !== y[i].tone) { if (x[i].tone !== 0 && y[i].tone !== 0) return false; diff++ }
   }
   return diff > 0
+}
+
+/** A gloss that only names a grammatical category ("sentence final particle", "general measure word", "modification marker"). */
+export function categoryOnly(gloss: string): boolean {
+  return /^(an? )?(general |sentence[- ]final |verbal |adverbial |aspect(ual)? |modal |structural |question |modification |complement |disposal )?(particle|marker|measure word|classifier)$/i.test(gloss.trim())
 }
 
 /** Source parts of speech that correspond to the game's `kind`s (only where the correspondence is clear). */
@@ -84,8 +94,13 @@ export function suggest(record: SourceRecord, words: Word[]): Suggestion[] {
     if (rel === 'tone-differs') warnings.push(`Tones differ from the game's ${w.pinyin}: a recording from this record is not used for any listening question unless a person verifies a reading the game accepts.`)
     if (rel === 'speech') warnings.push('A recording from this record must not be used for pinyin listening questions unless a person verifies it says the dictionary reading.')
 
-    const m = meaningOverlap(w.meaning, record.candidate.meanings)
-    evidence.push({ aspect: 'meaning', level: m.level, detail: m.level === 'unknown' ? 'no meaning to compare' : m.shared.length ? `shared meaning words: ${m.shared.join(', ')}` : `no shared meaning words ("${w.meaning}" vs "${record.candidate.meanings.join('; ')}")` })
+    let m = meaningOverlap(w.meaning, record.candidate.meanings)
+    // A category label ("sentence final particle") against a function description ("marks a yes/no question") is a wording
+    // difference, not evidence of another meaning.
+    const category = m.level === 'mismatch' && record.candidate.meanings.some(categoryOnly) && (w.kind === 'particle' || /\b(classifier|measure word|particle|marker)\b/i.test(w.meaning) || record.candidate.pos.some(p => /^(ptc|m)$/i.test(p)))
+    if (category) m = { shared: [], level: 'partial' }
+    if (category) evidence.push({ aspect: 'meaning', level: 'partial', detail: `the source names a grammatical category (“${record.candidate.meanings.join('; ')}”); the game describes the use (“${w.meaning}”)` })
+    else evidence.push({ aspect: 'meaning', level: m.level, detail: m.level === 'unknown' ? 'no meaning to compare' : m.shared.length ? `shared meaning words: ${m.shared.join(', ')}` : `no shared meaning words ("${w.meaning}" vs "${record.candidate.meanings.join('; ')}")` })
 
     const pos = record.candidate.pos
     if (pos.length > 0) {

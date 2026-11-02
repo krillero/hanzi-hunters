@@ -92,6 +92,8 @@ export function applyChangeset(state: RepoState, cs: Changeset, src: SourceState
       if (a.status === 'linked' && (!a.entry || !ids.has(a.entry))) { conflicts.push(`ops[${i}]: linked to unknown entry "${a.entry ?? ''}"`); return }
       if (a.status === 'new-candidate' && !a.draft) { conflicts.push(`ops[${i}]: a new-entry candidate needs a draft`); return }
       if (a.status !== 'linked' && a.entry) { conflicts.push(`ops[${i}]: only a linked mapping has an entry`); return }
+      if (a.distinctFrom?.some(e => !ids.has(e))) { conflicts.push(`ops[${i}]: distinctFrom names an unknown entry`); return }
+      if (a.status === 'linked' && a.distinctFrom?.includes(a.entry!)) { conflicts.push(`ops[${i}]: linked to ${a.entry}, which is also marked as a different meaning`); return }
       const after = { ...a }; delete after.reassess
       next.mappings.mappings[op.record] = after
       summary.push(`mapping ${op.record}: ${cur?.status ?? 'unresolved'} -> ${a.status}${a.entry ? ` (${a.entry})` : ''}`)
@@ -115,19 +117,25 @@ export function applyChangeset(state: RepoState, cs: Changeset, src: SourceState
       if (!same(cur, op.before)) { conflicts.push(`ops[${i}]: the ${op.field} selection of ${op.entry} changed since the review`); return }
       const a = { ...op.after }; delete a.reassess
       if (a.entry !== op.entry || a.field !== op.field) { conflicts.push(`ops[${i}]: after must be for ${op.entry}.${op.field}`); return }
-      if (a.choice === 'source') {
-        if (!a.value?.trim() || !a.provenance?.record) { conflicts.push(`ops[${i}]: a source choice needs a value and its provenance`); return }
-        const rec = a.provenance.record
-        const r = src.records.get(rec)
-        if (!r) { conflicts.push(`ops[${i}]: record ${rec} is not in the current import`); return }
-        if (a.provenance.recordHash !== r.hash) { conflicts.push(`ops[${i}]: record ${rec} changed since the review; reassess it`); return }
+      if (a.choice !== 'game') {
+        if (!a.value?.trim()) { conflicts.push(`ops[${i}]: a ${a.choice} choice needs a value`); return }
+        if (a.choice === 'source' && !a.provenance?.record) { conflicts.push(`ops[${i}]: a source choice needs its provenance`); return }
+        const rec = a.provenance?.record
+        if (rec) {
+          const r = src.records.get(rec)
+          if (!r) { conflicts.push(`ops[${i}]: record ${rec} is not in the current import`); return }
+          if (a.provenance!.recordHash !== r.hash) { conflicts.push(`ops[${i}]: record ${rec} changed since the review; reassess it`); return }
+        }
         w[op.field] = a.value.trim()
-        const ref: SourceRef = { name: a.provenance.source, ref: rec, note: `${op.field} ${a.provenance.mode === 'verbatim' ? 'taken verbatim' : 'adapted'} from this record` }
-        w.source = [...(w.source ?? []).filter(s => !(s.name === ref.name && s.ref === ref.ref && s.note === ref.note)), ref]
+        if (rec) {
+          const how = a.choice === 'edited' ? `written by a reviewer (${a.decision.by}) after comparing with this record` : `${a.provenance!.mode === 'verbatim' ? 'taken verbatim' : 'adapted'} from this record`
+          const ref: SourceRef = { name: a.provenance!.source, ref: rec, note: `${op.field} ${how}` }
+          w.source = [...(w.source ?? []).filter(s => !(s.name === ref.name && s.ref === ref.ref && s.note?.startsWith(`${op.field} `))), ref]
+        }
       }
       next.selections.selections = next.selections.selections.filter(s => s !== cur)
       next.selections.selections.push(a)
-      summary.push(a.choice === 'game' ? `${op.field} of ${op.entry}: keep the game's text` : `${op.field} of ${op.entry}: "${op.currentValue}" -> "${a.value}" (${a.provenance?.mode})`)
+      summary.push(a.choice === 'game' ? `${op.field} of ${op.entry}: keep the game's text` : `${op.field} of ${op.entry}: "${op.currentValue}" -> "${a.value}" (${a.choice === 'edited' ? 'reviewer\'s wording' : a.provenance?.mode})`)
     }
   })
   if (conflicts.length) return { ok: false, conflicts, warnings, summary: [], state }
