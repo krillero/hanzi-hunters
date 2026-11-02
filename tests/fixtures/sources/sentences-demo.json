@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "_note": "Test fixture for the sentences-json adapter. Not shipped, not imported into public/sources, not reviewed.",
+  "sentences": [
+    {
+      "id": "s1",
+      "zh": "我有三个朋友。",
+      "pinyin": "Wǒ yǒu sān ge péngyou.",
+      "en": "I have three friends.",
+      "links": [
+        { "objective": "count-with-measure-word", "role": "teaches" },
+        { "entry": "个", "role": "contains" },
+        { "entry": "朋友", "role": "contains" },
+        { "entry": "三", "role": "requires" },
+        { "entry": "有", "role": "requires" }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "e1",
+      "type": "cloze",
+      "targets": [{ "entry": "个", "role": "teaches" }],
+      "sentences": ["s1"],
+      "blank": "个",
+      "accept": ["个"],
+      "choices": ["个", "的", "很"],
+      "prerequisites": { "entries": ["三", "有", "朋友"] },
+      "feedback": { "wrong": { "的": "的 links a describer to a noun; it does not count.", "很": "很 goes before adjectives, not between a number and a noun." } },
+      "difficulty": 1,
+      "tags": ["measure-word"]
+    },
+    {
+      "id": "e2",
+      "type": "choice",
+      "targets": [{ "objective": "count-with-measure-word", "role": "teaches" }],
+      "sentences": ["s1"],
+      "accept": ["I have three friends."],
+      "choices": ["I have three friends.", "I have a friend.", "My friend has three."]
+    }
+  ]
+}

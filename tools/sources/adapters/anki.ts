@@ -66,7 +66,13 @@ export function parseCandidate(f: Record<string, string>, names: typeof DEFAULT_
   const pinyinRaw = plain(f[names.pinyin] ?? '')
   const readings = [...new Set(splitList(pinyinRaw).flatMap(x => expandOptional(x, false)).map(x => x.normalize('NFC')))]
   if (!pinyinRaw) issues.push('missing-field: Pinyin is empty')
-  for (const r of readings) if (!splitSyllables(r.replace(/[.,!?。，！？]/g, ''))) issues.push(`parse: reading "${r}" is not plain tone-marked pinyin`)
+  for (const r of readings) {
+    const plainR = r.replace(/[.,!?。，！？]/g, '')
+    if (splitSyllables(plainR)) continue
+    // Erhua (一点儿 yìdiǎnr): valid, but the game's pinyin checker does not support it yet.
+    if (/r$/.test(plainR) && splitSyllables(plainR.slice(0, -1))) { if (!flags.includes('erhua')) flags.push('erhua'); continue }
+    issues.push(`parse: reading "${r}" is not plain tone-marked pinyin`)
+  }
   const meaningRaw = plain(f[names.meaning] ?? '')
   if (!meaningRaw) issues.push('missing-field: Meaning is empty')
   const meanings = meaningRaw.split(/\s*(?:[;；]|\n)\s*/).map(x => x.trim()).filter(Boolean)
@@ -275,7 +281,7 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
       counts.mediaUnreferenced = unreferenced.length
       for (const n of unreferenced) problem(FONT_EXT.has(extOf(n)) ? 'unsupported' : 'unreferenced-media', `${n}: in the package but not referenced by any note${FONT_EXT.has(extOf(n)) ? ' (font, used by the card templates; not imported)' : ''}`)
       counts.withPlacement = records.filter(r => r.placement).length
-      for (const f of ['too-long', 'long', 'pattern', 'phrase', 'name', 'several-forms', 'several-readings']) counts[`flag_${f}`] = records.filter(r => r.candidate.flags.includes(f)).length
+      for (const f of ['too-long', 'long', 'pattern', 'phrase', 'name', 'erhua', 'several-forms', 'several-readings']) counts[`flag_${f}`] = records.filter(r => r.candidate.flags.includes(f)).length
       counts.recordsWithIssues = records.filter(r => r.issues.length).length
 
       const report: ImportReport = {

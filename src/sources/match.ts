@@ -11,13 +11,16 @@ export type Confidence = 'strong' | 'probable' | 'weak' | 'conflict'
 export type Suggestion = { entry: string; confidence: Confidence; score: number; reading: ReadingRelation; evidence: Evidence[]; warnings: string[] }
 
 const STOP = new Set(['a', 'an', 'the', 'to', 'of', 'be', 'is', 'for', 'and', 'or', 'in', 'on', 'at', 'with', 'one', "one's", 'sb', 'sth', 'someone', 'something', 'etc', 'used', 'as', 'by', 'it', 'up', 'out'])
+/** A few gloss words that dictionaries use interchangeably (kept small and explicit). */
+const SYNONYM: Record<string, string> = { classifier: 'measure', mw: 'measure', cl: 'measure', father: 'dad', mother: 'mom', mum: 'mom' }
 /** Lower-case content words of an English gloss ("to like / be fond of" -> like, fond). */
 export function glossWords(text: string): Set<string> {
   const out = new Set<string>()
   for (const raw of text.toLowerCase().replace(/\([^)]*\)/g, ' ').split(/[^a-z']+/)) {
     const w = raw.replace(/^'+|'+$/g, '')
     if (w.length < 2 || STOP.has(w)) continue
-    out.add(w.endsWith('s') && w.length > 3 && !w.endsWith('ss') ? w.slice(0, -1) : w)
+    const base = w.endsWith('s') && w.length > 3 && !w.endsWith('ss') ? w.slice(0, -1) : w
+    out.add(SYNONYM[base] ?? base)
   }
   return out
 }

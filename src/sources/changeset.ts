@@ -169,8 +169,12 @@ export function toneNumbers(pinyin: string): string {
   return syl.map(s => `${s.base.replace('ü', 'v')}${s.tone || 5}`).join('')
 }
 
-/** A stable id for a new entry: the hanzi when free, else hanzi + reading ("得-dei3"). Never derived from the English text. */
-export function proposeEntryId(hanzi: string, pinyin: string, taken: Set<string>): string {
+/**
+ * A stable id for a new entry: the hanzi when no entry is written with it, else hanzi + reading ("得-dei3"). Never derived from the
+ * English text. `words` are the existing entries (their ids and spellings are both taken).
+ */
+export function proposeEntryId(hanzi: string, pinyin: string, words: { id?: string; hanzi: string }[]): string {
+  const taken = new Set(words.flatMap(w => [w.id ?? w.hanzi, w.hanzi]))
   if (!taken.has(hanzi)) return hanzi
   const id = `${hanzi}-${toneNumbers(pinyin)}`
   if (!taken.has(id)) return id

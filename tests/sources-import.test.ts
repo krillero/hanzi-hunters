@@ -44,6 +44,7 @@ test('import: reads collection.anki21 (not the stub), keys records by the deck I
   assert.ok(ge.media[0].checks.includes('signature:mp3-id3'))
   const yd = r.bundle.records[2].candidate
   assert.deepEqual(yd.simplified, ['一点', '一点儿']); assert.deepEqual(yd.readings, ['yìdiǎn', 'yìdiǎnr'])
+  assert.ok(yd.flags.includes('erhua')); assert.equal(r.bundle.records[2].issues.length, 0, 'erhua is a flag, not a parse error')
   assert.ok(r.bundle.records[3].candidate.flags.includes('long'))
   assert.deepEqual(r.bundle.records[4].candidate.variants, [{ raw: 'shuí', reading: 'shuí' }])
   assert.match(r.bundle.report.problems.unsupported.join('|'), /font\.ttf/, 'the font is reported, not imported')
