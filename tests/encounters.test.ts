@@ -11,13 +11,15 @@ import { NO_BONUSES } from '../src/game/upgrades.ts'
 import { ENEMIES, GEAR, WORDS, ACTIVE_CURRICULUM } from '../src/data.ts'
 import type { Run, Saved } from '../src/game/types.ts'
 import { stepsOf } from '../src/game/course.ts'
+import { sched } from './helpers/sched.ts'
+import type { Mastery } from '../src/game/types.ts'
 
 const wordIds = WORDS.map(w => w.id)
 /** A save right after a floor-1 boss, with the given words introduced (default: every word any scene needs). */
 const ready = (ids: string[] = [...new Set(SCENES.flatMap(s => s.requires))]): Saved => {
   const s = sanitizeSave(null)
   s.run = { ...newRun(NO_BONUSES, GEAR, ENEMIES), phase: 'victory' as const, kill: 3, enemyHp: 0 }
-  s.mastery = Object.fromEntries(ids.map(id => [id, { lv: 2, ok: 0 }]))
+  s.mastery = Object.fromEntries(ids.map(id => [id, sched(2)]))
   return s
 }
 const closeIt = (s: Saved) => ({ ...s.run!, encounter: { ...s.run!.encounter!, status: 'closed' as const } })
@@ -119,13 +121,13 @@ test('old saves default safely; a pending encounter survives a reload; a removed
 
 test('an event needs every word at Familiar or higher; help follows each word: pinyin up to Familiar, English never by default', () => {
   const hello = sceneById('hello')!
-  const at = (lv: number) => Object.fromEntries(hello.requires.map(id => [id, { lv, ok: 0 }]))
+  const at = (lv: number) => Object.fromEntries(hello.requires.map(id => [id, sched(lv)]))
   const run = (lv: number) => { const s = ready(hello.requires); s.mastery = at(lv); return offer(s).run!.encounter }
   assert.equal(run(1), undefined, 'Learning words: not offered yet')
   assert.ok(run(2), 'Familiar: offered')
   assert.equal(showPinyin(2), true); assert.equal(showPinyin(3), false)
   assert.deepEqual(wordsIn('我是你朋友。', ['我', '是', '朋友', '茶']), ['我', '是', '朋友'])
-  const m = { 我: { lv: 3, ok: 0 }, 是: { lv: 4, ok: 0 }, 朋友: { lv: 2, ok: 0 } }
+  const m = { 我: sched(3), 是: sched(4), 朋友: sched(2) }
   assert.equal(pinyinFor('我是你朋友。', ['我', '是', '朋友'], levelOf(m)), true, 'the weakest word (朋友, Familiar) still needs pinyin')
   assert.equal(pinyinFor('我是', ['我', '是', '朋友'], levelOf(m)), false, 'all Remembered or higher: characters only')
   assert.equal(pinyinFor('…', ['我'], fixedLevel(5)), true, 'no known word found in the text: pinyin shown')
@@ -182,7 +184,7 @@ test('a Blessing counts once, on its floor, before calm and second chances; prac
 
 
 test('generated events: valid, every word Familiar, counting answers have exactly N tiles, requests ask exactly for the answer', () => {
-  const familiar: Mastery = Object.fromEntries(WORDS.map(w => [w.id, { lv: 2, ok: 0 }]))
+  const familiar: Mastery = Object.fromEntries(WORDS.map(w => [w.id, sched(2)]))
   const NUM: Record<string, number> = { 三: 3, 四: 4, 五: 5, 六: 6 }
   for (const seed of [1, 2, 3]) {
     let x = seed / 10; const rng = () => (x = (x * 9301 + 0.49297) % 1)
@@ -203,7 +205,7 @@ test('generated events: valid, every word Familiar, counting answers have exactl
       }
     }
   }
-  const few: Mastery = Object.fromEntries(['这里', '有', '个', '三', '人'].map(id => [id, { lv: 1, ok: 0 }]))
+  const few: Mastery = Object.fromEntries(['这里', '有', '个', '三', '人'].map(id => [id, sched(1)]))
   assert.equal(validGeneratedScenes(few).length, 0, 'Learning words are not enough: generated scenes need Familiar words too')
 })
 

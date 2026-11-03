@@ -28,6 +28,11 @@ export type SourceInfo = {
   reuse?: string
   /** Language variety the source teaches, when the source states it. */
   variety?: string
+  /**
+   * Whether this source's media files are published with the site. "local-only": files are extracted on a local import for
+   * preview but are not committed or deployed (unclear reuse terms); they can never be selected for gameplay.
+   */
+  media?: 'published' | 'local-only'
 }
 export type Sources = Record<string, SourceInfo>
 

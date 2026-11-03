@@ -7,9 +7,10 @@ import { sanitizeSave } from '../src/game/save.ts'
 import { NO_BONUSES } from '../src/game/upgrades.ts'
 import { ENEMIES, GEAR, WORDS } from '../src/data.ts'
 import type { Mastery, Run } from '../src/game/types.ts'
+import { sched } from './helpers/sched.ts'
 
 const wordIds = WORDS.map(w => w.id)
-const known: Mastery = Object.fromEntries([...new Set(TRIALS.flatMap(t => t.requires))].map(id => [id, { lv: 1, ok: 0 }]))
+const known: Mastery = Object.fromEntries([...new Set(TRIALS.flatMap(t => t.requires))].map(id => [id, sched(1)]))
 /** The floor-1 Golem fight with its first shield segment just broken. */
 const golem = (over: Partial<Run> = {}): Run => {
   const r = newRun(NO_BONUSES, GEAR, ENEMIES)
@@ -54,6 +55,8 @@ test('a right answer shatters the shield and staggers the Golem without killing 
 
 test('a wrong answer is an ordinary wrong answer: a heart (or a second chance), the shield holds, defeat at zero', () => {
   const run = offerTrial(golem(), known, ENEMIES, () => 0), t = trialFor(run.trial)!
+  assert.equal(t.boss, 'golem')
+  if (t.boss !== 'golem') return   // narrows the options to pinyin strings
   const wrong = t.options.find(o => o !== t.answer)!
   const res = resolveTrial(io({ ...run, secondLeft: 0 }, wrong))!
   assert.equal(res.correct, false); assert.equal(res.run.hearts, run.hearts - 1); assert.equal(res.run.shield, run.shield); assert.equal(res.run.trial?.status, 'answered')
@@ -184,7 +187,7 @@ const warden = (segments: number, over: Partial<Run> = {}): Run => {
   const r = newRun(NO_BONUSES, GEAR, ENEMIES)
   return { ...r, floor: 5, kill: 3, phase: 'fighting', enemyHp: enemyStats(ENEMIES, 5, 3, r.depth).hp, shield: segments, ...over }
 }
-const everyWord: Mastery = Object.fromEntries(WORDS.map(w => [w.id, { lv: 1, ok: 0 }]))
+const everyWord: Mastery = Object.fromEntries(WORDS.map(w => [w.id, sched(1)]))
 
 test('the Warden offers its gauntlet right after the first ward breaks: a tone step, then a note step', () => {
   const max = shieldFor(5, 'warden')
@@ -193,7 +196,7 @@ test('the Warden offers its gauntlet right after the first ward breaks: a tone s
   const t = offerTrial(warden(max - 1), everyWord, ENEMIES, () => 0.3).trial!
   assert.equal(t.step, 1); assert.equal(trialFor(t)!.boss, 'golem'); assert.equal(trialFor(t.next)!.boss, 'scribe')
   // Only single-character words known: no note can be built, so the gauntlet is the tone step alone.
-  const singles: Mastery = Object.fromEntries(WORDS.filter(w => [...w.hanzi].length === 1 && TRIALS.every(x => x.boss !== 'scribe' || !x.requires.includes(w.id))).map(w => [w.id, { lv: 1, ok: 0 }]))
+  const singles: Mastery = Object.fromEntries(WORDS.filter(w => [...w.hanzi].length === 1 && TRIALS.every(x => x.boss !== 'scribe' || !x.requires.includes(w.id))).map(w => [w.id, sched(1)]))
   const lone = offerTrial(warden(max - 1), singles, ENEMIES, () => 0.3).trial
   assert.ok(lone && !lone.next)
 })

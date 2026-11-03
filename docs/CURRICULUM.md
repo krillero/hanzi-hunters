@@ -108,6 +108,9 @@ as long as pinyin and translation are given. The introduction card labels them "
 
 ### Imported sources never change a course
 
+Draft proposals built from imported sources live in `docs/proposals/` (first: `xiehanzi-hsk1.md`, six draft lessons after
+`b100-lesson-20`). They are not read by the game; adopting one means promoting entries and editing this file by hand.
+
 A source's own book/lesson order is imported as `public/sources/<source>/placement.json`, a **draft proposal** of source-record
 keys. Courses reference game entry ids only, so an unresolved source record can never be in a lesson. New entries from a source
 are promoted to `words.json` deliberately (`npm run source:promote`) and taught only once someone adds their id here. See
@@ -131,10 +134,10 @@ Introductions are shown on the existing introduction card between fights. The ca
 camp adds progress: **"Lesson 1 · Greetings · 2 of 5 introduced"**. No ids or source names appear in gameplay.
 
 **Review / practice** (`selectReview`): a weighted random pick among entries the learner has **already been introduced to**
-(also entries known from another curriculum or an older save). It never returns an unseen entry. Weak entries are asked more
-(level weights `3, 3, 2, 2, 0.6`), and the last few asked are less likely to repeat. Question kinds, distractors and boss
-behaviour are unchanged and stay randomised. A future scheduler can pass its own `weight(word, entry)` (e.g. from review dates)
-without changing curriculum order.
+(also entries known from another curriculum or an older save). It never returns an unseen entry. Which known entry comes next is decided by
+the scheduler's tiers (relearning, due reviews, initial learning, others) and weights (`LEVEL_WEIGHT`, `DUE_WEIGHT`,
+`DUE_PER_FIGHT` in `course.ts`); see `docs/SCHEDULING.md` (Question selection). The last few asked are less likely to repeat.
+None of this changes the curriculum order.
 
 **Nothing new to introduce** → the game keeps reviewing; in development builds the reason (`learning-limit`, `prerequisites`,
 `complete`, `empty`) is logged to the console as `[course …]` and kept on `window.__hhCourse`. **Nothing known and nothing
@@ -153,7 +156,7 @@ allow-list is never bypassed.
 | **Practiced** | Answered correctly at least once since being introduced (a later miss at level 0 resets this). | `lv ≥ 1` or `ok ≥ 1` |
 | **Ready to advance** | Introduced, and has reached the curriculum's threshold now **or at some earlier time**. Earned readiness is never revoked. | `max(lv, peak[id]) ≥ readiness.minLevel` (default 1), only if `mastery[id]` exists |
 | **Lesson ready** | Every *required* entry of the lesson is ready. Recorded as **completed** the first time it happens. | `courses[id].completed` |
-| **Long-term mastery** | Separate concept (level 4, "mastered"). Lesson completion never claims it. | `lv = 4` |
+| **Long-term mastery** | Separate concept: level 4 is Retained, level 5 Mastered (`LEVEL_NAMES`, `docs/SCHEDULING.md`). Lesson completion never claims either. Retained is also the intended future unlock level for other meanings (`docs/SENSES.md`). | `lv ≥ 4` |
 
 Mastery levels keep their meaning and the lesson readiness threshold is unchanged (level 1, the first spaced success); how levels are earned is in `docs/SCHEDULING.md`.
 
@@ -185,32 +188,25 @@ ready. The engine default lives in `DEFAULT_READINESS` (`src/game/course.ts`); t
 
 ## 4. Saves
 
-Save format v1 (`SAVE_KEY` `hanzi-hunters-save`, restarted with expeditions; see `GAME_DESIGN.md`):
+Course data lives in the game save (`hanzi-hunters-save`, `version: 2`; full format in `docs/GAME_DESIGN.md`, Save format):
 
 ```json
-"courses": { "starter-compat": { "version": 1, "completed": ["first-characters-1", "first-characters-2"] } },
+"courses": { "beginner-mandarin-100": { "version": 1, "completed": ["b100-lesson-01", "b100-lesson-02"] } },
 "peak": { "人": 2, "大": 1, "一": 1 },
 "legacyPeak": {}
 ```
 
-* `peak`: highest mastery level reached per entry id (entries that never got past level 0 have no key). Updated in the same state
-  update as every mastery change (`withLearning` in `src/game/save.ts`), never lowered.
-* Peaks migrate through entry `aliases` and hanzi→id moves **exactly like mastery** (one shared implementation); peaks no current
-  entry claims are parked in `legacyPeak` (like `legacyMastery`) and recovered if the entry returns.
-* **Migration from v2/v3 (no readiness history):** peaks are derived from the **current** mastery level only. Conservative fallback:
-  an entry that was ready once but has dropped back below the threshold is treated as not ready until it is re-earned, even if its
-  lesson is completed; readiness is never inferred from lesson membership, and unseen entries get none. Completed lessons are
-  preserved, so lesson prerequisites stay unlocked and the course is not relocked; only explicit entry prerequisites on such an
-  entry wait until it reaches the threshold again.
-* Backups (export / import) carry `peak` and `legacyPeak`; imports accept save versions 2 to 4 (and the v1 prototype).
-
 * Entry progress stays in `mastery`, keyed by entry id and shared by every curriculum. Nothing in the save refers to array positions.
-* **Migration from v2 to v3** (`sanitizeCourses` in `src/game/save.ts`, tested in `tests/course.test.ts`): mastery, gold, upgrades, run,
-  gear and habit are kept as they are; entries with progress count as introduced (no introduction replay); lessons whose required
-  entries are already ready are marked completed; progress for entries outside the curriculum stays in `mastery`.
-* Course progress for unknown curriculum ids and unknown lesson ids is **kept**, never discarded, so it can be recovered.
-* An older build that drops `courses` / `peak` loses the history it cannot store: on the next load here, completion and peaks are
-  re-derived from mastery (same conservative fallback as above).
+* `courses`: completed lesson ids per curriculum id. Progress for unknown curriculum or lesson ids is **kept**, never discarded, so it
+  can be recovered (for example by adding a lesson `alias`).
+* `peak`: highest level reached per entry id (entries never past level 0 have no key). Updated in the same state update as every
+  mastery change (`withLearning` in `src/game/save.ts`), never lowered. Peaks follow entry `aliases` and id moves exactly like
+  mastery; peaks no current entry claims are parked in `legacyPeak` and recovered if the entry returns.
+* **When `courses` or `peak` are missing** (an older save, or a build that did not store them), they are derived from mastery
+  (`sanitizeCourses`, `migratePeaks`; tested in `tests/course.test.ts`): entries with progress count as introduced (no introduction
+  replay); lessons whose required entries are ready are marked completed; peaks come from the **current** level only, so an entry
+  that was ready once but has dropped back waits until it is re-earned (readiness is never inferred from lesson membership).
+* Backups (export / import) carry `courses`, `peak` and `legacyPeak`.
 * `habit.seed` is still read and written for compatibility but no longer affects word order.
 
 ---
@@ -259,38 +255,29 @@ The stored `version` is informational (it records what the progress was last syn
 
 ---
 
-## 7. Importing the reviewed 100-word course (no engine changes)
+## 7. Courses in the file, and adding a batch or a new course
 
-The current `starter-compat` curriculum is a **compatibility course**: the original 63 entries in the old file order, cut into
-lessons mechanically. Its order is **provisional** (`"provisional": true`, review status `ai-draft`) and is not the future beginner course.
-
-A content package for the curated course consists of:
-
-| File | Contents |
+| Curriculum | Status |
 |---|---|
-| `src/content/words.json` | The existing entries (do **not** remove or rename ids that players have progress under; use `aliases` if you must) plus the new entries, in any order. |
-| `src/content/curricula.json` | The new curriculum (e.g. id `beginner-mandarin`, `version: 1`), with `"default"` set to it. Keep `starter-compat` in the file or drop it; player progress survives either way. |
-| `src/content/explanations.json` | Existing explanations plus new ones (optional). |
-| `src/content/cloze.json` | Existing plus new sentence questions, with `prerequisiteEntries` / `prerequisiteLessons` where the sentence relies on other words. |
-| `src/content/sources.json` | Only if new sources are cited (with their real license and attribution). |
+| `beginner-mandarin-100` (**default**) | 100 entries in 20 lessons of 4–6, each lesson requiring the previous one. A deliberate practical sequence with HSK 2025 level mappings, `provisional: true`, review `ai-draft` (no Mandarin teacher has reviewed the order). Built with `docs/vocabulary-toolkit/`. |
+| `starter-compat` | The original compatibility course (the first 63 entries in their old file order, cut into lessons mechanically). Kept so saved lesson ids from before stay valid; not the teaching sequence. |
 
-Steps:
+**Adding the next batch** follows `docs/vocabulary-toolkit/README.md` (workflow) and its `NEXT-BATCH-PROMPT.md`: new entries in
+`words.json`, **new lessons appended after the existing ones** (do not insert entries into lessons players may have completed), raise
+the curriculum `version`. Draft proposals from imported sources are in `docs/proposals/`.
+
+**Installing a content package** (complete replacement JSON files prepared elsewhere):
 
 ```bash
-git checkout -b content/beginner-100
-cp <package>/src/content/*.json src/content/     # words, curricula, explanations, cloze, (sources)
+git checkout -b content/<topic>
+cp <package>/src/content/*.json src/content/     # merge instead of overwriting if main changed since the package's base commit
 npm run validate:content                           # must report 0 errors; read every warning and INFO line
 npm run curriculum                                 # check the effective order, lessons, prerequisites, unmapped levels
-npm test                                           # must stay green (the shipped-content tests check the new files too)
-npm run inventory                                  # refresh docs/content-inventory.json
-npm run build
-npm run dev                                        # fresh profile: first introduction card shows lesson 1, entry 1
+npm test && npm run inventory && npm run build
 ```
 
-Rules for the package: entry `review` stays `ai-draft` / `imported` unless a person really reviewed it (`human-reviewed` needs
-`reviewer` and `date`); official levels only where the edition is known and stated exactly; no invented citations. Set
-`"provisional": false` only for a reviewed order. Existing players keep all progress: their known entries count as introduced in the
-new course, lessons they already know are derived as completed, and the rest is introduced in the new order.
-
-The tests do not depend on the compatibility course: tests that use shipped content check whatever `default` names, and the
-compatibility-course checks skip themselves once `starter-compat` is removed. The package needs no engine or test changes.
+Rules for any package: never remove or rename ids players have progress under (use `aliases`); entry `review` stays `ai-draft` /
+`imported` unless a person really reviewed it (`human-reviewed` needs `reviewer` and `date`); official levels only where the edition
+is known and stated exactly; `"provisional": false` only for a reviewed order. Existing players keep all progress: known entries
+count as introduced in a new course and lessons they already know are derived as completed. Tests that use shipped content check
+whatever `default` names, so a package needs no engine or test changes.

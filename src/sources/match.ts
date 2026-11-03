@@ -120,6 +120,13 @@ export function suggest(record: SourceRecord, words: Word[], opts: { linkedTo?: 
       unknown: ['unknown', 'the source gives no usable reading']
     }
     evidence.push({ aspect: 'reading', level: readingText[rel][0], detail: readingText[rel][1] })
+    // Dictionary definitions per reading (sources that have them): evidence about readings, never merged into the meaning.
+    const defs = record.candidate.definitions ?? []
+    const defReading = defs.find(d => ['main', 'variant'].includes(readingRelation(d.reading, w)))
+    const declaredOk = rel === 'main' || rel === 'variant'
+    if (defs.length && defReading && !declaredOk) evidence.push({ aspect: 'reading', level: 'partial', detail: `the source's declared reading differs, but its Definitions list ${defReading.reading} (the game's reading) with: ${defReading.senses.slice(0, 3).join('; ')}${defReading.senses.length > 3 ? '; …' : ''}` })
+    const others = [...new Set(defs.filter(d => d !== defReading && !['main', 'variant'].includes(readingRelation(d.reading, w))).map(d => d.reading))]
+    if (others.length) evidence.push({ aspect: 'reading', level: 'neutral', detail: `the source's Definitions also cover other readings (${others.join(', ')}); those are other words or senses and are not part of this comparison` })
     if (rel === 'tone-differs') warnings.push(`Tones differ from the game's ${w.pinyin}: a recording from this record is not used for any listening question unless a person verifies a reading the game accepts.`)
     if (rel === 'speech') warnings.push('A recording from this record must not be used for pinyin listening questions unless a person verifies it says the dictionary reading.')
 
@@ -146,8 +153,7 @@ export function suggest(record: SourceRecord, words: Word[], opts: { linkedTo?: 
     const readOk = rel === 'main' || rel === 'variant'
     let strength: CandidateStrength
     if (!spelled) strength = opts.linkedTo === w.id ? 'possible' : 'weak'
-    else if (rel === 'different') strength = 'unlikely'
-    else if (rel === 'tone-differs') strength = neutralOnly ? 'possible' : 'weak'
+    else if (rel === 'tone-differs' || rel === 'different') strength = defReading ? 'possible' : rel === 'different' ? 'unlikely' : neutralOnly ? 'possible' : 'weak'
     else if (readOk && exact) strength = 'strong'
     else strength = 'possible'
     const score = { strong: 3, possible: 2, weak: 1, unlikely: 0 }[strength] + (exact ? 0.5 : 0) + (m.shared.length * 0.1) + (opts.linkedTo === w.id ? 1 : 0)

@@ -7,14 +7,19 @@
 //
 // An assessment is advice with provenance (who/what, how, when, why, how sure). It never links a record, changes game text, selects
 // a recording or activates content. It becomes OUTDATED when the source record or the game fields it considered change, and is
-// then no longer presented as current advice. Stored in src/content/sourceAssessments.json; workflow: `npm run source:assess`.
+// then no longer presented as current advice. Stored per source in src/content/assessments/<source>.json; workflow:
+// `npm run source:assess`. Schema 2 adds record-level dispositions (match / additional sense / new candidate / uncertain /
+// excluded, with an optional new-entry draft) and example assessments (which sense a sentence teaches); schema 1 files (pair
+// assessments only) are read unchanged.
 import { LIMITS } from '../content/validate.ts'
 import type { Explanation, Word } from '../content/types.ts'
 import { compareText, describePronunciation, evidenceHeadline, sourceDefinition, terminologySuggestion, TEXT_LABEL, type PronunciationNote, type TerminologySuggestion, type TextComparison } from './compare.ts'
 import { suggest, type Suggestion } from './match.ts'
-import type { Mapping, SourceRecord } from './types.ts'
+import type { EntryDraft, Mapping, SentenceItem, SourceRecord } from './types.ts'
 
-export const ASSESSMENT_SCHEMA_VERSION = 1
+export const ASSESSMENT_SCHEMA_VERSION = 2
+/** Versions this code reads. 1 = pair assessments only (the same shape as the `assessments` list of version 2). */
+export const READABLE_ASSESSMENT_VERSIONS = [1, 2]
 
 /**
  *  likely-equivalent  an assessor judged them to teach the same sense (not confirmed by a reviewer's decision)
@@ -59,8 +64,71 @@ export type SourceAssessment = {
   uncertainty: 'low' | 'medium' | 'high'
   references?: AssessmentReference[]
 }
-export type AssessmentsFile = { kind: 'hanzi-hunters-assessments'; schemaVersion: typeof ASSESSMENT_SCHEMA_VERSION; assessments: SourceAssessment[] }
-export const emptyAssessments = (): AssessmentsFile => ({ kind: 'hanzi-hunters-assessments', schemaVersion: ASSESSMENT_SCHEMA_VERSION, assessments: [] })
+/** Provenance shared by every kind of assessment. */
+type AssessedBy = Pick<SourceAssessment, 'method' | 'assessor' | 'on' | 'review' | 'uncertainty' | 'references'>
+
+/**
+ * What a source record contributes to the course, as a whole (all its candidate pairs considered together):
+ *  match             teaches the sense of an existing entry (its pair assessments say how well)
+ *  additional-sense  same written word as an existing entry, but its main sense is one the entry does not teach
+ *  new-candidate     beginner vocabulary the game does not have
+ *  uncertain         cannot be settled from the evidence
+ *  excluded          not proposed for the beginner course (reason required)
+ */
+export type Disposition = 'match' | 'additional-sense' | 'new-candidate' | 'uncertain' | 'excluded'
+export type SenseNote = { label: string; status: 'taught-by-entry' | 'not-taught' | 'separate-entry-proposed' | 'out-of-scope'; note?: string }
+export type RecordAssessment = AssessedBy & {
+  /** "<record key>|record" */
+  id: string
+  record: string
+  recordHash: string
+  disposition: Disposition
+  reason: string
+  /** Game entries considered (match / additional sense) and their fingerprint at the time (stale when they change). */
+  relatedEntries?: string[]
+  relatedFingerprint?: string
+  /** The record covers several senses or uses that must not become one undifferentiated answer. */
+  multipleSenses?: boolean
+  senses?: SenseNote[]
+  /** A proposed short English label. `basis: "source"` = the source's own short meaning (verbatim or trimmed);
+   *  "editorial" = written by the assessor (e.g. from the full definitions), never presented as the source's. */
+  shortLabel?: { text: string; basis: 'source' | 'editorial'; reason: string }
+  /** New-entry proposal (not playable; becomes an entry only through a reviewer's decision and promotion). */
+  draft?: EntryDraft & { related?: string[] }
+  /** Whether it is proposed for the first beginner expansion. */
+  expansion?: 'first' | 'later' | 'not-proposed'
+  /** Remark on the recording (not a verification). */
+  recording?: string
+}
+/** Whether one example sentence is suitable to illustrate one target (a game entry, or a source record proposed as a new entry). */
+export type ExampleVerdict = 'suitable' | 'needs-editing' | 'other-sense' | 'not-beginner' | 'uncertain'
+export type ExampleAssessment = AssessedBy & {
+  /** "<sentence id>|<entry id or record key>" */
+  id: string
+  sentence: string
+  /** exampleHash() of the sentence's Chinese, pinyin and translation when assessed: any change (including pinyin) makes it outdated. */
+  sentenceHash: string
+  record: string
+  target: { entry?: string; record?: string }
+  /** gameFingerprint of the target entry (when the target is an entry). */
+  targetFingerprint?: string
+  /** The sense of the target word the sentence actually shows. */
+  sense: string
+  verdict: ExampleVerdict
+  /** Other vocabulary in the sentence (written forms), and the part of it the game does not teach yet. */
+  contains: string[]
+  prerequisites: string[]
+  /** An editorial adaptation (the original stays in the source item). */
+  edited?: { zh?: string; pinyin?: string; en?: string; reason: string }
+  reason: string
+}
+export type AssessmentsFile = {
+  kind: 'hanzi-hunters-assessments'; schemaVersion: number; source?: string
+  assessments: SourceAssessment[]; records?: RecordAssessment[]; examples?: ExampleAssessment[]
+}
+export const emptyAssessments = (source?: string): AssessmentsFile => ({ kind: 'hanzi-hunters-assessments', schemaVersion: ASSESSMENT_SCHEMA_VERSION, ...(source ? { source } : {}), assessments: [], records: [], examples: [] })
+export const recordAssessmentId = (record: string) => `${record}|record`
+export const exampleAssessmentId = (sentence: string, target: { entry?: string; record?: string }) => `${sentence}|${target.entry ?? target.record}`
 export const assessmentId = (record: string, entry: string) => `${record}|${entry}`
 
 // ---- fingerprint and freshness --------------------------------------------------------------------------------------------------
@@ -90,6 +158,24 @@ function explanationContent(e: Explanation | undefined) {
 }
 export function gameFingerprint(w: Word, explanation?: Explanation): string {
   return hash16(stable({ id: w.id, hanzi: w.hanzi, pinyin: w.pinyin, variants: w.variants, speech: w.speech, kind: w.kind, meaning: w.meaning, note: w.note, explanation: explanationContent(explanation) }))
+}
+/** Fingerprint of several entries (in the given order). */
+export const entriesFingerprint = (ids: string[], words: Word[], explanations: Record<string, Explanation | undefined>) =>
+  hash16(ids.map(id => { const w = words.find(x => x.id === id); return w ? gameFingerprint(w, explanations[id]) : `missing:${id}` }).join(','))
+/** Hash of what an example says: Chinese, pinyin and translation. */
+export const exampleHash = (s: Pick<SentenceItem, 'zh' | 'pinyin' | 'en'>) => hash16(stable({ zh: s.zh, pinyin: s.pinyin ?? '', en: s.en }))
+
+export function recordFreshness(a: RecordAssessment, record: SourceRecord | undefined, words: Word[], explanations: Record<string, Explanation | undefined>): Freshness {
+  if (!record) return 'missing'
+  if (record.hash !== a.recordHash) return 'source-changed'
+  if (a.relatedEntries?.length && entriesFingerprint(a.relatedEntries, words, explanations) !== a.relatedFingerprint) return 'game-changed'
+  return 'current'
+}
+export function exampleFreshness(a: ExampleAssessment, sentence: SentenceItem | undefined, words: Word[], explanations: Record<string, Explanation | undefined>): Freshness {
+  if (!sentence) return 'missing'
+  if (exampleHash(sentence) !== a.sentenceHash) return 'source-changed'
+  if (a.target.entry) { const w = words.find(x => x.id === a.target.entry); if (!w) return 'missing'; if (gameFingerprint(w, explanations[w.id]) !== a.targetFingerprint) return 'game-changed' }
+  return 'current'
 }
 
 /** current, or why it is outdated. Outdated assessments are shown as history only, never as current advice. */
@@ -156,44 +242,127 @@ export function checkAssessment(a: SourceAssessment, at: string, ctx?: Assessmen
   return e
 }
 
-export function checkAssessmentsFile(f: unknown, ctx?: AssessmentContext): string[] {
+function checkProvenance(a: AssessedBy & { id?: string }, at: string): string[] {
+  const e: string[] = []
+  if (!a.assessor || !String(a.assessor).trim()) e.push(`${at}: "assessor" is required`)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(a.on ?? '')) e.push(`${at}: "on" must be YYYY-MM-DD`)
+  if (!['heuristic', 'ai-assisted', 'human'].includes(a.method)) e.push(`${at}: unknown method "${a.method}"`)
+  if (!['unreviewed', 'human-reviewed'].includes(a.review)) e.push(`${at}: review must be "unreviewed" or "human-reviewed"`)
+  if (a.review === 'human-reviewed' && a.method !== 'human') e.push(`${at}: only a person's assessment (method "human") can be human-reviewed`)
+  if (!['low', 'medium', 'high'].includes(a.uncertainty)) e.push(`${at}: uncertainty must be low, medium or high`)
+  for (const [i, r] of (a.references ?? []).entries()) if (!r?.name) e.push(`${at}: references[${i}].name is required`)
+  return e
+}
+const substantive = (s: unknown) => typeof s === 'string' && s.trim().length >= 12 && !EMPTY_REASON.test(s.trim())
+const DISPOSITIONS: Disposition[] = ['match', 'additional-sense', 'new-candidate', 'uncertain', 'excluded']
+const SENSE_STATUS = ['taught-by-entry', 'not-taught', 'separate-entry-proposed', 'out-of-scope']
+
+export function checkRecordAssessment(a: RecordAssessment, at: string, ctx?: AssessmentContext): string[] {
+  const e = checkProvenance(a, at)
+  if (!a.record || a.id !== recordAssessmentId(a.record)) e.push(`${at}: id must be "<record>|record"`)
+  if (!a.recordHash) e.push(`${at}: recordHash is required`)
+  if (!DISPOSITIONS.includes(a.disposition)) e.push(`${at}: disposition must be one of ${DISPOSITIONS.join(', ')}`)
+  if (!substantive(a.reason)) e.push(`${at}: reason must explain the disposition`)
+  if (a.method === 'heuristic' && a.disposition !== 'uncertain') e.push(`${at}: a heuristic can only record "uncertain"`)
+  if ((a.disposition === 'match' || a.disposition === 'additional-sense') && !a.relatedEntries?.length) e.push(`${at}: ${a.disposition} needs relatedEntries`)
+  if (a.relatedEntries?.length && !a.relatedFingerprint) e.push(`${at}: relatedEntries need relatedFingerprint`)
+  for (const sn of a.senses ?? []) if (!sn.label || !SENSE_STATUS.includes(sn.status)) e.push(`${at}: each sense needs a label and a known status`)
+  if (a.shortLabel) {
+    if (!['source', 'editorial'].includes(a.shortLabel.basis)) e.push(`${at}: shortLabel.basis must be "source" or "editorial"`)
+    if (!substantive(a.shortLabel.reason)) e.push(`${at}: shortLabel.reason must explain the label`)
+    if (a.shortLabel.text.length > LIMITS.particleMeaning) e.push(`${at}: shortLabel has ${a.shortLabel.text.length} characters (max ${LIMITS.meaning}, particles ${LIMITS.particleMeaning})`)
+    const r = ctx?.records.get(a.record)
+    if (r && a.shortLabel.basis === 'source' && r.candidate.meaningMissing) e.push(`${at}: the source has no short meaning for this record; a label written from its definitions is "editorial"`)
+    else if (r && a.shortLabel.basis === 'source' && !r.candidate.meanings.includes(a.shortLabel.text) && sourceDefinition(r) !== a.shortLabel.text) e.push(`${at}: shortLabel "${a.shortLabel.text}" is not the source's text; mark it "editorial"`)
+  }
+  if (a.draft) {
+    if (a.disposition !== 'new-candidate' && a.disposition !== 'additional-sense') e.push(`${at}: a draft belongs to a new-candidate or additional-sense record`)
+    if (!a.draft.id || !a.draft.hanzi || !a.draft.pinyin || !a.draft.meaning) e.push(`${at}: a draft needs id, hanzi, pinyin and meaning`)
+    if (ctx?.words.some(w => w.id === a.draft!.id)) e.push(`${at}: draft id "${a.draft.id}" is already a game entry`)
+    if (ctx?.words.some(w => w.hanzi === a.draft!.hanzi && w.pinyin === a.draft!.pinyin)) e.push(`${at}: the game already has an entry written ${a.draft.hanzi} ${a.draft.pinyin}; two entries with the same hanzi and pinyin are not supported (record the sense on the existing entry instead)`)
+    const max = a.draft.kind === 'particle' ? LIMITS.particleMeaning : LIMITS.meaning
+    if (a.draft.meaning.length > max) e.push(`${at}: draft meaning is longer than ${max} characters`)
+  }
+  if (a.expansion === 'first' && !a.draft) e.push(`${at}: a first-expansion proposal needs a draft`)
+  if (ctx) {
+    if (!ctx.records.has(a.record)) e.push(`${at}: unknown source record ${a.record}`)
+    for (const id of a.relatedEntries ?? []) if (!ctx.words.some(w => w.id === id)) e.push(`${at}: unknown game entry ${id}`)
+  }
+  return e
+}
+const EX_VERDICTS: ExampleVerdict[] = ['suitable', 'needs-editing', 'other-sense', 'not-beginner', 'uncertain']
+export function checkExampleAssessment(a: ExampleAssessment, at: string, ctx?: AssessmentContext & { sentences?: Map<string, SentenceItem> }): string[] {
+  const e = checkProvenance(a, at)
+  const t = a.target ?? {}
+  if ([t.entry, t.record].filter(Boolean).length !== 1) e.push(`${at}: target names exactly one of entry or record`)
+  if (a.id !== exampleAssessmentId(a.sentence, t)) e.push(`${at}: id must be "<sentence>|<target>"`)
+  if (!a.sentenceHash) e.push(`${at}: sentenceHash is required`)
+  if (t.entry && !a.targetFingerprint) e.push(`${at}: an entry target needs targetFingerprint`)
+  if (!EX_VERDICTS.includes(a.verdict)) e.push(`${at}: verdict must be one of ${EX_VERDICTS.join(', ')}`)
+  if (!a.sense?.trim()) e.push(`${at}: sense is required`)
+  if (!substantive(a.reason)) e.push(`${at}: reason must explain the verdict`)
+  if (!Array.isArray(a.contains) || !Array.isArray(a.prerequisites)) e.push(`${at}: contains and prerequisites must be lists`)
+  if (a.verdict === 'needs-editing' && !a.edited) e.push(`${at}: "needs-editing" needs the proposed edit`)
+  if (a.edited && !substantive(a.edited.reason)) e.push(`${at}: edited.reason must explain the edit`)
+  if (ctx) {
+    if (ctx.sentences && !ctx.sentences.has(a.sentence)) e.push(`${at}: unknown sentence ${a.sentence}`)
+    if (t.entry && !ctx.words.some(w => w.id === t.entry)) e.push(`${at}: unknown game entry ${t.entry}`)
+    if (t.record && !ctx.records.has(t.record)) e.push(`${at}: unknown source record ${t.record}`)
+  }
+  return e
+}
+
+export function checkAssessmentsFile(f: unknown, ctx?: AssessmentContext & { sentences?: Map<string, SentenceItem> }): string[] {
   const file = f as AssessmentsFile
   if (!file || file.kind !== 'hanzi-hunters-assessments') return ['not an assessments file (kind must be "hanzi-hunters-assessments")']
-  if (file.schemaVersion !== ASSESSMENT_SCHEMA_VERSION) return [`unsupported assessments schemaVersion ${String(file.schemaVersion)} (expected ${ASSESSMENT_SCHEMA_VERSION})`]
+  if (!READABLE_ASSESSMENT_VERSIONS.includes(file.schemaVersion)) return [`unsupported assessments schemaVersion ${String(file.schemaVersion)} (readable: ${READABLE_ASSESSMENT_VERSIONS.join(', ')})`]
   if (!Array.isArray(file.assessments)) return ['"assessments" must be an array']
+  if (file.schemaVersion === 1 && (file.records || file.examples)) return ['record and example assessments need schemaVersion 2']
   const errors: string[] = []
   const seen = new Set<string>()
-  file.assessments.forEach((a, i) => {
-    errors.push(...checkAssessment(a, `assessments[${i}] ${a?.id ?? ''}`.trim(), ctx))
-    if (a?.id && seen.has(a.id)) errors.push(`assessments[${i}]: duplicate id ${a.id}`)
+  const each = <T extends { id: string }>(list: T[] | undefined, name: string, check: (x: T, at: string) => string[]) => (list ?? []).forEach((a, i) => {
+    errors.push(...check(a, `${name}[${i}] ${a?.id ?? ''}`.trim()))
+    if (a?.id && seen.has(a.id)) errors.push(`${name}[${i}]: duplicate id ${a.id}`)
     seen.add(a?.id)
   })
+  each(file.assessments, 'assessments', (a, at) => checkAssessment(a, at, ctx))
+  each(file.records, 'records', (a, at) => checkRecordAssessment(a, at, ctx))
+  each(file.examples, 'examples', (a, at) => checkExampleAssessment(a, at, ctx))
   return errors
 }
+/** A version-1 file read as version 2 (same pair assessments, empty record and example lists). */
+export const upgradeAssessments = (f: AssessmentsFile): AssessmentsFile => ({ ...f, schemaVersion: ASSESSMENT_SCHEMA_VERSION, records: f.records ?? [], examples: f.examples ?? [] })
 
 /**
  * Merge validated assessments into the committed file. Refused (nothing changes) when any incoming assessment is invalid, was made
  * against another version of the record or game entry, or would replace a person's assessment with a non-human one.
  * Only the assessments file is produced: mappings, selections, recordings, words and curricula are never touched.
  */
-export function mergeAssessments(current: AssessmentsFile, incoming: unknown, ctx: AssessmentContext): { ok: boolean; errors: string[]; file: AssessmentsFile; added: number; replaced: number } {
+export function mergeAssessments(current: AssessmentsFile, incoming: unknown, ctx: AssessmentContext & { sentences?: Map<string, SentenceItem> }): { ok: boolean; errors: string[]; file: AssessmentsFile; added: number; replaced: number } {
   const inc = incoming as AssessmentsFile
-  const stripped = inc && Array.isArray(inc.assessments) ? { ...inc, assessments: inc.assessments.map(a => { const x = { ...a } as SourceAssessment & { context?: unknown }; delete x.context; return x as SourceAssessment }) } : inc
-  const errors = checkAssessmentsFile(stripped, ctx)
-  if (errors.length) return { ok: false, errors, file: current, added: 0, replaced: 0 }
-  const byId = new Map(current.assessments.map(a => [a.id, a]))
+  const strip = <T>(list: T[] | undefined) => (list ?? []).map(a => { const x = { ...a } as T & { context?: unknown }; delete x.context; return x as T })
+  const stripped: AssessmentsFile | undefined = inc && Array.isArray(inc.assessments) ? { ...inc, assessments: strip(inc.assessments), ...(inc.records ? { records: strip(inc.records) } : {}), ...(inc.examples ? { examples: strip(inc.examples) } : {}) } : undefined
+  const errors = checkAssessmentsFile(stripped ?? inc, ctx)
+  if (errors.length || !stripped) return { ok: false, errors, file: current, added: 0, replaced: 0 }
+  const cur = upgradeAssessments(current)
   let added = 0, replaced = 0
-  for (const a of stripped.assessments) {
-    const f = freshness(a, ctx.records.get(a.record), ctx.words.find(w => w.id === a.entry), ctx.explanations[a.entry])
-    if (f !== 'current') { errors.push(`${a.id}: ${FRESHNESS_LABEL[f]} Re-export a template and assess the current content.`); continue }
-    const old = byId.get(a.id)
-    if (old?.method === 'human' && a.method !== 'human') { errors.push(`${a.id}: would replace a person's assessment with a ${a.method} one`); continue }
-    if (old) replaced++; else added++
-    byId.set(a.id, a)
+  const merge = <T extends AssessedBy & { id: string }>(old: T[], next: T[], fresh: (a: T) => Freshness): T[] => {
+    const byId = new Map(old.map(a => [a.id, a]))
+    for (const a of next) {
+      const f = fresh(a)
+      if (f !== 'current') { errors.push(`${a.id}: ${FRESHNESS_LABEL[f]} Re-export a template and assess the current content.`); continue }
+      const prev = byId.get(a.id)
+      if (prev?.method === 'human' && a.method !== 'human') { errors.push(`${a.id}: would replace a person's assessment with a ${a.method} one`); continue }
+      if (prev) replaced++; else added++
+      byId.set(a.id, a)
+    }
+    return [...byId.values()].sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0))
   }
+  const assessments = merge(cur.assessments, stripped.assessments, a => freshness(a, ctx.records.get(a.record), ctx.words.find(w => w.id === a.entry), ctx.explanations[a.entry]))
+  const records = merge(cur.records ?? [], stripped.records ?? [], a => recordFreshness(a, ctx.records.get(a.record), ctx.words, ctx.explanations))
+  const examples = merge(cur.examples ?? [], stripped.examples ?? [], a => exampleFreshness(a, ctx.sentences?.get(a.sentence), ctx.words, ctx.explanations))
   if (errors.length) return { ok: false, errors, file: current, added: 0, replaced: 0 }
-  const assessments = [...byId.values()].sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0))
-  return { ok: true, errors, file: { kind: 'hanzi-hunters-assessments', schemaVersion: ASSESSMENT_SCHEMA_VERSION, assessments }, added, replaced }
+  return { ok: true, errors, file: { kind: 'hanzi-hunters-assessments', schemaVersion: ASSESSMENT_SCHEMA_VERSION, ...(cur.source ? { source: cur.source } : {}), assessments, records, examples }, added, replaced }
 }
 
 // ---- resolution: evidence + assessment + reviewer decision -------------------------------------------------------------------------

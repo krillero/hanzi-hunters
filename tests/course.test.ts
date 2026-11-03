@@ -35,7 +35,7 @@ function play(c: Curriculum, words: Word[], seed: number, fights = 120, acc = 0.
   let m: Mastery = {}, p = emptyCourse()
   const order: string[] = []
   for (let f = 0; f < fights; f++) {
-    for (const id of selectIntroductions({ curriculum: c, mastery: m, progress: p, words: byId }).ids) { order.push(id); m = learn(m, id, true) }
+    for (const id of selectIntroductions({ curriculum: c, mastery: m, progress: p, words: byId, peak: recordPeaks({}, m) }).ids) { order.push(id); m = learn(m, id, true) }
     for (let q = 0; q < 4; q++) {
       const w = selectReview(words, m, { rng })
       assert.ok(w, 'something is always reviewable after the first introductions')

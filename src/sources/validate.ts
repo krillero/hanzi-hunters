@@ -38,6 +38,7 @@ export function validateDecisions(
   const perEntry = new Map<string, number>()
   for (const [i, r] of (recordings?.recordings ?? []).entries()) {
     const at = `recordings.json[${i}] (${r.id})`
+    if (sources[r.provenance?.source]?.media === 'local-only') errors.push(`${at}: source "${r.provenance.source}" is media: local-only (its audio is not published); its recordings cannot be selected for the game`)
     if (!ids.has(r.entry)) errors.push(`${at}: unknown entry "${r.entry}"`)
     if (r.scope === 'word') perEntry.set(r.entry, (perEntry.get(r.entry) ?? 0) + 1)
     if (!safeMediaPath(r.file)) errors.push(`${at}: file "${r.file}" is not a generated media path (sources/<source>/media/<sha>.<ext>)`)

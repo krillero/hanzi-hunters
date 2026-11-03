@@ -14,7 +14,7 @@ Two versions: use **A** for a coding agent working in this repository, **B** for
 >
 > For every entry: short accurate note, safe `questions`, fair distractors (`confusable`, `audio: "none"` for polyphones), and simple examples mostly within known vocabulary. Label everything `ai-draft`; never call it human-reviewed. Register any new source in `sources.json` with its real license.
 >
-> Edit only `src/content/*.json` (plus `docs/vocabulary-toolkit/` notes for the next batch). Run `npm run validate:content`, `npm run curriculum`, `npm run inventory`, `npm test` and `npm run build`, and play the new lessons at 320 px width. Report the ordered list, files changed, warnings left, what you were unsure about, and what a Mandarin teacher must review. Update `docs/vocabulary-toolkit/` (README known issues, `reference/package-state.json` or a new batch file) so the following batch can start from it.
+> Edit only `src/content/*.json` (plus `docs/vocabulary-toolkit/` notes for the next batch). Run `npm run validate:content`, `npm run curriculum`, `npm run inventory`, `npm test` and `npm run build`, and play the new lessons at 360 px width. Report the ordered list, files changed, warnings left, what you were unsure about, and what a Mandarin teacher must review. Update `docs/vocabulary-toolkit/` (README known issues, `reference/package-state.json` or a new batch file) so the following batch can start from it.
 
 ## B. Outside assistant (delivers a ZIP)
 

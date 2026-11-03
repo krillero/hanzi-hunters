@@ -44,7 +44,7 @@ npm run dev                # preview (see "Previewing" below)
 
 ## 1. Entries (`words.json`)
 
-An entry is **one word, character or particle with one meaning and one reading**. The original 50 entries are single characters; new entries can be multi-character words.
+An entry is **one word, character or particle with one meaning and one reading**. The original 50 entries are single characters; new entries can be multi-character words. Other meanings of the same written form are not taught yet; the intended later step (unlocking them from the Retained level) and the rules that apply now are in `docs/SENSES.md`.
 
 ### 1.1 Required fields
 
@@ -52,7 +52,7 @@ An entry is **one word, character or particle with one meaning and one reading**
 |---|---|
 | `hanzi` | Simplified Chinese characters only, 1 to 8 (aim for 1 to 4, answer buttons are small). The same hanzi may appear in more than one entry only when the readings differ (see 1.5). |
 | `pinyin` | **Dictionary pinyin** with tone marks, lowercase, standard word spacing: `"nǐ hǎo"` (two words), `"péngyou"`, `"māma"`, `"xuéxiào"`. Never tone numbers. Use an apostrophe where syllables run together ambiguously (`xī'ān`). Must have exactly as many syllables as `hanzi` has characters (erhua 儿 is not supported yet). |
-| `meaning` | Natural English that fits an answer button, aim ≤ 40 chars. `" / "` separates senses: `"mom / mother"`. For particles, a short *functional description* (aim ≤ 44, it must fit the card and an answer button; put examples like 我的书 in the `note`). |
+| `meaning` | Natural English that fits an answer button, aim ≤ 40 chars. `" / "` separates near-synonyms of the one taught sense: `"mom / mother"`, never two different senses (`docs/SENSES.md`). Lower case, no sentence punctuation, verbs without "to" (`"drink"`, `"go"`), as every existing entry does. For particles, a short *functional description* (aim ≤ 44, it must fit the card and an answer button; put examples like 我的书 in the `note`). |
 | `group` | Family used to pick plausible wrong answers (`people`, `nature`, `number`, `size`, `body`, `place`, `grammar`, `greetings`, `time`, `verbs` …; make a new lowercase one if none fits). |
 | `note` | 1–2 teaching sentences shown after answering. Teach, never shame. |
 
@@ -114,7 +114,7 @@ Teach words as **whole words**; do not assume a word's meaning is the sum of its
 
 ```json
 { "hanzi": "吗", "pinyin": "ma", "neutral": [1], "kind": "particle", "audio": "none",
-  "meaning": "ends a yes/no question", "group": "grammar", "note": "Add 吗 to the end of a statement to ask yes or no." }
+  "meaning": "marks a yes/no question", "group": "grammar", "note": "Add 吗 to the end of a statement to ask yes or no." }
 ```
 
 Particles are by default asked only `meaning` ("what does it do?") and, if sentence questions exist for them, `particle` (see section 3). They are never asked pinyin or listening questions.
@@ -251,7 +251,7 @@ Every piece of content (entry, example, explanation, sentence question) may carr
 "review": { "status": "human-reviewed", "reviewer": "A. Teacher", "date": "2026-11-02", "note": "optional" }
 ```
 
-* `source[].name` must exist in **`sources.json`**, which stores the title, URL, license and required attribution once. Registered: `ai-draft`, `CC-CEDICT`, `HSK`, `Tatoeba`. Add a source there (with its real license and attribution) before using it.
+* `source[].name` must exist in **`sources.json`**, which stores the title, URL, license and required attribution once. Registered today: `ai-draft`, `CC-CEDICT`, `HSK`, `HSK-2025`, `Tatoeba`, `HH-editorial-2026`, and the imported sources `accc-anki` and `xiehanzi-new-hsk-2025-v24` (`sources.json` is the list). Add a source there (with its real license and attribution) before using it.
 * **CC-CEDICT / MDBG** (CC BY-SA 4.0): a guide for dictionary meanings and readings. Imported glosses are not automatically good answer buttons or classroom-ready; check sense, register and natural English. Copying or adapting its text carries the attribution and ShareAlike terms.
 * **HSK** (official, edition-labelled materials): a guide to *which* beginner words to teach. State the edition in `ref` (e.g. `"HSK 3.0 (2021) level 1"`); HSK 2.0 and 3.0 differ. Do not copy the lists.
 * **Tatoeba** (mostly CC BY 2.0 FR, some CC0): community sentences. Review each sentence individually; keep author and sentence number in `ref`.
@@ -275,18 +275,18 @@ Every piece of content (entry, example, explanation, sentence question) may carr
   "speech": [{ "pinyin": "ní hǎo", "context": "two third tones meet; the first is said with a rising tone", "note": "The dictionary pinyin keeps the third tone." }] }
 
 // mixed marked and neutral syllables
-{ "hanzi": "喜欢", "pinyin": "xǐhuan", "neutral": [2], "meaning": "to like", "group": "feelings", "note": "…", "wrongPinyin": ["xíhuan", "xǐhuán"] }
+{ "hanzi": "喜欢", "pinyin": "xǐhuan", "neutral": [2], "meaning": "like / be fond of", "group": "feelings", "note": "…", "wrongPinyin": ["xíhuan", "xǐhuán"] }
 
 // accepted pronunciation variants
 { "hanzi": "谁", "pinyin": "shéi", "variants": ["shuí"], "meaning": "who", "group": "questions", "note": "Both readings are normal." }
 
 // same hanzi, two readings and meanings (explicit ids, no audio)
-{ "id": "看-look",  "hanzi": "看", "pinyin": "kàn", "meaning": "to look / to watch",     "group": "verbs", "kind": "word", "audio": "none", "note": "…" }
-{ "id": "看-guard", "hanzi": "看", "pinyin": "kān", "meaning": "to guard / to look after", "group": "verbs", "kind": "word", "audio": "none", "note": "…" }
+{ "id": "看-look",  "hanzi": "看", "pinyin": "kàn", "meaning": "look / watch / read",  "group": "verbs", "kind": "word", "audio": "none", "note": "…" }
+{ "id": "看-guard", "hanzi": "看", "pinyin": "kān", "meaning": "guard / look after",   "group": "verbs", "kind": "word", "audio": "none", "note": "…" }
 
 // grammar particle, taught by function
 { "hanzi": "的", "pinyin": "de", "neutral": [1], "kind": "particle", "audio": "none",
-  "meaning": "links a describing word to a noun", "group": "grammar", "note": "…" }
+  "meaning": "marks possession / description", "group": "grammar", "note": "…" }
 
 // with provenance
 { "hanzi": "朋友", "pinyin": "péngyou", "neutral": [2], "meaning": "friend", "group": "people", "note": "…",
@@ -306,20 +306,15 @@ Every piece of content (entry, example, explanation, sentence question) may carr
 
 ---
 
-## Copy-paste prompt for another agent
+## Handing content work to another agent
 
-For choosing a whole new batch of vocabulary (sources, HSK levels, candidate checker, lessons from the first 100), see `docs/vocabulary-toolkit/README.md`. A complete ready-to-use version lives in `docs/AGENT_PROMPT.md`; the current content is listed in `docs/content-inventory.json` (regenerate with `npm run inventory`). Short version:
-
-> You are adding learning content to the Hanzi Hunters project. Read `docs/CONTENT_GUIDE.md` first and follow it exactly.
-> Edit only `src/content/*.json`; do not change code. Task: **<describe the task>**.
-> Rules: only information you are confident is correct; tone marks not numbers; neutral tones declared with `neutral`; simplified characters;
-> label everything `ai-draft` unless a person reviewed it. When done run `npm run validate:content` and `npm test`, fix every error, and report:
-> files changed, each new entry/explanation/sentence question, any warnings you left, and everything a Mandarin teacher must review.
+Use `docs/AGENT_PROMPT.md` (small content tasks: entries, explanations, sentence questions) or
+`docs/vocabulary-toolkit/NEXT-BATCH-PROMPT.md` (choosing and adding a whole new batch of vocabulary). Both point back to this guide.
 
 ## Not supported yet (do not work around these in JSON)
 
 * Erhua (儿) syllables, and entries longer than 8 characters.
 * Automatic generation of grammar questions; only authored `cloze.json` items exist.
-* Images or recorded audio (audio is browser text-to-speech only).
+* Images. Recorded audio exists only through the source layer (`recordings.json`, selected on the review screen; `docs/SOURCES.md` §6), never added by hand here; otherwise audio is browser text-to-speech.
 * New question types or per-entry custom question formats other than the sentence (particle) question.
 * Traditional characters.

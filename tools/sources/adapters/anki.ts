@@ -4,6 +4,9 @@
 //
 // Record key: "<source>:<ID field>" (the deck's own stable "ID"). Uniqueness is validated; duplicated IDs get "~<note guid>"
 // appended and are reported. The Anki note id and guid are kept in `native`.
+// Decks shaped differently plug in an AnkiProfile (field parser, deck selection, GUID keys, sentence extraction). Without a profile
+// the behaviour is exactly the ACCC one.
+import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -12,7 +15,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { splitSyllables } from '../../../src/content/pinyin.ts'
 import {
   SOURCE_SCHEMA_VERSION, type Candidate, type ContentItem, type ImportReport, type MediaRef, type Placement, type RecordingItem,
-  type SourceBundle, type SourceRecord
+  type SentenceItem, type SourceBundle, type SourceRecord
 } from '../../../src/sources/types.ts'
 import { readEntry, readZip, safeJoin } from '../zip.ts'
 
@@ -28,10 +31,47 @@ export type AnkiOptions = {
   retrieved?: string
   /** Map of our field roles to the deck's field names. Defaults fit the ACCC deck. */
   fields?: Partial<Record<'id' | 'traditional' | 'simplified' | 'pinyin' | 'pos' | 'meaning' | 'audio' | 'variants', string>>
+  /** Hooks for decks not shaped like the ACCC deck. Omitted: ACCC behaviour, unchanged. */
+  profile?: AnkiProfile
+}
+
+/** What a field profile extracts from one note. `sentences` become separate SentenceItems (never linked to an entry here). */
+export type ProfileParse = { candidate: Candidate; sentences?: { zh: string; pinyin?: string; en: string }[]; placement?: Omit<Placement, 'order'> }
+export type AnkiProfile = {
+  /** Import only notes that have a card in this deck (its full name, or a name ending in "::<deck>"). Uses card membership,
+   *  never a level field of the note. */
+  deck?: string
+  /** Record key from the note's GUID (Anki's own import identity) for decks without an ID field. */
+  keyFrom?: 'guid'
+  /** Note fields every note must have (reported when absent). */
+  requiredFields: string[]
+  parse: (fields: Record<string, string>, issues: string[]) => ProfileParse
+  /** Try to decode each extracted audio file with ffprobe (if installed) and record the result as a check. */
+  decodeAudio?: boolean
+  /** Recording origin, as far as the source states it. */
+  origin?: RecordingItem['origin']
+}
+
+/** ffprobe result for one file: a check string, or null when ffprobe is not available. */
+export function probeAudio(path: string): { ok: boolean; check: string } | null {
+  const r = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=codec_name,sample_rate', '-of', 'json', path], { encoding: 'utf8' })
+  if (r.error) return null
+  // Messages are made deterministic (ffprobe prints memory addresses such as "[mp3 @ 0x55…]") so reimports stay byte-identical.
+  if (r.status !== 0) return { ok: false, check: `ffprobe failed: ${(r.stderr || '').split('\n')[0].replace(/\s*@\s*0x[0-9a-f]+/gi, '').trim().slice(0, 120)}` }
+  try {
+    const j = JSON.parse(r.stdout) as { format?: { duration?: string }; streams?: { codec_name?: string; sample_rate?: string }[] }
+    const st = j.streams?.[0], d = Number(j.format?.duration)
+    if (!st || !(d > 0)) return { ok: false, check: 'ffprobe: no audio stream or zero duration' }
+    return { ok: true, check: `decoded:${st.codec_name} ${d.toFixed(2)}s ${st.sample_rate}Hz` }
+  } catch { return { ok: false, check: 'ffprobe: unreadable output' } }
 }
 
 const DEFAULT_FIELDS = { id: 'ID', traditional: 'Traditional', simplified: 'Simplified', pinyin: 'Pinyin', pos: 'POS', meaning: 'Meaning', audio: 'Audio', variants: 'Variants' }
 const sha256 = (b: Buffer | string) => createHash('sha256').update(b).digest('hex')
+/** A record's content hash: its original fields and its media. Changes whenever the source changes; also used to detect hand edits
+ *  of the imported files (tests/generated.test.ts). */
+export const recordHash = (fields: Record<string, string>, media: Pick<MediaRef, 'sha256' | 'original'>[]) =>
+  sha256(JSON.stringify({ fields, media: media.map(m => m.sha256 ?? m.original) })).slice(0, 16)
 const HAN = /\p{Script=Han}/u
 const ONLY_HAN = /^\p{Script=Han}+$/u
 
@@ -162,6 +202,7 @@ type Row = Record<string, unknown>
 
 export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
   const names = { ...DEFAULT_FIELDS, ...opts.fields }
+  const prof = opts.profile
   const pkg = readFileSync(opts.file)
   const pkgSha = sha256(pkg)
   const snapshotId = pkgSha.slice(0, 12)
@@ -228,19 +269,27 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
       for (const n of Object.values(mediaMap)) { const e = extOf(n) || '(none)'; byExt[e] = (byExt[e] ?? 0) + 1 }
       for (const [e, n] of Object.entries(byExt)) counts[`media_${e}`] = n
 
+      // ---- scope: the profile's deck, by card membership ----
+      const inDeck = (n: Row) => !prof?.deck || (cardsOf.get(String(n.id)) ?? []).some(c => { const d = deckNames.get(String(c.did)) ?? ''; return d === prof.deck || d.endsWith(`::${prof.deck}`) })
+      const selected = notes.filter(inDeck)
+      if (prof?.deck) {
+        counts.notesSelected = selected.length; counts.notesOutsideScope = notes.length - selected.length
+        if (!selected.length) throw new Error(`No note has a card in deck "${prof.deck}" (decks: ${[...deckNames.values()].join(', ')})`)
+      }
       // ---- notes -> records ----
       const idCount = new Map<string, number>()
-      const parsed = notes.map(n => {
+      const parsed = selected.map(n => {
         const fnames = fieldNames.get(String(n.mid)) ?? []
         const values = String(n.flds).split('\x1f')
         const fields: Record<string, string> = {}
         values.forEach((v, i) => { fields[fnames[i] ?? `field${i + 1}`] = v })
         if (values.length !== fnames.length) problem('parse', `note ${n.id}: ${values.length} field values but the note type has ${fnames.length} fields`)
-        const originalId = (fields[names.id] ?? '').trim()
+        const originalId = prof?.keyFrom === 'guid' ? String(n.guid) : (fields[names.id] ?? '').trim()
         if (originalId) idCount.set(originalId, (idCount.get(originalId) ?? 0) + 1)
         return { n, fields, originalId }
       })
-      for (const k of Object.keys(DEFAULT_FIELDS) as (keyof typeof DEFAULT_FIELDS)[]) {
+      if (prof) { for (const f of prof.requiredFields) if (parsed.some(p => !(f in p.fields))) problem('missing-field', `some notes have no "${f}" field`) }
+      else for (const k of Object.keys(DEFAULT_FIELDS) as (keyof typeof DEFAULT_FIELDS)[]) {
         if (!parsed.some(p => names[k] in p.fields)) problem('missing-field', `no note has a "${names[k]}" field`)
       }
       const dupes = [...idCount].filter(([, c]) => c > 1)
@@ -248,6 +297,7 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
       for (const [id, c] of dupes) problem('duplicate-id', `ID "${id}" is used by ${c} notes; their keys get "~<guid>" appended`)
 
       const usedMedia = new Set<string>()
+      let decodeUnavailable = false
       const records: SourceRecord[] = []
       const content: ContentItem[] = []
       if (!existsSync(opts.mediaDir)) mkdirSync(opts.mediaDir, { recursive: true })
@@ -256,9 +306,10 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
         const local = !originalId ? `note-${n.id}` : (idCount.get(originalId) ?? 0) > 1 ? `${originalId}~${String(n.guid)}` : originalId
         if (!originalId) issues.push(`missing-field: ${names.id} is empty; key uses the Anki note id`)
         const key = `${opts.source}:${local}`
-        const candidate = parseCandidate(fields, names, issues)
-        const pl = parsePlacement(originalId)
-        if (originalId && !pl) issues.push(`parse: could not read book/lesson/item from ID "${originalId}"`)
+        const fromProfile = prof?.parse(fields, issues)
+        const candidate = fromProfile?.candidate ?? parseCandidate(fields, names, issues)
+        const pl = prof ? fromProfile?.placement ?? null : parsePlacement(originalId)
+        if (!prof && originalId && !pl) issues.push(`parse: could not read book/lesson/item from ID "${originalId}"`)
         // media referenced by any field (normally only Audio)
         const media: MediaRef[] = []
         for (const value of Object.values(fields)) for (const m of value.matchAll(/\[sound:([^\]]+)\]/g)) {
@@ -283,11 +334,17 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
             const out = safeJoin(opts.mediaDir, fileName)
             if (!existsSync(out)) writeFileSync(out, data)
             ref.path = `${opts.mediaPrefix}/${fileName}`
+            if (prof?.decodeAudio) {
+              const pr = probeAudio(out)
+              if (pr === null) decodeUnavailable = true
+              else if (pr.ok) ref.checks.push(pr.check)
+              else { ref.problems.push(pr.check); problem('bad-media', `${key}: ${original}: ${pr.check}`) }
+            }
           }
           media.push(ref)
         }
-        if (media.length === 0 && names.audio in fields) issues.push('missing-media: no [sound:] reference')
-        const hash = sha256(JSON.stringify({ fields, media: media.map(m => m.sha256 ?? m.original) })).slice(0, 16)
+        if (media.length === 0 && (prof ? 'Audio' in fields : names.audio in fields)) issues.push('missing-media: no [sound:] reference')
+        const hash = recordHash(fields, media)
         const noteCards = cardsOf.get(String(n.id)) ?? []
         const native: Record<string, string> = { noteId: String(n.id), guid: String(n.guid), noteType: modelNames.get(String(n.mid)) ?? String(n.mid), cards: noteCards.map(c => String(c.id)).join(',') }
         const decks = [...new Set(noteCards.map(c => deckNames.get(String(c.did)) ?? String(c.did)))]
@@ -302,10 +359,17 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
             text: candidate.simplified[0] ?? candidate.traditional[0] ?? '', ...(candidate.readings[0] ? { declaredReading: candidate.readings[0] } : {}),
             provenance: { source: opts.source, record: key, recordHash: hash, mode: 'verbatim' },
             review: { status: 'imported' },
-            links: [{ record: key, role: 'teaches' }]
+            links: [{ record: key, role: 'teaches' }],
+            ...(prof ? { origin: prof.origin ?? { status: 'unknown' as const }, pronunciation: 'unverified' as const } : {})
           }
           if (content.some(c => c.id === rec.id)) rec.id = `${rec.id}:${m.sha256.slice(0, 8)}`
           content.push(rec)
+        }
+        // Example sentences: separate items with stable ids (record + position). Not linked to any entry: a sentence that contains
+        // a word does not necessarily teach the sense being learnt.
+        for (const [i, x] of (fromProfile?.sentences ?? []).entries()) {
+          const item: SentenceItem = { type: 'sentence', id: `${opts.source}:sentence:${local}-${i + 1}`, zh: x.zh, en: x.en, ...(x.pinyin ? { pinyin: x.pinyin } : {}), provenance: { source: opts.source, record: key, recordHash: hash, ref: `example ${i + 1}`, mode: 'verbatim' }, review: { status: 'imported' } }
+          content.push(item)
         }
       }
       // Stable order: book, lesson, part (I, II, III), section (numbered sections such as "0" first, then the main list, then
@@ -317,11 +381,16 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
       const keys = new Set<string>()
       for (const r of records) { if (keys.has(r.key)) throw new Error(`internal: duplicate record key ${r.key}`); keys.add(r.key) }
 
-      const unreferenced = [...memberOf.keys()].filter(n => !usedMedia.has(n))
+      // Media of notes outside the selected deck are neither extracted nor reported one by one.
+      const outOfScope = new Set<string>()
+      if (prof?.deck) for (const n of notes) if (!inDeck(n)) for (const m of String(n.flds).matchAll(/\[sound:([^\]]+)\]/g)) if (!usedMedia.has(m[1])) outOfScope.add(m[1])
+      if (prof?.deck) counts.mediaOutsideScope = outOfScope.size
+      const unreferenced = [...memberOf.keys()].filter(n => !usedMedia.has(n) && !outOfScope.has(n))
       counts.records = records.length
       counts.recordsWithAudio = records.filter(r => r.media.some(m => m.path)).length
-      counts.recordings = content.length
-      counts.mediaExtracted = new Set(content.map(c => (c as RecordingItem).sha256)).size
+      counts.recordings = content.filter(c => c.type === 'recording').length
+      if (prof) { counts.sentences = content.filter(c => c.type === 'sentence').length; counts.recordsWithSentences = new Set(content.filter(c => c.type === 'sentence').map(c => c.provenance.record)).size }
+      counts.mediaExtracted = new Set(content.filter(c => c.type === 'recording').map(c => (c as RecordingItem).sha256)).size
       counts.mediaUnreferenced = unreferenced.length
       for (const n of unreferenced) problem(FONT_EXT.has(extOf(n)) ? 'unsupported' : 'unreferenced-media', `${n}: in the package but not referenced by any note${FONT_EXT.has(extOf(n)) ? ' (font, used by the card templates; not imported)' : ''}`)
       counts.withPlacement = records.filter(r => r.placement).length
@@ -336,11 +405,14 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
           'each referenced media file: present in the media mapping and archive, CRC32 matches the archive, non-empty, sha256 recorded',
           'audio file signature (ID3 tag or MPEG frame sync / Ogg / WAV header)',
           'record key uniqueness',
-          'no card template or script was read or executed'
+          'no card template or script was read or executed',
+          ...(prof?.deck ? [`only notes with a card in deck "${prof.deck}" were imported (card membership, not the note's level field): ${counts.notesSelected} of ${counts.notes}`] : []),
+          ...(prof?.decodeAudio ? [decodeUnavailable ? 'audio decoding was requested but ffprobe is not installed: NOT run' : 'each extracted audio file decoded with ffprobe (codec, duration, sample rate)'] : [])
         ],
         notChecked: [
           'whether a recording actually says the record\'s text or its declared pinyin (needs a person to listen)',
-          'audio duration, loudness or decodability beyond the file signature',
+          ...(prof?.decodeAudio && !decodeUnavailable ? ['audio loudness or quality (only decodability and duration were checked)'] : ['audio duration, loudness or decodability beyond the file signature']),
+          ...(prof ? ['where each recording comes from (human speaker or text-to-speech): the source does not say per file'] : []),
           'whether the source\'s pinyin, meanings or part of speech are correct'
         ]
       }

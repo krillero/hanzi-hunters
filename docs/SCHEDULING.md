@@ -32,7 +32,7 @@ retention milestone, not proof of speaking, listening, writing or permanent know
 - Reading a new-word card calls `introduce` (level 0, no credit). Details, translations and every answer's feedback show the answer;
   `recordReveal` and `recordAnswer` store that as `reveal`, separate from the last qualifying success (`dims[d].lastQual`).
 - **Dimensions** (`meaning, reading, listening, reverse, sentence`): evidence (attempts, correct, last times; tone right/wrong for reading)
-  is stored per dimension for every answer. Only `PROMOTING_DIMENSIONS` (currently `meaning`) can move the scheduler, including lapses.
+  is stored per dimension for every answer. Only `PROMOTING_DIMENSIONS` (`meaning` and `reverse`, see below) can move the scheduler, including lapses.
   Requiring more dimensions per stage later only needs this constant and one predicate, not a data change.
 - A mode that cannot tell whether the answer was revealed must pass `assisted: true` (conservative).
 - **Promoting dimensions today: `meaning` and `reverse`** (meaning to hanzi, pinyin to hanzi, homophone, look-alike). A meaning-only gate would stall
@@ -75,7 +75,7 @@ Late players are never penalised: overdue words stay at their level and are simp
 
 ## Remaining limitations
 
-Recognition (multiple choice) is not production or speaking; only meaning questions promote for now; the timings are untested defaults.
+Recognition (multiple choice) is not production or speaking; only meaning and written-form (`reverse`) questions promote for now; the timings are untested defaults.
 Future validation should compare delayed recall after 7 and 30 days and retention per minute of practice, not session accuracy or playtime. No analytics are sent.
 
 ## Callers

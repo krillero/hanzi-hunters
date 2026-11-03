@@ -48,5 +48,16 @@
     "adapter": "anki-apkg",
     "reuse": "Unknown: the deck page states no license, and the textbook material is copyrighted. The project owner decided on 2026-11-02 to include the recordings in this repository; no permission from the rights holder is documented here.",
     "variety": "Taiwan Mandarin (the textbook's own standard; not stated per recording)"
+  },
+  "xiehanzi-new-hsk-2025-v24": {
+    "title": "Anki-xiehanzi (写汉字) New HSK (2025) deck, release v2.4: HSK 1 subdeck",
+    "url": "https://github.com/krmanik/Anki-xiehanzi/releases/download/v2.4/Anki-xiehanzi-New-HSK-2025.apkg",
+    "license": "Mixed and partly unknown (see reuse)",
+    "attribution": "Anki-xiehanzi by Mani (krmanik), https://github.com/krmanik/Anki-xiehanzi, release v2.4, package Anki-xiehanzi-New-HSK-2025.apkg (sha256 4b0bea5d05c6e3ff970b4408f6c0422652c651dec3ad261b296ad782fbb1a37a). Definitions from CC-CEDICT (CC BY-SA 4.0, https://cc-cedict.org). Word list via krmanik/HSK-3.0-words-list (MIT) and hskhsk.com word lists (Alan Davies, non-commercial use).",
+    "usage": "Imported into the source layer (public/sources/xiehanzi-new-hsk-2025-v24) for comparison only: the 321 notes of the HSK 1 subdeck. Records, definitions and example sentences are published with the review screen; audio files are NOT published (media: local-only) and cannot be selected for gameplay. Nothing from it is playable until a person maps, selects and promotes it.",
+    "adapter": "anki-xiehanzi-hsk1",
+    "reuse": "Per component, as stated in the project's License.md (checked 2026-11-02): deck code MIT/GPL-3.0; definitions CC-CEDICT (CC BY-SA 4.0); word lists partly 'free for non-commercial use' (hskhsk.com); audio credited to audio-cmn (CC BY-SA), the Shtooka/University of Caen collection and gTTS text-to-speech, with no per-file attribution, so each file's origin and terms are unknown; example sentences: no source or licence stated (unknown). Decision by the project owner on 2026-11-02 (option b): publish records, definitions and examples for review; keep audio local-only.",
+    "variety": "Mainland Standard Mandarin readings (CC-CEDICT conventions; not stated per recording)",
+    "media": "local-only"
   }
 }

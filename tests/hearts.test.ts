@@ -8,6 +8,7 @@ import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, bossIdFor, sealAsk, newRun, playe
 import { CHARACTER_KINDS, TONE_KINDS, isCharacterQuestion, isToneQuestion, pickSealCard, tryBuildQuestion } from '../src/game/questions.ts'
 import { selectReview } from '../src/game/course.ts'
 import type { Mastery } from '../src/game/types.ts'
+import { sched } from './helpers/sched.ts'
 
 const last = ENEMIES_PER_FLOOR - 1
 
@@ -65,7 +66,7 @@ test('every boss is beatable with the vocabulary of the first lesson, of the fir
   const ids = ACTIVE_CURRICULUM.units.flatMap(u => u.lessons.flatMap(l => l.introductions.map(i => i.entryId)))
   const sets: [string, string[]][] = [['lesson 1', ids.slice(0, 5)], ['first 10', ids.slice(0, 10)], ['course', ids]]
   for (const [name, set] of sets) {
-    const mastery: Mastery = Object.fromEntries(set.map(id => [id, { lv: 1, ok: 0 }]))
+    const mastery: Mastery = Object.fromEntries(set.map(id => [id, sched(1)]))
     for (let floor = 1; floor <= EXPEDITION_FLOORS; floor++) {
       const r = fightBoss(floor, mastery)
       assert.ok(r.won, `${name}: the ${bossIdFor(floor)} on floor ${floor} was not beaten in ${r.answers} correct answers`)
@@ -75,12 +76,12 @@ test('every boss is beatable with the vocabulary of the first lesson, of the fir
 
 test('shield fallback: when no seal question can be built, a correct answer still breaks a segment', () => {
   // only particles known: they are never asked pinyin or character questions, so the Golem's shield needs the fallback
-  const mastery: Mastery = Object.fromEntries(WORDS.filter(w => w.kind === 'particle').map(w => [w.id, { lv: 1, ok: 0 }]))
+  const mastery: Mastery = Object.fromEntries(WORDS.filter(w => w.kind === 'particle').map(w => [w.id, sched(1)]))
   const r = fightBoss(1, mastery)
   assert.ok(r.won, 'the Golem is beaten'); assert.ok(r.fallbacks > 0, 'via the fallback')
   const w = fightBoss(EXPEDITION_FLOORS, mastery)
   assert.ok(w.won, 'the Warden too (wards and seals)'); assert.ok(w.fallbacks > 0)
-  const noSeal = pickSealCard(() => ({ question: { ask: 'meaning' as const, kind: 'meaning' as const } }), q => q.ask === 'pinyin', 5)
+  const noSeal = pickSealCard(() => ({ question: { ask: 'meaning' as 'meaning' | 'pinyin', kind: 'meaning' as const } }), q => q.ask === 'pinyin', 5)
   assert.equal(noSeal?.sealFallback, true)
   const seal = pickSealCard(() => ({ question: { ask: 'pinyin' as const, kind: 'pinyin' as const } }), q => q.ask === 'pinyin', 5)
   assert.equal(seal?.sealFallback, false)

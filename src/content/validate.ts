@@ -29,7 +29,8 @@ export function validateContent(words: unknown, explanations: unknown, cloze: un
   else for (const [name, info] of Object.entries(sources)) {
     sourceNames.add(name)
     if (!isObj(info)) { err(`sources.json["${name}"]: must be an object`); continue }
-    for (const k of Object.keys(info)) if (!['title', 'url', 'license', 'attribution', 'usage', 'adapter', 'reuse', 'variety'].includes(k)) err(`sources.json["${name}"]: unknown field "${k}"`)
+    for (const k of Object.keys(info)) if (!['title', 'url', 'license', 'attribution', 'usage', 'adapter', 'reuse', 'variety', 'media'].includes(k)) err(`sources.json["${name}"]: unknown field "${k}"`)
+    if ((info as { media?: unknown }).media !== undefined && !['published', 'local-only'].includes(String((info as { media?: unknown }).media))) err(`sources.json["${name}"]: "media" must be "published" or "local-only"`)
     for (const k of ['title', 'license', 'attribution']) if (!isStr(info[k])) err(`sources.json["${name}"].${k}: required non-empty string`)
     if (info.url !== undefined && (!isStr(info.url) || !/^https?:\/\//.test(info.url))) err(`sources.json["${name}"].url: must start with http:// or https://`)
   }

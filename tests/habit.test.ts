@@ -37,5 +37,6 @@ test('saves: old saves load with an empty habit; the habit survives export and i
   assert.deepEqual(loadSave({ getItem: () => JSON.stringify({ version: 1, meta: { gold: 1 } }) }).habit, emptyHabit())
   const s = sanitizeSave({ ...old, habit: { daysPlayed: 4, lastPlayed: '2026-10-31', warmupDay: '2026-10-31', correct: 40, badges: ['known-10'] } })
   const back = parseBackup(serializeBackup(s))
+  assert.ok(back, 'the backup parses')
   assert.deepEqual(back.habit, s.habit)
 })

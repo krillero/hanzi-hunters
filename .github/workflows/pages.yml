@@ -23,6 +23,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run validate:content
+      - run: npm run typecheck   # src, tools and tests (the build only checks src)
       - run: npm test
       - run: npm run build
         env:

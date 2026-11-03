@@ -1,234 +1,112 @@
-# Hanzi Hunters — product and engineering handoff
+# Hanzi Hunters — architecture and current state
+
+This is the technical handoff: what the product is for, how the code is organised, where state lives, how quality is checked
+and what is still open. Game rules are in `docs/GAME_DESIGN.md`; everything else is reachable from the map in `README.md`.
+The code is the authority: when this document disagrees with it, fix this document.
 
 ## 1. Product intent
 
-**Hanzi Hunters** is a portrait-friendly, mobile-first browser RPG for complete Mandarin Chinese beginners. The core promise is: learn a small piece of Chinese, use it to fight a monster, earn a reward, and return stronger. The experience should feel like a compact fantasy adventure rather than a quiz wrapped in a game skin.
+A portrait, mobile-first browser RPG for complete Mandarin beginners: learn a small piece of Chinese, use it to fight a monster,
+earn a reward, come back stronger. It should feel like a compact fantasy adventure, not a quiz in a game skin.
 
-### Intended audience
-- Learners with little or no Mandarin knowledge.
-- People playing in short sessions on a phone.
-- Players who benefit from seeing Hanzi, pinyin with tone marks, English meaning and hearing a pronunciation.
+- **Audience:** people with little or no Mandarin, playing short sessions on a phone.
+- **Teach before testing:** a new word is shown on its own card before it is ever asked.
+- **Mistakes teach:** a wrong answer explains itself and never shames; it costs a heart, not progress.
+- **Learning first:** a reward never makes guessing or speed pay better than knowing (see `docs/GAME_FEEL_AND_PROGRESSION.md` §1).
+- **One tap per question, mobile first, desktop compatible.** 360 CSS px is the narrowest supported width.
+- **Honest content:** every piece of Mandarin carries its source and review status; nothing AI-written is labelled human-reviewed.
 
-### Product principles
-- Teach before testing: display enough context to make the question understandable.
-- Encourage mistakes: incorrect answers should give useful feedback and another opportunity to learn.
-- Make progression legible: XP, gold, gear and learned words should have clear effects.
-- Short interactions: a battle question should be answerable with one tap.
-- Mobile first, desktop compatible.
+## 2. Architecture
 
-## 2. Current implementation — source of truth
+Stack: React 19, TypeScript 5.7, Vite 6, Phaser 3.90 (battle scene only), `vite-plugin-pwa`, browser `localStorage`,
+the Web Speech API (text-to-speech) and WebAudio (procedural sound effects). No backend, no runtime network calls except the
+Google Fonts stylesheet (`src/styles.css`).
 
-The source code is the authority for what is currently implemented. A concept image generated during planning is **not** a specification of existing features or assets.
+Two pages are built: the game (`index.html` → `src/main.tsx`) and the source review screen (`review/index.html` →
+`src/review/main.tsx`, served at `<base>/review/`, never loaded by the game).
 
-### Stack
-- React 19 + React DOM
-- TypeScript 5.7
-- Vite 6
-- Phaser 3.90 for the encounter scene
-- `vite-plugin-pwa` for PWA-related configuration
-- CSS for responsive interface styling
-- Browser `localStorage` for persistence
-- Browser Speech Synthesis API for pronunciation playback
+### Module map
 
-No server/API is present. No external art asset pack is bundled.
+| Area | Files | Notes |
+|---|---|---|
+| App shell and screens (React) | `src/App.tsx` (battle flow, state, wiring), `CampScreen`, `EncounterScreen`, `TrialScreen`, `BossIntro`, `NewWordCard`, `ExplainModal`, `SummaryModal`, `LootReveal`, `MenuSheet`, `AppData`, `Hearts`, `entryUi` | UI only; rules are delegated to `src/game/`. |
+| Battle scene (Phaser) | `src/game/PixelScene.ts` | Decorative: sprites, animations, hit feedback. Receives events from React; owns no game state. |
+| Game rules (pure, tested) | `src/game/rules.ts` (combat, hearts, bosses, depths, `TUNING`), `upgrades.ts`, `rarity.ts`, `runStats.ts`, `flow.ts` (auto-continue) | No React, DOM or Phaser. |
+| Learning (pure, tested) | `questions.ts` (question kinds, distractors, fairness), `schedule.ts` (spaced review), `learning.ts` (answer → scheduler), `course.ts` (introductions, review selection, lesson readiness), `mastery.ts`, `status.ts`, `progress.ts`, `habit.ts` | `docs/SCHEDULING.md`, `docs/CURRICULUM.md`. |
+| Encounters and boss trials | `encounters.ts`, `trials.ts`, `trialgen.ts`, `scenegen.ts`, `nouns.ts`, `support.ts`, `recent.ts` | `docs/CONTEXTUAL_ENCOUNTERS.md`. |
+| Save | `save.ts` (load, sanitise, migrate), `backup.ts` (export/import), `types.ts` | See §3. |
+| Content (data) | `src/content/*.json`; loaders and rules in `entries.ts`, `index.ts`, `validate.ts`, `validateCurriculum.ts`, `pinyin.ts`, `recordings.ts`, `provenance.ts`, `curriculumReport.ts`; `src/data.ts` (normalised words, enemies, bosses, gear, curricula) | `docs/CONTENT_GUIDE.md`. |
+| Audio | `src/audio.ts` (sound effects, haptics), `src/wordAudio.ts` (recording or TTS per entry) | |
+| Source layer and review screen | `src/sources/*` (types, matching, comparison, assessments, changesets), `src/review/*`, `public/sources/` (imported data) | `docs/SOURCES.md`. |
+| Tools | `tools/validate-content.ts`, `content-inventory.ts`, `curriculum-report.ts`, `vocab-candidates.ts`, `simulate.ts`, `source-*.ts`, `tools/sources/*` (importer, adapters), `layout-check.mjs`, `brief-reporter.mjs`, `make_pixel_assets.py`, `make_boss_sprites.py` | Run with `npm run …` or `node tools/…`. |
 
-### Main modules
-- `src/main.tsx`: creates/mounts the React app and imports styles.
-- `src/App.tsx`: owns player/save state, combat, questions, rewards, inventory/wordbook drawers and most interface rendering.
-- `src/data.ts`: typed word records plus static enemy and gear lists.
-- `src/game/PixelScene.ts`: Phaser scene. It draws a grid-like dungeon, torches, a simple hero and slime using `Graphics`; tweens provide idle motion and hit feedback.
-- `src/styles.css`: colors, layout, panels, buttons, cards, feedback states and responsive rules.
-- `vite.config.ts`: development/build configuration and PWA plugin.
+### State ownership and the answer path
 
-### Current features in the code
-- 30 starter Chinese vocabulary records.
-- Question categories: meaning and pinyin are represented in the word data, while the app has question-type state that also includes character. Check the current data and UI behavior before expanding question modes.
-- Three enemy definitions: Moss Slime, Ember Imp and Cave Bat.
-- Four gear definitions: Copper Blade, Scholar Charm, Mossy Vest and Lucky Coin.
-- Combat, HP, enemy HP, correct/incorrect answer feedback, XP, gold and progression.
-- Potions, gear bonuses, learned-word tracking and a wordbook drawer.
-- Local persistence under `hanzi-hunters-save-v1`.
-- Responsive React/CSS UI and Phaser canvas scene.
+React owns all game state (`Saved` plus transient battle state in `App.tsx`); Phaser only renders. Every save change goes
+through `withLearning` (`save.ts`), so entry peaks and lesson completion update in the same state update as mastery.
 
-### Not implemented / not to be assumed
-- The full-screen illustrated start/menu screen from the concept.
-- A production-quality pixel art sprite atlas, tileset or animated sprite sheets.
-- Full map navigation, room selection, branching dungeon generation or treasure exploration.
-- A complete equipment system with mutually exclusive slots, item stats, selling or crafting.
-- Enemy-specific abilities, boss fights, skill trees or a robust tutorial.
-- Accounts, cloud saves, analytics, multiplayer or server-side data.
-- A complete spaced-repetition system or curriculum aligned to HSK standards.
-- Verified production PWA/offline behavior.
+An answer: `buildQuestion` / `chooseKind` (`questions.ts`) make the question from a word picked by `selectReview` / introduced by
+the course (`course.ts`) → the player taps once (buttons lock until feedback is dismissed) → `resolveAnswer` (`rules.ts`) applies
+damage, hearts and boss effects → `applyAnswer` (`learning.ts`) updates the word's scheduler (`schedule.ts`) → the save is written
+to `localStorage`.
 
-Some of these may appear in the concept mockup but are not part of the current build.
+## 3. Persistence
 
-## 3. Existing game loop and mechanics
+| Key | Contents | Rules |
+|---|---|---|
+| `hanzi-hunters-save` | The game save, `version: 2` (`SAVE_VERSION`). Field list in `docs/GAME_DESIGN.md` (Save format). | Every field is validated on load (`sanitizeSave`); v1 saves are migrated once (`docs/SCHEDULING.md`, Migration); optional fields (`courses`, `peak`, encounter and trial state) are re-derived or dropped safely when missing or invalid. Older keys (`hanzi-hunters-save-v1`, `-v2`, from before expeditions) are deleted on start and never read. |
+| `hanzi-hunters-settings-v1` | Player preferences (`src/settings.ts`). | Separate from the save: resetting or importing progress never changes them. |
+| `hanzi-hunters-review-v2:<source>` | Review-screen drafts (`src/review/store.ts`). | Separate from the game; v1 drafts are migrated, unreadable drafts backed up. |
 
-Read `src/App.tsx` for exact logic before changing numbers. The following is a high-level description; implementation details may need balancing.
+Backups: Settings → App & data exports/imports the save (`backup.ts`, accepts save versions 1–2). Progress is keyed by stable
+entry id, never by array position or Chinese text.
 
-1. The player sees an enemy and a Chinese word.
-2. The player chooses an answer from a set of options.
-3. Correct answers attack the enemy and never cost a heart; an incorrect answer deals no damage and costs exactly one heart unless protected (first practice of a new word, then second-chance charges). Zero hearts ends the run (see `docs/GAME_DESIGN.md`, Hearts).
-4. The game shows feedback, the correct answer and a short learning note.
-5. Defeating an enemy awards XP and gold and may award gear.
-6. XP contributes to leveling. Levels add attack only (never hearts or healing).
-7. Gear bonuses affect attack, maximum hearts (cap 8), hints, XP, mastery damage or gold. Second chances (max 3) come from upgrades and last the whole expedition.
-8. Potions restore one heart (never used at full hearts). Clearing a floor restores a heart only with the Second Wind upgrade. An expedition is 5 floors and is won by beating the final boss.
-9. Correct answers can add a Hanzi to the learned-word list; the wordbook shows learned entries.
-10. Progress is saved in the current browser. Defeat/restart behavior retains some permanent progress as described in the README and code.
+## 4. Quality checks
 
-### Combat review checklist
-- Ensure answer controls disable after the first tap until feedback is dismissed.
-- Ensure enemy death, player defeat and victory states cannot overlap.
-- A correct answer never costs a heart; a wrong one costs exactly one (unless protected) and never damages the enemy.
-- Check heart clamping at 0 and the maximum, including after gear swaps (a higher maximum is not filled) and level-ups (no healing).
-- Verify enemy HP scaling by floor and the displayed enemy HP denominator agree.
-- Verify rewards are awarded exactly once per enemy.
-- Verify random gear drops are understandable (only gear you do not own yet can drop; no duplicate conversion).
-- Verify that a restart does not unintentionally reset permanent progress or keep stale battle state.
+- **Automated:** `npm run typecheck` (src, tools and tests). `npm run test:brief` (Node's test runner; rules, questions and fairness,
+  scheduler, course, saves and migrations, content audits, sources, balance guardrails), including three tests that enforce
+  conventions: `conventions.test.ts` (pure modules use no React/Phaser/browser globals; Phaser only in the scene; no clock in the
+  scheduling core; browser storage only in `App.tsx` / `ReviewApp.tsx`; nothing below 360 px; no code marks content human-reviewed),
+  `generated.test.ts` (generated files current; imported source data not edited by hand) and `docs.test.ts` (paths named in docs
+  exist; every doc is on the README map). `npm run validate:content`. `npm run build`. CI runs all of them before deploying.
+- **Layout stability:** `node tools/layout-check.mjs` checks that the battle screen does not move or resize when you answer.
+- **Balance:** `node tools/simulate.ts --report` (seeded bot; model results, not evidence about real learners).
+- **Browser check:** one check at 360 px when the UI changed (see `AGENTS.md`).
 
-## 4. Save data and data structures
+Review checklist for combat and learning changes:
+- Only one answer resolves per question (rapid taps); answer buttons stay locked until feedback is dismissed.
+- A right answer never costs a heart; a wrong one costs exactly one unless protected (practice, blessing, calm, second chance),
+  and never damages the enemy. Hearts clamp at 0 and at the maximum (a higher maximum adds an empty heart).
+- Rewards are paid exactly once per enemy; kill, defeat, floor-clear and victory states never overlap.
+- Every question has exactly one correct option; no accepted variant, connected-speech form or overlapping meaning is offered
+  as wrong (`tests/questions.test.ts`, `tests/multiword.test.ts`).
+- A reload mid-run resumes correctly; a corrupt or old save loads safely; ending a run keeps upgrades and word progress only.
 
-`App.tsx` defines the `Saved` state shape and `SAVE_KEY = 'hanzi-hunters-save-v1'`. The current save includes fields such as level, XP, gold, HP/max HP, attack, learned Hanzi, gear names, potions and floor. The precise shape in source wins if this document becomes outdated.
+## 5. What exists (summary)
 
-### Save safety
-- `localStorage` may contain malformed or older data. Keep parsing defensive and validate fields before trusting them.
-- If the schema changes, introduce a migration or a new key with migration from the old key. (Current: `version: 4`; v3 added per-curriculum lesson completion `courses`, v4 entry readiness history `peak`; older saves are migrated on load. See `docs/CURRICULUM.md` §4.)
-- Do not store credentials or sensitive personal data.
-- Add an in-game reset/save-delete option only with clear confirmation.
-- Consider a small save validation function and tests before adding more state.
+Expeditions with hearts, five floor bosses with trials, five depths, a permanent upgrade tree, gear with cosmetic rarity, the
+Warden Sigil relic; a curriculum engine with the 100-entry beginner course; a spaced-review scheduler; about ten question kinds
+with fairness rules; contextual scenes; new-word cards, explanations, a wordbook, floor/defeat summaries; procedural sound and
+haptics; PWA update flow and save backups; an Anki import pipeline with a review screen, AI-assisted assessments and a draft
+expansion proposal (`docs/proposals/`). Details: `docs/GAME_DESIGN.md` and the topic docs. History: `CHANGELOG.md`.
 
-### Vocabulary data
-Each word is defined in `src/data.ts`. Entries include Hanzi, pinyin, meaning, prompt type, answer choices, answer and a learning note. Maintain consistent field names and keep answer strings exactly aligned with the choices. Avoid duplicated Hanzi keys unless intentional. Tone marks and Unicode must survive editing/building.
+## 6. Open work
 
-Before expanding vocabulary:
-- Verify each character, pinyin, tone and meaning.
-- Keep distractors plausible but unambiguously wrong for the question.
-- Explain polysemy/context where relevant.
-- Avoid treating simplified/traditional variants as interchangeable without a decision.
-- Have a qualified speaker/educator review content before release.
+- **Content review:** all Mandarin (entries, notes, examples, sentence questions, scenes, the course order, source assessments)
+  is an AI-assisted draft until a Mandarin teacher reviews it. `npm run validate:content` prints what is unreviewed.
+- **Vocabulary growth:** the next batch (`docs/vocabulary-toolkit/`), possibly from the draft proposal
+  `docs/proposals/xiehanzi-hsk1.md`. Other meanings of words are deliberately not taught yet (`docs/SENSES.md`).
+- **Not supported yet:** erhua syllables, entries longer than 8 characters, new question formats beyond the sentence (particle)
+  question (ideas: `docs/GAME_FEEL_AND_PROGRESSION.md` §3), traditional characters (not planned).
+- **Art:** the sprite set is small; the Ink Scribe, Mirror Trickster, Echo Wraith and Shield Golem are recolours, the Cavern
+  Warden reuses the Golem sprite with a glow (`ASSET_PIPELINE.md`).
+- **Release readiness:** install/offline behaviour on real iOS and Android devices is not verified; fonts are loaded from Google
+  Fonts and must be self-hosted before any offline claim (`ASSET_CREDITS.md`); an accessibility pass; a data/privacy policy before
+  any backend or account feature.
+- **Playtests:** balance and scheduling numbers come from a bot; real learners have not been measured.
 
-## 5. UX and visual direction
+## 7. Reporting back
 
-### Target style
-A polished, cohesive 16-bit/pixel-art fantasy RPG: deep navy/charcoal dungeon backgrounds, warm torchlight, mossy greens, readable gold highlights, chunky pixel forms and high-contrast UI. The interface should feel handcrafted but remain highly legible on small displays.
-
-### Current reality
-- The scene is generated from Phaser `Graphics`, not sprites.
-- The UI uses CSS, text, Unicode symbols and emoji for many icons.
-- No production sprite sheets, character illustrations, dungeon tiles, icon atlas or illustrated screens are included.
-- A generated promotional collage is a **visual concept**, not a real screenshot and not an asset source. Do not claim the game currently matches it.
-
-### Mobile UX requirements
-- Portrait layout should be the primary experience.
-- Core answer options must be comfortably tappable (target roughly 44 CSS px minimum height where practical).
-- Keep Hanzi prominent and pinyin/meaning readable; do not shrink Chinese text to fit a cramped panel.
-- Avoid horizontal scrolling at 360–430 CSS px widths (360 px is the narrowest supported width).
-- Respect mobile browser safe areas and viewport changes.
-- Ensure scrollable drawers/panels remain reachable when the on-screen keyboard or browser chrome changes viewport height.
-- Use semantic buttons, visible focus states and accessible labels.
-- Do not rely on color alone to indicate correct/incorrect answers.
-- Audio playback should gracefully handle browsers that lack a suitable Chinese voice.
-
-## 6. Architecture guidance
-
-### Keep state ownership clear
-React currently owns the game state and the UI; Phaser renders the scene and receives visual feedback through a scene reference. Keep this separation unless a deliberate refactor is justified. Do not make Phaser the second authority for HP, current enemy, XP or inventory.
-
-### Suggested future organization (only when needed)
-As complexity grows, consider extracting:
-- `src/game/gameTypes.ts`: shared types.
-- `src/game/gameRules.ts`: pure combat/reward/progression functions.
-- `src/game/save.ts`: safe load, validation, migration and save.
-- `src/components/`: reusable React panels/buttons/health bars.
-- `src/assets/`: licensed images, sprite sheets and audio, with source/credits.
-
-Avoid broad restructuring before getting a baseline build and tests in place.
-
-## 7. Prioritized roadmap
-
-### Milestone 0 — Establish a trustworthy baseline
-- [ ] Install dependencies successfully.
-- [ ] Run `npm run build`; fix TypeScript/Vite errors.
-- [ ] Run the dev server and test the battle loop manually.
-- [ ] Inspect browser console and mobile responsiveness.
-- [ ] Record baseline known issues and screenshots of the actual running app.
-
-**Acceptance:** clean production build; no blocking runtime errors; documented test results.
-
-### Milestone 1 — Stabilize the game loop
-- [ ] Review combat/reward logic for edge cases and duplicate rewards.
-- [ ] Add automated tests for pure combat/progression functions once extracted.
-- [ ] Validate local save fields and add migration-safe handling.
-- [ ] Ensure question prompt type, displayed prompt and answer options always agree.
-- [ ] Improve error/empty states and provide a safe reset option.
-
-**Acceptance:** repeatable fights, predictable rewards, valid saves and no softlocks.
-
-### Milestone 2 — Pixel-art proof of concept
-- [ ] Create/acquire licensed hero, slime, floor tile, wall tile, torch and chest assets.
-- [ ] Establish a consistent pixel grid, palette and export conventions.
-- [ ] Integrate one hero and one enemy in Phaser using real texture assets.
-- [ ] Confirm texture scaling remains crisp (no unwanted smoothing) at phone sizes.
-- [ ] Preserve a fallback if an asset fails to load.
-
-**Acceptance:** one complete encounter looks cohesive and remains responsive; assets have clear provenance/licensing.
-
-### Milestone 3 — Full visual pass
-- [ ] Expand environment tiles and enemy/hero animations.
-- [ ] Replace emoji-dependent core UI icons with consistent art where appropriate.
-- [ ] Create UI panel, button, health bar, reward and item icon treatments.
-- [ ] Improve combat animations, hit effects and reward transitions.
-- [ ] Add actual screenshots to documentation only after capturing the running game.
-
-**Acceptance:** coherent style across scene and UI; mockup is treated as a guide, not a promise.
-
-### Milestone 4 — Learning design
-- [ ] Review and expand vocabulary with educational review.
-- [ ] Add explicit question modes (Hanzi→meaning, Hanzi→pinyin, pinyin→Hanzi, listening) only when prompts/options are unambiguous.
-- [ ] Consider review scheduling and revisit previously missed words.
-- [ ] Add a first-session tutorial and clear explanations of tones/pinyin.
-- [ ] Make speech support robust across mobile browsers.
-
-**Acceptance:** beginner can understand the task without prior Chinese knowledge; content is reviewed.
-
-### Milestone 5 — Product readiness
-- [ ] Decide on PWA scope and test install/offline behavior on iOS and Android.
-- [ ] Deploy HTTPS preview and test on real devices.
-- [ ] Add automated tests and a simple CI build if appropriate.
-- [ ] Add accessibility pass, performance checks and content/license credits.
-- [ ] Define data/privacy approach before any backend/account feature.
-
-**Acceptance:** documented device/browser matrix, reliable build/deploy and clear privacy/content policies.
-
-## 8. Manual test plan
-
-Run these after baseline build and after relevant changes:
-
-1. Load the game in a fresh browser; confirm default stats and first encounter render.
-2. Answer correctly; verify damage, feedback, learning note and progression.
-3. Answer incorrectly; verify the correct answer is revealed and exactly one heart is lost (or "Practice · no heart lost" / "Second chance · heart saved").
-4. Tap answer buttons rapidly; verify only one answer resolves.
-5. Defeat an enemy; verify victory state, XP, gold and any gear reward are applied once.
-6. Continue to next enemy; verify hearts carry over and the enemy HP display resets correctly.
-7. Use a potion below full hearts; verify +1 heart and the potion count. At full hearts / zero potions it must be disabled.
-8. Open gear and wordbook drawers; close them and verify layout is intact.
-9. Learn a word, refresh the page, and verify saved progress returns.
-10. Corrupt/remove the local save and reload; verify safe fallback instead of a crash.
-11. Reach defeat and restart; verify intended permanent progression persists and transient battle state resets.
-12. Test speech playback on supported browsers and confirm graceful failure when unavailable.
-13. Check at 360 CSS px (the narrowest supported width; see AGENTS.md for when to run a browser check); inspect horizontal overflow and tap targets.
-14. Test desktop layout and browser console.
-15. Run `npm run build` after code changes.
-
-## 9. Release / reporting expectations
-
-When handing work back, include:
-- What changed and why.
-- Files added/changed.
-- Commands run and pass/fail results.
-- Manual tests performed and device/browser used.
-- Known limitations and next recommended task.
-- Asset provenance and licenses for any new art/audio/fonts.
-
-Never state the build or real-device behavior is verified unless the corresponding command/device test was actually completed.
+When handing work back, include: what changed and why; files changed; commands run with pass/fail results; the browser check
+(if the UI changed) and anything that still needs a real device; known limitations and the next recommended step; provenance and
+licences of any new art, audio, fonts or content. Never say a build, test or device behaviour is verified unless it was.

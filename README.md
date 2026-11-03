@@ -1,100 +1,82 @@
-# Hanzi Hunters — developer handoff
+# Hanzi Hunters
 
-Hanzi Hunters is a mobile-first browser-game prototype that teaches absolute beginners Mandarin Chinese through short RPG encounters. This repository is a **vertical slice / work in progress**, not a finished game.
+A mobile-first browser game that teaches complete beginners simplified Mandarin Chinese through short roguelite RPG
+expeditions. You answer questions about words to fight monsters; your word knowledge persists between runs and is scheduled
+for spaced review. Work in progress: playable, but the Mandarin content and teaching order are AI-assisted drafts that a
+Mandarin teacher has not reviewed yet.
+
+**New here (person or coding agent)? Read `AGENTS.md` first**, then `DEVELOPMENT_BRIEF.md` (architecture and current state),
+then the doc for your task from the map below.
 
 ## Quick start
 
-### Requirements
-- Node.js **20.19+** (or a current supported Node.js LTS release)
-- npm (bundled with Node.js)
-- Internet access for the first dependency install
-
-### Install and run
-From the project root:
+Requirements: Node.js **22.18+** (tests and tools run TypeScript directly via Node's type stripping; the source importer also
+uses `node:sqlite`), npm.
 
 ```bash
 npm install
-npm run dev
+npm run dev          # http://localhost:5173 (also reachable from a phone on the same Wi-Fi)
+npm run build        # TypeScript project build + Vite production build
+npm run preview      # serve the production build
 ```
 
-Vite prints a local URL, usually `http://localhost:5173`. The dev script already binds to `0.0.0.0`, so the network URL Vite prints can be opened on a phone connected to the same Wi-Fi as the development computer. If the phone cannot connect, check the computer firewall and make sure both devices are on the same network.
+| Command | What it does |
+|---|---|
+| `npm run typecheck` | TypeScript check of `src`, `tools` and `tests` (the build checks only `src`; Node runs tests and tools without checking types). |
+| `npm test` / `npm run test:brief` | All tests (`tests/*.test.ts`, Node's test runner); `test:brief` prints only failures and a summary. `npm run test:brief -- tests/x.test.ts` runs one file. |
+| `npm run validate:content` | Validates everything in `src/content/` (words, explanations, sentence questions, curricula, encounters, trials, source decisions, assessments). |
+| `npm run curriculum` | Prints the effective teaching order of the active course. |
+| `npm run inventory` | Regenerates `docs/content-inventory.json` (what content exists, and the validator limits). |
+| `npm run vocab:candidates -- 字 词` | Checks candidate words against existing entries, HSK levels and CC-CEDICT (see `docs/vocabulary-toolkit/`). |
+| `node tools/simulate.ts --report` | Balance simulator (seeded bot). |
+| `npm run source:import` / `source:assess` / `source:apply` / `source:promote` | Imported learning sources and the review screen (`docs/SOURCES.md`). |
 
-### Verify a production build
-```bash
-npm run build
-npm run preview
-```
+Deployment: GitHub Pages from `main` (`.github/workflows/pages.yml` runs validation, tests and the build); pull requests get a
+preview (`pr-preview.yml`). The source review screen is at `<site>/review/` (not linked from the game).
 
-`npm run build` runs TypeScript project builds followed by Vite. **Build status: verified** (see `CHANGELOG.md` for exactly what was run). `npm test` runs the rules/save/content/curriculum tests (no extra dependency; needs Node 22.18+ for built-in TypeScript stripping).
+## What the game is today
 
-## Project map
+- **Expeditions:** 5 floors of 4 fights, each floor ending in a boss with its own rule and a one-question trial; a final boss;
+  5 depths with harder question mixes. Hearts instead of HP: a wrong answer costs one heart, a right one never does.
+  Gold is banked when a run ends and buys permanent upgrades at camp. Full rules: `docs/GAME_DESIGN.md`.
+- **Learning:** a course of lessons (`src/content/curricula.json`, default: `beginner-mandarin-100`, 100 entries in 20 lessons);
+  new words are introduced on a card, then asked in about ten question kinds (meaning, pinyin, written form, listening,
+  homophones, look-alikes, particle sentences). Each word has a level 0–5 (New … Retained, Mastered) driven by a spaced-review
+  scheduler. Short contextual scenes between floors use only words the player knows.
+- **Content:** 127 entries in `src/content/words.json` (the course teaches 100), with notes, explanations and examples. Every entry
+  teaches one meaning (`docs/SENSES.md`).
+- **Tech:** React 19 + TypeScript + Vite; Phaser 3 draws the battle scene with small original pixel-art sprites; PWA (offline
+  cache) via `vite-plugin-pwa`; saves in `localStorage` with export/import; browser text-to-speech for pronunciation.
+- **Not there yet:** a teacher review of the Mandarin, real-device verification of install/offline behaviour, production art
+  beyond the small sprite set, other meanings of words, accounts or cloud saves (there is no backend).
 
-```text
-hanzi-hunters/
-├── AGENTS.md                 # instructions for coding agents
-├── DEVELOPMENT_BRIEF.md      # product, architecture, state and roadmap handoff
-├── ASSET_PIPELINE.md         # visual-art requirements and integration guidance
-├── ASSET_CREDITS.md          # provenance/licence of every asset
-├── CHANGELOG.md              # what changed, how it was tested, what is still missing
-├── tools/make_pixel_assets.py# generates public/assets/*.png (Pillow; output is committed)
-├── tests/rules.test.ts       # node --test suite for src/game/rules.ts and data integrity
-├── README.md                 # setup and overview
-├── package.json              # scripts and dependencies
-├── index.html                # page shell and document metadata
-├── vite.config.ts            # Vite + React + PWA plugin configuration
-├── tsconfig.json
-├── tsconfig.app.json
-├── public/
-│   └── favicon.svg
-└── src/
-    ├── main.tsx              # React entry point
-    ├── App.tsx               # game UI, battle flow, progression and local save
-    ├── data.ts                # vocabulary, enemy and gear data
-    ├── styles.css             # responsive visual styling
-    └── game/
-        ├── rules.ts           # pure combat/progression/save/question logic (tested)
-        └── PixelScene.ts      # Phaser scene: textured dungeon, sprites, animations, fallback
-```
+## Documentation map
 
-## Current prototype features
-- React UI and a Phaser-rendered dungeon encounter scene.
-- Three enemy definitions and four gear definitions in `src/data.ts`.
-- Starter vocabulary (30 entries) containing Hanzi, pinyin with tone marks, English meanings, question prompts, answer choices and learning notes.
-- Multiple-choice questions; correct answers deal more damage than incorrect answers.
-- XP, levels, gold, potions, gear bonuses, a wordbook and browser-local save data.
-- Browser speech synthesis for pronunciation where the browser has a suitable voice.
-- Responsive layout and Vite PWA plugin configuration. Production install/offline behavior still requires testing.
+| If you are working on… | Read |
+|---|---|
+| Anything (rules for agents, testing workflow, definition of done) | `AGENTS.md` |
+| What is settled and why, and what is still open for the owner | `QUESTIONS-AND-DECISIONS.md` |
+| Bugs whose cause was not where the symptom pointed (read before debugging something odd) | `docs/PITFALLS.md` |
+| Architecture, modules, state ownership, saves overview, open work | `DEVELOPMENT_BRIEF.md` |
+| Game rules: expeditions, hearts, bosses, upgrades, gear, balance, save format | `docs/GAME_DESIGN.md` |
+| Word levels and spaced review | `docs/SCHEDULING.md` |
+| Scenes between floors and boss trials | `docs/CONTEXTUAL_ENCOUNTERS.md` |
+| Words, explanations, examples, sentence questions (formats and rules) | `docs/CONTENT_GUIDE.md` |
+| One meaning per entry now; other meanings later (intent) | `docs/SENSES.md` |
+| Teaching order, lessons, course progress | `docs/CURRICULUM.md` |
+| Choosing the next batch of vocabulary | `docs/vocabulary-toolkit/README.md` |
+| Handing a content task to another agent | `docs/AGENT_PROMPT.md` (small edits), `docs/vocabulary-toolkit/NEXT-BATCH-PROMPT.md` (a new batch) |
+| Imported sources (Anki decks), the review screen, assessments | `docs/SOURCES.md`; proposals in `docs/proposals/` |
+| Art, sprites, asset licences | `ASSET_PIPELINE.md`, `public/assets/README.md`, `ASSET_CREDITS.md` |
+| Game-feel principles and ideas not built yet | `docs/GAME_FEEL_AND_PROGRESSION.md` |
+| What changed and how it was tested (history) | `CHANGELOG.md` |
 
-## Important limitations
-- The Phaser scene now uses a small original pixel-art set (hero, 3 enemies, tiles, torch, chest, UI frame). It is a proof of concept, **not** the full asset pack shown in the concept mockup; UI icons are still emoji.
-- Screenshots in `docs/screenshots/` are of the real running game (headless Chromium, mobile emulation).
-- The mockup is a visual target/reference, not a screenshot of the running application and not a bundle of production assets.
-- There is no backend, account system, cloud save, analytics or multiplayer.
-- Local progress is stored in the browser using `localStorage`; different browsers/devices do not share progress.
-- Gear is a prototype system: owned items are unlocked/equipped and bonuses stack. There is no full inventory/equipment-slot management yet.
-- Vocabulary is a starter set, and the shipped curriculum order is provisional, not a reviewed course. Have a qualified Mandarin educator review linguistic content and the teaching order before public release.
-- PWA setup is present, but HTTPS deployment, installability, offline behavior and mobile-device behavior have not been verified.
+When docs and code disagree, the code is right; fix the doc in the same change.
 
-## Suggested first task for a new agent
-1. Read `AGENTS.md`, `DEVELOPMENT_BRIEF.md` and `ASSET_PIPELINE.md`.
-2. Run `npm install`, `npm run build` and `npm run dev`; record and fix any existing errors.
-3. Test the main combat loop, save/load, mobile layout and browser console.
-4. Only then begin the next milestone from the development brief.
+## For players
 
-## Seeing the newest version (without losing progress)
-The game caches itself for offline use, so a normal reload can show an old version. In the game: **⚙ Settings → App & data → Update app** (or tap **Update** on the "new version available" banner). Your progress is stored separately and is not deleted. **Export progress** there saves a backup file you can import again, for example before clearing browser data. Do not use the browser's "Clear site data": it deletes the save.
-
-## Adding words and explanations
-Vocabulary (single characters, multi-character words, grammar particles), example sentences, sentence questions and their sources are JSON files in `src/content/`. **The teaching order is a separate curriculum file** (`src/content/curricula.json`, see **`docs/CURRICULUM.md`**); the order of `words.json` does not matter. The shipped curriculum is a provisional compatibility course; `docs/CURRICULUM.md` §7 explains how to install the reviewed 100-word course. `npm run curriculum` prints the effective teaching order. See **`docs/CONTENT_GUIDE.md`** (format, rules, checklist and a ready-made prompt for another agent). Validate with `npm run validate:content`; preview any word with `/?word=她`. To hand content work to another agent use `docs/AGENT_PROMPT.md`; `npm run inventory` regenerates `docs/content-inventory.json` (what exists now).
-
-## Importing sources and the review screen
-External material (first: the *A Course in Contemporary Chinese* Anki deck) is imported into `public/sources/` with `npm run source:import`, compared with the game on the review screen at **`<site>/review/`** (not linked from the game; decisions are saved in the reviewer's browser and exported as a changeset), and applied with `npm run source:apply`. The screen keeps matching evidence, editorial assessments (`src/content/sourceAssessments.json`, managed with `npm run source:assess`) and reviewer decisions apart; an assessment is advice and never changes content. Importing or linking never makes anything playable by itself. See **`docs/SOURCES.md`** §5.
-
-## Playing on a phone
-Use the ⛶ button (top right) for fullscreen. For the best experience install it: Android Chrome/Brave menu → *Install app* / *Add to Home screen*; iPhone Safari Share → *Add to Home Screen*. The installed app runs without browser bars.
-
-## Game loop (0.2)
-See `docs/GAME_DESIGN.md`. Short version: fight through floors of 4 enemies (last one is an elite), answer questions to deal damage, die, bank your gold, buy permanent upgrades at camp, and restart at level 1 with no gear — your word mastery persists and unlocks harder question types.
-
-## Controls / game loop
-Choose one of the answer options for the displayed Chinese word. **A correct answer attacks the enemy and never costs a heart. A wrong answer costs one heart** (your first practice of a new word is free, and second-chance upgrades can save a heart). At zero hearts the expedition ends; a potion restores a heart (floors restore hearts only with the Second Wind upgrade). An expedition is 5 floors: beat the Cavern Warden on floor 5 to win, which unlocks the next of 5 depths (harder question mix, more gold). Defeating enemies awards XP and gold, with a chance of gear. Full rules: `docs/GAME_DESIGN.md` (Hearts). The wordbook lists words learned through correct answers. If the player is defeated, they can restart the run while retaining persistent progression as implemented in the prototype.
+- **Newest version without losing progress:** ⚙ Settings → App & data → **Update app** (or the "new version available" banner).
+  Progress is stored separately. **Export progress** there makes a backup file. Do not use the browser's "Clear site data": it
+  deletes the save.
+- **On a phone:** ⛶ (top right) for fullscreen, or install it: Android Chrome/Brave menu → *Install app*; iPhone Safari Share →
+  *Add to Home Screen*.

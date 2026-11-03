@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { BRANCHES, UPGRADES, branchNodes, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { GEAR } from '../src/data.ts'
+import type { Meta } from '../src/game/types.ts'
 
 test('cost curve rises with tier and is the same shape in every branch', () => {
   assert.deepEqual([1, 2, 3, 4, 5].map(upgradeCost), [25, 75, 150, 250, 375])
@@ -10,7 +11,7 @@ test('cost curve rises with tier and is the same shape in every branch', () => {
 })
 
 test('tiers must be bought in order and cost gold', () => {
-  const meta = { gold: 1000, upgrades: [], bestFloor: 1, runs: 0 }
+  const meta: Meta = { gold: 1000, upgrades: [], bestFloor: 1, runs: 0, wins: 0, depthCleared: 0 }
   assert.equal(buyUpgrade(meta, 'W2'), null, 'tier 2 locked')
   const a = buyUpgrade(meta, 'W1')!; assert.deepEqual(a.upgrades, ['W1']); assert.equal(a.gold, 975)
   assert.equal(buyUpgrade(a, 'W1'), null, 'cannot buy twice')

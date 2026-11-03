@@ -2,14 +2,16 @@
 // new entry, pick a recording or a definition). Decisions are saved in this browser only, exported as a changeset file and
 // applied to the repository with `npm run source:apply`. Nothing here changes the game directly. Workflow: docs/SOURCES.md.
 // Each candidate pair shows three separate things: matching EVIDENCE (computed), the MEANING and WORDING ASSESSMENTS (stored in
-// sourceAssessments.json, with provenance and freshness), and the reviewer's own DECISIONS (drafts here, then a changeset).
+// src/content/assessments/<source>.json, with provenance and freshness), and the reviewer's own DECISIONS (drafts here, then a
+// changeset). Imported content, AI-assisted assessments, mapping decisions, selected game content and curriculum activation are
+// shown as separate things.
 import { useEffect, useMemo, useState } from 'react'
 import wordsJson from '../content/words.json'
 import mappingsJson from '../content/sourceMappings.json'
 import recordingsJson from '../content/recordings.json'
 import selectionsJson from '../content/selections.json'
 import sourcesJson from '../content/sources.json'
-import assessmentsJson from '../content/sourceAssessments.json'
+import curriculaJson from '../content/curricula.json'
 import { WORDS } from '../data'
 import { EXPLANATIONS } from '../content/index'
 import { audioReliable } from '../content/entries'
@@ -18,12 +20,12 @@ import { eligibleUses, readingRelation } from '../content/recordings'
 import { STRENGTH_LABEL, type Suggestion } from '../sources/match'
 import { sourceDefinition } from '../sources/compare'
 import {
-  candidateComparisons, coverage, coverageLine, FRESHNESS_LABEL, METHOD_LABEL, SCOPE_LABEL, shortStatus, WORDING_NOT_ASSESSED,
-  type AssessmentsFile, type Comparison
+  candidateComparisons, coverage, coverageLine, emptyAssessments, exampleFreshness, FRESHNESS_LABEL, METHOD_LABEL, recordFreshness, SCOPE_LABEL,
+  shortStatus, upgradeAssessments, WORDING_NOT_ASSESSED, type AssessmentsFile, type Comparison, type ExampleAssessment, type Freshness, type RecordAssessment
 } from '../sources/assessment'
 import { searchScore } from '../sources/search'
 import { draftFromRecord, neutralPositions, type RepoState } from '../sources/changeset'
-import type { ContentItem, EntryDraft, FieldSelection, Mapping, RecordingItem, RecordingUse, SelectedRecording, SourceIndex, SourceRecord } from '../sources/types'
+import type { ContentItem, EntryDraft, FieldSelection, Mapping, RecordingItem, RecordingUse, SelectedRecording, SentenceItem, SourceIndex, SourceRecord } from '../sources/types'
 import type { RawWord, Sources, Word } from '../content/types'
 import {
   decision, describeOp, dropOp, effectiveMapping, effectiveRecording, effectiveSelection, fieldOp, loadReviewer, loadWorkingWithNotice,
@@ -34,13 +36,24 @@ const BASE = import.meta.env.BASE_URL
 const SOURCES = sourcesJson as unknown as Sources
 /** The committed state this build was made from ("applied to the game"). */
 const REPO: RepoState = { words: wordsJson as unknown as RawWord[], mappings: mappingsJson as unknown as RepoState['mappings'], recordings: recordingsJson as unknown as RepoState['recordings'], selections: selectionsJson as unknown as RepoState['selections'] }
-const ASSESSMENTS = assessmentsJson as unknown as AssessmentsFile
+/** Assessment files, one per source, loaded only for the source being reviewed. */
+const ASSESSMENT_FILES = import.meta.glob('../content/assessments/*.json', { import: 'default' }) as Record<string, () => Promise<unknown>>
+const loadAssessments = async (source: string): Promise<AssessmentsFile> => { const f = ASSESSMENT_FILES[`../content/assessments/${source}.json`]; return f ? upgradeAssessments((await f()) as AssessmentsFile) : emptyAssessments(source) }
+/** Entries of the active (default) course and their lesson: curriculum activation, separate from everything else here. */
+const COURSE = (() => {
+  const c = curriculaJson as unknown as { default: string; curricula: { id: string; title: string; units: { lessons: { id: string; title?: string; introductions: { entryId: string }[] }[] }[] }[] }
+  const cur = c.curricula.find(x => x.id === c.default)
+  const lessonOf = new Map<string, string>()
+  for (const u of cur?.units ?? []) for (const l of u.lessons) for (const i of l.introductions) lessonOf.set(i.entryId, `${l.id}${l.title ? ` (${l.title})` : ''}`)
+  return { title: cur?.title ?? c.default, lessonOf }
+})()
 const WORD_BY_ID = new Map(WORDS.map(w => [w.id, w]))
 const PAGE = 40
 const storage = (() => { try { return window.localStorage } catch { return null } })()
 
 type Filter = 'all' | 'unresolved' | 'linked' | 'new-candidate' | 'excluded' | 'reassess' | 'audio' | 'working'
   | 'no-match' | 'text-same' | 'text-different' | 'meaning-pending' | 'different-sense' | 'wording-pending' | 'wording-proposed' | 'uncertain-stale' | 'pronunciation'
+  | 'has-match' | 'new-cand' | 'first' | 'additional' | 'excluded-prop' | 'missing-short' | 'multi' | 'has-examples' | 'ex-mismatch' | 'audio-unknown' | 'rec-uncertain'
 /** Decision filters (what the reviewer decided). */
 const DECISION_FILTERS: [Filter, string][] = [['all', 'All'], ['unresolved', 'Unresolved'], ['linked', 'Linked'], ['new-candidate', 'New candidates'], ['excluded', 'Excluded'], ['reassess', 'Needs reassessment'], ['audio', 'Has audio'], ['working', 'Changed here']]
 /** Comparison filters: a record matches when ANY of its candidate pairs does. */
@@ -55,10 +68,32 @@ const COMPARISON_FILTERS: [Filter, string, (c: Comparison) => boolean][] = [
   ['pronunciation', 'Pronunciation differs', c => c.pronunciation.differs]
 ]
 const PREDICATE = new Map(COMPARISON_FILTERS.map(([f, , p]) => [f, p]))
+/** Record-level filters (record dispositions, source fields, examples, audio): a record matches on its own data. */
+type RecInfo = { ra?: RecordAssessment; raFresh?: Freshness; r: SourceRecord; examples: number; ex: { a: ExampleAssessment; fresh: Freshness }[]; audioUnknown: boolean; comparisons: Comparison[] }
+const RECORD_FILTERS: [Filter, string, (i: RecInfo) => boolean][] = [
+  ['has-match', 'Existing game match', i => i.comparisons.length > 0],
+  ['new-cand', 'New vocabulary candidate', i => i.raFresh === 'current' && i.ra?.disposition === 'new-candidate'],
+  ['first', 'Proposed first expansion', i => i.raFresh === 'current' && i.ra?.expansion === 'first'],
+  ['additional', 'Additional sense', i => i.raFresh === 'current' && (i.ra?.disposition === 'additional-sense' || !!i.ra?.senses?.some(s => s.status === 'not-taught' || s.status === 'separate-entry-proposed'))],
+  ['excluded-prop', 'Excluded from the proposal', i => i.raFresh === 'current' && i.ra?.disposition === 'excluded'],
+  ['missing-short', 'Missing short meaning', i => !!i.r.candidate.meaningMissing],
+  ['multi', 'Several meanings to separate', i => i.raFresh === 'current' && !!i.ra?.multipleSenses],
+  ['has-examples', 'Has examples', i => i.examples > 0],
+  ['ex-mismatch', 'Example / sense mismatch', i => i.ex.some(x => x.fresh === 'current' && x.a.verdict === 'other-sense')],
+  ['audio-unknown', 'Audio origin unknown', i => i.audioUnknown],
+  ['rec-uncertain', 'Record uncertain or outdated', i => (i.raFresh === 'current' && i.ra?.disposition === 'uncertain') || (!!i.ra && i.raFresh !== 'current') || i.ex.some(x => x.fresh !== 'current' || x.a.verdict === 'uncertain')]
+]
+const REC_PREDICATE = new Map(RECORD_FILTERS.map(([f, , p]) => [f, p]))
+const DISPOSITION_LABEL: Record<RecordAssessment['disposition'], string> = { match: 'Candidate match to an existing game entry', 'additional-sense': 'Additional sense of an existing word', 'new-candidate': 'New beginner vocabulary candidate', uncertain: 'Uncertain or incomplete', excluded: 'Excluded from the proposed beginner expansion' }
+const VERDICT_LABEL: Record<ExampleAssessment['verdict'], string> = { suitable: 'Suitable example', 'needs-editing': 'Suitable after editing', 'other-sense': 'Shows another sense', 'not-beginner': 'Not beginner-appropriate', uncertain: 'Uncertain' }
 const USE_LABEL: Record<RecordingUse, string> = { display: 'Play on word cards', listen: 'Listening: hear → pick the characters', listen2meaning: 'Listening: hear → pick the meaning', listen2pinyin: 'Listening: hear → pick the pinyin' }
 const LEVEL_ICON = { match: '✓', partial: '≈', mismatch: '✗', neutral: '·', unknown: '?' } as const
 
-type Loaded = { source: string; snapshot: string; records: SourceRecord[]; byKey: Map<string, SourceRecord>; recItems: Map<string, RecordingItem> }
+type Loaded = {
+  source: string; snapshot: string; records: SourceRecord[]; byKey: Map<string, SourceRecord>; recItems: Map<string, RecordingItem>
+  sentences: Map<string, SentenceItem[]>; assessments: AssessmentsFile
+  recAssess: Map<string, { a: RecordAssessment; fresh: Freshness }>; exAssess: Map<string, { a: ExampleAssessment; fresh: Freshness }[]>
+}
 
 export default function ReviewApp() {
   const [index, setIndex] = useState<SourceIndex | null>(null)
@@ -87,11 +122,20 @@ export default function ReviewApp() {
     setData(null); setSelected(null); setPage(0)
     Promise.all([
       fetch(`${BASE}sources/${sourceId}/records.json`).then(r => (r.ok ? r.json() : Promise.reject(new Error(`records.json: HTTP ${r.status}`)))),
-      fetch(`${BASE}sources/${sourceId}/content.json`).then(r => (r.ok ? r.json() : { content: [] })).catch(() => ({ content: [] }))
-    ]).then(([rec, con]: [{ snapshot: string; records: SourceRecord[] }, { content?: ContentItem[] }]) => {
+      fetch(`${BASE}sources/${sourceId}/content.json`).then(r => (r.ok ? r.json() : { content: [] })).catch(() => ({ content: [] })),
+      loadAssessments(sourceId)
+    ]).then(([rec, con, assessments]: [{ snapshot: string; records: SourceRecord[] }, { content?: ContentItem[] }, AssessmentsFile]) => {
       const recItems = new Map<string, RecordingItem>()
-      for (const c of con.content ?? []) if (c.type === 'recording' && c.provenance.record && !recItems.has(c.provenance.record)) recItems.set(c.provenance.record, c)
-      setData({ source: sourceId, snapshot: rec.snapshot, records: rec.records, byKey: new Map(rec.records.map(r => [r.key, r])), recItems })
+      const sentences = new Map<string, SentenceItem[]>(), sentenceById = new Map<string, SentenceItem>()
+      for (const c of con.content ?? []) {
+        if (c.type === 'recording' && c.provenance.record && !recItems.has(c.provenance.record)) recItems.set(c.provenance.record, c)
+        if (c.type === 'sentence' && c.provenance.record) { sentences.set(c.provenance.record, [...(sentences.get(c.provenance.record) ?? []), c]); sentenceById.set(c.id, c) }
+      }
+      const byKey = new Map(rec.records.map(r => [r.key, r]))
+      const recAssess = new Map((assessments.records ?? []).map(a => [a.record, { a, fresh: recordFreshness(a, byKey.get(a.record), WORDS, EXPLANATIONS) }]))
+      const exAssess = new Map<string, { a: ExampleAssessment; fresh: Freshness }[]>()
+      for (const a of assessments.examples ?? []) exAssess.set(a.sentence, [...(exAssess.get(a.sentence) ?? []), { a, fresh: exampleFreshness(a, sentenceById.get(a.sentence), WORDS, EXPLANATIONS) }])
+      setData({ source: sourceId, snapshot: rec.snapshot, records: rec.records, byKey, recItems, sentences, assessments, recAssess, exAssess })
       const loaded = loadWorkingWithNotice(storage, sourceId, rec.snapshot)
       setWorking(loaded.state); setNotice(loaded.notice ?? null)
     }).catch(e => setError(`Could not load ${sourceId}: ${(e as Error).message}`))
@@ -100,12 +144,12 @@ export default function ReviewApp() {
   const update = (fn: (w: WorkingState) => WorkingState) => setWorking(w => { if (!w) return w; const n = fn(w); setSaved(saveWorking(storage, n)); return n })
 
   const info = useMemo(() => {
-    const out = new Map<string, { status: Mapping['status']; working: boolean; reassess: boolean; audio: boolean; suggestions: Suggestion[]; comparisons: Comparison[]; focus?: Comparison }>()
+    const out = new Map<string, { status: Mapping['status']; working: boolean; reassess: boolean; audio: boolean; suggestions: Suggestion[]; comparisons: Comparison[]; focus?: Comparison; rec: RecInfo }>()
     if (!data || !working) return out
     // Reviewer decisions as they stand in this browser (drafts over committed ones): they feed "confirmed by a reviewer".
     const mappings: Record<string, Mapping | undefined> = {}
     for (const r of data.records) mappings[r.key] = effectiveMapping(working, REPO, r.key).mapping ?? undefined
-    const cmp = candidateComparisons(data.records, WORDS, EXPLANATIONS, ASSESSMENTS, mappings)
+    const cmp = candidateComparisons(data.records, WORDS, EXPLANATIONS, data.assessments, mappings)
     for (const r of data.records) {
       const { mapping, working: w } = effectiveMapping(working, REPO, r.key)
       const { suggestions, comparisons } = cmp.get(r.key)!
@@ -114,6 +158,7 @@ export default function ReviewApp() {
       const ops = Object.values(working.ops).filter(op => (op.op === 'field' ? op.after.provenance?.record === r.key : op.record === r.key))
       out.set(r.key, {
         status: mapping?.status ?? 'unresolved', working: w || ops.length > 0, suggestions, comparisons, focus,
+        rec: { r, ra: data.recAssess.get(r.key)?.a, raFresh: data.recAssess.get(r.key)?.fresh, examples: data.sentences.get(r.key)?.length ?? 0, ex: (data.sentences.get(r.key) ?? []).flatMap(s => data.exAssess.get(s.id) ?? []), audioUnknown: !!data.recItems.get(r.key) && data.recItems.get(r.key)!.origin?.status !== 'known' && !!data.recItems.get(r.key)!.origin, comparisons },
         reassess: !!REPO.mappings.mappings[r.key]?.reassess || ops.some(op => opStatus(op, REPO, data.byKey) !== 'ok'),
         audio: r.media.some(m => m.path)
       })
@@ -135,6 +180,8 @@ export default function ReviewApp() {
       if (filter === 'no-match' && i.comparisons.length > 0) return false
       const pred = PREDICATE.get(filter)
       if (pred && !i.comparisons.some(pred)) return false
+      const rp = REC_PREDICATE.get(filter)
+      if (rp && !rp(i.rec)) return false
       if (filter === 'reassess' && !i.reassess) return false
       if (filter === 'audio' && !i.audio) return false
       if (filter === 'working' && !i.working) return false
@@ -151,10 +198,12 @@ export default function ReviewApp() {
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: 0, unresolved: 0, linked: 0, 'new-candidate': 0, excluded: 0, reassess: 0, audio: 0, working: 0, 'no-match': 0 }
     for (const [f] of COMPARISON_FILTERS) c[f] = 0
+    for (const [f] of RECORD_FILTERS) c[f] = 0
     for (const i of info.values()) {
       c.all++; c[i.status]++; if (i.reassess) c.reassess++; if (i.audio) c.audio++; if (i.working) c.working++
       if (i.comparisons.length === 0) c['no-match']++
       for (const [f, , p] of COMPARISON_FILTERS) if (i.comparisons.some(p)) c[f]++
+      for (const [f, , p] of RECORD_FILTERS) if (p(i.rec)) c[f]++
     }
     return c
   }, [info])
@@ -209,6 +258,11 @@ export default function ReviewApp() {
             <p className="rv-small">Filter counts are source records; a record matches a comparison filter when any of its candidate pairs does.</p>
             <div className="rv-chips" role="group" aria-label="Decision filters">{DECISION_FILTERS.map(([f, label]) => <button key={f} className={filter === f ? 'on' : ''} onClick={() => { setFilter(f); setPage(0) }}>{label} <small>{counts[f]}</small></button>)}</div>
             <div className="rv-chips" role="group" aria-label="Comparison filters">{[['no-match', 'No matching game entry'] as [Filter, string], ...COMPARISON_FILTERS.map(([f, l]) => [f, l] as [Filter, string])].map(([f, label]) => <button key={f} className={filter === f ? 'on' : ''} onClick={() => { setFilter(f); setPage(0) }}>{label} <small>{counts[f]}</small></button>)}</div>
+            {(data.assessments.records?.length ?? 0) + (data.assessments.examples?.length ?? 0) > 0 && <>
+              <p className="rv-small">Record proposals ({data.source}): {[...data.recAssess.values()].filter(x => x.fresh === 'current').length} of {counts.all} source records have a current disposition; examples: {[...data.exAssess.values()].flat().filter(x => x.fresh === 'current').length} example assessments for {[...data.sentences.values()].flat().length} extracted sentences (not every sentence is assessed).</p>
+              <div className="rv-chips" role="group" aria-label="Record filters">{RECORD_FILTERS.map(([f, label]) => <button key={f} className={filter === f ? 'on' : ''} onClick={() => { setFilter(f); setPage(0) }}>{label} <small>{counts[f]}</small></button>)}</div>
+            </>}
+            {(data.assessments.records?.length ?? 0) === 0 && <div className="rv-chips" role="group" aria-label="Record filters">{RECORD_FILTERS.filter(([f]) => ['has-match', 'missing-short', 'has-examples', 'audio-unknown'].includes(f) && counts[f] > 0).map(([f, label]) => <button key={f} className={filter === f ? 'on' : ''} onClick={() => { setFilter(f); setPage(0) }}>{label} <small>{counts[f]}</small></button>)}</div>}
             {books.length > 0 && <div className="rv-row">
               <label>Book <select value={book} onChange={e => { setBook(e.target.value); setLesson(''); setPage(0) }}><option value="">all</option>{books.map(b => <option key={b} value={b}>B{b}</option>)}</select></label>
               <label>Lesson <select value={lesson} onChange={e => { setLesson(e.target.value); setPage(0) }}><option value="">all</option>{lessons.map(l => <option key={l} value={l}>L{l}</option>)}</select></label>
@@ -219,25 +273,28 @@ export default function ReviewApp() {
               return <li key={r.key}><button className={selected === r.key ? 'on' : ''} onClick={() => setSelected(r.key)}>
                 <span className="rv-zh" lang="zh-CN">{r.candidate.simplified[0] ?? '—'}</span>
                 <span className="rv-mid"><b>{r.candidate.readings.join(' / ')}</b><small>{r.candidate.meanings.join('; ')}</small></span>
-                <span className="rv-tags"><em className={`st-${i.status}`}>{i.status}</em>{i.focus ? <em className={`m-${i.focus.meaning.state}`}>{shortStatus(i.focus)}{i.comparisons.length > 1 ? ` (+${i.comparisons.length - 1} more)` : ''}</em> : <em className="m-none">no matching game entry</em>}{i.working && <em className="st-working">changed</em>}{i.reassess && <em className="cf-conflict">reassess</em>}<small>{r.placement?.label ?? r.originalId}</small></span>
+                <span className="rv-tags"><em className={`st-${i.status}`}>{i.status}</em>{i.rec.ra && i.rec.raFresh === 'current' && <em className={`d-${i.rec.ra.disposition}`}>{i.rec.ra.disposition}{i.rec.ra.expansion === 'first' ? ' · first expansion' : ''}</em>}{i.focus ? <em className={`m-${i.focus.meaning.state}`}>{shortStatus(i.focus)}{i.comparisons.length > 1 ? ` (+${i.comparisons.length - 1} more)` : ''}</em> : <em className="m-none">no matching game entry</em>}{i.working && <em className="st-working">changed</em>}{i.reassess && <em className="cf-conflict">reassess</em>}<small>{r.placement?.label ?? r.originalId}</small></span>
               </button></li>
             })}</ul>
             <div className="rv-row rv-pager"><button disabled={page === 0} onClick={() => setPage(p => p - 1)}>‹ Prev</button><span>Page {page + 1} / {pages}</span><button disabled={page + 1 >= pages} onClick={() => setPage(p => p + 1)}>Next ›</button></div>
           </section>
-          {record && <RecordDetail key={record.key} record={record} data={data} suggestions={info.get(record.key)?.suggestions ?? []} comparisons={info.get(record.key)?.comparisons ?? []} working={working} reviewer={reviewer} update={update} onClose={() => setSelected(null)} />}
+          {record && <RecordDetail key={record.key} record={record} data={data} localOnly={sourceInfo?.media === 'local-only'} suggestions={info.get(record.key)?.suggestions ?? []} comparisons={info.get(record.key)?.comparisons ?? []} working={working} reviewer={reviewer} update={update} onClose={() => setSelected(null)} />}
         </div>
       )}
     </main>
   )
 }
 
-function Audio({ path }: { path: string }) {
-  return <audio className="rv-audio" controls preload="none" src={`${BASE}${path}`} />
+/** A preview player. Local-only sources: the file exists only after a local import, so a failure explains why instead of a silent error. */
+function Audio({ path, localOnly }: { path: string; localOnly?: boolean }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return <span className="rv-small">{localOnly ? 'Audio preview unavailable here: this source\'s audio is not published. Import the package locally (npm run source:import) to listen.' : 'Audio could not be loaded.'}</span>
+  return <audio className="rv-audio" controls preload="none" src={`${BASE}${path}`} onError={() => setFailed(true)} />
 }
 
 /** One record: the comparison (evidence, assessments) for each candidate entry, then three separate decisions. */
-function RecordDetail({ record: r, data, suggestions, comparisons, working, reviewer, update, onClose }: {
-  record: SourceRecord; data: Loaded; suggestions: Suggestion[]; comparisons: Comparison[]; working: WorkingState; reviewer: string
+function RecordDetail({ record: r, data, localOnly, suggestions, comparisons, working, reviewer, update, onClose }: {
+  record: SourceRecord; data: Loaded; localOnly: boolean; suggestions: Suggestion[]; comparisons: Comparison[]; working: WorkingState; reviewer: string
   update: (fn: (w: WorkingState) => WorkingState) => void; onClose: () => void
 }) {
   const { mapping, working: mappingWorking } = effectiveMapping(working, REPO, r.key)
@@ -248,7 +305,8 @@ function RecordDetail({ record: r, data, suggestions, comparisons, working, revi
   const focus = focusId ? WORD_BY_ID.get(focusId) : undefined
   const [other, setOther] = useState('')
   const [reason, setReason] = useState(mapping?.reason ?? '')
-  const [draft, setDraft] = useState<EntryDraft>(() => mapping?.draft ?? draftFromRecord(r, WORDS))
+  const proposal = data.recAssess.get(r.key)
+  const [draft, setDraft] = useState<EntryDraft>(() => mapping?.draft ?? (proposal?.fresh === 'current' && proposal.a.draft ? (({ related, ...d }) => { void related; return d })(proposal.a.draft) : draftFromRecord(r, WORDS)))
   const keep = (m: Mapping | null) => ({ ...(m?.distinctFrom?.length ? { distinctFrom: m.distinctFrom } : {}) })
   const setMapping = (after: Omit<Mapping, 'recordHash' | 'decision'>) => update(w => putOp(w, mappingOp(REPO, r, after, reviewer)))
   const c = comparisons.find(x => x.entry === focusId)
@@ -263,7 +321,7 @@ function RecordDetail({ record: r, data, suggestions, comparisons, working, revi
       <div className="rv-card">
         <div className="rv-title"><span className="rv-big" lang="zh-CN">{r.candidate.simplified[0] ?? '—'}</span>
           <div><b>{r.candidate.readings.join(' / ') || 'no reading'}</b><div>{sourceDefinition(r)}</div><small>{r.key} · {r.placement?.label ?? 'no placement'}</small></div></div>
-        {r.media.map(m => <div key={m.id} className="rv-media">{m.path ? <Audio path={m.path} /> : <span className="rv-warn">Audio missing: {m.problems.join(', ')}</span>}</div>)}
+        {r.media.map(m => <div key={m.id} className="rv-media">{m.path ? <Audio path={m.path} localOnly={localOnly} /> : <span className="rv-warn">Audio missing: {m.problems.join(', ')}</span>}<small> checks: {m.checks.join(', ') || 'none'}{data.recItems.get(r.key)?.origin ? ` · origin: ${data.recItems.get(r.key)!.origin!.status}` : ''}{data.recItems.get(r.key)?.pronunciation ? ' · pronunciation not verified by listening' : ''}</small></div>)}
         <p>Decision now: <b>{state}</b>{distinct.length > 0 && <> · different sense from {distinct.join(', ')}</>} {mappingWorking ? <em className="st-working">changed in this browser</em> : mapping ? <em className="rv-pill">applied</em> : <em className="rv-pill">no decision (default)</em>}{committed?.reassess && <em className="cf-conflict">needs reassessment: {committed.reassess}</em>}</p>
         <details><summary>Original fields (verbatim)</summary>
           <table className="rv-fields"><tbody>{Object.entries(r.fields).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v || <i>empty</i>}</td></tr>)}{Object.entries(r.native).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v}</td></tr>)}<tr><th>hash</th><td>{r.hash}</td></tr>{r.media.map(m => <tr key={m.id}><th>audio file</th><td>{m.original} · checks: {m.checks.join(', ') || 'none'}{m.problems.length ? ` · problems: ${m.problems.join(', ')}` : ''}</td></tr>)}</tbody></table>
@@ -271,6 +329,7 @@ function RecordDetail({ record: r, data, suggestions, comparisons, working, revi
         {(r.candidate.flags.length > 0 || r.issues.length > 0) && <p className="rv-warn">{[...r.candidate.flags.map(f => `flag: ${f}`), ...r.issues].join(' · ')}</p>}
       </div>
 
+      <SourceDetails record={r} data={data} />
       {comparisons.length === 0 ? <div className="rv-card"><p><b>No matching game entry.</b> No game entry is written {r.candidate.simplified.join(' / ')}. Link it to another entry, prepare a new entry, or leave it unresolved (below).</p></div> : <>
         {comparisons.length > 1 && <div className="rv-card rv-row" role="group" aria-label="Game entry to compare with"><span className="rv-small">Compare with:</span>{comparisons.map(x => { const w = WORD_BY_ID.get(x.entry)!; return <button key={x.entry} className={x.entry === focusId ? 'on' : ''} onClick={() => setFocusId(x.entry)}>{w.hanzi} {w.pinyin} · {w.meaning} <small>({x.meaning.state === 'not-assessed' ? 'meaning pending' : x.meaning.label.split('—')[0].toLowerCase()})</small></button> })}</div>}
         {focus && c && <>
@@ -291,7 +350,7 @@ function RecordDetail({ record: r, data, suggestions, comparisons, working, revi
           </div>
 
           {linkedId === focus.id
-            ? <EntryContent record={r} word={focus} data={data} media={media} working={working} reviewer={reviewer} update={update} c={c} />
+            ? <EntryContent record={r} word={focus} data={data} media={media} localOnly={localOnly} working={working} reviewer={reviewer} update={update} c={c} />
             : <div className="rv-card rv-muted"><h2>2 · Which wording should be used?</h2>
               {c.meaning.state === 'different' ? <p className="rv-small">Not applicable: the senses differ, so neither definition replaces the other.</p> : <p className="rv-small">Link the record first (step 1). Then choose the wording and any recording, each on its own. Wording assessment: {c.wording.label}</p>}
               <h2>3 · Which additional content (audio) should be selected?</h2><p className="rv-small">Available after linking.</p></div>}
@@ -329,6 +388,82 @@ function RecordDetail({ record: r, data, suggestions, comparisons, working, revi
   )
 }
 
+/** Records of other imported sources, fetched only when a reviewer asks (they can be large). */
+const otherSourceCache = new Map<string, Promise<{ records: SourceRecord[]; assessments: AssessmentsFile }>>()
+const loadOther = (id: string) => {
+  let p = otherSourceCache.get(id)
+  if (!p) { p = Promise.all([fetch(`${BASE}sources/${id}/records.json`).then(r => (r.ok ? r.json() : { records: [] })), loadAssessments(id)]).then(([r, a]) => ({ records: (r as { records: SourceRecord[] }).records, assessments: a })); otherSourceCache.set(id, p) }
+  return p
+}
+function OtherSources({ record: r, current }: { record: SourceRecord; current: string }) {
+  const [rows, setRows] = useState<{ source: string; r: SourceRecord; note: string }[] | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const load = () => {
+    fetch(`${BASE}sources/index.json`).then(x => x.json()).then(async (i: SourceIndex) => {
+      const out: { source: string; r: SourceRecord; note: string }[] = []
+      for (const s of i.sources.filter(x => x.id !== current)) {
+        const { records, assessments } = await loadOther(s.id)
+        for (const o of records) if (o.candidate.simplified.some(f => r.candidate.simplified.includes(f))) {
+          const pairs = assessments.assessments.filter(a => a.record === o.key).map(a => `${a.entry}: ${a.meaning.verdict}`)
+          out.push({ source: s.id, r: o, note: pairs.length ? `assessed against the game: ${pairs.join('; ')}` : 'no assessment' })
+        }
+      }
+      setRows(out)
+    }).catch(e => setErr((e as Error).message))
+  }
+  return <details className="rv-card" onToggle={e => { if ((e.target as HTMLDetailsElement).open && !rows) load() }}>
+    <summary>Same written form in other imported sources</summary>
+    <p className="rv-small">Additional evidence only. Sources are not merged, and agreement between them is not proof that either is correct.</p>
+    {err && <p className="rv-warn">{err}</p>}
+    {!rows && !err && <p className="rv-small">Loading…</p>}
+    {rows && (rows.length === 0 ? <p className="rv-small">None.</p> : <ul className="rv-small">{rows.map(x => <li key={x.r.key}><b>{x.source}</b> {x.r.originalId}: {x.r.candidate.simplified.join(' / ')} {x.r.candidate.readings.join(' / ')} “{sourceDefinition(x.r) || '—'}” · {x.note}</li>)}</ul>)}
+  </details>
+}
+
+/** What the source itself says (imported, verbatim structure), the AI-assisted record proposal, and the extracted examples. */
+function SourceDetails({ record: r, data }: { record: SourceRecord; data: Loaded }) {
+  const c = r.candidate
+  const ra = data.recAssess.get(r.key)
+  const sentences = data.sentences.get(r.key) ?? []
+  const hasStructure = c.definitions || c.meaningMissing !== undefined || c.meta
+  return <>
+    {hasStructure && <div className="rv-card">
+      <h2>Imported source content</h2>
+      <p><b>Source short meaning:</b> {c.meaningMissing ? <em className="rv-pill">missing in the source</em> : <>“{sourceDefinition(r)}”</>}{c.meaningMissing && <span className="rv-small"> Any short label below is an editorial proposal, not the source's.</span>}</p>
+      {c.pos.length > 0 && <p className="rv-small">Part of speech (source): {c.pos.map(p => (p === c.posDominant ? `${p} (main)` : p)).join(', ')}</p>}
+      {c.meta && <p className="rv-small">Source metadata (evidence, not a teaching order): {Object.entries(c.meta).map(([k, v]) => `${k} ${v}`).join(' · ')}{r.native.deck ? ` · deck ${r.native.deck}` : ''}</p>}
+      {c.definitions && c.definitions.length > 0 && <details open={c.definitions.length <= 2}><summary>Full definitions ({c.definitions.length} reading{c.definitions.length === 1 ? '' : 's'}; other readings are other words or senses)</summary>
+        {c.definitions.map((d, i) => <div key={i} className="rv-def"><b>{d.reading}</b>{d.zhuyin ? <small> {d.zhuyin}</small> : null}<ol>{d.senses.map((x, j) => <li key={j}>{x}</li>)}</ol>{d.classifiers?.length ? <small>measure words: {d.classifiers.map(x => `${x.form}${x.reading ? ` ${x.reading}` : ''}`).join(', ')}</small> : null}</div>)}
+      </details>}
+    </div>}
+    {ra && <div className={`rv-card rv-rec d-${ra.a.disposition}`}>
+      <h2>Proposal for this record</h2>
+      {ra.fresh !== 'current' ? <p className="rv-warn"><b>{FRESHNESS_LABEL[ra.fresh]}</b> Shown for reference only: {ra.a.disposition}.</p> : <>
+        <p><b>{DISPOSITION_LABEL[ra.a.disposition]}</b>{ra.a.relatedEntries?.length ? ` (${ra.a.relatedEntries.join(', ')})` : ''}{ra.a.expansion === 'first' ? ' · proposed for the first beginner expansion' : ra.a.expansion === 'later' ? ' · later' : ''}. {ra.a.reason}</p>
+        {ra.a.senses && <ul className="rv-small">{ra.a.senses.map((x, i) => <li key={i}>{x.label}: <b>{({ 'taught-by-entry': 'taught by the game entry', 'not-taught': 'not taught (keep separate)', 'separate-entry-proposed': 'separate entry proposed', 'out-of-scope': 'out of scope' } as const)[x.status]}</b>{x.note ? ` — ${x.note}` : ''}</li>)}</ul>}
+        {ra.a.shortLabel && <p className="rv-small">Proposed short label: <b>“{ra.a.shortLabel.text}”</b> ({ra.a.shortLabel.basis === 'source' ? "the source's own short meaning" : 'editorial proposal, not the source'}). {ra.a.shortLabel.reason}</p>}
+        {ra.a.draft && <p className="rv-small">New-entry draft (prefilled under “Other actions”; not playable): <b>{ra.a.draft.id}</b> {ra.a.draft.pinyin} “{ra.a.draft.meaning}” — {ra.a.draft.note}{ra.a.draft.related?.length ? ` Related entries: ${ra.a.draft.related.join(', ')}.` : ''}</p>}
+        {ra.a.recording && <p className="rv-small">Recording: {ra.a.recording}</p>}
+      </>}
+      <p className="rv-small rv-prov">{METHOD_LABEL[ra.a.method]} by {ra.a.assessor}, {ra.a.on} · {ra.a.review === 'human-reviewed' ? 'reviewed by a person' : 'not reviewed by a person'} · uncertainty {ra.a.uncertainty}. Advice only: it links nothing, changes no text and activates nothing.</p>
+    </div>}
+    {sentences.length > 0 && <details className="rv-card" open>
+      <summary>Examples from the source ({sentences.length})</summary>
+      <p className="rv-small">Separate items. Containing a word does not mean an example teaches the sense being learnt; nothing here is linked or turned into an exercise.</p>
+      <ul className="rv-examples">{sentences.map(x => <li key={x.id}>
+        <span lang="zh-CN">{x.zh}</span> <small>{x.pinyin}</small> <span>{x.en}</span>
+        {(data.exAssess.get(x.id) ?? []).map(({ a, fresh }) => <div key={a.id} className={`rv-small ex-${a.verdict}`}>
+          → {a.target.entry ?? 'proposed new entry'}: <b>{fresh === 'current' ? VERDICT_LABEL[a.verdict] : FRESHNESS_LABEL[fresh]}</b> · sense: {a.sense}. {a.reason}
+          {a.edited && fresh === 'current' && <> Proposed edit ({METHOD_LABEL[a.method]}, original kept): {a.edited.zh ? `“${a.edited.zh}” ` : ''}{a.edited.pinyin ? `${a.edited.pinyin} ` : ''}{a.edited.en ? `“${a.edited.en}”` : ''}.</>}
+          {a.prerequisites.length > 0 && <> Needs first: {a.prerequisites.join(', ')}.</>}
+        </div>)}
+        {!data.exAssess.has(x.id) && <div className="rv-small">Not assessed.</div>}
+      </li>)}</ul>
+    </details>}
+    <OtherSources record={r} current={data.source} />
+  </>
+}
+
 /** Source vs game side by side, then evidence, meaning assessment and wording assessment as three separate rows. */
 function ComparisonCard({ record: r, word: w, c, s }: { record: SourceRecord; word: Word; c: Comparison; s?: Suggestion }) {
   const ex = EXPLANATIONS[w.id]
@@ -344,6 +479,7 @@ function ComparisonCard({ record: r, word: w, c, s }: { record: SourceRecord; wo
         <div><small>Game · {w.id}</small><b lang="zh-CN">{w.hanzi}</b><span>{w.pinyin}{w.variants.length ? ` (also ${w.variants.join(', ')})` : ''}</span><span>Short meaning: “{w.meaning}”</span><span>{w.kind}</span></div>
       </div>
       <p className="rv-small"><b>Game teaching note:</b> {w.note}</p>
+      <p className="rv-small"><b>Curriculum:</b> {COURSE.lessonOf.has(w.id) ? <>in the active course “{COURSE.title}”, {COURSE.lessonOf.get(w.id)}</> : <>not in the active course “{COURSE.title}”</>}. Nothing on this screen changes a course.</p>
       {(ex?.summary || texts.length > 0 || examples.length > 0) && <details><summary>Game explanation and examples</summary>
         {ex?.summary && <p className="rv-small">{ex.summary}</p>}
         {texts.map((t, i) => <p key={i} className="rv-small">{t}</p>)}
@@ -370,8 +506,8 @@ function ComparisonCard({ record: r, word: w, c, s }: { record: SourceRecord; wo
 }
 
 /** Steps 2 and 3 for the linked entry: wording and recording, each decided on its own. */
-function EntryContent({ record: r, word, data, media, working, reviewer, update, c }: {
-  record: SourceRecord; word: Word; data: Loaded; media: SourceRecord['media'][number] | undefined; working: WorkingState; reviewer: string
+function EntryContent({ record: r, word, data, media, localOnly, working, reviewer, update, c }: {
+  record: SourceRecord; word: Word; data: Loaded; media: SourceRecord['media'][number] | undefined; localOnly: boolean; working: WorkingState; reviewer: string
   update: (fn: (w: WorkingState) => WorkingState) => void; c: Comparison
 }) {
   const { recording: current, working: recWorking } = effectiveRecording(working, REPO, word.id)
@@ -426,7 +562,7 @@ function EntryContent({ record: r, word, data, media, working, reviewer, update,
       {c.assessment?.recording && <p className="rv-small">Assessor's remark (metadata only, not proof of what the clip says): {c.assessment.recording}</p>}
       <p>Selected now: {current ? <>{current.provenance.record} {current.file && <Audio path={current.file} />} {recWorking ? <em className="st-working">changed in this browser</em> : <em className="rv-pill">applied</em>}</> : 'none'} · TTS for this entry: {word.audio === 'none' ? 'off (unreliable)' : audioReliable(word, WORDS) ? 'on' : 'off (shared characters)'}</p>
       {!proposal ? <p className="rv-small">This record has no usable recording.</p> : <>
-        {media?.path && <Audio path={media.path} />}
+        {media?.path && <Audio path={media.path} localOnly={localOnly} />}
         <p>The clip is declared as <b>{declared ?? '?'}</b>; the game teaches <b>{word.pinyin}</b>{word.speech.length ? ` (connected speech: ${word.speech.map(x => x.pinyin).join(', ')})` : ''}.</p>
         <label>What do you hear? <input value={heard} placeholder={`e.g. ${word.pinyin}${word.speech[0] ? ` or ${word.speech[0].pinyin}` : ''}`} onChange={e => setHeard(e.target.value)} /></label>
         <p className="rv-small">Leave empty if you did not listen carefully. Reading used for the checks: {heard.trim() || declared || '?'} → {({ main: 'the dictionary reading', variant: 'an accepted variant', speech: 'a connected-speech form', 'tone-differs': 'other tones than the game', different: 'a different reading', unknown: 'unknown' } as const)[rel]}.</p>
@@ -434,7 +570,8 @@ function EntryContent({ record: r, word, data, media, working, reviewer, update,
           <label key={u}><input type="checkbox" checked={uses.includes(u)} onChange={e => setUses(x => (e.target.checked ? [...x, u] : x.filter(y => y !== u)))} /> {USE_LABEL[u]} {uses.includes(u) && !eligible.has(u) && <em className="cf-conflict">not possible with this reading</em>}</label>))}
         </fieldset>
         <div className="rv-actions">
-          <button disabled={uses.length === 0} onClick={() => update(w => putOp(w, recordingOp(REPO, r, word.id, proposal)))}>Use this recording for {word.hanzi}</button>
+          <button disabled={uses.length === 0 || localOnly} title={localOnly ? 'This source\'s audio is not published (unclear reuse terms); it cannot be selected for the game.' : undefined} onClick={() => update(w => putOp(w, recordingOp(REPO, r, word.id, proposal)))}>Use this recording for {word.hanzi}</button>
+          {localOnly && <p className="rv-small">Not selectable: this source's audio is local-only (not published; reuse terms and origin unknown).</p>}
           {current && <button onClick={() => update(w => putOp(w, recordingOp(REPO, r, word.id, null)))}>Remove the selected recording</button>}
           {recWorking && <button onClick={() => update(w => dropOp(w, `recording:${word.id}`))}>Keep what the game has</button>}
         </div>

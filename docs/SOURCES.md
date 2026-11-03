@@ -65,7 +65,7 @@ public/sources/index.json                     the sources the review screen offe
 - Raw data (`fields`), normalisation (`candidate`), decisions (`src/content/*.json`) and game editorial text stay separate.
 - The game bundle never loads `public/sources`; it loads only `recordings.json` (small) and plays a file when asked.
 - Code: types `src/sources/types.ts`; matcher `src/sources/match.ts`; changesets and reassessment `src/sources/changeset.ts`;
-  comparison evidence `src/sources/compare.ts`; assessments `src/sources/assessment.ts` + `src/content/sourceAssessments.json`;
+  comparison evidence `src/sources/compare.ts`; assessments `src/sources/assessment.ts` + `src/content/assessments/<source>.json`;
   validation `src/sources/validate.ts`, `src/sources/bundle.ts`; recording rules `src/content/recordings.ts`;
   importer `tools/sources/` (`zip.ts`, `importer.ts`, `adapters/`); review screen `src/review/`, `review/index.html`.
 
@@ -93,6 +93,26 @@ npm run source:import -- --source accc-anki --file ~/Downloads/A_Course_in_Conte
   ignores a recording flagged for reassessment until someone decides again.
 - Media no longer referenced are kept (a selected recording may use them) and counted in the import output.
 
+### Second source: Anki-xiehanzi New HSK (2025), HSK 1 subdeck
+
+```bash
+npm run source:import -- --source xiehanzi-new-hsk-2025-v24 --file Anki-xiehanzi-New-HSK-2025.apkg --retrieved 2026-11-02
+```
+
+- Package: release v2.4, sha256 `4b0bea5d05c6…a37a`; full details, counts and findings in
+  [`docs/proposals/xiehanzi-hsk1.md`](proposals/xiehanzi-hsk1.md).
+- Adapter `anki-xiehanzi-hsk1` = the generic Anki adapter with the **field profile** `tools/sources/adapters/xiehanzi.ts`
+  (`AnkiProfile`): import scope by **card deck membership** (`…::HSK 1`; 321 of 10,900 notes; the `HskLevel` field is empty for
+  20 of them), record keys from the note GUID, the 13 fields parsed by HTML structure (short meaning without its heading;
+  definitions per reading with numbered senses and measure words; parts of speech; examples as separate sentences), audio
+  decoded with ffprobe when installed. The ACCC behaviour (no profile) is unchanged.
+- Only the selected notes' media are extracted. **`"media": "local-only"`**: the files are written for local preview but ignored
+  by git and never deployed (unclear reuse terms), and the validator refuses selecting them for gameplay. The review screen says
+  so instead of failing silently.
+- Normalised candidates: `meanings` = the short meaning (empty + `meaningMissing` when the source has none: a label proposed from
+  the definitions is an *editorial* proposal), `definitions` = per-reading blocks (never merged into the meaning), `meta` =
+  frequency and level (evidence, not a teaching order). Recording items carry `origin: unknown` and `pronunciation: unverified`.
+
 ## 5. Review screen (`<site>/review/`)
 
 Open `https://<pages host>/hanzi-hunters/review/` (or `http://localhost:5173/review/` with `npm run dev`). It is not linked from
@@ -103,7 +123,7 @@ the game, is not precached by the service worker, and loads the source data only
 | Layer | What it is | Where | Who/what produces it |
 |---|---|---|---|
 | **Matching evidence** | Observable facts: spelling, readings (main, accepted variants, connected speech), text equality, English-word overlap, part of speech, an existing mapping | computed, never stored (`src/sources/match.ts`, `compare.ts`) | deterministic rules |
-| **Meaning assessment** | Do the two records teach the same sense? | `src/content/sourceAssessments.json` | an assessor (AI-assisted or a person), with reason, provenance, uncertainty |
+| **Meaning assessment** | Do the two records teach the same sense? | `src/content/assessments/<source>.json` | an assessor (AI-assisted or a person), with reason, provenance, uncertainty |
 | **Wording assessment** | Which description teaches that sense more clearly? | same file | same |
 | **Reviewer decisions** | Link / keep separate / exclude / new-entry draft; which text; which recording | browser drafts → changeset → `sourceMappings.json`, `selections.json`, `recordings.json` | a person on the review screen |
 
@@ -150,7 +170,15 @@ the replacement is better everywhere.
   the source text, or an edited text, `choice: "edited"`; prefilled with an assessment's proposal when there is one). Never
   offered as a replacement when the senses differ. **3. Which additional content (audio) should be selected?** (see §6; an
   assessor's remark on a recording is metadata, not proof of what the clip says).
-- Other actions: link to any entry id, exclude (optional reason), prepare a new-entry draft.
+- Sources with record and example assessments (xiehanzi) also show: the imported content (short meaning or “missing in the
+  source”, definitions per reading, parts of speech, frequency/level), the **proposal for the record** (disposition, senses,
+  label basis, draft, provenance, freshness), every extracted **example** with its assessments, the active-course status of
+  the compared entry, and, on request, the same written form in **other imported sources** (evidence only, never merged).
+  Record filters: existing game match, new vocabulary candidate, proposed first expansion, additional sense, excluded, missing
+  short meaning, several meanings to separate, has examples, example/sense mismatch, audio origin unknown, record uncertain or
+  outdated (counts are source records).
+- Other actions: link to any entry id, exclude (optional reason), prepare a new-entry draft (prefilled from a current draft
+  proposal).
 - **Saved in this browser** (localStorage `hanzi-hunters-review-v2:<source>`, separate from game saves) vs **applied in the
   game** (the committed files of the deployed build) are labelled everywhere. Drafts hold only decisions.
   Drafts from the earlier screen (`hanzi-hunters-review-v1:<source>`) are migrated once: their ops are the reviewer's own
@@ -166,7 +194,10 @@ Then review `git diff src/content`, run `npm run validate:content` and `npm test
 
 ### 5a. Assessments: data and workflow
 
-`src/content/sourceAssessments.json` (`kind: "hanzi-hunters-assessments"`, `schemaVersion: 1`), one record per candidate pair:
+One file per source, `src/content/assessments/<source>.json` (`kind: "hanzi-hunters-assessments"`, `schemaVersion: 2`; version 1
+files, which hold pair assessments only, are still read). Three lists, all advice with the same provenance fields:
+
+**`assessments`: one per candidate pair** (record × game entry):
 
 | Field | Meaning |
 |---|---|
@@ -179,6 +210,19 @@ Then review `git diff src/content`, run `npm run validate:content` and `npm test
 | `method`, `assessor`, `on` | heuristic / ai-assisted / human; the person or tool; date |
 | `review`, `uncertainty`, `references` | `unreviewed` or `human-reviewed` (method `human` only); low / medium / high; pointers to references consulted |
 
+**`records`: one disposition per source record** (`id` `<record>|record`): `disposition` match / additional-sense /
+new-candidate / uncertain / excluded with a `reason`; `relatedEntries` + `relatedFingerprint` (stale when those entries change);
+`multipleSenses` and `senses` (each taught by the entry, not taught, separate entry proposed, or out of scope); `shortLabel`
+with `basis` `source` (must be the source's exact text) or `editorial`; an optional new-entry `draft` (stable id, game pinyin
+convention, note, related entries); `expansion` first / later / not-proposed. A draft can never reuse an entry id or an
+existing hanzi + pinyin pair (the engine refuses those duplicates).
+
+**`examples`: one per example-to-target relationship** (`id` `<sentence id>|<entry or record>`): the `sense` the sentence
+actually shows, `verdict` suitable / needs-editing / other-sense / not-beginner / uncertain, `contains` and `prerequisites`
+(other vocabulary and the part the game does not teach yet), an optional `edited` adaptation (Chinese / pinyin / English +
+reason; the source item stays verbatim), and `sentenceHash` (Chinese, pinyin and translation: changing any of them, including a
+tone mark, makes the assessment outdated) plus `targetFingerprint` for entry targets.
+
 Rules enforced by `checkAssessment` (also run by `npm run validate:content`): only `human` can be `human-reviewed` or
 `same-confirmed`; a heuristic can only record `uncertain` and never wording; reasons must be substantive (placeholders such as
 “No clear improvement” are refused); different senses require wording `not-applicable`; proposals fit the answer-button limit.
@@ -186,14 +230,18 @@ An assessment is **outdated** when the record hash or the game fingerprint chang
 it as outdated, not as advice).
 
 ```bash
-npm run source:assess -- check                      # validate, report coverage (pairs / records / entries) and outdated ones
-npm run source:assess -- template --out todo.json   # pairs without a current assessment (--all: every pair), with hashes,
-                                                    # fingerprints and a read-only `context` (definitions, note, explanation)
-npm run source:assess -- import todo.json --dry-run # validate; refused as a whole if any record is invalid or outdated, or
-npm run source:assess -- import todo.json           # would replace a person's assessment with a non-human one
+npm run source:assess -- check [--source <id>]                         # validate; coverage per source; outdated ones
+npm run source:assess -- template --source <id> --kind pairs --out t.json    # pairs without a current assessment (--all: all)
+npm run source:assess -- template --source <id> --kind records --out t.json  # records without a current disposition
+npm run source:assess -- template --source <id> --kind examples --out t.json # examples of matched / first-expansion records
+npm run source:assess -- import --source <id> t.json [--dry-run]       # all or nothing (invalid, outdated, or replacing a
+                                                                       # person's assessment with a non-human one: refused)
+npm run source:assess -- report --source <id> --out docs/proposals/<id>-records.md   # generated per-record table
 ```
 
-Import writes **only** `sourceAssessments.json`. It never links records, changes game wording, selects recordings or touches
+Templates carry ids, hashes, fingerprints and a read-only `context` (definitions, examples, game note and explanation; for
+examples, prefilled `contains` / `prerequisites` from a longest-match segmenter, `src/sources/segment.ts`, to be checked).
+Import writes **only** `src/content/assessments/<source>.json`. It never links records, changes game wording, selects recordings or touches
 curricula; adopting a recommendation still goes through a reviewer's decision and a changeset. No AI service or API key is used
 by the browser or the tools: AI-assisted assessments are produced offline, recorded as `ai-assisted` / `unreviewed`, and checked
 by a person before anyone treats them as more than advice. A person's own assessment is recorded with `method: "human"`.
@@ -227,7 +275,10 @@ consistency caveat), 27 not applicable, 5 not assessed (their meaning is uncerta
 
 ## 7. Adding another source adapter
 
-1. Register the source in `sources.json` (title, url, license, attribution, `adapter`, `reuse`, optional `variety`).
+0. Another Anki deck? Usually no new adapter: write an `AnkiProfile` (deck scope, key from GUID, field parser) like
+   `tools/sources/adapters/xiehanzi.ts` and register `readAnkiPackage({ ...i, profile })` under a new adapter name.
+1. Register the source in `sources.json` (title, url, license, attribution, `adapter`, `reuse`, optional `variety`, and
+   `media: "local-only"` when its media must not be published).
 2. Write `tools/sources/adapters/<name>.ts`: a function returning a `SourceBundle` — any subset of records, recordings,
    sentences, definitions, explanations, exercises. Keep original fields verbatim; put matching aids in `candidate`; hash each
    record's content; write media only through `safeJoin` under generated names.

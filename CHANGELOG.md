@@ -1,5 +1,82 @@
 # Changelog / test log
 
+History, newest first: what changed and how it was tested. Older entries describe designs that were later changed or removed;
+the current state is in the topic docs (map in `README.md`).
+
+## 2026-11-03 — Code standards, pitfalls and decisions log (docs only)
+
+- AGENTS.md: code standards adapted from the owner's other projects (readability, where things go, one word per concept,
+  duplication rule, ~300-line signal with the current offenders, generated files never edited by hand), working rules (review every
+  change for coherence, mockups as PNG images, record decisions and pitfalls), and "change a rule only with a reason beside it".
+- New `docs/PITFALLS.md`: 12 bugs from this project's history whose cause was not where the symptom pointed (stale PWA cache, phone
+  viewport height, layout jumps, async voices, scene mount, speech before the intro card, captions from state diffs, readiness from
+  lesson membership, copied records dropping fields, untyped test fixtures, non-deterministic re-imports, search matching mid-word).
+- New `QUESTIONS-AND-DECISIONS.md`: settled decisions with their reasons, and the open questions for the owner.
+- Both on the README map. Checks: typecheck, 321 tests (docs test included), build.
+
+## 2026-11-03 — Type checking everywhere; conventions, generated-file and docs tests (tooling)
+
+- `npm run typecheck` now also checks `tools/`, `tests/` and `vite.config.ts` (`tsconfig.tools.json`, dev dependency `@types/node`,
+  types only). It found 79 errors that Node's type stripping had hidden: 76 test fixtures still built word progress as `{ lv, ok }`
+  (the shape from before the scheduler; now `sched(lv, ok)` in `tests/helpers/sched.ts`, a real entry), a missing `peak` in a course
+  test, a narrowing in the trials test, and real type errors in `tools/source-assess.ts` and `vite.config.ts`. CI runs it.
+- `tests/conventions.test.ts`: pure modules use no React/Phaser/browser globals; Phaser only in the scene and its host; no clock reads
+  in the scheduling core (elsewhere only as default parameters); browser storage only in `App.tsx` / `ReviewApp.tsx`; no styles
+  below 360 px; no code marks content human-reviewed. Each rule states its reason; each pattern is self-checked against a bad line.
+- `tests/generated.test.ts`: `docs/content-inventory.json` and the proposal table must match their scripts (`--check` modes added);
+  the source index matches the imported files; every imported record's hash matches its fields (hand edits fail; the hash function
+  is the importer's `recordHash`); committed media match their content-hash names.
+- `tests/docs.test.ts`: every file path named in a doc exists; every top-level doc is on the README map.
+- Verified that the checks catch breaches: a stale inventory, a hand-edited record and a React import in a pure module each failed.
+- Checks: typecheck clean, 321 tests pass, validate:content 0 errors (7 known warnings), build passes.
+
+## 2026-11-03 — Documentation audit and cleanup (docs only)
+
+- README rewritten: what the game is today, commands, one documentation map (which doc is the home of each topic). AGENTS.md:
+  reading order, "code wins over docs", one home per topic; stale "first milestone" removed; rules 2/5/9 corrected (sprites,
+  hearts, save version).
+- DEVELOPMENT_BRIEF rewritten from the original prototype handoff (30 words in `data.ts`, save key `-v1`, "version 4", no tests,
+  finished milestones) to the current architecture, module map, persistence keys, quality checks and open work.
+- Fixed contradictions with the code: save format is v2 (GAME_DESIGN, CURRICULUM §4 described v1 / "v2–v4" / backups "2 to 4");
+  promoting dimensions are meaning + written form (SCHEDULING said meaning only); review weights (CURRICULUM §2); auto-continue
+  settings and delays (GAME_DESIGN); "elite" → boss; removed badge mention; CURRICULUM §7 described installing the 100-word
+  course, which is installed and default; registered sources and recorded audio (CONTENT_GUIDE); 320 px → 360 px.
+- De-duplicated: boss trials specified once (CONTEXTUAL_ENCOUNTERS, GAME_DESIGN summarises); historical gear columns removed; the
+  inline content prompt in CONTENT_GUIDE replaced by pointers to AGENT_PROMPT / NEXT-BATCH-PROMPT.
+- GAME_FEEL_AND_PROGRESSION reduced to principles, a status table of the 2026-10 proposals (built / changed / removed / open) and
+  the formats not built yet. ASSET_PIPELINE and `public/assets/README.md` list the real sprites (scribe, trickster added).
+- Marked dated material: `docs/screenshots/` (2026-10-29, before hearts and expeditions), the combat-screen design reference,
+  CHANGELOG as history. Regenerated `docs/content-inventory.json` (it was stale).
+
+## 2026-11-03 — Intent recorded: one meaning per entry, other meanings later (docs only)
+
+- New `docs/SENSES.md`: entries teach one basic meaning now; other meanings are intended to unlock from level 4 (Retained),
+  taught in context with their own progress. Not implemented. Lists the rules that apply now, open questions, collected material
+  and existing labels that combine two meanings (left unchanged pending an owner decision).
+- Pointers in AGENTS.md (new rule 11), CONTENT_GUIDE.md (`" / "` joins near-synonyms, not senses), the xiehanzi proposal.
+- Doc fixes: CURRICULUM.md and GAME_FEEL_AND_PROGRESSION.md still called level 4 "mastered"; the code names it Retained (5 = Mastered).
+
+## 2026-11-02 — Second source: Anki-xiehanzi HSK 1 compared, assessed and proposed (branch ccr-d8ccb49c-6plu3f)
+
+- Verified package: Anki-xiehanzi v2.4 `Anki-xiehanzi-New-HSK-2025.apkg` (sha256 `4b0bea5d…a37a`): 10,900 notes; HSK 1 subdeck
+  321 notes by card membership (20 have an empty `HskLevel`), 180 short meanings, 301 with examples (896 sentences), 321 audio
+  references, all resolving and decoding.
+- Importer: `AnkiProfile` hooks in the Anki adapter (deck scope, GUID keys, field parser, sentences, ffprobe decoding, recording
+  origin); field profile `xiehanzi.ts` with a small structural HTML reader. ACCC behaviour unchanged. Source registered as
+  `xiehanzi-new-hsk-2025-v24` with `media: local-only` (owner decision, option b): audio not committed or deployed and not
+  selectable; validator enforces it.
+- Matching: readings found only in a source's per-reading definitions are reported as evidence (了: declared liǎo, definitions
+  list le), never as the reading.
+- Assessments: per-source files `src/content/assessments/<source>.json`, schema 2 (pairs + record dispositions with drafts +
+  example assessments; schema 1 readable; ACCC file moved unchanged). Freshness covers example Chinese/pinyin/translation and the
+  related entries. `source:assess` gains `--source`, `--kind records|examples` and `report`.
+- AI-assisted, unreviewed assessment of the whole subset: 108 pairs (106 likely equivalent, 1 different, 1 uncertain; 1 wording
+  proposal: 个 terminology), 321 dispositions (106 match, 1 uncertain, 186 new candidates, 28 excluded), 396 example
+  assessments. Draft first expansion: 25 entries in six lessons (`docs/proposals/xiehanzi-hsk1.md`); nothing applied.
+- Review screen: source content panel, record proposal, examples with verdicts and proposed edits, other-source evidence on
+  request, curriculum status, record filters; audio of local-only sources explained and not selectable.
+- Fixed while testing: ffprobe messages contain memory addresses, which made reimports non-deterministic; stripped.
+
 ## 2026-11-02 — Review screen: evidence, assessments and decisions kept apart (branch ccr-d8ccb49c-6plu3f)
 
 - Problem: rule-based matching was presented as meaning and wording judgments (“Same meaning” from one shared English word,

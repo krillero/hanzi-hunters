@@ -1,4 +1,8 @@
-# Game design: expeditions (implemented in 0.3)
+# Game design: the rules of the game (current)
+
+The home of the game rules. Word levels and review timing: `docs/SCHEDULING.md`; teaching order: `docs/CURRICULUM.md`; scenes
+and boss trials in detail: `docs/CONTEXTUAL_ENCOUNTERS.md`. Numbers here come from the code (`src/game/rules.ts`, `upgrades.ts`,
+`src/data.ts`); if they differ, the code is right.
 
 ## Loop
 1. A run is an **expedition**: **5 floors** (`EXPEDITION_FLOORS`), level 1, no gear, **5 full hearts** and 1 potion (plus any upgrades).
@@ -21,7 +25,6 @@
 * **Harder questions, only within taught material:** `challengeFor(depth, floor)` (0 at depth 1 floor 1, rising a little each floor and a lot each depth, 1 at depth 5 floor 5) is passed to `chooseKind`. It multiplies the weight of recall kinds (meaning→pinyin, audio→pinyin, pinyin→char, audio→char, audio→meaning) by up to ×3 and recognition kinds (char→meaning, meaning→char, char→pinyin) by down to ×0.4. It only re-weights kinds already in the word's level table that are fair right now (eligibility, sound, distractors), so nothing new is asked; a new word's first step and particles are unaffected.
 * **Rewards and toughness:** enemy gold and XP +25 % per depth (`depthRewardMult`), enemy HP +30 % per depth (`TUNING.depthEnemyHp`), the Cavern Warden another +15 % per depth (`depthBossHpMult`), and the victory bonus (40 × depth) is banked on a win.
 * Words always come from the course: depth never changes which entries are introduced or reviewed.
-* Gear was reviewed for depths and is unchanged.
 
 ## Hearts (`src/game/rules.ts`)
 The player's health is a row of whole **hearts** (`Run.hearts`, the only player-health value). Enemies keep an HP bar but have no attack.
@@ -80,7 +83,7 @@ The level decides which kinds can be asked (weights in `KIND_WEIGHTS`, `src/game
 
 Which kind a word gets is a weighted draw: the level table, filtered by what is *fair* for that word, x 0.15 if it was the previous kind,
 x 0.5 if it was one of the last two, x (1 + 2 x miss rate) for kinds missed in this session (weak areas). Audio kinds need a Mandarin voice.
-Not yet: per-kind history across sessions, sentence/context questions (see the roadmap discussion).
+Not yet: per-kind history across sessions, and context questions beyond the authored particle sentences.
 
 **Difficulty of the wrong answers** follows the level: level 0 (and the intro) = clearly different words (other families first, look-alike characters last, so 四 is never offered next to 五 六 九); level 1 = mixed; level 2+ = same family first (the hard version). A word that drops back to level 0 starts again with the easy first step.
 
@@ -98,7 +101,7 @@ Not yet: per-kind history across sessions, sentence/context questions (see the r
 
 A wrong answer's recap does not repeat the right answer (the card above shows it). It shows **what you chose** in its own red box, sized by length (one character big; words, pinyin, phrases and sentences smaller and wrapped), with the pinyin and meaning when it is a word you know, so the mix-up itself is taught.
 
-Right answer: the card reveals the word in place and the game continues by itself (Quick 1 s / Relaxed 2.5 s / Off in settings); after a normal kill the next monster follows ~1.5 s later. Always paused: wrong answer, defeat, floor cleared (elite). Rewards are shown in the scene and counters, loot sets a NEW dot on Gear. Sound off = no audio and no listening questions.
+Auto-continue setting (`src/game/flow.ts`): **Learn first** (default: after a right answer to a word at Familiar or above, continues after 1 s, also to the next monster), **Quick** (0.5 s), **Relaxed** (2.5 s; 3 s to the next monster) or **Off**. It never continues after a wrong answer or a defeat; floor-cleared moments (after the boss) always pause. Rewards are shown in the scene and counters; loot sets a NEW dot on Gear. Sound off = no audio and no listening questions.
 
 ## Upgrade tree (permanent; 4 branches × 5 tiers, bought in order)
 Cost = 25 × tier × (tier+1) / 2 → **25, 75, 150, 250, 375** per branch (875 each, 3 500 total).
@@ -109,17 +112,11 @@ Cost = 25 × tier × (tier+1) / 2 → **25, 75, 150, 250, 375** per branch (875 
 No upgrade answers questions; a test enforces that every effect is power or convenience. Upgrade ids, prerequisites and costs did not change with hearts.
 
 ## Gear (`src/data.ts`)
-Item names are their identity in saves. Effects: attack, max hearts, hints per fight, XP %, mastery damage %, gold per win. Gear gives no second chances (they are a per-expedition pool from upgrades, so gear found mid-run could never add one).
-
-| Item | HP rules (before hearts) | Hearts (PR #30) | Expeditions (now) |
-|---|---|---|---|
-| Mossy Vest | +8 max HP | +1 max heart | +1 max heart |
-| Windrunner Boots | +1 armor | +1 second chance per floor | +1 hint per fight |
-| Guardian Helm | +4 max HP · +1 armor | +1 max heart · +1 hint per fight | same |
-| Golem Plate (boss) | +12 max HP · +1 armor | +1 max heart · +1 second chance per floor | +1 max heart · +1 hint per fight |
-| Trick Mantle (boss) | +6 max HP · +2 armor | +1 second chance per floor · +1 hint per fight | +1 max heart · +10 % mastery damage |
-
-Weapons and the other accessories are unchanged. A gear review for depths is planned in PR 2.
+Item names are their identity in saves. Effects: attack, max hearts, hints per fight, XP %, mastery damage %, gold per win (the
+full list with values is `GEAR` in `src/data.ts`). Gear gives no second chances (they are a per-expedition pool from upgrades,
+so gear found mid-run could never add one). Rarity (common / rare / epic, `src/game/rarity.ts`) is cosmetic: colour, sound and the
+reveal card, never drop odds or stats. Boss-only items (Golem Plate, Wraith Lantern, Scribe Brush, Trick Mantle) drop the first
+time each boss type is beaten.
 
 ## Balance (tools/simulate.ts, tests/balance.test.ts)
 `node tools/simulate.ts --report` plays a seeded bot (accuracy rises as words are learned; boss seal/trick questions are a little harder) for new players buying upgrades greedily, and for fully upgraded players, 5 seeds.
@@ -146,7 +143,7 @@ Depth 1 targets (agreed 2026-11-01): perfect play always wins; 90 % wins the fir
 
 Per-depth enemy HP: without it (only the boss and the question mix) a 75 % player cleared depths 2–5 in 5 expeditions after the first win and expeditions stayed at ~40 answers; +15 % gave 6 / 9 / 10 / 11 / 12; **+30 % (chosen)** gives a real climb at 75 % and brings deep expeditions to ~50–60 answers. A 60 % player stays in depths 1–2 within 40 expeditions (wins remain possible there). Perfect play wins every depth (`tests/depths.test.ts`).
 
-Tried and rejected for depth 1: more enemy HP (×1.25–1.8) makes expeditions only a little longer (damage grows with levels and mastery) but drops 60 % players to no wins at all and pushes 75 % to a median of 10 expeditions. So expeditions are about 35–40 answers (6–8 minutes), shorter than first estimated; harder question mixes per depth (PR 2) are the planned way to add challenge. Longest fights are shield bosses. `tests/balance.test.ts` guards the targets, bounded expeditions (≤ 100 answers, fights ≤ 24: a 40-seed sweep shows a rare 22-answer shield fight at 0.75 accuracy, with or without boss trials) and that hearts only come back from potions and Second Wind. Tune `TUNING` (`src/game/rules.ts`) and `src/game/upgrades.ts`. The bot is a model, not real players — expect to retune after human playtests.
+Tried and rejected for depth 1: more enemy HP (×1.25–1.8) makes expeditions only a little longer (damage grows with levels and mastery) but drops 60 % players to no wins at all and pushes 75 % to a median of 10 expeditions. So expeditions are about 35–40 answers (6–8 minutes) at depth 1; deeper depths add challenge through the question mix and enemy HP (see Depths). Longest fights are shield bosses. `tests/balance.test.ts` guards the targets, bounded expeditions (≤ 100 answers, fights ≤ 24: a 40-seed sweep shows a rare 22-answer shield fight at 0.75 accuracy, with or without boss trials) and that hearts only come back from potions and Second Wind. Tune `TUNING` (`src/game/rules.ts`) and `src/game/upgrades.ts`. The bot is a model, not real players — expect to retune after human playtests.
 
 ## Warden Sigil (`sigilBonus` in `src/game/rules.ts`)
 A relic kept forever instead of loot from the Cavern Warden (an item would vanish at once, because beating it ends the expedition).
@@ -160,12 +157,25 @@ on: 0.75 accuracy wins 64.4 % → 68.8 %, depth 3/4 cleared after 11/12 → 10/1
 (59.6 → 54.8, 56.4 → 52.0 answers). Stronger scalings were measured and not taken: 15 % + 5 %/level (0.75 wins 70.5 %),
 10 % + 10 %/level (74.6 %, expeditions about 10 % shorter).
 
-## Save format v1 (key `hanzi-hunters-save`)
-Saves were **restarted at v1 with expeditions** (2026-11-01): the earlier keys (`hanzi-hunters-save-v1`, `hanzi-hunters-save-v2`) are deleted on start (`clearOldSaves`) and never read, and backups from before are rejected. There are no migrations from earlier formats.
+## Save format (key `hanzi-hunters-save`, `version: 2`; `src/game/save.ts`)
+Saves were restarted with expeditions (2026-11-01): the earlier keys (`hanzi-hunters-save-v1`, `hanzi-hunters-save-v2`) are
+deleted on start (`clearOldSaves`) and never read. Version 1 of the current key (calendar-day mastery) is migrated once to
+version 2 (scheduler data per entry, `answerSeq`; see `docs/SCHEDULING.md`, Migration). A save with any other `version` loads as
+a fresh save. Backups (`src/game/backup.ts`) accept versions 1 and 2.
 
-`{ version: 1, meta{gold,upgrades,bestFloor,runs,wins,depthCleared}, mastery{entryId:{lv,ok,at?}}, legacyMastery{id:{lv,ok}}, run|null, lastRun{floor,kills,level,goldBanked,bonus,result,depth,unlocked}|null, habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,badges}, courses{curriculumId:{version,completed[lessonId]}}, peak{entryId:highestLevel}, legacyPeak{id:level}, practiced[entryId] }`. `run` holds `depth` (1–5), `floor` (1–5), `hearts`, `secondLeft` (the expedition's pool), `recoveredFloor`, `shield` and `reward.hearts`; `lastRun.result` is `won` / `defeat` / `returned`. Every field is validated on load (`src/game/save.ts`); a save with another `version` loads as a fresh save. A mid-run reload resumes the expedition.
+`{ version: 2, answerSeq, meta{gold,upgrades,bestFloor,runs,wins,depthCleared}, mastery{entryId: scheduler entry},
+legacyMastery{id: …}, run|null, lastRun{floor,kills,level,goldBanked,bonus,result,depth,unlocked}|null,
+habit{daysPlayed,lastPlayed,warmupDay,correct,bosses,bossesMet,seed,tipsSeen,notesSeen,badges}, courses{curriculumId:{version,completed[lessonId]}},
+peak{entryId: highestLevel}, legacyPeak{id: level}, practiced[entryId] }`. `run` holds `depth` (1–5), `floor` (1–5), `hearts`,
+`secondLeft` (the expedition's pool), `recoveredFloor`, `shield` and `reward.hearts`; `lastRun.result` is `won` / `defeat` /
+`returned`. Every field is validated on load; a mid-run reload resumes the expedition. `habit.warmupDay`, `habit.badges` and
+`habit.seed` are kept for round-tripping but unused. `legacyMastery` / `legacyPeak` park progress of entry ids that no longer exist,
+so it comes back if the entry returns (`docs/CONTENT_GUIDE.md` §1.7). `courses` and `peak` are re-derived from mastery when
+missing (`docs/CURRICULUM.md` §4).
 
-Optional additive fields (old saves load without them): `run.encounter`, `run.trial` (`{id, floor, order, status, chosen?, data?}`; `data` holds a generated trial and is re-validated on load), `run.calm`, `encounterHistory`, and `recentEvents` (the last 12 scenes/trials shown, `scene:<id>` / `trial:<id>`). See `docs/CONTEXTUAL_ENCOUNTERS.md`.
+Optional additive fields (old saves load without them): `run.encounter`, `run.trial` (`{id, floor, order, status, chosen?, data?}`;
+`data` holds a generated trial and is re-validated on load), `run.calm`, `run.omen`, `encounterHistory`, and `recentEvents` (the last 12
+scenes/trials shown). See `docs/CONTEXTUAL_ENCOUNTERS.md`.
 
 ## Entries, readings and questions (`src/content`, `src/game/questions.ts`)
 * An **entry** is one word / character / particle with one meaning and reading (`kind`). Multi-character words, neutral-tone syllables (`neutral`), accepted pronunciation variants (`variants`), connected-speech guidance (`speech`), several entries for one hanzi (explicit `id`s) and per-entry question eligibility (`questions`) are all data: see `docs/CONTENT_GUIDE.md`.
@@ -180,22 +190,26 @@ Optional additive fields (old saves load without them): `run.encounter`, `run.tr
 * Milestone badges were removed (they were noise); `habit.badges` stays in saves, unused, so older saves round-trip unchanged.
 
 ## Bosses (`src/game/rules.ts`, `src/data.ts`)
+Every boss offers one **trial** (a one-question challenge) during the fight: answered once, no mastery change, and a wrong trial
+answer is an ordinary wrong answer (a heart unless protected). The trials are summarised below and specified in
+`docs/CONTEXTUAL_ENCOUNTERS.md` (Boss trials).
+
 * **Every floor ends with a boss** (the 4th fight): **Shield Golem** (floor 1), **Echo Wraith** (2), **Ink Scribe** (3), **Mirror Trickster** (4) (`BOSS_ORDER`), and the final boss **Cavern Warden** (floor 5, `FINAL_BOSS`). To add a boss: a sprite, an entry in `BOSSES` / `BOSS_INFO` (`data.ts`), its place in `bossIdFor`, and its rule in `resolveAnswer` / `makeCard`.
 * **Cavern Warden** (final boss): 2 **tone wards** then 2 **ink seals** (`WARDEN_WARDS`, `WARDEN_SEALS`; `sealAsk` says which question kind breaks the current segment: tone questions for wards, character questions for seals, with the same safe fallback), then an **echo** phase like the Wraith's. Beating it wins the expedition. Placeholder art: the Golem sprite with a gold glow. Drops **no item** (the expedition ends right after it): its reward is the **Warden Sigil** relic (below).
-  **Gauntlet** (`src/game/trials.ts`): right after the first tone ward breaks, two steps: a tone trial (right: the last ward breaks), then a torn note (right: every remaining seal breaks). Each is answered once; a wrong step is an ordinary wrong answer and the next step still follows. Once per fight, no mastery change.
+  **Gauntlet** (trial): after the first tone ward breaks, a tone trial then a torn note; each right step breaks the remaining wards / seals. Details: `docs/CONTEXTUAL_ENCOUNTERS.md`.
 * Stats: base enemy × boss multipliers, then the per-floor scaling. Early bosses are gentler and ramp up: HP ×(1.3 + 0.15·(floor−1)) up to `BOSS_HP` 1.7, rewards ×`BOSS_REWARD` 2. Bosses have no attack: like every enemy, a mistake against them costs exactly one heart (before protection), and protected practice causes no boss penalty either.
 * **Shield Golem:** a shield that blocks all damage: 2 segments (`shieldFor`; 3 for the Scribe on floor 3). Only a correct *pinyin* (tone) question breaks a segment; while the shield is up the game asks pinyin questions about words you know. **Safe fallback** (`pickSealCard`): if no such question can be built from your words (e.g. only particles known), the game asks another fair question marked `sealFallback`, and a correct answer to it breaks a segment too, so a shield is never unbreakable (`tests/hearts.test.ts` beats every boss with the first lesson's words). Wrong answers never repair it. Once down it is a normal fight. `Run.shield` is saved.
-  **Tone Trial** (`src/game/trials.ts`, content `src/content/trials.json`): right after the first segment breaks, the Golem offers one trial: a short line of words you have met, pick the tone-marked pinyin. Right: the rest of the shield shatters and the Golem loses 25 % of its max HP (`TUNING.golemTrialHit`, never the killing blow). Wrong: an ordinary wrong answer (heart / second chance / defeat via `resolveAnswer`). Once per fight (`Run.trial`), no mastery change. See `docs/CONTEXTUAL_ENCOUNTERS.md`.
+  **Tone Trial** (trial): after the first segment breaks, pick the tone-marked pinyin of a line of known words; right shatters the shield and takes 25 % of its HP. Details: `docs/CONTEXTUAL_ENCOUNTERS.md`.
 * **Ink Scribe:** the same idea with a different skill: ink seals (2, then 3 from floor 3) block all damage and only a correct *character* question (pick the right hanzi) breaks one. Same safe fallback as the Golem. Seals never grow back (removed with hearts). Sprite: recoloured slime.
-  **Torn Note** (`src/game/trials.ts`): right after the first seal breaks, the Scribe shows a note of words you have met with one character missing (English meaning shown); pick the character that completes it. Distractors are often homophones (有 / 友, both yǒu). Right: every remaining seal breaks (no damage). Wrong: an ordinary wrong answer. Once per fight, no mastery change.
+  **Torn Note** (trial): after the first seal breaks, pick the missing character of a note of known words; right breaks every remaining seal. Details: `docs/CONTEXTUAL_ENCOUNTERS.md`.
 * **Mirror Trickster:** no shield. Asks only look-alike and same-sound questions (the easy ones to confuse). A right answer hits +40 % (`TRICKSTER_HIT`); a wrong answer deals nothing (it no longer heals the Trickster). If no trick question can be built, a normal question is asked. Sprite: recoloured imp.
-  **Mirrors** (`src/game/trials.ts`): the first time it drops below half HP (`TRICKSTER_LOW`), a scene and three statements, one true: usually a generated **tray of noun tiles** (这里有 X / 这里没有 X / 这里有 N 个 X, for any noun the player has met), or a picture for 他 / 她. Right: a heavy blow, 30 % of its max HP (never the killing blow), and a calm charge. Wrong: an ordinary wrong answer. Once per fight, no mastery change.
+  **Mirrors** (trial): below half HP, pick the one true statement about a scene; right deals 30 % of its HP and gives a calm charge. Details: `docs/CONTEXTUAL_ENCOUNTERS.md`.
 * **Echo Wraith:** normal fight; below 60 % HP it asks the kind of question you got wrong most recently (falls back to a normal question when that kind cannot be built).
-  **Wail** (`src/game/trials.ts`): when it first drops below 60 % HP it says a line of words you have met (你好…… / 你是谁？ / 这里有人吗？ …) and you pick the reply that answers it. Right: it calms, and your next wrong answer this expedition costs no heart (`Run.calm`, kept until used). Wrong: an ordinary wrong answer. Once per fight, no mastery change.
-* Rewards: the first time you beat each boss type it drops its own item (**Golem Plate** / **Wraith Lantern** / **Scribe Brush** / **Trick Mantle**, boss-only gear that never drops elsewhere). After that a boss rolls for normal gear with a +30 % better chance. The first kill of any boss counts for the *Boss slayer* badge.
+  **Wail** (trial): below 60 % HP, pick the reply to its line; right calms it, so your next wrong answer this expedition costs no heart. Details: `docs/CONTEXTUAL_ENCOUNTERS.md`.
+* Rewards: the first time you beat each boss type it drops its own item (**Golem Plate** / **Wraith Lantern** / **Scribe Brush** / **Trick Mantle**, boss-only gear that never drops elsewhere). After that a boss rolls for normal gear with a +30 % better chance.
 * The intro card is shown only the first time you meet each boss type (`habit.bossesMet`); later floors show just the `BOSS · PHASE n/2` tag and the shield / ECHO tag in the arena.
 * Preview a boss without playing: open `/?floor=1` (Golem) … `/?floor=5` (Warden); `&kill=0..3` picks an earlier fight of that floor. It replaces the current run with a fresh, levelled-up hero (test URLs only).
-* **Longer floors:** `ENEMIES_PER_FLOOR` (rules.ts) is one constant. A trial with 10 per floor typechecks, and the simulator pacing stays similar, but it needs: the pacing and save tests' thresholds re-checked, the header path (10 nodes overflowed the header by ~22 px on a 320 px phone (re-measure at 360 px, the narrowest supported width): shrink the nodes or drop the BOSS tag), and a look at per-floor rewards.
+* **Longer floors:** `ENEMIES_PER_FLOOR` (rules.ts) is one constant. A trial with 10 per floor typechecks, and the simulator pacing stays similar, but it needs: the pacing and save tests' thresholds re-checked, the header path (10 nodes overflowed the header on a narrow phone: re-measure at 360 px, the narrowest supported width, and shrink the nodes or drop the BOSS tag), and a look at per-floor rewards.
 * Loot reveal: rare/epic gear, boss gear, or a clear upgrade over what you wear opens a chest card that compares the stats with the equipped item (and offers *Equip now*); other drops stay a chip. Auto-continue waits while the card is open.
 
 ## Which words come first (`src/game/course.ts`, `src/content/curricula.json`)
