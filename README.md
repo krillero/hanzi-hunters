@@ -55,6 +55,8 @@ preview (`pr-preview.yml`). The source review screen is at `<site>/review/` (not
 | If you are working on… | Read |
 |---|---|
 | Anything (rules for agents, testing workflow, definition of done) | `AGENTS.md` |
+| What is settled and why, and what is still open for the owner | `QUESTIONS-AND-DECISIONS.md` |
+| Bugs whose cause was not where the symptom pointed (read before debugging something odd) | `docs/PITFALLS.md` |
 | Architecture, modules, state ownership, saves overview, open work | `DEVELOPMENT_BRIEF.md` |
 | Game rules: expeditions, hearts, bosses, upgrades, gear, balance, save format | `docs/GAME_DESIGN.md` |
 | Word levels and spaced review | `docs/SCHEDULING.md` |

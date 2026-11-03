@@ -3,6 +3,17 @@
 History, newest first: what changed and how it was tested. Older entries describe designs that were later changed or removed;
 the current state is in the topic docs (map in `README.md`).
 
+## 2026-11-03 — Code standards, pitfalls and decisions log (docs only)
+
+- AGENTS.md: code standards adapted from the owner's other projects (readability, where things go, one word per concept,
+  duplication rule, ~300-line signal with the current offenders, generated files never edited by hand), working rules (review every
+  change for coherence, mockups as PNG images, record decisions and pitfalls), and "change a rule only with a reason beside it".
+- New `docs/PITFALLS.md`: 12 bugs from this project's history whose cause was not where the symptom pointed (stale PWA cache, phone
+  viewport height, layout jumps, async voices, scene mount, speech before the intro card, captions from state diffs, readiness from
+  lesson membership, copied records dropping fields, untyped test fixtures, non-deterministic re-imports, search matching mid-word).
+- New `QUESTIONS-AND-DECISIONS.md`: settled decisions with their reasons, and the open questions for the owner.
+- Both on the README map. Checks: typecheck, 321 tests (docs test included), build.
+
 ## 2026-11-03 — Type checking everywhere; conventions, generated-file and docs tests (tooling)
 
 - `npm run typecheck` now also checks `tools/`, `tests/` and `vite.config.ts` (`tsconfig.tools.json`, dev dependency `@types/node`,
