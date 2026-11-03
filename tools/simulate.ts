@@ -7,7 +7,7 @@ import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, TUNING, advance, bankR
 import { UPGRADES, buyUpgrade, computeBonuses, nodeState, upgradeCost } from '../src/game/upgrades.ts'
 import { MAX_LV, isDue } from '../src/game/mastery.ts'
 import { introduce as introduceEntry, recordAnswer, type Outcome } from '../src/game/schedule.ts'
-import { answerRevealed, dimensionOf } from '../src/game/learning.ts'
+import { answerRevealed, dimensionOf, promotesProgress } from '../src/game/learning.ts'
 import { tryBuildQuestion, type KindResult } from '../src/game/questions.ts'
 import { SCENES, eligible, validGeneratedScenes } from '../src/game/encounters.ts'
 import { DUE_PER_FIGHT, emptyCourse, recordPeaks, selectIntroductions, selectReview, syncCourse, wordMap, type CourseProgress, type PeakLevels } from '../src/game/course.ts'
@@ -140,7 +140,7 @@ export function simulate(accuracy: number, runsToPlay: number, seed = 1, opts: S
       }
       seq++; now += SIM_ANSWER_MS
       const kind = q?.kind ?? 'meaning'; history.push({ kind, ok }); if (history.length > 16) history.shift()
-      const res = recordAnswer(mastery[word.id] ?? introduceEntry(now, seq - 1), { correct: ok, assisted: hinted || (q ? answerRevealed(q) : false), dim: dimensionOf(kind), now, seq })
+      const res = recordAnswer(mastery[word.id] ?? introduceEntry(now, seq - 1), { correct: ok, assisted: hinted || (q ? answerRevealed(q) : false), dim: dimensionOf(kind), promotes: promotesProgress(kind), now, seq })
       mastery = { ...mastery, [word.id]: res.entry }
       if (pace) {
         pace.answers++; pace.outcomes[res.outcome] = (pace.outcomes[res.outcome] ?? 0) + 1

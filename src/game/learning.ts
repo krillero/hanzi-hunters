@@ -16,6 +16,15 @@ const DIMENSION: Record<QKind, Dimension> = {
 }
 export const dimensionOf = (kind: QKind): Dimension => DIMENSION[kind]
 
+/**
+ * Question kinds whose correct answers can move the scheduler: those that reinforce the written character, either because it is
+ * shown (character→meaning, character→pinyin) or because it is the answer (meaning/pinyin/homophone/look-alike/audio→character).
+ * Meaning→pinyin and the other audio questions never involve the character, so they are recorded as evidence only. This is
+ * chosen per kind, not per dimension: character→pinyin and meaning→pinyin share the 'reading' dimension.
+ */
+const PROMOTING_KINDS: readonly QKind[] = ['intro', 'meaning', 'pinyin', 'character', 'listen', 'pinyin2char', 'homophone', 'lookalike']
+export const promotesProgress = (kind: QKind): boolean => PROMOTING_KINDS.includes(kind)
+
 /** Was the answer shown on the question card before the player chose? (The intro question shows everything.) */
 export const answerRevealed = (q: Question) => q.kind === 'intro' || (q.ask !== 'particle' && q.show[q.ask])
 
@@ -54,7 +63,7 @@ export function applyAnswer(s: Saved, a: Submission, seq = s.answerSeq + 1): Lea
   const entry = existing ?? introduce(a.now, seq - 1)   // asked without an introduction: created now; the intro question shows the answer, so it is assisted
   const dim = dimensionOf(a.kind)
   const toneOk = dim === 'reading' && a.chosen !== undefined && a.answer !== undefined ? toneCorrect(a.answer, a.chosen) : undefined
-  const r = recordAnswer(entry, { correct: a.correct, assisted: a.assisted || !existing, dim, now: a.now, seq, toneOk })
+  const r = recordAnswer(entry, { correct: a.correct, assisted: a.assisted || !existing, dim, promotes: promotesProgress(a.kind), now: a.now, seq, toneOk })
   if (r.outcome === 'ignored') return { save: s, outcome: 'ignored', before, after: entry.lv }
   return { save: { ...s, answerSeq: Math.max(s.answerSeq, seq), mastery: { ...s.mastery, [a.id]: r.entry } }, outcome: r.outcome, before, after: r.entry.lv }
 }

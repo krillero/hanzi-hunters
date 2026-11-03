@@ -32,13 +32,14 @@ retention milestone, not proof of speaking, listening, writing or permanent know
 - Reading a new-word card calls `introduce` (level 0, no credit). Details, translations and every answer's feedback show the answer;
   `recordReveal` and `recordAnswer` store that as `reveal`, separate from the last qualifying success (`dims[d].lastQual`).
 - **Dimensions** (`meaning, reading, listening, reverse, sentence`): evidence (attempts, correct, last times; tone right/wrong for reading)
-  is stored per dimension for every answer. Only `PROMOTING_DIMENSIONS` (`meaning` and `reverse`, see below) can move the scheduler, including lapses.
+  is stored per dimension for every answer. Only answers marked as promoting (see below) can move the scheduler, including lapses.
   Requiring more dimensions per stage later only needs this constant and one predicate, not a data change.
 - A mode that cannot tell whether the answer was revealed must pass `assisted: true` (conservative).
-- **Promoting dimensions today: `meaning` and `reverse`** (meaning to hanzi, pinyin to hanzi, homophone, look-alike). A meaning-only gate would stall
-  every word at Learning, because the question mix at level 1 has no meaning question (`KIND_WEIGHTS` in questions.ts). Reading (pinyin, with
-  tone-right / tone-wrong evidence), listening and sentence (particle) answers are recorded only. Particles are asked mostly as sentences, so they
-  advance more slowly (through their meaning questions). Revisit when the question mix is reviewed.
+- **Which questions promote (per question kind, `PROMOTING_KINDS` in `learning.ts`):** every question that involves the written character:
+  character→meaning, character→pinyin, audio→character, meaning→character, pinyin→character, homophone and look-alike. Meaning→pinyin,
+  audio→meaning, audio→pinyin and particle sentence questions are recorded only (no character to reinforce; particles advance through their
+  meaning questions). The choice is per kind, not per dimension, because character→pinyin and meaning→pinyin share `reading`
+  (tone evidence is recorded for both). `Answer.promotes` carries it into `recordAnswer`; when omitted, `PROMOTING_DIMENSIONS` decides.
 - **Assisted** = a hint removed options, or the question card showed the answer it asks for (`answerRevealed`), or the word had no introduction.
   Showing pinyin on a meaning question is not assistance. Reveals: new-word card, answer feedback, opening details, opening the wordbook.
 - Boss-trial answers bump the global answer number (they count as answered questions for spacing) but are not tied to a word, so they record no evidence and promote nothing.

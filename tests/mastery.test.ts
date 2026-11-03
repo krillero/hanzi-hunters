@@ -4,7 +4,7 @@ import { LEVEL_NAMES, MAX_LEARNING, MAX_LV, MIN_KNOWN, SESSION_LV, STARTING_POOL
 import { DUE_PER_FIGHT, introCapacity, selectReview } from '../src/game/course.ts'
 import { WORDS } from '../src/data.ts'
 import { INITIAL_GAPS, STAGE_INTERVAL_MS, entryAtLevel } from '../src/game/schedule.ts'
-import { answerRevealed, applyAnswer, applyIntroduce, applyReveal, dimensionOf, learningNote, toneCorrect } from '../src/game/learning.ts'
+import { answerRevealed, applyAnswer, applyIntroduce, applyReveal, dimensionOf, learningNote, promotesProgress, toneCorrect } from '../src/game/learning.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import { buildQuestion } from '../src/game/questions.ts'
 import type { Mastery, Saved } from '../src/game/types.ts'
@@ -63,6 +63,12 @@ test('help and answer-revealing questions are assisted; dimensions map to questi
   assert.equal(answerRevealed(byKind('meaning')), false)
   assert.equal(answerRevealed(buildQuestion(w, undefined, WORDS)), true, 'the intro question shows everything')
   assert.deepEqual(['meaning', 'pinyin', 'character', 'listen', 'particle'].map(k => dimensionOf(k as never)), ['meaning', 'reading', 'reverse', 'listening', 'sentence'])
+})
+
+test('only questions that involve the written character can move a word on', () => {
+  const counts = ['meaning', 'pinyin', 'character', 'listen', 'pinyin2char', 'homophone', 'lookalike'].filter(k => promotesProgress(k as never))
+  assert.equal(counts.length, 7, 'character→meaning/pinyin and meaning/audio/pinyin→character all count')
+  for (const k of ['meaning2pinyin', 'listen2meaning', 'listen2pinyin', 'particle']) assert.equal(promotesProgress(k as never), false, `${k} never shows or asks for the character`)
 })
 
 test('tone evidence: right tone, wrong tone, and a different syllable', () => {

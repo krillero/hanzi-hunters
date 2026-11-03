@@ -3,6 +3,10 @@
 History, newest first: what changed and how it was tested. Older entries describe designs that were later changed or removed;
 the current state is in the topic docs (map in `README.md`).
 
+## 2026-11-03 — Character→pinyin and audio→character now count
+
+- Which answers move a word on is now decided per question kind (`PROMOTING_KINDS`, `promotesProgress` in `src/game/learning.ts`): every question that shows or asks for the written character counts, including character→pinyin and audio→character (before, only meaning and character-answer questions did). Meaning→pinyin, audio→meaning, audio→pinyin and particle sentences are still recorded only. `Answer.promotes` is optional; without it the dimension rule applies. Existing saves need no migration. Docs: `docs/SCHEDULING.md`. Tested: `npm run typecheck`, `npm run test:brief` (new test in `tests/mastery.test.ts`); the simulator was not re-run, so its quoted pacing numbers predate this.
+
 ## 2026-11-03 — Faster spacing: 1, 1, 3 days
 
 - `STAGE_INTERVAL_MS` waits after Familiar, Remembered and Retained are now 24 h, 24 h, 72 h (were 24 h, 72 h, 168 h); the first maintenance check stays at 14 d. Existing saves need no migration: stored due dates are clamped to at most one (now shorter) interval from now, so some words become due sooner. Docs: `docs/GAME_DESIGN.md`, `docs/SCHEDULING.md`. Tested: `npm run test:brief`; the simulator report in `docs/SCHEDULING.md` was not re-measured.

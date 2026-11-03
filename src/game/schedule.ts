@@ -2,7 +2,7 @@
 // See docs/SCHEDULING.md for the research basis (and its limits), the state-transition table and the migration rules.
 //
 // One scheduler per entry. Levels 0-5 keep their meaning (see LEVEL_NAMES in mastery.ts). Evidence for every tested dimension is
-// recorded, but only PROMOTING_DIMENSIONS can move the scheduler (today: meaning and written-form questions, see game/learning.ts).
+// recorded, but only answers the caller marks as promoting can move the scheduler (per question kind: PROMOTING_KINDS in game/learning.ts).
 
 const MIN = 60_000, HOUR = 3_600_000, DAY = 86_400_000
 
@@ -29,7 +29,7 @@ export const MAX_COUNT = 9999
 
 export const DIMENSIONS = ['meaning', 'reading', 'listening', 'reverse', 'sentence'] as const
 export type Dimension = typeof DIMENSIONS[number]
-/** Dimensions whose answers can change level, due dates or relearning. Everything else is recorded only. */
+/** Default for an answer that does not say whether it promotes: these dimensions can change level, due dates or relearning. */
 export const PROMOTING_DIMENSIONS: readonly Dimension[] = ['meaning', 'reverse']
 
 // ---- Types -------------------------------------------------------------------------------------------------------------------
@@ -56,6 +56,8 @@ export type Answer = {
   now: number                // ms timestamp
   seq: number                // global answer number, increasing by one per submitted answer
   toneOk?: boolean           // reading questions only
+  /** Can this answer move the scheduler? The caller decides per question kind (PROMOTING_KINDS in learning.ts); when omitted the dimension decides. */
+  promotes?: boolean
 }
 export type Outcome = 'ignored' | 'recorded' | 'assisted' | 'practice' | 'spaced' | 'familiar' | 'advanced' | 'maintained' | 'lapse' | 'relearned' | 'rechecked'
 
@@ -108,7 +110,8 @@ export function recordAnswer(e: SchedEntry, a: Answer): { entry: SchedEntry; out
     const dims = qualified ? { ...touched.dims, [a.dim]: { ...stat, lastQual: a.now } } : touched.dims
     return { entry: { ...touched, ...patch, dims }, outcome }
   }
-  if (!PROMOTING_DIMENSIONS.includes(a.dim)) return done({}, 'recorded')
+  const promotes = a.promotes ?? PROMOTING_DIMENSIONS.includes(a.dim)
+  if (!promotes) return done({}, 'recorded')
 
   if (!a.correct) {
     // One failure transition per recovery period: a miss while already relearning / rechecking only restarts the relearning gap.
