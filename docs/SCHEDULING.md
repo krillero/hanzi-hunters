@@ -20,7 +20,7 @@ retention milestone, not proof of speaking, listening, writing or permanent know
 ## Constants (all in `schedule.ts`)
 
 `INITIAL_SUCCESS_TARGET = 3`; `INITIAL_GAPS` = 2 other answers + 30 s, 4 + 90 s, 8 + 180 s; `LONG_BREAK_MS` = 20 min (satisfies any gap);
-`RELEARN_GAP` = 2 + 30 s; `REVEAL_QUIET_MS` = 10 min; `STAGE_INTERVAL_MS` = 24 h (Familiar), 72 h (Remembered), 168 h (Retained), 14 d (first maintenance);
+`RELEARN_GAP` = 2 + 30 s; `REVEAL_QUIET_MS` = 10 min; `STAGE_INTERVAL_MS` = 24 h (Familiar), 24 h (Remembered), 72 h (Retained), 14 d (first maintenance);
 `MAINTENANCE_INTERVAL_MS` = 30 d; `RECHECK_MS` = 24 h. All waits are elapsed milliseconds, never calendar dates.
 
 ## Rules
@@ -68,7 +68,7 @@ Late players are never penalised: overdue words stay at their level and are simp
 `fromLegacyEntry` converts each v1 entry (also the parked `legacyMastery`) `{lv, ok, at?}` once; the new shape is then validated by `sanitizeSched` on every load (no re-migration).
 
 - Every level is kept. lv 0: 0 successes; lv 1: 1 of 3; lv 2+: initial learning complete. No credit for past answers; gap anchors and the answer counter start at migration time.
-- lv 2+ with a valid date: due = **local noon** of that date + the interval of the level (24 h / 72 h / 168 h / 14 d for 2/3/4/5), clamped to at most one interval from now. Overdue dates are preserved.
+- lv 2+ with a valid date: due = **local noon** of that date + the interval of the level (24 h / 24 h / 72 h / 14 d for 2/3/4/5), clamped to at most one interval from now. Overdue dates are preserved.
 - Missing or invalid date: due now, no promotion. A level-5 entry without a date is capped at 4 (as before).
 - `sanitizeSched` bounds counters, enum values and sequence numbers, and clamps future `at`/`reveal`/`adv`/`due` timestamps to now (a requirement may wait, never pass).
 - Peaks, legacy mastery/peak (unknown ids), curriculum progress and practiced history are untouched; lesson readiness keeps its current threshold.

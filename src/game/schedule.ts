@@ -20,7 +20,7 @@ export const RELEARN_GAP = { otherAnswers: 2, minimumMs: 30_000 } as const
 /** A delayed success must come this long after the last exposure that displayed the entry's answer. */
 export const REVEAL_QUIET_MS = 10 * MIN
 /** Wait after reaching level 2, 3, 4, 5 (level 5 = first maintenance). Elapsed time, never calendar dates. */
-export const STAGE_INTERVAL_MS: Readonly<Record<number, number>> = { 2: 24 * HOUR, 3: 72 * HOUR, 4: 168 * HOUR, 5: 14 * DAY }
+export const STAGE_INTERVAL_MS: Readonly<Record<number, number>> = { 2: 24 * HOUR, 3: 24 * HOUR, 4: 72 * HOUR, 5: 14 * DAY }
 export const MAINTENANCE_INTERVAL_MS = 30 * DAY
 /** Wait after a successful relearning answer on an established word. */
 export const RECHECK_MS = 24 * HOUR

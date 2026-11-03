@@ -46,8 +46,8 @@ Each word has a level 0-5 and one scheduler (`game/schedule.ts`; full rules, res
 | 1 | Learning | the 1st of 3 **spaced** successes (2 other answers + 30 s later) |
 | 2 | Familiar | the 3rd spaced success (4 answers + 90 s, then 8 answers + 180 s; a 20 min break also counts) |
 | 3 | Remembered | a correct unassisted answer **24 h** after Familiar |
-| 4 | Retained | the same, **72 h** after Remembered |
-| 5 | Mastered | the same, **168 h** after Retained; then a maintenance check after 14 days, then every 30 days |
+| 4 | Retained | the same, **24 h** after Remembered |
+| 5 | Mastered | the same, **72 h** after Retained; then a maintenance check after 14 days, then every 30 days |
 
 * All waits are elapsed time, not calendar days. A right answer before the word is due counts as practice but never moves the due time;
   help (a hint, or an answer shown on the card) and an answer shown in the last 10 minutes do not count. A late answer promotes **one** stage only.
