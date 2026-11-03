@@ -10,7 +10,7 @@ export type Habit = {
   bossesMet: string[]     // boss types whose intro card has been shown (later floors skip it)
   seed: number            // shuffles the order new words are introduced in (0 = the file's order; a fresh profile gets a random one)
   tipsSeen: string[]      // words whose 💡 button has already pulsed once
-  notesSeen: string[]     // explanations already shown in full after a right answer (word ids, cloze:<item id>): later ones fold away
+  notesSeen: string[]     // unused since explanations always show in full; kept so saves stay valid
   badges: string[]        // no longer used (milestone badges were removed); kept so older saves round-trip unchanged
 }
 export const emptyHabit = (): Habit => ({ daysPlayed: 0, lastPlayed: '', warmupDay: '', correct: 0, bosses: 0, bossesMet: [], seed: 0, tipsSeen: [], notesSeen: [], badges: [] })

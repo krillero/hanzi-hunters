@@ -3,6 +3,10 @@
 History, newest first: what changed and how it was tested. Older entries describe designs that were later changed or removed;
 the current state is in the topic docs (map in `README.md`).
 
+## 2026-11-03 — Explanations always shown (no "Why?" fold)
+
+- Answer feedback now always shows the explanation; the "Why? ›" button that folded it after a word's first right answer is gone. `habit.notesSeen` stays in the save format but is no longer written. Tested: `npm run typecheck`, `npm run test:brief`, `npm run build`; no browser check run.
+
 ## 2026-11-03 — Beginner meaning groups; outdated reviewer decisions; fuller fingerprint; recording selection rules
 
 - **Rule:** “one meaning per entry” is replaced by the owner's “one beginner meaning group per entry” (near-synonyms or a

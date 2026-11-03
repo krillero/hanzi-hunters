@@ -97,7 +97,7 @@ Not yet: per-kind history across sessions, and context questions beyond the auth
 - New entries come in curriculum order (see below); no new entry is introduced while 4 entries are still at level 0, and entries met may exceed entries at level 1+ by at most 6.
 
 ## Flow after an answer
-**Pacing:** the game pauses for new material (introduction cards; words below Familiar get the recap card) and for every mistake. A right answer to a Familiar word gets a brief reveal and continues by itself after 1 s (`LEARNING_AUTO_DELAY`, the default "Learn first" setting); 💡 opens the details and pauses. A word's explanation is shown in full the first time it appears after a right answer and folds behind "Why? ›" afterwards (`habit.notesSeen`); after a mistake it is always shown. Explanations are never cut short (the recap scrolls).
+**Pacing:** the game pauses for new material (introduction cards; words below Familiar get the recap card) and for every mistake. A right answer to a Familiar word gets a brief reveal and continues by itself after 1 s (`LEARNING_AUTO_DELAY`, the default "Learn first" setting); 💡 opens the details and pauses. A word's explanation is always shown in full after an answer (no fold). Explanations are never cut short (the recap scrolls).
 
 A wrong answer's recap does not repeat the right answer (the card above shows it). It shows **what you chose** in its own red box, sized by length (one character big; words, pinyin, phrases and sentences smaller and wrapped), with the pinyin and meaning when it is a word you know, so the mix-up itself is taught.
 

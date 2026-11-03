@@ -48,8 +48,7 @@ type Card = { word: Word; question: Question; sealFallback?: boolean }
 type CombatExchange = { damage: number; heartsLost: number; saved: 'practice' | 'second' | 'calm' | 'blessing' | null; heartsRestored: number; victory: boolean; combo: number; weak: boolean; shield: 'broken' | 'blocked' | null; shieldLeft: number }
 type Caption = { side: 'hero' | 'monster'; kind: 'weak' | 'block' | 'heal' | 'shield' | 'hurt'; text: string }
 type Feedback = { correct: boolean; word: Word; mastery: string; masteryUp: boolean; masteredNow: boolean; lv: number; chosen: string; answer: string; title: string; foeName: string; exchange: CombatExchange
-  /** Show the explanation open: always after a mistake, and the first time after a right answer (later ones fold behind Why?). */
-  noteOpen: boolean }
+  }
 
 /** Streak badge in the arena: pips until the combo bonus starts (needs the Combo Strikes upgrade), a flame while it is active. */
 function ComboBadge({ streak, bonusPct }: { streak: number; bonusPct: number }) {
@@ -172,7 +171,6 @@ export default function App() {
   const [card, setCard] = useState<Card | null>(null)
   const [eliminated, setEliminated] = useState<string[]>([])
   const [feedback, setFeedback] = useState<Feedback | null>(null)
-  const [noteShown, setNoteShown] = useState(true)   // a folded explanation opened with Why?
   const [toast, setToast] = useState('')
   const [campMsg, setCampMsg] = useState('')
   const [showBag, setShowBag] = useState(false)
@@ -558,14 +556,9 @@ export default function App() {
     const exchange: CombatExchange = { damage: r.damage, heartsLost: r.heartsLost, saved: r.practiceSaved ? 'practice' : r.savedByBlessing ? 'blessing' : r.savedByCalm ? 'calm' : r.savedBySecondChance ? 'second' : null, heartsRestored: r.heartsRestored, victory: r.outcome === 'victory', combo: r.comboHit ? Math.round(bonuses.streakDmgPct * 100) : 0, weak: !isCorrect, shield: r.shieldBroken ? 'broken' : r.shieldBlocked ? 'blocked' : null, shieldLeft: r.run.shield }
     if (plan) setReveal({ chosen: option, plan, exchange })
     else {
-      // A right answer shows a word's explanation in full once; afterwards it folds behind "Why?" (no repeated reading).
-      const noteKey = question.cloze ? `cloze:${question.cloze.itemId}` : word.id
-      const noteOpen = !isCorrect || !save.habit.notesSeen.includes(noteKey)
-      if (isCorrect && noteOpen) patch(s => (s.habit.notesSeen.includes(noteKey) ? s : { ...s, habit: { ...s.habit, notesSeen: [...s.habit.notesSeen, noteKey].slice(-1000) } }))
-      setNoteShown(noteOpen)
       setFeedback({
         correct: isCorrect, word, mastery: masteryNote, masteryUp: after > before && before >= 0, masteredNow, lv: after, chosen: option, answer: question.answer,
-        title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster', exchange, noteOpen
+        title: isCorrect ? '✦ Correct!' : '↻ Not quite', foeName: foe?.enemy.name ?? 'monster', exchange
       })
     }
     if (r.outcome === 'victory') {
@@ -1028,9 +1021,7 @@ export default function App() {
                       {mixedUp && <span className="chosen-gloss">{mixedUp.pinyin} · {mixedUp.meaning}</span>}
                     </div>
                   })()}
-                  {noteShown
-                    ? <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
-                    : <button className="result-why" onClick={() => setNoteShown(true)}>Why? ›</button>}
+                  <p className="result-note">{feedback.correct ? (card?.question.cloze?.note ?? feedback.word.note) : (card?.question.cloze?.why[feedback.chosen] ?? feedback.word.note)}</p>
                 </div>
               ) : <div className="answer-list">{question.options.map((option, i) => {
                 const gone = eliminated.includes(option)
