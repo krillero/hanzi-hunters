@@ -6,6 +6,7 @@ import { NO_BONUSES } from '../src/game/upgrades.ts'
 import { DEPTHS, ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, bankRun, challengeFor, enemyStats, newRun, resolveAnswer, unlockedDepth, victoryBonus } from '../src/game/rules.ts'
 import { KIND_WEIGHTS, RECALL_KINDS, chooseKind, type QKind } from '../src/game/questions.ts'
 import { sanitizeSave } from '../src/game/save.ts'
+import { sched } from './helpers/sched.ts'
 
 const none = { ...NO_BONUSES }
 const meta = { gold: 0, upgrades: [], bestFloor: 1, runs: 0, wins: 0, depthCleared: 0 }
@@ -44,7 +45,7 @@ test('challenge rises with depth and floor, and only re-weights kinds the word i
   assert.equal(challengeFor(1, 1), 0); assert.ok(challengeFor(1, 5) > 0); assert.ok(challengeFor(3, 1) >= challengeFor(2, 5)); assert.equal(challengeFor(MAX_DEPTH, EXPEDITION_FLOORS), 1)
   const w = WORDS.find(x => x.hanzi === '水')!
   const known = new Set(WORDS.map(x => x.id))
-  const draw = (lv: number, challenge: number) => { const c: Record<string, number> = {}; for (let i = 0; i < 1500; i++) { const k = chooseKind(w, { lv, ok: 0 }, WORDS, { canListen: true, known, challenge }); c[k] = (c[k] ?? 0) + 1 } return c }
+  const draw = (lv: number, challenge: number) => { const c: Record<string, number> = {}; for (let i = 0; i < 1500; i++) { const k = chooseKind(w, sched(lv), WORDS, { canListen: true, known, challenge }); c[k] = (c[k] ?? 0) + 1 } return c }
   for (const lv of [1, 2, 3]) {
     const easy = draw(lv, 0), hard = draw(lv, 1)
     for (const k of Object.keys(hard)) assert.ok(k in KIND_WEIGHTS[lv], `lv${lv}: ${k} is not in this level's table`)
@@ -52,10 +53,10 @@ test('challenge rises with depth and floor, and only re-weights kinds the word i
     assert.ok(share(hard) > share(easy), `lv${lv}: more recall at full challenge (${share(easy)} -> ${share(hard)})`)
   }
   // the first step of a new word and particles ignore challenge
-  for (let i = 0; i < 200; i++) assert.equal(chooseKind(w, { lv: 0, ok: 0 }, WORDS, { canListen: true, known, challenge: 1 }), 'meaning')
+  for (let i = 0; i < 200; i++) assert.equal(chooseKind(w, sched(0), WORDS, { canListen: true, known, challenge: 1 }), 'meaning')
   const noAudio = draw(3, 1)
   assert.ok(Object.keys(noAudio).length > 0)
-  for (let i = 0; i < 200; i++) assert.ok(!(chooseKind(w, { lv: 3, ok: 0 }, WORDS, { canListen: false, known, challenge: 1 }) as QKind).startsWith('listen'), 'no audio kinds without sound, even at full challenge')
+  for (let i = 0; i < 200; i++) assert.ok(!(chooseKind(w, sched(3), WORDS, { canListen: false, known, challenge: 1 }) as QKind).startsWith('listen'), 'no audio kinds without sound, even at full challenge')
 })
 
 test('saves keep depth progress and the expedition depth, clamped', () => {

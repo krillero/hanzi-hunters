@@ -2,15 +2,16 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { normalizeWords, audioReliable, homographsOf } from '../src/content/entries.ts'
 import { checkPinyin, splitSyllables, soundKey, toneVariants } from '../src/content/pinyin.ts'
-import type { ClozeItem, RawWord } from '../src/content/types.ts'
+import type { ClozeItem, RawWord, SpeechChange } from '../src/content/types.ts'
 import { validateContent } from '../src/content/validate.ts'
 import { QUESTION_KINDS, buildQuestion, isFeasible, meaningsOverlap, soundAlikesOf, usableHomophones, wrongPinyinFor, type QKind } from '../src/game/questions.ts'
 import { WORDS } from '../src/data.ts'
 import { CLOZE as SHIPPED_CLOZE } from '../src/content/index.ts'
+import { sched } from './helpers/sched.ts'
 
 const R = (o: Partial<RawWord> & { hanzi: string; pinyin: string; meaning: string }): RawWord => ({ group: 'g', note: 'n', ...o })
 const rng = () => 0.5
-const LV2 = { lv: 2, ok: 0 }
+const LV2 = sched(2)
 
 // A small, hand-made vocabulary that exercises every case.
 const SET = normalizeWords([
@@ -61,7 +62,7 @@ test('tone variants are only made for one-syllable entries with a lexical tone',
 // ---- multi-character words and unambiguous options ----------------------------------------------------
 test('multi-character words work in every question kind that is possible for them, with one right answer', () => {
   for (const w of SET.filter(x => x.kind === 'word' && [...x.hanzi].length === 2)) for (const kind of QUESTION_KINDS) for (const lv of [0, 1, 2, 3]) {
-    const q = buildQuestion(w, { lv, ok: 0 }, SET, { kind, canListen: true, known: KNOWN, rng })
+    const q = buildQuestion(w, sched(lv), SET, { kind, canListen: true, known: KNOWN, rng })
     assert.equal(new Set(q.options).size, q.options.length, `${w.hanzi} ${q.kind}: duplicate options`)
     assert.equal(q.options.filter(o => o === q.answer).length, 1, `${w.hanzi} ${q.kind}: exactly one correct option`)
     assert.ok(q.options.length >= 2 || q.kind === 'intro')
@@ -202,7 +203,7 @@ test('validator: readings, variants, speech, wrong readings', () => {
   assert.match(errs([R({ hanzi: '谁', pinyin: 'shéi', meaning: 'who', variants: ['shéi'] })]), /repeats the main pinyin/)
   assert.match(errs([R({ hanzi: '谁', pinyin: 'shéi', meaning: 'who', variants: ['shuí'], wrongPinyin: ['shuí'] })]), /valid way to say this word/)
   assert.match(errs([R({ hanzi: '你好', pinyin: 'nǐ hǎo', meaning: 'hello', speech: [{ pinyin: 'nǐ hǎo', context: 'x' }] })]), /repeats the dictionary pinyin/)
-  assert.match(errs([R({ hanzi: '你好', pinyin: 'nǐ hǎo', meaning: 'hello', speech: [{ pinyin: 'ní hǎo' }] })]), /context/)
+  assert.match(errs([R({ hanzi: '你好', pinyin: 'nǐ hǎo', meaning: 'hello', speech: [{ pinyin: 'ní hǎo' } as SpeechChange] })]), /context/)
 })
 
 test('validator: the same hanzi twice needs explicit ids and no audio; ids and aliases are checked', () => {
@@ -257,7 +258,7 @@ test('audit: across all shipped entries, kinds and many random draws, no wrong o
   for (const w of WORDS) {
     const valid = new Set<string>([soundKey(w.pinyin), ...w.variants.map(soundKey), ...w.speech.map(s => soundKey(s.pinyin))])
     for (const kind of QUESTION_KINDS) for (let k = 0; k < 12; k++) {
-      const q = buildQuestion(w, { lv: 2, ok: 0 }, WORDS, { kind, canListen: true, known, cloze: SHIPPED_CLOZE, rng: Math.random })
+      const q = buildQuestion(w, sched(2), WORDS, { kind, canListen: true, known, cloze: SHIPPED_CLOZE, rng: Math.random })
       questions++
       assert.equal(new Set(q.options).size, q.options.length, `${w.id} ${q.kind}: duplicate option text`)
       assert.equal(q.options.filter(o => o === q.answer).length, 1, `${w.id} ${q.kind}: exactly one correct option`)

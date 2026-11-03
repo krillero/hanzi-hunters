@@ -11,10 +11,11 @@ import { NO_BONUSES } from '../src/game/upgrades.ts'
 import { ENEMIES, GEAR, WORDS, ACTIVE_CURRICULUM } from '../src/data.ts'
 import { stepsOf } from '../src/game/course.ts'
 import type { Mastery, Run } from '../src/game/types.ts'
+import { sched } from './helpers/sched.ts'
 
 const wordIds = WORDS.map(w => w.id)
 const course = [...new Set(stepsOf(ACTIVE_CURRICULUM).map(s => s.intro.entryId))]
-const knowing = (ids: string[]): Mastery => Object.fromEntries(ids.map(id => [id, { lv: 1, ok: 0 }]))
+const knowing = (ids: string[]): Mastery => Object.fromEntries(ids.map(id => [id, sched(1)]))
 const everything = knowing(wordIds)
 const seeded = (seed: number) => { let s = seed; return () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296) }
 const HANZI = /\p{Script=Han}/u
@@ -107,7 +108,7 @@ test('a generated trial survives a reload; tampered data is dropped (the trial c
 test('encounter offers skip recently offered scenes and remember the new one', () => {
   const s = sanitizeSave(null)
   s.run = { ...newRun(NO_BONUSES, GEAR, ENEMIES), phase: 'victory' as const, kill: 3, enemyHp: 0 }
-  s.mastery = Object.fromEntries(['你好', '再见', '谢谢', '对不起'].map(id => [id, { lv: 2, ok: 0 }]))   // events need Familiar words
+  s.mastery = Object.fromEntries(['你好', '再见', '谢谢', '对不起'].map(id => [id, sched(2)]))   // events need Familiar words
   const first = offer(s, seeded(1))
   const id = first.run!.encounter!.id
   assert.equal(first.recentEvents![0], sceneKey(id))

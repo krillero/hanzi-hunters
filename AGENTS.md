@@ -10,7 +10,8 @@ You are continuing a working prototype. Before editing, read `README.md` (what e
 3. **Keep the game playable at each milestone.** Prefer small, reviewable changes.
    **Testing workflow (keep it cheap):**
    - While working, run only the test files you touched or that cover the changed code, with the compact reporter: `npm run test:brief -- tests/rules.test.ts`. It prints one block per failure (test, message, expected/actual, file:line), so a failure never needs a second run just to see why it failed. Do not rerun the whole suite after every edit.
-   - Once, before committing: `npm run test:brief` (all tests, ~20 s), `npm run build` (and `npm run validate:content` for content changes).
+   - Once, before committing: `npm run typecheck` (src, tools and tests: Node runs tests and tools without checking types), `npm run test:brief` (all tests, ~30 s), `npm run build` (and `npm run validate:content` for content changes).
+   - Some rules are enforced by tests: `tests/conventions.test.ts` (pure modules, storage, clock, 360 px, review status), `tests/generated.test.ts` (generated files current, imported data not hand-edited), `tests/docs.test.ts` (paths in docs exist, every doc on the README map). When a new rule can be checked by a script, add it there with its reason.
    - Browser checks are **not** part of the normal workflow. Only when the UI changed, run **one simple browser check at the end, at 360 px width only** (no other widths, no screenshots of every state). If you skip it or cannot run it, say so.
    - Balance changes: compare options with `node tools/simulate.ts --report key=value` (about 2 s each), then quote one final report in the docs. Do not re-run tools to re-measure something already measured in the conversation.
 

@@ -68,6 +68,10 @@ export function probeAudio(path: string): { ok: boolean; check: string } | null 
 
 const DEFAULT_FIELDS = { id: 'ID', traditional: 'Traditional', simplified: 'Simplified', pinyin: 'Pinyin', pos: 'POS', meaning: 'Meaning', audio: 'Audio', variants: 'Variants' }
 const sha256 = (b: Buffer | string) => createHash('sha256').update(b).digest('hex')
+/** A record's content hash: its original fields and its media. Changes whenever the source changes; also used to detect hand edits
+ *  of the imported files (tests/generated.test.ts). */
+export const recordHash = (fields: Record<string, string>, media: Pick<MediaRef, 'sha256' | 'original'>[]) =>
+  sha256(JSON.stringify({ fields, media: media.map(m => m.sha256 ?? m.original) })).slice(0, 16)
 const HAN = /\p{Script=Han}/u
 const ONLY_HAN = /^\p{Script=Han}+$/u
 
@@ -340,7 +344,7 @@ export function readAnkiPackage(opts: AnkiOptions): SourceBundle {
           media.push(ref)
         }
         if (media.length === 0 && (prof ? 'Audio' in fields : names.audio in fields)) issues.push('missing-media: no [sound:] reference')
-        const hash = sha256(JSON.stringify({ fields, media: media.map(m => m.sha256 ?? m.original) })).slice(0, 16)
+        const hash = recordHash(fields, media)
         const noteCards = cardsOf.get(String(n.id)) ?? []
         const native: Record<string, string> = { noteId: String(n.id), guid: String(n.guid), noteType: modelNames.get(String(n.mid)) ?? String(n.mid), cards: noteCards.map(c => String(c.id)).join(',') }
         const decks = [...new Set(noteCards.map(c => deckNames.get(String(c.did)) ?? String(c.did)))]

@@ -3,6 +3,22 @@
 History, newest first: what changed and how it was tested. Older entries describe designs that were later changed or removed;
 the current state is in the topic docs (map in `README.md`).
 
+## 2026-11-03 — Type checking everywhere; conventions, generated-file and docs tests (tooling)
+
+- `npm run typecheck` now also checks `tools/`, `tests/` and `vite.config.ts` (`tsconfig.tools.json`, dev dependency `@types/node`,
+  types only). It found 79 errors that Node's type stripping had hidden: 76 test fixtures still built word progress as `{ lv, ok }`
+  (the shape from before the scheduler; now `sched(lv, ok)` in `tests/helpers/sched.ts`, a real entry), a missing `peak` in a course
+  test, a narrowing in the trials test, and real type errors in `tools/source-assess.ts` and `vite.config.ts`. CI runs it.
+- `tests/conventions.test.ts`: pure modules use no React/Phaser/browser globals; Phaser only in the scene and its host; no clock reads
+  in the scheduling core (elsewhere only as default parameters); browser storage only in `App.tsx` / `ReviewApp.tsx`; no styles
+  below 360 px; no code marks content human-reviewed. Each rule states its reason; each pattern is self-checked against a bad line.
+- `tests/generated.test.ts`: `docs/content-inventory.json` and the proposal table must match their scripts (`--check` modes added);
+  the source index matches the imported files; every imported record's hash matches its fields (hand edits fail; the hash function
+  is the importer's `recordHash`); committed media match their content-hash names.
+- `tests/docs.test.ts`: every file path named in a doc exists; every top-level doc is on the README map.
+- Verified that the checks catch breaches: a stale inventory, a hand-edited record and a React import in a pure module each failed.
+- Checks: typecheck clean, 321 tests pass, validate:content 0 errors (7 known warnings), build passes.
+
 ## 2026-11-03 — Documentation audit and cleanup (docs only)
 
 - README rewritten: what the game is today, commands, one documentation map (which doc is the home of each topic). AGENTS.md:

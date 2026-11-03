@@ -63,8 +63,12 @@ entry id, never by array position or Chinese text.
 
 ## 4. Quality checks
 
-- **Automated:** `npm run test:brief` (Node's test runner; rules, questions and fairness, scheduler, course, saves and migrations,
-  content audits, sources, balance guardrails). `npm run validate:content`. `npm run build`. CI runs all three before deploying.
+- **Automated:** `npm run typecheck` (src, tools and tests). `npm run test:brief` (Node's test runner; rules, questions and fairness,
+  scheduler, course, saves and migrations, content audits, sources, balance guardrails), including three tests that enforce
+  conventions: `conventions.test.ts` (pure modules use no React/Phaser/browser globals; Phaser only in the scene; no clock in the
+  scheduling core; browser storage only in `App.tsx` / `ReviewApp.tsx`; nothing below 360 px; no code marks content human-reviewed),
+  `generated.test.ts` (generated files current; imported source data not edited by hand) and `docs.test.ts` (paths named in docs
+  exist; every doc is on the README map). `npm run validate:content`. `npm run build`. CI runs all of them before deploying.
 - **Layout stability:** `node tools/layout-check.mjs` checks that the battle screen does not move or resize when you answer.
 - **Balance:** `node tools/simulate.ts --report` (seeded bot; model results, not evidence about real learners).
 - **Browser check:** one check at 360 px when the UI changed (see `AGENTS.md`).

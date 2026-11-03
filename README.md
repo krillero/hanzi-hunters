@@ -22,6 +22,7 @@ npm run preview      # serve the production build
 
 | Command | What it does |
 |---|---|
+| `npm run typecheck` | TypeScript check of `src`, `tools` and `tests` (the build checks only `src`; Node runs tests and tools without checking types). |
 | `npm test` / `npm run test:brief` | All tests (`tests/*.test.ts`, Node's test runner); `test:brief` prints only failures and a summary. `npm run test:brief -- tests/x.test.ts` runs one file. |
 | `npm run validate:content` | Validates everything in `src/content/` (words, explanations, sentence questions, curricula, encounters, trials, source decisions, assessments). |
 | `npm run curriculum` | Prints the effective teaching order of the active course. |

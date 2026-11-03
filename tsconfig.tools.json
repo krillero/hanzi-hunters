@@ -1,0 +1,11 @@
+{
+  // Type-checks the Node side: tools/, tests/ and the Vite config, together with src/ (which they import).
+  // `npm run typecheck` runs this after the app build check; tools and tests run with Node's type stripping, which checks nothing.
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tools.tsbuildinfo",
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["src", "tools/**/*.ts", "tests/**/*.ts", "vite.config.ts"]
+}

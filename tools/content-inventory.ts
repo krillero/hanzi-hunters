@@ -1,6 +1,5 @@
 // npm run inventory  -> writes docs/content-inventory.json (what content exists right now + the rules to follow).
-import { writeFileSync } from 'node:fs'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { LIMITS, needsReview, validateContent } from '../src/content/validate.ts'
 import { curriculaReport } from '../src/content/curriculumReport.ts'
 
@@ -52,5 +51,13 @@ const inventory = {
   sentenceQuestions: cloze.map(c => ({ id: c.id, answer: c.answer, zh: c.zh, options: c.options })),
   existingIssues: { errors, warnings, info }
 }
-writeFileSync(new URL('../docs/content-inventory.json', import.meta.url), JSON.stringify(inventory, null, 2) + '\n')
+const target = new URL('../docs/content-inventory.json', import.meta.url)
+const text = JSON.stringify(inventory, null, 2) + '\n'
+// --check: fail when the committed file is not what this script produces now (run by tests/generated.test.ts).
+if (process.argv.includes('--check')) {
+  const current = existsSync(target) ? readFileSync(target, 'utf8') : ''
+  if (current !== text) { console.error('docs/content-inventory.json is stale: run npm run inventory'); process.exit(1) }
+  process.exit(0)
+}
+writeFileSync(target, text)
 console.log(`docs/content-inventory.json: ${words.length} entries, ${Object.keys(explanations).length} explanations, ${cloze.length} sentence questions`)

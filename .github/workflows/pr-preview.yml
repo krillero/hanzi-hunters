@@ -31,6 +31,8 @@ jobs:
         if: github.event.action != 'closed'
       - run: npm run validate:content
         if: github.event.action != 'closed'
+      - run: npm run typecheck   # src, tools and tests (the build only checks src)
+        if: github.event.action != 'closed'
       - run: npm test
         if: github.event.action != 'closed'
       - run: npm run build

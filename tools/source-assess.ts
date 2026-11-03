@@ -10,11 +10,11 @@
 //   import --source <id> <file.json> [--dry-run]
 //                                  validate and merge; refused as a whole when anything is invalid or outdated, or would replace
 //                                  a person's assessment with a non-human one
-//   report --source <id> [--out file.md]
+//   report --source <id> [--out file.md] [--check]
 //                                  a generated table of every record of the source with its disposition, proposals and examples
 // Assessments are advice: this tool writes ONLY src/content/assessments/<source>.json (and the report you ask for). It never
 // links records, changes game text, selects recordings or touches curricula. See docs/SOURCES.md §5a.
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { WORDS } from '../src/data.ts'
 import { EXPLANATIONS } from '../src/content/index.ts'
@@ -122,7 +122,7 @@ if (cmd === 'check') {
         const self = r.candidate.simplified[0] ?? ''
         const seg = segmentKnown(s.zh, forms)
         const contains = seg.known.filter(x => x !== self)
-        const w = target.entry ? WORDS.find(x => x.id === target.entry) : undefined
+        const w = 'entry' in target ? WORDS.find(x => x.id === target.entry) : undefined
         out.examples.push({ id, sentence: s.id, sentenceHash: exampleHash(s), record: r.key, target, ...(w ? { targetFingerprint: gameFingerprint(w, EXPLANATIONS[w.id]) } : {}),
           context: { zh: s.zh, pinyin: s.pinyin, en: s.en, word: self, targetMeaning: w ? `${w.meaning} | note: ${w.note}` : ra.draft?.meaning ?? ra.shortLabel?.text, unknownCharacters: seg.unknown },
           sense: '', verdict: 'uncertain', contains, prerequisites: [...contains.filter(x => !gameForms.has(x)), ...seg.unknown], reason: '', ...base })
@@ -171,6 +171,11 @@ if (cmd === 'check') {
     '|---|---|---|---|---|---|---|---|---|', ...rows, ''
   ].join('\n')
   const target = opt('--out')
+  // --check: fail when the committed report is not what this command produces now (run by tests/generated.test.ts).
+  if (target && args.includes('--check')) {
+    if (!existsSync(target) || readFileSync(target, 'utf8') !== md) { console.error(`${target} is stale: run npm run source:assess -- report --source ${source} --out ${target}`); process.exit(1) }
+    process.exit(0)
+  }
   if (target) { writeFileSync(target, md); console.log(`Wrote ${target}`) } else process.stdout.write(md)
 } else {
   console.error('usage: npm run source:assess -- check [--source id] | template --source id [--kind pairs|records|examples] [--all] [--out file] | import --source id <file.json> [--dry-run] | report --source id [--out file.md]')
