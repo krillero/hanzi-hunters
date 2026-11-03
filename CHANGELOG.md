@@ -21,7 +21,7 @@ the current state is in the topic docs (map in `README.md`).
 - **Recordings:** selection is separate from playability: an entry with any selected recording (even rejected, flagged,
   incompatible or failed) never uses TTS; audio→pinyin only for a clip whose reading is the entry's main reading (谁 `shuí` no
   longer allowed for a `shéi` answer). The speaker toast says “not available” for an ineligible clip.
-- Checks: typecheck, full test suite, `validate:content`, build (see the task report for counts).
+- Checks: typecheck; 326 tests pass; `validate:content` 0 errors (49 warnings, 42 of them the outdated assessments); build passes including the service worker; one 360 px browser check (review screen and game, no console errors, no horizontal scroll).
 
 ## 2026-11-03 — Code standards, pitfalls and decisions log (docs only)
 
