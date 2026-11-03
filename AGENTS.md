@@ -1,10 +1,12 @@
 # Instructions for coding agents
 
-You are continuing an existing prototype. Read `README.md`, `DEVELOPMENT_BRIEF.md` and `ASSET_PIPELINE.md` before editing.
+You are continuing a working prototype. Before editing, read `README.md` (what exists, commands, documentation map) and
+`DEVELOPMENT_BRIEF.md` (architecture and current state), then the doc for your task from the map in `README.md`
+(`ASSET_PIPELINE.md` only for art work). When a doc and the code disagree, the code is right: fix the doc in the same change.
 
 ## Rules of engagement
 1. **Validate before changing.** Install dependencies and run `npm run build`. Report any pre-existing failures separately from regressions you introduce.
-2. **Do not mistake concept art for implemented assets.** The visual mockup is a target only. The current scene uses Phaser Graphics and the interface uses CSS, text and emoji. No full external sprite sheet or polished UI asset pack is bundled.
+2. **Do not mistake concept art for implemented assets.** Mockups (`docs/design-references/`) are targets only. The scene uses a small set of original, code-generated pixel-art sprites (`public/assets/`); the interface uses CSS, text and emoji. No polished external asset pack is bundled.
 3. **Keep the game playable at each milestone.** Prefer small, reviewable changes.
    **Testing workflow (keep it cheap):**
    - While working, run only the test files you touched or that cover the changed code, with the compact reporter: `npm run test:brief -- tests/rules.test.ts`. It prints one block per failure (test, message, expected/actual, file:line), so a failure never needs a second run just to see why it failed. Do not rerun the whole suite after every edit.
@@ -18,12 +20,12 @@ You are continuing an existing prototype. Read `README.md`, `DEVELOPMENT_BRIEF.m
    - Read narrowly: search for the lines you need and read that range; do not re-read files already read in the conversation unless they changed.
    - Keep tool output small: summaries, counts and failures, not full logs.
 4. **Preserve the core learning loop.** Every battle question should have an unambiguous correct answer; pinyin tone marks must be preserved; the feedback should teach rather than shame; the player should not be able to submit multiple answers to the same question.
-5. **Keep React and Phaser responsibilities clear.** React currently owns game state and most UI; Phaser owns the decorative/animated encounter scene. Avoid creating duplicate, conflicting sources of truth for HP, enemy identity or progression.
+5. **Keep React and Phaser responsibilities clear.** React currently owns game state and most UI; Phaser owns the decorative/animated encounter scene. Avoid creating duplicate, conflicting sources of truth for hearts, enemy identity or progression.
 6. **Mobile-first.** Test narrow portrait widths, touch targets, text wrapping, safe-area spacing and scroll behavior. Do not require keyboard/mouse to complete the core loop.
    **360 CSS px is the narrowest supported width.** The one end-of-task browser check uses 360 px only; do not test below 360 px and do not add styles or media queries that only target screens narrower than 360 px.
 7. **Avoid unnecessary dependencies.** Explain why any new runtime dependency is needed. Keep package lockfile in sync if one is created/updated.
 8. **Do not claim untested work.** State what commands ran, whether they passed, and what still needs real-device/manual testing.
-9. **Protect user progress when changing saves.** `SAVE_KEY` currently identifies the persisted schema. If changing the shape, add a versioned migration or safe fallback instead of assuming every stored value is current.
+9. **Protect user progress when changing saves.** The save lives under `SAVE_KEY` with a `version` (`SAVE_VERSION` in `src/game/save.ts`; format in `docs/GAME_DESIGN.md`). If changing the shape, add a versioned migration or a safe fallback (optional fields re-derived when missing) instead of assuming every stored value is current.
 10. **Document asset rights.** Use original artwork, commissioned art, or assets with a license compatible with the project. Keep source/credits/license information for third-party assets.
 
 11. **One meaning per entry.** An entry teaches its written form, pinyin and one basic meaning. Do not teach or test other meanings yet (no second entry with the same hanzi and pinyin, no multi-sense labels, no examples using another sense). The intended later step, other meanings unlocked from the Retained level, is described in `docs/SENSES.md`; do not build it without the owner's go-ahead.
@@ -36,7 +38,8 @@ You are continuing an existing prototype. Read `README.md`, `DEVELOPMENT_BRIEF.m
 - The commands that ran (and the single 360 px browser check, if the UI changed) are reported.
 - No new console errors or obvious mobile layout regressions remain.
 - User-facing learning text and game-state feedback are coherent.
-- Documentation is updated if architecture, setup, saves, controls or asset conventions changed.
+- Documentation is updated if architecture, setup, saves, controls or asset conventions changed. Each topic has one home doc
+  (see the map in `README.md`); change it there and link to it from elsewhere instead of repeating it. Add a `CHANGELOG.md` entry.
 
-## Recommended first milestone
-Do not immediately rebuild the entire game. First get the current project to build and document any errors. Then create a small art proof of concept (one hero, one slime, one tile set and one UI panel) and integrate it into the current scene before expanding the asset pack.
+## Where to start
+There is no fixed next milestone. Open work is listed in `DEVELOPMENT_BRIEF.md` §6; the owner usually gives a specific task.

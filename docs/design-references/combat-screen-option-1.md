@@ -1,8 +1,8 @@
 # Combat screen design reference — Option 1: Learning-first RPG
 
-Status: approved visual direction (2026-10-30)
-
-The approved reference is the generated portrait mobile mockup shared in the ChatGPT conversation on 2026-10-30. Use that image as the visual target during implementation and screenshot reviews.
+Status: approved visual direction (2026-10-30), implemented in the battle screen. The reference mockup was shared in a chat on
+2026-10-30 and is **not stored in this repository**. Written before hearts replaced HP: read “HP bars” for the player as hearts
+(`docs/GAME_DESIGN.md`, Hearts). Keep these principles when changing the battle screen.
 
 ## Design intent
 

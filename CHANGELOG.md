@@ -1,5 +1,26 @@
 # Changelog / test log
 
+History, newest first: what changed and how it was tested. Older entries describe designs that were later changed or removed;
+the current state is in the topic docs (map in `README.md`).
+
+## 2026-11-03 — Documentation audit and cleanup (docs only)
+
+- README rewritten: what the game is today, commands, one documentation map (which doc is the home of each topic). AGENTS.md:
+  reading order, "code wins over docs", one home per topic; stale "first milestone" removed; rules 2/5/9 corrected (sprites,
+  hearts, save version).
+- DEVELOPMENT_BRIEF rewritten from the original prototype handoff (30 words in `data.ts`, save key `-v1`, "version 4", no tests,
+  finished milestones) to the current architecture, module map, persistence keys, quality checks and open work.
+- Fixed contradictions with the code: save format is v2 (GAME_DESIGN, CURRICULUM §4 described v1 / "v2–v4" / backups "2 to 4");
+  promoting dimensions are meaning + written form (SCHEDULING said meaning only); review weights (CURRICULUM §2); auto-continue
+  settings and delays (GAME_DESIGN); "elite" → boss; removed badge mention; CURRICULUM §7 described installing the 100-word
+  course, which is installed and default; registered sources and recorded audio (CONTENT_GUIDE); 320 px → 360 px.
+- De-duplicated: boss trials specified once (CONTEXTUAL_ENCOUNTERS, GAME_DESIGN summarises); historical gear columns removed; the
+  inline content prompt in CONTENT_GUIDE replaced by pointers to AGENT_PROMPT / NEXT-BATCH-PROMPT.
+- GAME_FEEL_AND_PROGRESSION reduced to principles, a status table of the 2026-10 proposals (built / changed / removed / open) and
+  the formats not built yet. ASSET_PIPELINE and `public/assets/README.md` list the real sprites (scribe, trickster added).
+- Marked dated material: `docs/screenshots/` (2026-10-29, before hearts and expeditions), the combat-screen design reference,
+  CHANGELOG as history. Regenerated `docs/content-inventory.json` (it was stale).
+
 ## 2026-11-03 — Intent recorded: one meaning per entry, other meanings later (docs only)
 
 - New `docs/SENSES.md`: entries teach one basic meaning now; other meanings are intended to unlock from level 4 (Retained),
