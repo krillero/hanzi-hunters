@@ -141,8 +141,8 @@ claimed.
 linguistic review”), *formatting-only* (case, whitespace and punctuation only; never dropped words, synonyms, qualifiers or
 negations), *different wording*, *missing*. Equal text does not show that the definition is right.
 
-**Meaning states:** not assessed · likely equivalent (an assessment, with reason) · same sense confirmed by a reviewer (a person
-linked the record) · different sense (assessment or a reviewer's “keep separate”) · uncertain. **Wording states:** not assessed
+**Meaning states** (a “sense” here is the entry's included uses, `docs/SENSES.md` §1.1)**:** not assessed · likely equivalent (an
+assessment, with reason) · same sense confirmed by a reviewer (a person linked the record, and the decision is current) · different sense (assessment or a reviewer's “keep separate”) · uncertain. **Wording states:** not assessed
 (shown as «No change proposed. This wording has not been assessed.») · keep game wording (with a substantive reason) · prefer
 source wording · edited wording proposed (text + reason) · not applicable because the senses differ. A reviewer's own
 “keep the game text” is a *decision* and is shown apart from the application's default of changing nothing.
@@ -203,7 +203,7 @@ files, which hold pair assessments only, are still read). Three lists, all advic
 |---|---|
 | `id` | `<source record key>\|<game entry id>` (stable ids; Chinese text is never the key) |
 | `record`, `recordHash` | the source record and its hash when assessed |
-| `entry`, `gameFingerprint` | the game entry and a hash of the fields considered: hanzi, pinyin, variants, connected speech, kind, meaning, note and the entry's explanation text/examples |
+| `entry`, `gameFingerprint` | the game entry and a hash of the fields considered: hanzi, pinyin, variants, connected speech, kind, meaning, note, and the explanation's summary, text, tips, intros, parts (character, pinyin, meaning, note) and examples (Chinese, pinyin, English, note). Not hashed: headings, title, `related`, `source`/`review` and an example's `audio` flag |
 | `meaning` | `verdict` (likely-equivalent / same-confirmed / different / uncertain), optional `scope` (same, source-broader, source-narrower, overlapping, distinct), `reason` |
 | `wording` | optional; absent = not assessed. `verdict` (keep-game / prefer-source / edited / not-applicable), `reason`, `proposed`, `terminology` |
 | `recording` | optional remark on recording suitability (never a verification) |
@@ -225,9 +225,18 @@ tone mark, makes the assessment outdated) plus `targetFingerprint` for entry tar
 
 Rules enforced by `checkAssessment` (also run by `npm run validate:content`): only `human` can be `human-reviewed` or
 `same-confirmed`; a heuristic can only record `uncertain` and never wording; reasons must be substantive (placeholders such as
-“No clear improvement” are refused); different senses require wording `not-applicable`; proposals fit the answer-button limit.
+“No clear improvement” are refused); different senses require wording `not-applicable`; a source broader than the entry's included uses (scope `source-broader`)
+cannot be adopted whole (`prefer-source` is refused; propose an `edited` text with the included part, `docs/SENSES.md` §1.1);
+proposals fit the answer-button limit.
 An assessment is **outdated** when the record hash or the game fingerprint changes (`validate:content` warns; the screen shows
-it as outdated, not as advice).
+it as outdated, not as advice). Assessments made before the fingerprint covered example pinyin and notes (2026-11-03) are
+labelled “made before the check covered example pinyin and notes” (`check-changed`): whether those fields changed since is
+unknown, so they stay outdated until a real reassessment; no tool refreshes their hashes.
+
+**Reviewer decisions go out of date too** (`decisionOutdated`): a mapping flagged `reassess` by the importer, or whose
+`recordHash` is not the record's current hash, keeps its history (who, when, linked or kept separate) but gives no current
+“confirmed” or “different” verdict. The comparison shows it as “Reviewer decision outdated”, a current assessment (if any) is
+shown as advice with its own provenance, and the record counts under “Needs reassessment” and “Uncertain or outdated”.
 
 ```bash
 npm run source:assess -- check [--source <id>]                         # validate; coverage per source; outdated ones
@@ -261,13 +270,19 @@ consistency caveat), 27 not applicable, 5 not assessed (their meaning is uncerta
   provenance (record + hash), `reading.declared` (verbatim from the source) and `reading.verified` (+ who/when, only when a person
   listened), variety (from the source registry), `validation` (unverified / verified / rejected) and the `uses` a person allowed.
 - **Eligibility** (`eligibleUses`): nothing if rejected, flagged for reassessment, a sentence clip, or the reading (verified, else
-  declared) is not the entry's main reading, a variant or a connected-speech form. A connected-speech reading allows display,
-  audio→character and audio→meaning, **never audio→pinyin**. Each use must also have been allowed.
+  declared) is not the entry's main reading, a variant or a connected-speech form. A variant or connected-speech reading allows
+  display, audio→character and audio→meaning, **never audio→pinyin**: that question's answer is always the entry's main `pinyin`,
+  so audio→pinyin needs a clip whose reading is the main reading (formatting differences such as case or spacing are ignored; a
+  tone difference never is). Each use must also have been allowed.
   - 个: game `gè` (speech `ge`); the Anki clip declares `ge` → playable and usable for meaning, not for a pinyin question —
     unless a person verifies they hear `gè`.
-- **Selection order in the game:** an entry with a selected recording always uses it and never falls back to TTS (one voice,
-  one reading per entry). Entries without one use TTS only when reliable (`audio` not `none`, no homograph) and a Mandarin voice
-  exists. `audio: "none"` therefore blocks TTS but not a suitable recording. Muted: nothing plays, no listening questions.
+  - 谁: game `shéi` (variant `shuí`); a clip saying `shuí` is never used for a pinyin question whose answer is `shéi`.
+- **Selection decides, not playability** (`selectedRecording` vs `playableRecording`, `src/content/recordings.ts`): while a
+  recording is selected for an entry, the entry uses only that recording and never falls back to TTS (one voice, one reading per
+  entry), even when the clip is ineligible (rejected, flagged, incompatible reading) or failed: the speaker button is then hidden
+  and no listening question is asked about it. Removing the selection from `recordings.json` restores ordinary TTS eligibility.
+  Entries without a selection use TTS only when reliable (`audio` not `none`, no homograph) and a Mandarin voice exists.
+  `audio: "none"` therefore blocks TTS but not a suitable recording. Muted: nothing plays, no listening questions.
 - Files load only when played (`<audio>` per tap), never at startup and not precached. If a file fails to play, that entry's
   recording is dropped for the session, a toast says so, an open listening question becomes a normal question, and nothing is
   substituted silently. Offline, recordings that were never played are unavailable (handled the same way).

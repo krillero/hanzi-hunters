@@ -3,6 +3,26 @@
 History, newest first: what changed and how it was tested. Older entries describe designs that were later changed or removed;
 the current state is in the topic docs (map in `README.md`).
 
+## 2026-11-03 — Beginner meaning groups; outdated reviewer decisions; fuller fingerprint; recording selection rules
+
+- **Rule:** “one meaning per entry” is replaced by the owner's “one beginner meaning group per entry” (near-synonyms or a
+  deliberately chosen combination of common beginner uses; other uses deferred). Canonical text and the three source-comparison
+  cases in `docs/SENSES.md` §1; AGENTS.md rule 11, the decisions log, README, CONTENT_GUIDE, GAME_DESIGN, AGENT_PROMPT and
+  SOURCES updated. New assessment check: a `source-broader` source cannot be adopted whole (`prefer-source` refused). Existing
+  two-use labels listed for owner decisions (`docs/SENSES.md` §5); no vocabulary changed.
+- **Reviewer decisions:** a mapping flagged `reassess` or made against an older record hash no longer gives a current
+  “confirmed same” / “different” verdict (`decisionOutdated`); its history is shown as “Reviewer decision outdated”, a current
+  assessment still shows as advice with its own provenance, and list summaries, coverage, “Needs reassessment” and “Uncertain or
+  outdated” follow.
+- **Fingerprint:** `gameFingerprint` now covers example pinyin and notes, part pinyin and notes and breakdown/compare intros
+  (not headings, title, related, provenance or the audio flag). Assessments made under the old fingerprint are now outdated as
+  `check-changed` (ACCC: 66 of 131 pairs; Anki-xiehanzi: 57 of 108 pairs, 57 of 321 records, 171 of 396 examples); none was
+  refreshed. Regenerated `docs/proposals/xiehanzi-hsk1-records.md`.
+- **Recordings:** selection is separate from playability: an entry with any selected recording (even rejected, flagged,
+  incompatible or failed) never uses TTS; audio→pinyin only for a clip whose reading is the entry's main reading (谁 `shuí` no
+  longer allowed for a `shéi` answer). The speaker toast says “not available” for an ineligible clip.
+- Checks: typecheck; 326 tests pass; `validate:content` 0 errors (49 warnings, 42 of them the outdated assessments); build passes including the service worker; one 360 px browser check (review screen and game, no console errors, no horizontal scroll).
+
 ## 2026-11-03 — Code standards, pitfalls and decisions log (docs only)
 
 - AGENTS.md: code standards adapted from the owner's other projects (readability, where things go, one word per concept,

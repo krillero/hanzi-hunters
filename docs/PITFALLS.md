@@ -141,3 +141,24 @@ compares.
 
 **Fix:** search is ranked (exact characters, readings and ids first) and matches English from word starts only
 (`src/sources/search.ts`).
+
+### An entry with a selected recording plays text-to-speech
+
+**Seen:** a recording selected for an entry became ineligible (flagged for reassessment, wrong reading, rejected), and the
+entry quietly went back to the TTS voice and TTS listening questions.
+
+**Why:** “does this entry have a recording?” was answered by `playableRecording()`, which also checks eligibility. An ineligible
+clip therefore looked like no selection at all.
+
+**Fix:** selection and playability are separate (`selectedRecording` / `playableRecording` in `src/content/recordings.ts`); the
+choice between recording and TTS asks only whether a recording is selected.
+
+### An assessment stays “current” after the pinyin of an example changed
+
+**Seen:** editing the tone marks of an example sentence in `explanations.json` left the source assessments of that entry current.
+
+**Why:** the game fingerprint hashed each example's Chinese and English only; the bug was in what the hash covered, not in the
+freshness check.
+
+**Fix:** `gameFingerprint` (`src/sources/assessment.ts`) covers every teaching field of the explanation, including pinyin and
+notes. Assessments made under the old fingerprint are labelled `check-changed` and stay outdated until really reassessed.

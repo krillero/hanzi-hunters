@@ -8,8 +8,8 @@ import { EXPLANATIONS } from '../src/content/index.ts'
 import { suggest } from '../src/sources/match.ts'
 import { compareText, describePronunciation, terminologySuggestion } from '../src/sources/compare.ts'
 import {
-  assessmentId, candidateComparisons, checkAssessment, checkAssessmentsFile, compare, coverage, coverageLine, emptyAssessments, freshness,
-  gameFingerprint, mergeAssessments, WORDING_NOT_ASSESSED, type AssessmentsFile, type SourceAssessment
+  assessmentId, candidateComparisons, checkAssessment, checkAssessmentsFile, compare, coverage, coverageLine, decisionOutdated, emptyAssessments, freshness,
+  gameFingerprint, mergeAssessments, shortStatus, WORDING_NOT_ASSESSED, type AssessmentsFile, type SourceAssessment
 } from '../src/sources/assessment.ts'
 import { parseCandidate } from '../tools/sources/adapters/anki.ts'
 import { loadWorkingWithNotice, REVIEW_KEY_PREFIX, LEGACY_KEY_PREFIX } from '../src/review/store.ts'
@@ -100,6 +100,10 @@ test('“not assessed” is distinguishable from an assessment to keep the game 
   assert.match(kept.wording.label, /Keep game wording—AI-assisted assessment/)
   assert.match(kept.wording.reason!, /omits “to”/)
   assert.ok(![none, kept].some(c => /No clear improvement/.test(JSON.stringify(c))))
+  // A source broader than the included uses (included + deferred) is never adopted whole; an edited, narrower text is fine.
+  const broader = { verdict: 'likely-equivalent' as const, scope: 'source-broader' as const, reason: 'The source adds a deferred use to the taught one.' }
+  assert.ok(checkAssessment(assessment(REGRESSION.lai, '来', { meaning: broader, wording: { verdict: 'prefer-source', proposed: 'come; arrive; take place', reason: 'The source lists more uses than the game label.' } }), 'x').some(e => /broader than the entry's included uses/.test(e)))
+  assert.deepEqual(checkAssessment(assessment(REGRESSION.lai, '来', { meaning: broader, wording: { verdict: 'keep-game', reason: 'The included use is already named; the extra uses are deferred.' } }), 'x'), [])
   // A placeholder reason is refused.
   assert.ok(checkAssessment(assessment(REGRESSION.lai, '来', { wording: { verdict: 'keep-game', reason: 'No clear improvement.' } }), 'x').some(e => /substantive/.test(e)))
 })
@@ -176,25 +180,94 @@ test('coverage counts candidate pairs and states what was not assessed', () => {
   assert.equal(coverageLine(c), '1 wording change proposed · 2 comparisons not yet assessed')
 })
 
-test('the committed assessments cover every current candidate pair of the imported source, and are current', () => {
+test('the committed assessments cover every current candidate pair of the imported source; outdated ones only by the fingerprint change', () => {
   const records = (JSON.parse(readFileSync(new URL('../public/sources/accc-anki/records.json', import.meta.url), 'utf8')) as { records: SourceRecord[] }).records
   const file = JSON.parse(readFileSync(new URL('../src/content/assessments/accc-anki.json', import.meta.url), 'utf8')) as AssessmentsFile
   assert.deepEqual(checkAssessmentsFile(file, { records: new Map(records.map(r => [r.key, r])), words: WORDS, explanations: EXPLANATIONS }), [])
   const cmp = [...candidateComparisons(records, WORDS, EXPLANATIONS, file).values()].flatMap(x => x.comparisons)
   const c = coverage(cmp)
   assert.equal(c.pairs, file.assessments.length, 'one assessment per candidate pair')
-  assert.equal(c.meaning['not-assessed'], 0); assert.equal(c.outdated, 0)
+  // The 2026-11-03 fingerprint (example pinyin and notes) outdated 66 pairs. They stay outdated until really reassessed:
+  // no tool refreshes their hashes, and every one is outdated for that reason only, not because content changed.
+  assert.equal(c.outdated, 66); assert.equal(c.meaning['not-assessed'], 66)
+  assert.ok(cmp.every(x => !x.outdated || x.outdated.freshness === 'check-changed'))
   assert.ok(c.records < records.length, 'records without a candidate are not assessed as if they had one')
   // Regression examples, as assessed in the data.
   const get = (id: string, entry: string) => cmp.find(x => x.record === `accc-anki:${id}` && x.entry === entry)!
   assert.equal(get('B1L01-I-05', '来').meaning.state, 'likely-equivalent')
-  assert.equal(get('B1L01-I-08', '吗').meaning.state, 'likely-equivalent')
-  for (const [id, e] of [['B1L12-II-06', '好'], ['B1L14-II-04', '要'], ['B3L07-I-05', '叫']]) {
+  for (const [id, e] of [['B1L12-II-06', '好'], ['B1L14-II-04', '要']]) {
     assert.equal(get(id, e).meaning.state, 'different', id); assert.equal(get(id, e).wording.state, 'not-applicable', id)
   }
-  const ge = get('B1L02-II-10', '个')
-  assert.equal(ge.wording.state, 'edited'); assert.equal(ge.wording.proposed, 'general counting word'); assert.equal(ge.wording.terminology, true)
-  assert.match(ge.wording.reason!, /preserves the meaning/)
+  // Outdated by the fingerprint change: kept as history with the original verdicts, not shown as advice.
+  for (const [id, e] of [['B1L01-I-08', '吗'], ['B3L07-I-05', '叫'], ['B1L02-II-10', '个']]) assert.equal(get(id, e).outdated?.freshness, 'check-changed', id)
+  const ge = get('B1L02-II-10', '个').outdated!.assessment
+  assert.equal(ge.wording?.verdict, 'edited'); assert.equal(ge.wording?.proposed, 'general counting word'); assert.equal(ge.wording?.terminology, true)
+  assert.equal(get('B3L07-I-05', '叫').outdated!.assessment.meaning.verdict, 'different')
+})
+
+test('outdated reviewer decisions keep their history but give no current verdict', () => {
+  const r = REGRESSION.lai
+  const linked: Mapping = { status: 'linked', entry: '来', recordHash: r.hash, decision: { by: 'Kim', on: '2026-11-02', how: 'person' } }
+  assert.equal(decisionOutdated(linked, r), undefined)
+  // Flagged by the importer for reassessment.
+  const flagged = pair(r, '来', { mapping: { ...linked, reassess: 'source record changed' } })
+  assert.equal(flagged.meaning.state, 'not-assessed'); assert.equal(flagged.meaning.basis, 'none')
+  assert.doesNotMatch(flagged.meaning.label, /confirmed/)
+  assert.deepEqual(flagged.outdatedDecision, { verdict: 'same', by: 'Kim', on: '2026-11-02', why: 'source record changed' })
+  assert.match(shortStatus(flagged), /decision outdated/)
+  // Made against an older version of the record (no flag yet).
+  const older = pair(r, '来', { mapping: { ...linked, recordHash: 'ffffffffffffffff' } })
+  assert.equal(older.meaning.state, 'not-assessed'); assert.equal(older.outdatedDecision?.why, 'the source record changed since this decision')
+  // A current assessment still shows as advice, with its own provenance, not overridden by the stale decision.
+  const advised = pair(r, '来', { mapping: { ...linked, reassess: 'source record changed' }, assessment: assessment(r, '来') })
+  assert.equal(advised.meaning.state, 'likely-equivalent'); assert.equal(advised.meaning.basis, 'assessment')
+  assert.equal(advised.meaning.label, 'Likely equivalent—AI-assisted assessment')
+  assert.ok(advised.outdatedDecision)
+  // A stale "different sense" decision: no current "different" verdict and wording is not forced to not-applicable.
+  const sep: Mapping = { status: 'unresolved', distinctFrom: ['叫'], recordHash: 'ffffffffffffffff', decision: { by: 'Kim', on: '2026-11-02', how: 'person' } }
+  const d = pair(REGRESSION.jiaoBark, '叫', { mapping: sep })
+  assert.equal(d.meaning.state, 'not-assessed'); assert.notEqual(d.wording.state, 'not-applicable')
+  assert.equal(d.outdatedDecision?.verdict, 'different')
+  const d2 = pair(REGRESSION.jiaoBark, '叫', { mapping: { ...sep, recordHash: REGRESSION.jiaoBark.hash, reassess: 'record removed' } })
+  assert.equal(d2.meaning.state, 'not-assessed')
+  // Filters and summaries: counted apart from outdated assessments.
+  const cov = coverage([flagged, older, d])
+  assert.equal(cov.decisionsOutdated, 3); assert.equal(cov.meaning['same-confirmed'], 0); assert.equal(cov.meaning.different, 0)
+  assert.match(coverageLine(cov), /3 reviewer decisions outdated/)
+})
+
+test('the game fingerprint covers example pinyin and teaching fields, and ignores presentation and provenance', () => {
+  const w = word('叫')
+  const ex = EXPLANATIONS['叫']!
+  const base = gameFingerprint(w, ex)
+  assert.equal(gameFingerprint(w, structuredClone(ex)), base, 'deterministic: the same content gives the same fingerprint')
+  const firstExamples = ex.sections.findIndex(sec => sec.type === 'examples')
+  assert.ok(firstExamples >= 0, '叫 has examples')
+  const editExample = (fn: (x: { zh: string; pinyin: string; en: string; note?: string; audio?: boolean; review?: unknown }) => void) => {
+    const copy = structuredClone(ex)
+    const sec = copy.sections[firstExamples]
+    if (sec.type === 'examples') fn(sec.items[0])
+    return gameFingerprint(w, copy)
+  }
+  assert.notEqual(editExample(x => { x.pinyin = x.pinyin.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC') }), base, 'example pinyin (tone marks)')
+  assert.notEqual(editExample(x => { x.note = 'Another note.' }), base, 'example note')
+  assert.equal(editExample(x => { x.audio = false }), base, 'the audio flag is playback policy')
+  assert.equal(editExample(x => { x.review = { status: 'human-reviewed' } }), base, 'review status is provenance')
+  const titled = structuredClone(ex); titled.title = 'Another title'; titled.related = ['来']
+  assert.equal(gameFingerprint(w, titled), base, 'title and related links are presentation')
+  assert.equal(gameFingerprint({ ...w, group: 'other', wrongPinyin: ['jiāo'], questions: ['meaning'] }, ex), base, 'group, distractors and question kinds are not assessed')
+  assert.notEqual(gameFingerprint({ ...w, variants: ['jiāo'] }, ex), base)
+  // A breakdown/compare part's pinyin counts too.
+  const withPart = { sections: [{ type: 'breakdown' as const, parts: [{ char: '口', pinyin: 'kǒu', meaning: 'mouth' }] }] }
+  assert.notEqual(gameFingerprint(w, withPart), gameFingerprint(w, { sections: [{ type: 'breakdown' as const, parts: [{ char: '口', pinyin: 'kou', meaning: 'mouth' }] }] }))
+  // An assessment made against this content stays current; editing example pinyin outdates it.
+  const r = REGRESSION.jiaoBark
+  const a = assessment(r, '叫', { meaning: { verdict: 'different', scope: 'distinct', reason: 'An animal cry, not naming.' }, wording: { verdict: 'not-applicable', reason: 'Different senses: neither definition should replace the other.' } })
+  assert.equal(freshness(a, r, w, ex), 'current')
+  const copy = structuredClone(ex)
+  const sec = copy.sections[firstExamples]
+  if (sec.type === 'examples') sec.items[0].pinyin = `${sec.items[0].pinyin} ma`
+  assert.equal(freshness(a, r, w, copy), 'game-changed')
 })
 
 test('terminology suggestions are generic, labelled, and say nothing about meaning', () => {

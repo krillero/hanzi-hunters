@@ -11,7 +11,7 @@ content JSON. You do not change code, tests, styles or configuration.
 
 READ FIRST, in this order:
 1. docs/CONTENT_GUIDE.md      - the exact formats, limits, writing rules and checklist. Follow it literally.
-   docs/SENSES.md              - every entry teaches ONE meaning; do not add other meanings of a word.
+   docs/SENSES.md              - every entry teaches ONE beginner meaning group; other uses are deferred (do not add them).
 2. docs/content-inventory.json - what exists right now and the validator limits (refresh: npm run inventory).
 3. src/content/words.json, explanations.json, cloze.json, sources.json - the files you may edit; copy the style of
    the existing entries (他, 她 and 好 are explanation examples; 朋友, 谁, 看-look / 看-guard and 吗 / 的 / 了 show the newer features).

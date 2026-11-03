@@ -44,7 +44,7 @@ preview (`pr-preview.yml`). The source review screen is at `<site>/review/` (not
   homophones, look-alikes, particle sentences). Each word has a level 0–5 (New … Retained, Mastered) driven by a spaced-review
   scheduler. Short contextual scenes between floors use only words the player knows.
 - **Content:** 127 entries in `src/content/words.json` (the course teaches 100), with notes, explanations and examples. Every entry
-  teaches one meaning (`docs/SENSES.md`).
+  teaches one beginner meaning group; other uses are deferred (`docs/SENSES.md`).
 - **Tech:** React 19 + TypeScript + Vite; Phaser 3 draws the battle scene with small original pixel-art sprites; PWA (offline
   cache) via `vite-plugin-pwa`; saves in `localStorage` with export/import; browser text-to-speech for pronunciation.
 - **Not there yet:** a teacher review of the Mandarin, real-device verification of install/offline behaviour, production art
@@ -62,7 +62,7 @@ preview (`pr-preview.yml`). The source review screen is at `<site>/review/` (not
 | Word levels and spaced review | `docs/SCHEDULING.md` |
 | Scenes between floors and boss trials | `docs/CONTEXTUAL_ENCOUNTERS.md` |
 | Words, explanations, examples, sentence questions (formats and rules) | `docs/CONTENT_GUIDE.md` |
-| One meaning per entry now; other meanings later (intent) | `docs/SENSES.md` |
+| One beginner meaning group per entry now; deferred uses later (intent) | `docs/SENSES.md` |
 | Teaching order, lessons, course progress | `docs/CURRICULUM.md` |
 | Choosing the next batch of vocabulary | `docs/vocabulary-toolkit/README.md` |
 | Handing a content task to another agent | `docs/AGENT_PROMPT.md` (small edits), `docs/vocabulary-toolkit/NEXT-BATCH-PROMPT.md` (a new batch) |

@@ -20,7 +20,7 @@ import { eligibleUses, readingRelation } from '../content/recordings'
 import { STRENGTH_LABEL, type Suggestion } from '../sources/match'
 import { sourceDefinition } from '../sources/compare'
 import {
-  candidateComparisons, coverage, coverageLine, emptyAssessments, exampleFreshness, FRESHNESS_LABEL, METHOD_LABEL, recordFreshness, SCOPE_LABEL,
+  candidateComparisons, coverage, coverageLine, decisionOutdated, emptyAssessments, exampleFreshness, FRESHNESS_LABEL, METHOD_LABEL, recordFreshness, SCOPE_LABEL,
   shortStatus, upgradeAssessments, WORDING_NOT_ASSESSED, type AssessmentsFile, type Comparison, type ExampleAssessment, type Freshness, type RecordAssessment
 } from '../sources/assessment'
 import { searchScore } from '../sources/search'
@@ -64,7 +64,7 @@ const COMPARISON_FILTERS: [Filter, string, (c: Comparison) => boolean][] = [
   ['different-sense', 'Different sense', c => c.meaning.state === 'different'],
   ['wording-pending', 'Wording assessment pending', c => c.wording.state === 'not-assessed'],
   ['wording-proposed', 'Wording change proposed', c => c.wording.state === 'prefer-source' || c.wording.state === 'edited'],
-  ['uncertain-stale', 'Uncertain or outdated', c => c.meaning.state === 'uncertain' || !!c.outdated],
+  ['uncertain-stale', 'Uncertain or outdated', c => c.meaning.state === 'uncertain' || !!c.outdated || !!c.outdatedDecision],
   ['pronunciation', 'Pronunciation differs', c => c.pronunciation.differs]
 ]
 const PREDICATE = new Map(COMPARISON_FILTERS.map(([f, , p]) => [f, p]))
@@ -159,7 +159,8 @@ export default function ReviewApp() {
       out.set(r.key, {
         status: mapping?.status ?? 'unresolved', working: w || ops.length > 0, suggestions, comparisons, focus,
         rec: { r, ra: data.recAssess.get(r.key)?.a, raFresh: data.recAssess.get(r.key)?.fresh, examples: data.sentences.get(r.key)?.length ?? 0, ex: (data.sentences.get(r.key) ?? []).flatMap(s => data.exAssess.get(s.id) ?? []), audioUnknown: !!data.recItems.get(r.key) && data.recItems.get(r.key)!.origin?.status !== 'known' && !!data.recItems.get(r.key)!.origin, comparisons },
-        reassess: !!REPO.mappings.mappings[r.key]?.reassess || ops.some(op => opStatus(op, REPO, data.byKey) !== 'ok'),
+        // A committed decision needs reassessment when the importer flagged it OR it was made against another record version.
+        reassess: !!decisionOutdated(REPO.mappings.mappings[r.key], r) || ops.some(op => opStatus(op, REPO, data.byKey) !== 'ok'),
         audio: r.media.some(m => m.path)
       })
     }
@@ -253,7 +254,7 @@ export default function ReviewApp() {
             <input className="rv-search" type="search" value={q} placeholder="Search 简体, pinyin (tones optional), English or ID" onChange={e => { setQ(e.target.value); setPage(0) }} />
             <div className="rv-cov" aria-label="Assessment coverage">
               <p><b>{coverageLine(cov)}</b></p>
-              <p className="rv-small">Units: {cov.pairs} candidate pairs ({cov.records} source records compared with {cov.entries} game entries); {counts['no-match']} of {counts.all} source records have no matching game entry. Meaning: {cov.meaning['likely-equivalent']} likely equivalent, {cov.meaning['same-confirmed']} confirmed by a reviewer, {cov.meaning.different} different sense, {cov.meaning.uncertain} uncertain, {cov.meaning['not-assessed']} not assessed. Wording: {cov.wording['prefer-source'] + cov.wording.edited} change{cov.wording['prefer-source'] + cov.wording.edited === 1 ? '' : 's'} proposed, {cov.wording['keep-game']} keep game wording (assessed), {cov.wording['not-applicable']} not applicable, {cov.wording['not-assessed']} not assessed. Assessments: {cov.byMethod['ai-assisted']} AI-assisted, {cov.byMethod.human} human, {cov.outdated} outdated.</p>
+              <p className="rv-small">Units: {cov.pairs} candidate pairs ({cov.records} source records compared with {cov.entries} game entries); {counts['no-match']} of {counts.all} source records have no matching game entry. Meaning: {cov.meaning['likely-equivalent']} likely equivalent, {cov.meaning['same-confirmed']} confirmed by a reviewer, {cov.meaning.different} different sense, {cov.meaning.uncertain} uncertain, {cov.meaning['not-assessed']} not assessed. Wording: {cov.wording['prefer-source'] + cov.wording.edited} change{cov.wording['prefer-source'] + cov.wording.edited === 1 ? '' : 's'} proposed, {cov.wording['keep-game']} keep game wording (assessed), {cov.wording['not-applicable']} not applicable, {cov.wording['not-assessed']} not assessed. Assessments: {cov.byMethod['ai-assisted']} AI-assisted, {cov.byMethod.human} human, {cov.outdated} outdated{cov.decisionsOutdated ? <>; {cov.decisionsOutdated} reviewer decision{cov.decisionsOutdated === 1 ? '' : 's'} outdated</> : null}.</p>
             </div>
             <p className="rv-small">Filter counts are source records; a record matches a comparison filter when any of its candidate pairs does.</p>
             <div className="rv-chips" role="group" aria-label="Decision filters">{DECISION_FILTERS.map(([f, label]) => <button key={f} className={filter === f ? 'on' : ''} onClick={() => { setFilter(f); setPage(0) }}>{label} <small>{counts[f]}</small></button>)}</div>
@@ -322,7 +323,7 @@ function RecordDetail({ record: r, data, localOnly, suggestions, comparisons, wo
         <div className="rv-title"><span className="rv-big" lang="zh-CN">{r.candidate.simplified[0] ?? '—'}</span>
           <div><b>{r.candidate.readings.join(' / ') || 'no reading'}</b><div>{sourceDefinition(r)}</div><small>{r.key} · {r.placement?.label ?? 'no placement'}</small></div></div>
         {r.media.map(m => <div key={m.id} className="rv-media">{m.path ? <Audio path={m.path} localOnly={localOnly} /> : <span className="rv-warn">Audio missing: {m.problems.join(', ')}</span>}<small> checks: {m.checks.join(', ') || 'none'}{data.recItems.get(r.key)?.origin ? ` · origin: ${data.recItems.get(r.key)!.origin!.status}` : ''}{data.recItems.get(r.key)?.pronunciation ? ' · pronunciation not verified by listening' : ''}</small></div>)}
-        <p>Decision now: <b>{state}</b>{distinct.length > 0 && <> · different sense from {distinct.join(', ')}</>} {mappingWorking ? <em className="st-working">changed in this browser</em> : mapping ? <em className="rv-pill">applied</em> : <em className="rv-pill">no decision (default)</em>}{committed?.reassess && <em className="cf-conflict">needs reassessment: {committed.reassess}</em>}</p>
+        <p>Decision now: <b>{state}</b>{distinct.length > 0 && <> · different sense from {distinct.join(', ')}</>} {mappingWorking ? <em className="st-working">changed in this browser</em> : mapping ? <em className="rv-pill">applied</em> : <em className="rv-pill">no decision (default)</em>}{decisionOutdated(committed, r) && <em className="cf-conflict">needs reassessment: {decisionOutdated(committed, r)}</em>}</p>
         <details><summary>Original fields (verbatim)</summary>
           <table className="rv-fields"><tbody>{Object.entries(r.fields).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v || <i>empty</i>}</td></tr>)}{Object.entries(r.native).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v}</td></tr>)}<tr><th>hash</th><td>{r.hash}</td></tr>{r.media.map(m => <tr key={m.id}><th>audio file</th><td>{m.original} · checks: {m.checks.join(', ') || 'none'}{m.problems.length ? ` · problems: ${m.problems.join(', ')}` : ''}</td></tr>)}</tbody></table>
         </details>
@@ -495,6 +496,7 @@ function ComparisonCard({ record: r, word: w, c, s }: { record: SourceRecord; wo
         : <p className="rv-small rv-prov">No current assessment for this pair. {c.wording.state === 'not-assessed' ? WORDING_NOT_ASSESSED : ''}</p>}
       {a?.recording && <p className="rv-small">Assessor's remark on the recording (not a verification of what it says): {a.recording}</p>}
       {c.outdated && <div className="rv-warn"><p><b>{FRESHNESS_LABEL[c.outdated.freshness]}</b> Shown for reference only, not as current advice: {c.outdated.assessment.meaning.verdict}{c.outdated.assessment.wording ? ` / ${c.outdated.assessment.wording.verdict}` : ''} ({METHOD_LABEL[c.outdated.assessment.method]}, {c.outdated.assessment.on}).</p></div>}
+      {c.outdatedDecision && <div className="rv-warn"><p><b>Reviewer decision outdated—{c.outdatedDecision.why}.</b> Shown for reference only, not as a current verdict: {c.outdatedDecision.verdict === 'same' ? 'linked as the same sense' : 'decided as a different sense'} by {c.outdatedDecision.by}, {c.outdatedDecision.on}. Decide again (step 1) to make it current.</p></div>}
       {c.terminology && <p className="rv-small">{c.terminology.note} “{c.terminology.from}” → “{c.terminology.to}”.</p>}
       {s && <details><summary>Matching evidence ({STRENGTH_LABEL[s.strength]})</summary>
         <p className="rv-small">Why this entry was offered for comparison. Candidate strength says how worth comparing it is, not whether either definition is correct or equivalent.</p>
