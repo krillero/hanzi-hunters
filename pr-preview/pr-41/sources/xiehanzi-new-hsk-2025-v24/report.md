@@ -1,0 +1,119 @@
+# Import report: xiehanzi-new-hsk-2025-v24
+
+- Adapter: anki-apkg
+- File: pkg.apkg (57493136 bytes)
+- Snapshot sha256: 4b0bea5d05c6e3ff970b4408f6c0422652c651dec3ad261b296ad782fbb1a37a
+- Retrieved: 2026-11-02
+- collection: collection.anki2
+
+## Counts
+
+| | |
+|---|---|
+| zipMembers | 10912 |
+| notesIn_collection.anki2 | 10900 |
+| notes | 10900 |
+| cards | 10900 |
+| noteTypes | 1 |
+| mediaFiles | 10910 |
+| media_json | 1 |
+| media_mp3 | 10900 |
+| media_woff2 | 1 |
+| media_svg | 1 |
+| media_png | 5 |
+| media_js | 2 |
+| notesSelected | 321 |
+| notesOutsideScope | 10579 |
+| duplicateIds | 0 |
+| mediaOutsideScope | 10579 |
+| records | 321 |
+| recordsWithAudio | 321 |
+| recordings | 321 |
+| sentences | 896 |
+| recordsWithSentences | 301 |
+| mediaExtracted | 321 |
+| mediaUnreferenced | 10 |
+| withPlacement | 321 |
+| flag_too-long | 0 |
+| flag_long | 0 |
+| flag_pattern | 0 |
+| flag_phrase | 0 |
+| flag_name | 0 |
+| flag_erhua | 7 |
+| flag_several-forms | 0 |
+| flag_several-readings | 0 |
+| recordsWithIssues | 27 |
+
+## Checks that ran
+
+- read collection.anki2 (notes 10900)
+- every archive member name checked for path traversal; media written only under generated names <sha256 prefix>.<ext>
+- each referenced media file: present in the media mapping and archive, CRC32 matches the archive, non-empty, sha256 recorded
+- audio file signature (ID3 tag or MPEG frame sync / Ogg / WAV header)
+- record key uniqueness
+- no card template or script was read or executed
+- only notes with a card in deck "Anki xiehanzi::New HSK (2025)::HSK 1" were imported (card membership, not the note's level field): 321 of 10900
+- each extracted audio file decoded with ffprobe (codec, duration, sample rate)
+
+## Not checked
+
+- whether a recording actually says the record's text or its declared pinyin (needs a person to listen)
+- audio loudness or quality (only decodability and duration were checked)
+- where each recording comes from (human speaker or text-to-speech): the source does not say per file
+- whether the source's pinyin, meanings or part of speech are correct
+
+## Problems
+
+### unsupported (2)
+
+- Only collection.anki2 is present: check that it holds the full deck (in newer packages it is a stub)
+- _MaterialIcons-Regular.woff2: in the package but not referenced by any note (font, used by the card templates; not imported)
+
+### source-data (27)
+
+- xiehanzi-new-hsk-2025-v24:1rmaedw0luwrb7: declared reading "nǎ" has no erhua r for 哪儿
+- xiehanzi-new-hsk-2025-v24:0jjk9ne0762tx5: declared reading "zhè" has no erhua r for 这儿
+- xiehanzi-new-hsk-2025-v24:1lc5j8m1r7aau1: declared reading "nà" has no erhua r for 那儿
+- xiehanzi-new-hsk-2025-v24:1l1cwkl0x2lveu: declared reading "yǒu diǎn" has no erhua r for 有点儿
+- xiehanzi-new-hsk-2025-v24:0lth54t1i3es5a: declared reading "yī diǎn" has no erhua r for 一点儿
+- xiehanzi-new-hsk-2025-v24:0h0pytq0th23fh: declared reading "hǎo wán" has no erhua r for 好玩儿
+- xiehanzi-new-hsk-2025-v24:03aiil31ifl880: declared reading "miàn tiáo" has no erhua r for 面条儿
+- xiehanzi-new-hsk-2025-v24:0nz3re00pmnn6v: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:0zqarti1u222ed: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:10k2f1p1hna0lm: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:0fspwri1h5yifl: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:1ef9o6p0qa23a2: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:1nl4vmp09stxv6: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:1kp4cki0u5vpst: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:1as6n5h0wrhb5q: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:1d0fhip0lu4yu2: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:0pyqiod1bwilo2: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:1qe5fde00jx7wx: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:1p7wpoe0il4b7x: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:11opt291clh5dq: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:0p8jpao066e9c7: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:0gv2rzp13qe47m: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:0kum9ge0e1hro5: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:1y2ybmf1es7cjs: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:05npk391rntbcy: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:0wy0ftm0ssag39: HskLevel is empty although the note is in the HSK 1 deck
+- xiehanzi-new-hsk-2025-v24:0y0aehp1mttnci: HskLevel is empty although the note is in the HSK 1 deck
+
+### unreferenced-media (9)
+
+- _hanzi-writer-data.json: in the package but not referenced by any note
+- _characterpop.svg: in the package but not referenced by any note
+- _hanzicraft.png: in the package but not referenced by any note
+- _pleco.png: in the package but not referenced by any note
+- _rtega.png: in the package but not referenced by any note
+- _youdao.png: in the package but not referenced by any note
+- _tatoeba.png: in the package but not referenced by any note
+- _anki-persistence.js: in the package but not referenced by any note
+- _hanzi-writer.min.js: in the package but not referenced by any note
+
+
+## Changes since the previous snapshot
+
+- from (none)
+- added 321, removed 0, changed 0, unchanged 0
+- decisions flagged for reassessment: 0
