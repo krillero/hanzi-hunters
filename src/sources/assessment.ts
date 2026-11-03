@@ -12,7 +12,7 @@
 // excluded, with an optional new-entry draft) and example assessments (which sense a sentence teaches); schema 1 files (pair
 // assessments only) are read unchanged.
 import { LIMITS } from '../content/validate.ts'
-import type { Explanation, Word } from '../content/types.ts'
+import type { Explanation, Part, Word } from '../content/types.ts'
 import { compareText, describePronunciation, evidenceHeadline, sourceDefinition, terminologySuggestion, TEXT_LABEL, type PronunciationNote, type TerminologySuggestion, type TextComparison } from './compare.ts'
 import { suggest, type Suggestion } from './match.ts'
 import type { EntryDraft, Mapping, SentenceItem, SourceRecord } from './types.ts'
@@ -151,13 +151,47 @@ export function hash16(text: string): string {
   }
   return a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0')
 }
-/** Explanation content an assessor reads: summary, text, tips and examples (not titles or provenance). */
+/** A character or component as taught: its sound, meaning and note. */
+const partContent = (p: Part) => ({ char: p.char, pinyin: p.pinyin, meaning: p.meaning, note: p.note })
+/**
+ * Explanation content an assessor reads: everything that teaches (summary, text, tips, intros, every part's and every example's
+ * Chinese, pinyin, English and note). Left out on purpose: headings and the title (presentation), `related` (navigation),
+ * `source` / `review` (provenance) and an example's `audio` flag (playback policy), so editing those does not outdate advice.
+ */
 function explanationContent(e: Explanation | undefined) {
+  if (!e) return null
+  const sections = e.sections.map(sec => {
+    switch (sec.type) {
+      case 'text': return { text: sec.body }
+      case 'tips': return { tips: sec.items }
+      case 'breakdown': return { intro: sec.intro, parts: sec.parts.map(partContent) }
+      case 'compare': return { intro: sec.intro, parts: sec.items.map(partContent) }
+      case 'examples': return { examples: sec.items.map(x => ({ zh: x.zh, pinyin: x.pinyin, en: x.en, note: x.note })) }
+    }
+  })
+  return { summary: e.summary, sections }
+}
+/** The entry fields an assessment considers (see ASSESSED_GAME_FIELDS). Group, question kinds, distractors and TTS policy are not. */
+const entryContent = (w: Word) => ({ id: w.id, hanzi: w.hanzi, pinyin: w.pinyin, variants: w.variants, speech: w.speech, kind: w.kind, meaning: w.meaning, note: w.note })
+export function gameFingerprint(w: Word, explanation?: Explanation): string {
+  return hash16(stable({ ...entryContent(w), explanation: explanationContent(explanation) }))
+}
+
+/**
+ * The fingerprint used until 2026-11-03. It left out example pinyin and notes, part pinyin and notes, and breakdown/compare intros,
+ * so a pronunciation edit left an assessment looking current. Used ONLY to label assessments made under it as outdated for that
+ * reason ("check-changed"): it cannot show that the fields it skipped are unchanged, so it never makes an assessment current.
+ */
+function legacyExplanationContent(e: Explanation | undefined) {
   if (!e) return null
   return { summary: e.summary, sections: e.sections.map(s => s.type === 'text' ? s.body : s.type === 'tips' ? s.items : s.type === 'examples' ? s.items.map(x => [x.zh, x.en]) : s.type === 'breakdown' ? s.parts.map(p => [p.char, p.meaning]) : s.items.map(p => [p.char, p.meaning])) }
 }
-export function gameFingerprint(w: Word, explanation?: Explanation): string {
-  return hash16(stable({ id: w.id, hanzi: w.hanzi, pinyin: w.pinyin, variants: w.variants, speech: w.speech, kind: w.kind, meaning: w.meaning, note: w.note, explanation: explanationContent(explanation) }))
+function legacyGameFingerprint(w: Word, explanation?: Explanation): string {
+  return hash16(stable({ ...entryContent(w), explanation: legacyExplanationContent(explanation) }))
+}
+/** Why a stored entry fingerprint no longer matches: an assessment made under the old fingerprint, or a real content change. */
+function gameMismatch(stored: string | undefined, w: Word, explanation?: Explanation): Exclude<Freshness, 'current' | 'source-changed' | 'missing'> {
+  return stored === legacyGameFingerprint(w, explanation) ? 'check-changed' : 'game-changed'
 }
 /** Fingerprint of several entries (in the given order). */
 export const entriesFingerprint = (ids: string[], words: Word[], explanations: Record<string, Explanation | undefined>) =>
@@ -168,28 +202,36 @@ export const exampleHash = (s: Pick<SentenceItem, 'zh' | 'pinyin' | 'en'>) => ha
 export function recordFreshness(a: RecordAssessment, record: SourceRecord | undefined, words: Word[], explanations: Record<string, Explanation | undefined>): Freshness {
   if (!record) return 'missing'
   if (record.hash !== a.recordHash) return 'source-changed'
-  if (a.relatedEntries?.length && entriesFingerprint(a.relatedEntries, words, explanations) !== a.relatedFingerprint) return 'game-changed'
+  if (a.relatedEntries?.length && entriesFingerprint(a.relatedEntries, words, explanations) !== a.relatedFingerprint) {
+    const legacy = hash16(a.relatedEntries.map(id => { const w = words.find(x => x.id === id); return w ? legacyGameFingerprint(w, explanations[id]) : `missing:${id}` }).join(','))
+    return legacy === a.relatedFingerprint ? 'check-changed' : 'game-changed'
+  }
   return 'current'
 }
 export function exampleFreshness(a: ExampleAssessment, sentence: SentenceItem | undefined, words: Word[], explanations: Record<string, Explanation | undefined>): Freshness {
   if (!sentence) return 'missing'
   if (exampleHash(sentence) !== a.sentenceHash) return 'source-changed'
-  if (a.target.entry) { const w = words.find(x => x.id === a.target.entry); if (!w) return 'missing'; if (gameFingerprint(w, explanations[w.id]) !== a.targetFingerprint) return 'game-changed' }
+  if (a.target.entry) { const w = words.find(x => x.id === a.target.entry); if (!w) return 'missing'; if (gameFingerprint(w, explanations[w.id]) !== a.targetFingerprint) return gameMismatch(a.targetFingerprint, w, explanations[w.id]) }
   return 'current'
 }
 
-/** current, or why it is outdated. Outdated assessments are shown as history only, never as current advice. */
-export type Freshness = 'current' | 'source-changed' | 'game-changed' | 'missing'
+/**
+ * current, or why it is outdated. Outdated assessments are shown as history only, never as current advice.
+ *  check-changed  made under the older game fingerprint, which did not cover example pinyin and notes: whether those changed
+ *                 since is unknown, so the assessment needs a real reassessment (its hashes are never refreshed by a tool)
+ */
+export type Freshness = 'current' | 'source-changed' | 'game-changed' | 'check-changed' | 'missing'
 export function freshness(a: SourceAssessment, record: SourceRecord | undefined, word: Word | undefined, explanation?: Explanation): Freshness {
   if (!record || !word) return 'missing'
   if (record.hash !== a.recordHash) return 'source-changed'
-  if (gameFingerprint(word, explanation) !== a.gameFingerprint) return 'game-changed'
+  if (gameFingerprint(word, explanation) !== a.gameFingerprint) return gameMismatch(a.gameFingerprint, word, explanation)
   return 'current'
 }
 export const FRESHNESS_LABEL: Record<Freshness, string> = {
   current: 'Current',
   'source-changed': 'Assessment outdated—content changed (the source record changed).',
   'game-changed': 'Assessment outdated—content changed (the game entry or its explanation changed).',
+  'check-changed': 'Assessment outdated—made before the check covered example pinyin and notes, so it is unknown whether what it considered still matches; it needs reassessment.',
   missing: 'Assessment outdated—the record or entry no longer exists.'
 }
 
@@ -229,6 +271,8 @@ export function checkAssessment(a: SourceAssessment, at: string, ctx?: Assessmen
     if (w.verdict === 'not-applicable' && a.meaning?.verdict !== 'different') e.push(`${at}: wording "not-applicable" is only for different senses`)
     if (a.meaning?.verdict === 'different' && w.verdict !== 'not-applicable') e.push(`${at}: different senses: one definition must not replace the other (wording must be "not-applicable")`)
     if ((w.verdict === 'edited' || w.verdict === 'prefer-source') && !str(w.proposed)) e.push(`${at}: wording "${w.verdict}" needs the proposed text`)
+    // The source also covers uses the entry defers (docs/SENSES.md §1.1): adopting its whole definition would teach them.
+    if (w.verdict === 'prefer-source' && a.meaning?.scope === 'source-broader') e.push(`${at}: the source is broader than the entry's included uses; do not adopt it whole (propose an "edited" text with the included part, or "keep-game")`)
     const word = ctx?.words.find(x => x.id === a.entry)
     const max = word?.kind === 'particle' ? LIMITS.particleMeaning : LIMITS.meaning
     if (str(w.proposed) && w.proposed!.length > max) e.push(`${at}: proposed text has ${w.proposed!.length} characters; answer buttons allow ${max}`)
@@ -392,6 +436,20 @@ export type Comparison = {
   outdated?: { assessment: SourceAssessment; freshness: Exclude<Freshness, 'current'> }
   /** A plain-term option for the game label, offered whatever the assessment says (wording only). */
   terminology?: TerminologySuggestion
+  /** A reviewer's decision about this pair that is no longer current (history, not a verdict): see decisionOutdated. */
+  outdatedDecision?: { verdict: 'same' | 'different'; by: string; on: string; why: string }
+}
+
+/**
+ * Why a reviewer decision (mapping) no longer applies to the record as it is now, or undefined when it is current: the importer
+ * flagged it for reassessment, or it was made against another version of the record (`recordHash`). An outdated decision keeps
+ * its history (who, when, what) but must not supply a current "confirmed" verdict.
+ */
+export function decisionOutdated(m: Mapping | null | undefined, r: SourceRecord): string | undefined {
+  if (!m) return undefined
+  if (m.reassess) return m.reassess
+  if (m.recordHash !== r.hash) return 'the source record changed since this decision'
+  return undefined
 }
 
 export function compare(r: SourceRecord, w: Word, s: Suggestion, opts: { assessment?: SourceAssessment; explanation?: Explanation; mapping?: Mapping | null } = {}): Comparison {
@@ -401,15 +459,29 @@ export function compare(r: SourceRecord, w: Word, s: Suggestion, opts: { assessm
   const cur = a && f === 'current' ? a : undefined
   const m = opts.mapping
   const by = (x: Mapping) => `${x.decision.by}, ${x.decision.on}`
+  // What a person decided about THIS pair, if anything; it is a verdict only while the decision is current.
+  let decided: 'same' | 'different' | undefined
+  if (m && m.decision.how === 'person') {
+    if (m.distinctFrom?.includes(w.id)) decided = 'different'
+    else if (m.status === 'linked' && m.entry === w.id) decided = 'same'
+  }
+  const staleWhy = decided ? decisionOutdated(m, r) : undefined
+  const outdatedDecision = decided && staleWhy ? { verdict: decided, by: m!.decision.by, on: m!.decision.on, why: staleWhy } : undefined
 
   let meaning: Comparison['meaning']
-  if (m?.distinctFrom?.includes(w.id) && m.decision.how === 'person') meaning = { state: 'different', basis: 'reviewer', label: 'Different sense—keep separate (reviewer decision)', reason: `Decided by ${by(m)}.` }
-  else if (m?.status === 'linked' && m.entry === w.id && m.decision.how === 'person') meaning = { state: 'same-confirmed', basis: 'reviewer', label: 'Same sense—confirmed by a reviewer', reason: `Linked by ${by(m)}.` }
+  if (decided === 'different' && !staleWhy) meaning = { state: 'different', basis: 'reviewer', label: 'Different sense—keep separate (reviewer decision)', reason: `Decided by ${by(m!)}.` }
+  else if (decided === 'same' && !staleWhy) meaning = { state: 'same-confirmed', basis: 'reviewer', label: 'Same sense—confirmed by a reviewer', reason: `Linked by ${by(m!)}.` }
   else if (cur) {
     const v = cur.meaning.verdict, how = METHOD_LABEL[cur.method]
     const label = { 'likely-equivalent': `Likely equivalent—${how}`, 'same-confirmed': 'Same sense—confirmed by a reviewer', different: `Different sense—keep separate (${how})`, uncertain: `Uncertain—${how}; a reviewer should decide` }[v]
     meaning = { state: v, basis: 'assessment', label, reason: cur.meaning.reason, scope: cur.meaning.scope }
-  } else meaning = { state: 'not-assessed', basis: 'none', label: 'Meaning not assessed', ...(f && f !== 'current' ? { reason: 'An earlier assessment is outdated because the content changed.' } : {}) }
+  } else {
+    const why = [
+      ...(f && f !== 'current' ? ['An earlier assessment is outdated.'] : []),
+      ...(outdatedDecision ? ['An earlier reviewer decision is outdated.'] : [])
+    ].join(' ')
+    meaning = { state: 'not-assessed', basis: 'none', label: 'Meaning not assessed', ...(why ? { reason: why } : {}) }
+  }
 
   let wording: Comparison['wording']
   if (meaning.state === 'different') wording = { state: 'not-applicable', basis: meaning.basis, label: 'Not applicable—the senses differ; do not replace one definition with the other', reason: cur?.wording?.verdict === 'not-applicable' ? cur.wording.reason : undefined }
@@ -424,7 +496,8 @@ export function compare(r: SourceRecord, w: Word, s: Suggestion, opts: { assessm
     record: r.key, entry: w.id, strength: s.strength, text, textLabel, pronunciation: describePronunciation(r, w),
     headline: evidenceHeadline(s, text, meaning.state === 'not-assessed'), meaning, wording,
     ...(cur ? { assessment: cur } : {}), ...(a && f && f !== 'current' ? { outdated: { assessment: a, freshness: f } } : {}),
-    ...(terminologySuggestion(w.meaning) ? { terminology: terminologySuggestion(w.meaning) } : {})
+    ...(terminologySuggestion(w.meaning) ? { terminology: terminologySuggestion(w.meaning) } : {}),
+    ...(outdatedDecision ? { outdatedDecision } : {})
   }
 }
 
@@ -433,7 +506,8 @@ export function shortStatus(c: Comparison): string {
   const t = { exact: 'exact text', formatting: 'formatting only', different: 'different wording', missing: 'no text' }[c.text]
   const m = { 'not-assessed': 'meaning pending', 'likely-equivalent': 'likely equivalent', 'same-confirmed': 'same (reviewer)', different: 'different sense', uncertain: 'uncertain' }[c.meaning.state]
   const w = { 'not-assessed': 'wording pending', 'keep-game': 'keep game wording', 'prefer-source': 'source wording proposed', edited: 'edit proposed', 'not-applicable': 'wording n/a' }[c.wording.state]
-  return `${c.entry}: ${t} · ${m} · ${w}${c.outdated ? ' · outdated' : ''}`
+  const stale = [...(c.outdated ? ['outdated'] : []), ...(c.outdatedDecision ? ['decision outdated'] : [])]
+  return [`${c.entry}: ${t}`, m, w, ...stale].join(' · ')
 }
 
 // ---- coverage -----------------------------------------------------------------------------------------------------------------------
@@ -445,6 +519,8 @@ export type Coverage = {
   wording: Record<WordingState, number>
   text: Record<TextComparison, number>
   outdated: number; pronunciation: number
+  /** Pairs whose reviewer decision is outdated (counted apart from outdated assessments). */
+  decisionsOutdated: number
   byMethod: Record<AssessmentMethod, number>
 }
 export function coverage(cs: Comparison[]): Coverage {
@@ -452,12 +528,13 @@ export function coverage(cs: Comparison[]): Coverage {
     pairs: cs.length, records: new Set(cs.map(x => x.record)).size, entries: new Set(cs.map(x => x.entry)).size,
     meaning: { 'not-assessed': 0, 'likely-equivalent': 0, 'same-confirmed': 0, different: 0, uncertain: 0 },
     wording: { 'not-assessed': 0, 'keep-game': 0, 'prefer-source': 0, edited: 0, 'not-applicable': 0 },
-    text: { exact: 0, formatting: 0, different: 0, missing: 0 }, outdated: 0, pronunciation: 0,
+    text: { exact: 0, formatting: 0, different: 0, missing: 0 }, outdated: 0, pronunciation: 0, decisionsOutdated: 0,
     byMethod: { heuristic: 0, 'ai-assisted': 0, human: 0 }
   }
   for (const x of cs) {
     c.meaning[x.meaning.state]++; c.wording[x.wording.state]++; c.text[x.text]++
     if (x.outdated) c.outdated++
+    if (x.outdatedDecision) c.decisionsOutdated++
     if (x.pronunciation.differs) c.pronunciation++
     if (x.assessment) c.byMethod[x.assessment.method]++
   }
@@ -473,7 +550,8 @@ export function coverageLine(c: Coverage): string {
     `${n(proposed, 'wording change')} proposed`,
     `${n(pending, 'comparison')} not yet assessed`,
     ...(wordingPending !== pending ? [`wording not assessed in ${n(wordingPending, 'comparison')}`] : []),
-    ...(c.outdated ? [`${n(c.outdated, 'assessment')} outdated`] : [])
+    ...(c.outdated ? [`${n(c.outdated, 'assessment')} outdated`] : []),
+    ...(c.decisionsOutdated ? [`${n(c.decisionsOutdated, 'reviewer decision')} outdated`] : [])
   ].join(' · ')
 }
 

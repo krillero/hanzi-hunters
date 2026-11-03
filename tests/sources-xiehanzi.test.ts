@@ -174,21 +174,28 @@ test('same spelling does not merge meanings; example inclusion does not establis
   assert.ok([...sentences.values()].every(s => !s.links))
 })
 
-test('assessments: complete, current, AI-assisted and unreviewed, and stale when example pinyin changes', () => {
+test('assessments: complete, AI-assisted and unreviewed, outdated only by the fingerprint change, and stale when example pinyin changes', () => {
   const { file, ctx, records, sentences } = committed()
   assert.deepEqual(checkAssessmentsFile(file, ctx), [])
   assert.equal(file.records!.length, 321, 'every source record has a disposition')
-  assert.ok(file.records!.every(a => recordFreshness(a, ctx.records.get(a.record), WORDS, EXPLANATIONS) === 'current'))
+  // 57 record assessments relate to entries whose explanation the 2026-11-03 fingerprint now covers more fully (example pinyin and
+  // notes): outdated until a real reassessment, never refreshed by a tool. Nothing else is outdated.
+  const recFresh = file.records!.map(a => recordFreshness(a, ctx.records.get(a.record), WORDS, EXPLANATIONS))
+  assert.equal(recFresh.filter(f => f === 'check-changed').length, 57)
+  assert.ok(recFresh.every(f => f === 'current' || f === 'check-changed'))
   assert.ok([...file.assessments, ...file.records!, ...file.examples!].every(a => a.method === 'ai-assisted' && a.review === 'unreviewed'))
   const cov = coverage([...candidateComparisons(records, WORDS, EXPLANATIONS, file).values()].flatMap(x => x.comparisons))
-  assert.equal(cov.pairs, file.assessments.length); assert.equal(cov.meaning['not-assessed'], 0)
+  assert.equal(cov.pairs, file.assessments.length); assert.equal(cov.meaning['not-assessed'], cov.outdated); assert.equal(cov.outdated, 57)
   // Units stay apart: 107 records with candidates, 108 pairs (看 has two entries), 108 unique entries.
   assert.deepEqual([cov.records, cov.pairs, cov.entries], [107, 108, 108])
   const first = file.records!.filter(a => a.expansion === 'first')
   assert.ok(first.length >= 20 && first.length <= 30)
   assert.ok(first.every(a => a.draft && !WORDS.some(w => w.id === a.draft!.id)), 'drafts use new, stable ids')
   // Example freshness covers the pinyin.
-  const a = file.examples!.find(x => x.verdict === 'suitable')!
+  const exFresh = file.examples!.map(x => exampleFreshness(x, sentences.get(x.sentence), WORDS, EXPLANATIONS))
+  assert.ok(exFresh.every(f => f === 'current' || f === 'check-changed'))
+  assert.equal(exFresh.filter(f => f === 'check-changed').length, 171)
+  const a = file.examples!.find(x => x.verdict === 'suitable' && exampleFreshness(x, sentences.get(x.sentence), WORDS, EXPLANATIONS) === 'current')!
   const s = sentences.get(a.sentence)!
   assert.equal(exampleFreshness(a, s, WORDS, EXPLANATIONS), 'current')
   assert.equal(exampleFreshness(a, { ...s, pinyin: `${s.pinyin} ` + 'x' }, WORDS, EXPLANATIONS), 'source-changed')

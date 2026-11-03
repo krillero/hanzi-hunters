@@ -430,7 +430,8 @@ export default function App() {
     if (settings.muted && !force) return
     if (!hasSelectedRecording(word)) { if (audioReliable(word, WORDS)) speak(word.hanzi, force); return }
     const rec = wordRecording(word, failedRecs.current)
-    if (!rec) { if (force) setToast(`The recording of ${word.hanzi} could not be played.`); return }
+    // A selected recording that cannot be used (failed, or not eligible for this entry) leaves the word silent: never TTS instead.
+    if (!rec) { if (force) setToast(failedRecs.current.has(word.id) ? `The recording of ${word.hanzi} could not be played.` : `The recording of ${word.hanzi} is not available.`); return }
     try {
       window.speechSynthesis?.cancel?.()
       audioEl.current?.pause()

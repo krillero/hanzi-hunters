@@ -1,10 +1,11 @@
-// Which sound an entry uses. A selected, suitable recording (content/recordings.json) always wins over text-to-speech; an entry
-// with a recording never falls back to TTS (so a player never hears two different voices or readings for one entry). Entries
-// without a recording use TTS only when it is reliable (audio: "ok" and no other entry with the same hanzi).
+// Which sound an entry uses. An entry with a recording SELECTED (content/recordings.json) uses only that recording, and never
+// falls back to TTS, even when the clip is ineligible (rejected, flagged, incompatible reading) or failed: then it has no audio.
+// So a player never hears two different voices or readings for one entry. Entries without a selection use TTS only when it is
+// reliable (audio: "ok" and no other entry with the same hanzi).
 import recordingsJson from './content/recordings.json' with { type: 'json' }
 import { WORDS } from './data'
 import { audioReliable } from './content/entries'
-import { canHearEntry, indexRecordings, playableRecording } from './content/recordings'
+import { canHearEntry, indexRecordings, playableRecording, selectedRecording } from './content/recordings'
 import type { RecordingsFile, SelectedRecording } from './sources/types'
 import type { Word } from './content/types'
 
@@ -12,8 +13,8 @@ export const RECORDINGS = indexRecordings(recordingsJson as unknown as Recording
 
 /** The recording to play for this entry, unless it failed to play earlier this session. */
 export const wordRecording = (w: Word, failed?: Set<string>): SelectedRecording | undefined => (failed?.has(w.id) ? undefined : playableRecording(w, RECORDINGS))
-/** Does the entry have a recording selected at all (even one that failed)? Then TTS is not used for it. */
-export const hasSelectedRecording = (w: Word) => !!playableRecording(w, RECORDINGS)
+/** Does the entry have a recording selected at all (even one that is ineligible or failed)? Then TTS is never used for it. */
+export const hasSelectedRecording = (w: Word) => !!selectedRecording(w, RECORDINGS)
 /** Can a speaker button play this entry? */
 export const hasWordAudio = (w: Word, failed?: Set<string>) => (hasSelectedRecording(w) ? !!wordRecording(w, failed) : audioReliable(w, WORDS))
 export const recordingUrl = (r: SelectedRecording) => `${import.meta.env.BASE_URL}${r.file}`
