@@ -75,6 +75,14 @@ could be asked.
 **Fix:** a question is built and spoken only when it is about to be shown, after any introduction card. Side effects (speech,
 sounds) belong to what is on screen, not to what was prepared.
 
+### The speaker gives away a pinyin answer
+
+**Seen:** on "Choose the correct pinyin for 姐姐" the 🔊 button played the word, so the answer could be heard instead of recalled.
+
+**Why:** the speaker was shown whenever the word had trustworthy audio, whatever the question asked.
+
+**Fix:** `soundGivesAnswerAway` in `App.tsx` hides it while a non-listening question asks for pinyin; it returns after answering. Any new question kind that asks for pinyin gets this for free through `ask: 'pinyin'`.
+
 ### A caption claims a bonus the player does not have
 
 **Seen:** after a kill that also levelled up, the arena showed "💚 +3 Second Wind" without the Second Wind upgrade.

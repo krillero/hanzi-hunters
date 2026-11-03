@@ -817,7 +817,10 @@ export default function App() {
   }
   const { word, question } = card
   const entry = save.mastery[word.id]
-  const canSpeak = hasWordAudio(word, failedRecs.current)
+  // Hearing the word would give away a pinyin answer, so the speaker waits until the question is answered. Listening questions are
+  // the exception: the sound is the question itself.
+  const soundGivesAnswerAway = question.ask === 'pinyin' && !question.audio && !feedback && !reveal
+  const canSpeak = hasWordAudio(word, failedRecs.current) && !soundGivesAnswerAway
   const revealed = !!feedback
   const fighting = run.phase === 'fighting'
   const revealing = !!reveal   // a right answer is being shown in place before the game moves on
