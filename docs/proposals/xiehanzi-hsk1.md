@@ -59,7 +59,8 @@ uses that must stay apart (要 “want; be going to; ask for; demand”, 一 wit
 and “ask for”, 好 “easy to” and completion after a verb, 下 “get off” and “next”, 叫 “tell someone to”, 多 “how (多大)”, 口 as
 measure word for family members. They are marked “not taught (keep separate)”. The engine refuses two entries with the same
 hanzi **and** pinyin, so 要 “will” or 会 “meeting” cannot become separate playable entries today; they stay notes or wait for an
-engine change.
+engine change. The intended later approach (other meanings unlocked from the Retained level, taught in context) is in
+`docs/SENSES.md`.
 
 **Short labels for new candidates:** 186 proposed; 32 are the source's own `SimpleMeaning` (validated to be its exact text),
 154 are editorial (written from the full definitions, or correcting the source: 岁 “year (of crop harvests)” → “years old”,

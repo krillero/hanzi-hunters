@@ -88,7 +88,7 @@ Summary: the **informational** feedback is good and calm; the **emotional** feed
 
 ## 4. Learning-visible design
 
-* Mastery pips and the "level up / slipped back" sentence already exist; add a **mastery ceremony** when a word reaches level 4 ("MASTERED 好 hǎo") — a distinct sound and a card flip in the result box, once per word.
+* Mastery pips and the "level up / slipped back" sentence already exist; add a **mastery ceremony** when a word reaches the top level (level 5, Mastered, since the scheduler change; level 4 is now Retained) ("MASTERED 好 hǎo") — a distinct sound and a card flip in the result box, once per word.
 * **Review priority is explained once** ("words you miss return sooner"), because spaced repetition that feels random feels unfair.
 * **Explanations** (💡) become a reward too: after a first correct answer a small "💡 more about 石" link pulses once per word.
 * Never show information that gives away the current answer (rule from the bulb fix: the bulb appears only when the whole word is already visible).

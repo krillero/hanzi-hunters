@@ -1,5 +1,13 @@
 # Changelog / test log
 
+## 2026-11-03 — Intent recorded: one meaning per entry, other meanings later (docs only)
+
+- New `docs/SENSES.md`: entries teach one basic meaning now; other meanings are intended to unlock from level 4 (Retained),
+  taught in context with their own progress. Not implemented. Lists the rules that apply now, open questions, collected material
+  and existing labels that combine two meanings (left unchanged pending an owner decision).
+- Pointers in AGENTS.md (new rule 11), CONTENT_GUIDE.md (`" / "` joins near-synonyms, not senses), the xiehanzi proposal.
+- Doc fixes: CURRICULUM.md and GAME_FEEL_AND_PROGRESSION.md still called level 4 "mastered"; the code names it Retained (5 = Mastered).
+
 ## 2026-11-02 — Second source: Anki-xiehanzi HSK 1 compared, assessed and proposed (branch ccr-d8ccb49c-6plu3f)
 
 - Verified package: Anki-xiehanzi v2.4 `Anki-xiehanzi-New-HSK-2025.apkg` (sha256 `4b0bea5d…a37a`): 10,900 notes; HSK 1 subdeck

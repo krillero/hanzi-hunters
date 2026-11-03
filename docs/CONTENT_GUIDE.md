@@ -44,7 +44,7 @@ npm run dev                # preview (see "Previewing" below)
 
 ## 1. Entries (`words.json`)
 
-An entry is **one word, character or particle with one meaning and one reading**. The original 50 entries are single characters; new entries can be multi-character words.
+An entry is **one word, character or particle with one meaning and one reading**. The original 50 entries are single characters; new entries can be multi-character words. Other meanings of the same written form are not taught yet; the intended later step (unlocking them from the Retained level) and the rules that apply now are in `docs/SENSES.md`.
 
 ### 1.1 Required fields
 
@@ -52,7 +52,7 @@ An entry is **one word, character or particle with one meaning and one reading**
 |---|---|
 | `hanzi` | Simplified Chinese characters only, 1 to 8 (aim for 1 to 4, answer buttons are small). The same hanzi may appear in more than one entry only when the readings differ (see 1.5). |
 | `pinyin` | **Dictionary pinyin** with tone marks, lowercase, standard word spacing: `"nǐ hǎo"` (two words), `"péngyou"`, `"māma"`, `"xuéxiào"`. Never tone numbers. Use an apostrophe where syllables run together ambiguously (`xī'ān`). Must have exactly as many syllables as `hanzi` has characters (erhua 儿 is not supported yet). |
-| `meaning` | Natural English that fits an answer button, aim ≤ 40 chars. `" / "` separates senses: `"mom / mother"`. For particles, a short *functional description* (aim ≤ 44, it must fit the card and an answer button; put examples like 我的书 in the `note`). |
+| `meaning` | Natural English that fits an answer button, aim ≤ 40 chars. `" / "` separates near-synonyms of the one taught sense: `"mom / mother"`, never two different senses (`docs/SENSES.md`). For particles, a short *functional description* (aim ≤ 44, it must fit the card and an answer button; put examples like 我的书 in the `note`). |
 | `group` | Family used to pick plausible wrong answers (`people`, `nature`, `number`, `size`, `body`, `place`, `grammar`, `greetings`, `time`, `verbs` …; make a new lowercase one if none fits). |
 | `note` | 1–2 teaching sentences shown after answering. Teach, never shame. |
 

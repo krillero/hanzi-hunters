@@ -156,7 +156,7 @@ allow-list is never bypassed.
 | **Practiced** | Answered correctly at least once since being introduced (a later miss at level 0 resets this). | `lv ≥ 1` or `ok ≥ 1` |
 | **Ready to advance** | Introduced, and has reached the curriculum's threshold now **or at some earlier time**. Earned readiness is never revoked. | `max(lv, peak[id]) ≥ readiness.minLevel` (default 1), only if `mastery[id]` exists |
 | **Lesson ready** | Every *required* entry of the lesson is ready. Recorded as **completed** the first time it happens. | `courses[id].completed` |
-| **Long-term mastery** | Separate concept (level 4, "mastered"). Lesson completion never claims it. | `lv = 4` |
+| **Long-term mastery** | Separate concept: level 4 is Retained, level 5 Mastered (`LEVEL_NAMES`, `docs/SCHEDULING.md`). Lesson completion never claims either. Retained is also the intended future unlock level for other meanings (`docs/SENSES.md`). | `lv ≥ 4` |
 
 Mastery levels keep their meaning and the lesson readiness threshold is unchanged (level 1, the first spaced success); how levels are earned is in `docs/SCHEDULING.md`.
 
