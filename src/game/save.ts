@@ -10,6 +10,7 @@ import type { Mastery, Meta, Run, RunSummary, Saved } from './types.ts'
 import { emptyCourse, recordPeaks, syncCourse, wordMap, type CourseProgress, type PeakLevels } from './course.ts'
 import { UPGRADES, computeBonuses, nodeState, type UpgradeNode } from './upgrades.ts'
 import { ENEMIES_PER_FLOOR, EXPEDITION_FLOORS, MAX_DEPTH, bossIdFor, enemyStats, hasShield, isBoss, playerStats, shieldFor } from './rules.ts'
+import { QUESTION_KINDS } from './questions.ts'
 import { MAX_LV, fromLegacyEntry, sanitizeSched, type SchedEntry } from './schedule.ts'
 
 export const SAVE_KEY = 'hanzi-hunters-save'
@@ -40,7 +41,7 @@ function validUpgrades(raw: unknown): string[] {
 // v1 entries ({ lv, ok, at? }) are converted once by fromLegacyEntry (levels kept, no credit for imaginary past answers); v2 entries are
 // only validated. The same cleaner is used for the claimed and the legacy (unknown id) maps, so nothing is lost or postponed again.
 type Ctx = { version: number; now: number; maxSeq: number }
-const cleanerFor = (c: Ctx) => (e: unknown): SchedEntry | null => (c.version === 1 ? fromLegacyEntry(e, c.now) : sanitizeSched(e, c.now, c.maxSeq))
+const cleanerFor = (c: Ctx) => (e: unknown): SchedEntry | null => (c.version === 1 ? fromLegacyEntry(e, c.now) : sanitizeSched(e, c.now, c.maxSeq, QUESTION_KINDS))
 const better = (a: SchedEntry, b: SchedEntry) => (b.lv > a.lv || (b.lv === a.lv && b.ok > a.ok) ? b : a)
 
 /**

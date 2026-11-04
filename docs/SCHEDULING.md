@@ -30,22 +30,22 @@ retention milestone, not proof of speaking, listening, writing or permanent know
   global per-save answer number, +1 per submitted answer (incl. mistakes). An answer whose `seq` is not above the entry's `lastSeq` is
   ignored, so double submissions and replays cannot score twice. "Other answers" = answers of other entries since the anchor.
 - Reading a new-word card calls `introduce` (level 0, no credit). Details, translations and every answer's feedback show the answer;
-  `recordReveal` and `recordAnswer` store that as `reveal`, separate from the last qualifying success (`dims[d].lastQual`).
-- **Dimensions** (`meaning, reading, listening, reverse, sentence`): evidence (attempts, correct, last times; tone right/wrong for reading)
-  is stored per dimension for every answer. Only answers marked as promoting (see below) can move the scheduler, including lapses.
-  Requiring more dimensions per stage later only needs this constant and one predicate, not a data change.
+  `recordReveal` and `recordAnswer` store that as `reveal`, separate from the last qualifying success (`kinds[kind].lastQual`).
+- **Evidence per question kind** (`SchedEntry.kinds`, keyed by the `QKind` name, e.g. `pinyin` = character→pinyin, `pinyin2char`): attempts, correct,
+  last times, and tone right/wrong for pinyin answers are stored for every answer, so how good a learner is at each direction can be read
+  per kind. There are no separate "dimensions" (removed 2026-11-04: they merged character→pinyin with meaning→pinyin and nothing read them).
+  Only answers marked as promoting (below) can move the scheduler, including lapses. Saves written earlier hold `dims`, which is ignored on load.
 - A mode that cannot tell whether the answer was revealed must pass `assisted: true` (conservative).
 - **Which questions promote (per question kind, `PROMOTING_KINDS` in `learning.ts`):** every question that involves the written character:
   character→meaning, character→pinyin, audio→character, meaning→character, pinyin→character, homophone and look-alike. Meaning→pinyin,
   audio→meaning, audio→pinyin and particle sentence questions are recorded only (no character to reinforce; particles advance through their
-  meaning questions). The choice is per kind, not per dimension, because character→pinyin and meaning→pinyin share `reading`
-  (tone evidence is recorded for both). `Answer.promotes` carries it into `recordAnswer`; when omitted, `PROMOTING_DIMENSIONS` decides.
+  meaning questions). `Answer.promotes` (required) carries the decision into `recordAnswer`.
 - **Assisted** = a hint removed options, or the question card showed the answer it asks for (`answerRevealed`), or the word had no introduction.
   Showing pinyin on a meaning question is not assistance. Reveals: new-word card, answer feedback, opening details, opening the wordbook.
 - Boss-trial answers bump the global answer number (they count as answered questions for spacing) but are not tied to a word, so they record no evidence and promote nothing.
   Events and scenes never promote.
 
-## State transitions (promoting dimension)
+## State transitions (promoting answer)
 
 | State | Answer | Result |
 |---|---|---|
@@ -105,7 +105,7 @@ All estimates come from stored timestamps; a late return only shows words as due
 ## Simulator and measured pace (`tools/simulate.ts`, `node tools/simulate.ts --report`)
 
 The simulator advances a clock (12 s per answer, 8 h between expeditions on one day) and the answer number, asks each word the question kind the game
-would choose (so only promoting dimensions earn credit), and uses a hint on 8% of answers (assisted, no credit, but a right answer is more likely).
+would choose (so only promoting question kinds earn credit), and uses a hint on 8% of answers (assisted, no credit, but a right answer is more likely).
 Final report (5 seeds x 20 expeditions): median time from the new-word card to Familiar is about **1 day** (1434-1446 min at 75-100% accuracy, because
 words introduced late in a session finish in the next one), about 80-127 answers counted across all words (about 2 expeditions); 88-95% of words
 introduced reach Familiar within 20 expeditions at 75%+ accuracy (68% at 60%); 38-48% of answers move a word on. Expeditions to clear depth 1-5 are

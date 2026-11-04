@@ -7,7 +7,8 @@ import {
 } from '../src/game/schedule.ts'
 
 const S = 1000, H = 3_600_000, T0 = 1_800_000_000_000
-const ans = (now: number, seq: number, o: Partial<Answer> = {}): Answer => ({ correct: true, assisted: false, dim: 'meaning', now, seq, ...o })
+const KINDS = ['meaning', 'pinyin', 'character'] as const   // stands in for QUESTION_KINDS
+const ans = (now: number, seq: number, o: Partial<Answer> = {}): Answer => ({ correct: true, assisted: false, kind: 'meaning', promotes: true, now, seq, ...o })
 /** Answer by the entry at (now, seq); the other entries' answers in between are just sequence numbers. */
 const go = (e: SchedEntry, now: number, seq: number, o: Partial<Answer> = {}) => recordAnswer(e, ans(now, seq, o))
 
@@ -128,11 +129,11 @@ test('lapse of an established word: one level down (floor 2), relearn, 24 h rech
   const floor = go({ ...familiar().e, reveal: 0 }, 1, 9, { correct: false }); assert.equal(floor.entry.lv, 2)
 })
 
-test('answers in non-promoting dimensions are recorded (with tone evidence) but never change the scheduler', () => {
+test('answers to non-promoting question kinds are recorded (with tone evidence) but never change the scheduler', () => {
   const { e } = familiar(); const due = e.due!
-  const r = go({ ...e, reveal: 0 }, due, 99, { dim: 'reading', toneOk: true }); assert.equal(r.outcome, 'recorded'); assert.equal(r.entry.lv, 2); assert.equal(r.entry.due, due)
-  const w = go(r.entry, due + S, 100, { dim: 'reading', toneOk: false, correct: false }); assert.equal(w.entry.lv, 2); assert.equal(w.entry.rel, undefined)
-  assert.deepEqual([w.entry.dims.reading!.n, w.entry.dims.reading!.ok, w.entry.dims.reading!.toneOk, w.entry.dims.reading!.toneBad], [2, 1, 1, 1])
+  const r = go({ ...e, reveal: 0 }, due, 99, { kind: 'meaning2pinyin', promotes: false, toneOk: true }); assert.equal(r.outcome, 'recorded'); assert.equal(r.entry.lv, 2); assert.equal(r.entry.due, due)
+  const w = go(r.entry, due + S, 100, { kind: 'meaning2pinyin', promotes: false, toneOk: false, correct: false }); assert.equal(w.entry.lv, 2); assert.equal(w.entry.rel, undefined)
+  assert.deepEqual([w.entry.kinds.meaning2pinyin!.n, w.entry.kinds.meaning2pinyin!.ok, w.entry.kinds.meaning2pinyin!.toneOk, w.entry.kinds.meaning2pinyin!.toneBad], [2, 1, 1, 1])
   assert.equal(w.entry.lastSeq, 100)
 })
 
@@ -149,15 +150,15 @@ test('standing and earnsCredit never loop: an entry with no spaced credit availa
 
 test('sanitizeSched validates, preserves overdue dates and clamps future timestamps without instant promotion', () => {
   const now = T0, { e } = familiar(T0 - 10 * 24 * H)
-  const keep = sanitizeSched(JSON.parse(JSON.stringify(e)), now, 1e6)!; assert.equal(keep.due, e.due)       // overdue date preserved
-  const future = sanitizeSched({ ...e, due: now + 400 * 24 * H, reveal: now + 99 * H, adv: now + 5 * H, g: { at: now + H, seq: 5, own: 1 } }, now, 1e6)!
+  const keep = sanitizeSched(JSON.parse(JSON.stringify(e)), now, 1e6, KINDS)!; assert.equal(keep.due, e.due)       // overdue date preserved
+  const future = sanitizeSched({ ...e, due: now + 400 * 24 * H, reveal: now + 99 * H, adv: now + 5 * H, g: { at: now + H, seq: 5, own: 1 } }, now, 1e6, KINDS)!
   assert.equal(future.due, now + STAGE_INTERVAL_MS[2]); assert.equal(future.reveal, now); assert.equal(future.adv, now); assert.equal(future.g.at, now)
-  assert.equal(sanitizeSched(null, now, 1), null); assert.equal(sanitizeSched([], now, 1), null)
-  const bad = sanitizeSched({ lv: 'x', ok: NaN, g: 5, due: 'soon', lastSeq: -4, dims: { meaning: { n: 'a' }, nope: {} } }, now, 10)!
-  assert.deepEqual([bad.lv, bad.ok, bad.due, bad.lastSeq], [0, 0, null, 0]); assert.deepEqual(bad.dims.meaning, { n: 0, ok: 0, last: 0, lastOk: 0, lastQual: 0 })
-  assert.equal(sanitizeSched({ lv: 3, ok: 0, rel: 'recheck' }, now, 1)!.due, now)                          // missing date on an established word: due now
-  assert.equal(sanitizeSched({ lv: 1, ok: 9, rel: 'recheck' }, now, 1)!.rel, 'relearn')                    // an initial word cannot be rechecking
-  assert.equal(sanitizeSched({ lv: 1, lastSeq: 50 }, now, 10)!.lastSeq, 10)                                // bounded by the save's sequence
+  assert.equal(sanitizeSched(null, now, 1, KINDS), null); assert.equal(sanitizeSched([], now, 1, KINDS), null)
+  const bad = sanitizeSched({ lv: 'x', ok: NaN, g: 5, due: 'soon', lastSeq: -4, kinds: { meaning: { n: 'a' }, nope: {} }, dims: { reading: { n: 4 } } }, now, 10, KINDS)!
+  assert.deepEqual([bad.lv, bad.ok, bad.due, bad.lastSeq], [0, 0, null, 0]); assert.deepEqual(bad.kinds.meaning, { n: 0, ok: 0, last: 0, lastOk: 0, lastQual: 0 }); assert.deepEqual(Object.keys(bad.kinds), ['meaning'], 'unknown kinds and the old per-dimension data (dims) are dropped')
+  assert.equal(sanitizeSched({ lv: 3, ok: 0, rel: 'recheck' }, now, 1, KINDS)!.due, now)                          // missing date on an established word: due now
+  assert.equal(sanitizeSched({ lv: 1, ok: 9, rel: 'recheck' }, now, 1, KINDS)!.rel, 'relearn')                    // an initial word cannot be rechecking
+  assert.equal(sanitizeSched({ lv: 1, lastSeq: 50 }, now, 10, KINDS)!.lastSeq, 10)                                // bounded by the save's sequence
 })
 
 test('legacy migration keeps levels, grants no credit and derives due dates from the old date at local noon', () => {

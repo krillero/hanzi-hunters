@@ -1,8 +1,8 @@
 // Vocabulary scheduling: pure functions, no DOM, no Date.now (every time and sequence number is passed in).
 // See docs/SCHEDULING.md for the research basis (and its limits), the state-transition table and the migration rules.
 //
-// One scheduler per entry. Levels 0-5 keep their meaning (see LEVEL_NAMES in mastery.ts). Evidence for every tested dimension is
-// recorded, but only answers the caller marks as promoting can move the scheduler (per question kind: PROMOTING_KINDS in game/learning.ts).
+// One scheduler per entry. Levels 0-5 keep their meaning (see LEVEL_NAMES in mastery.ts). Evidence for every question kind is
+// recorded per question kind, but only answers the caller marks as promoting can move the scheduler (PROMOTING_KINDS in game/learning.ts).
 
 const MIN = 60_000, HOUR = 3_600_000, DAY = 86_400_000
 
@@ -27,16 +27,12 @@ export const RECHECK_MS = 24 * HOUR
 export const MAX_LV = 5
 export const MAX_COUNT = 9999
 
-export const DIMENSIONS = ['meaning', 'reading', 'listening', 'reverse', 'sentence'] as const
-export type Dimension = typeof DIMENSIONS[number]
-/** Default for an answer that does not say whether it promotes: these dimensions can change level, due dates or relearning. */
-export const PROMOTING_DIMENSIONS: readonly Dimension[] = ['meaning', 'reverse']
 
 // ---- Types -------------------------------------------------------------------------------------------------------------------
 /** Anchor of the current spacing requirement: when and at which global answer number it started, and how many answers of THIS entry followed. */
 export type Gap = { at: number; seq: number; own: number }
-/** Evidence per tested dimension. `toneOk` / `toneBad` (reading only) count answers with the right / wrong tone. */
-export type DimStat = { n: number; ok: number; last: number; lastOk: number; lastQual: number; toneOk?: number; toneBad?: number }
+/** Evidence per question kind (a plain string here: the scheduler knows no question types). `toneOk` / `toneBad` count answers with the right / wrong tone, when the caller supplies it. */
+export type KindStat = { n: number; ok: number; last: number; lastOk: number; lastQual: number; toneOk?: number; toneBad?: number }
 export type Recovery = 'relearn' | 'recheck'
 export type SchedEntry = {
   lv: number                 // 0-5
@@ -47,17 +43,17 @@ export type SchedEntry = {
   due: number | null         // earliest time a delayed / maintenance / recheck success counts; null in initial learning and relearning
   reveal: number             // last exposure that displayed this entry's answer (0 = never)
   rel?: Recovery             // relearning (after a miss, before the recovery answer) or recheck (waiting for the next-day check)
-  dims: Partial<Record<Dimension, DimStat>>
+  kinds: Partial<Record<string, KindStat>>   // evidence per question kind, e.g. how often character→pinyin was right
 }
 export type Answer = {
   correct: boolean
   assisted: boolean          // the answer was revealed before submission, or a hint removed options
-  dim: Dimension
+  kind: string               // the question kind (QKind); evidence is kept per kind
   now: number                // ms timestamp
   seq: number                // global answer number, increasing by one per submitted answer
-  toneOk?: boolean           // reading questions only
-  /** Can this answer move the scheduler? The caller decides per question kind (PROMOTING_KINDS in learning.ts); when omitted the dimension decides. */
-  promotes?: boolean
+  toneOk?: boolean           // pinyin answers only: was the tone right?
+  /** Can this answer move the scheduler? The caller decides per question kind (PROMOTING_KINDS in learning.ts). */
+  promotes: boolean
 }
 export type Outcome = 'ignored' | 'recorded' | 'assisted' | 'practice' | 'spaced' | 'familiar' | 'advanced' | 'maintained' | 'lapse' | 'relearned' | 'rechecked'
 
@@ -69,7 +65,7 @@ export const intervalFor = (lv: number) => STAGE_INTERVAL_MS[lv] ?? MAINTENANCE_
 
 /** A new entry, created when the new-word card is read. Reading creates no retrieval credit. */
 export function introduce(now: number, seq: number): SchedEntry {
-  return { lv: 0, ok: 0, g: { at: now, seq, own: 0 }, lastSeq: 0, adv: now, due: null, reveal: now, dims: {} }
+  return { lv: 0, ok: 0, g: { at: now, seq, own: 0 }, lastSeq: 0, adv: now, due: null, reveal: now, kinds: {} }
 }
 
 /** An exposure that displayed the answer (details, translation, new-word card). */
@@ -92,7 +88,7 @@ export function standing(e: SchedEntry, now: number, seq: number): Standing {
   if (isInitial(e)) return gapMet(e.g, needFor(e), now, seq) ? 'initial' : 'other'
   return e.due !== null && now >= e.due && quietSince(e, now) ? 'due' : 'other'
 }
-/** True when a correct unassisted promoting-dimension answer now would change this entry. */
+/** True when a correct unassisted promoting answer now would change this entry. */
 export const earnsCredit = (e: SchedEntry, now: number, seq: number) => standing(e, now, seq) !== 'other'
 /** Time of the next delayed / maintenance / recheck review, or null (initial learning, relearning). */
 export const nextReviewAt = (e: SchedEntry) => e.due
@@ -101,17 +97,16 @@ export const nextReviewAt = (e: SchedEntry) => e.due
 /** Evidence + scheduling for one submitted answer. Returns the same entry for a repeated or out-of-order answer number. */
 export function recordAnswer(e: SchedEntry, a: Answer): { entry: SchedEntry; outcome: Outcome } {
   if (!(a.seq > e.lastSeq)) return { entry: e, outcome: 'ignored' }
-  const d = e.dims[a.dim] ?? { n: 0, ok: 0, last: 0, lastOk: 0, lastQual: 0 }
-  const stat: DimStat = { ...d, n: bump(d.n), ok: a.correct ? bump(d.ok) : d.ok, last: a.now, lastOk: a.correct ? a.now : d.lastOk }
-  if (a.dim === 'reading' && a.toneOk !== undefined) { if (a.toneOk) stat.toneOk = bump(d.toneOk); else stat.toneBad = bump(d.toneBad) }
+  const d = e.kinds[a.kind] ?? { n: 0, ok: 0, last: 0, lastOk: 0, lastQual: 0 }
+  const stat: KindStat = { ...d, n: bump(d.n), ok: a.correct ? bump(d.ok) : d.ok, last: a.now, lastOk: a.correct ? a.now : d.lastOk }
+  if (a.toneOk !== undefined) { if (a.toneOk) stat.toneOk = bump(d.toneOk); else stat.toneBad = bump(d.toneBad) }
   // Every answer shows the correction or confirmation, so it is also an answer-revealing exposure (checked AFTER the decision below).
-  const touched: SchedEntry = { ...e, lastSeq: a.seq, reveal: Math.max(e.reveal, a.now), g: { ...e.g, own: bump(e.g.own) }, dims: { ...e.dims, [a.dim]: stat } }
+  const touched: SchedEntry = { ...e, lastSeq: a.seq, reveal: Math.max(e.reveal, a.now), g: { ...e.g, own: bump(e.g.own) }, kinds: { ...e.kinds, [a.kind]: stat } }
   const done = (patch: Partial<SchedEntry>, outcome: Outcome, qualified = false): { entry: SchedEntry; outcome: Outcome } => {
-    const dims = qualified ? { ...touched.dims, [a.dim]: { ...stat, lastQual: a.now } } : touched.dims
-    return { entry: { ...touched, ...patch, dims }, outcome }
+    const kinds = qualified ? { ...touched.kinds, [a.kind]: { ...stat, lastQual: a.now } } : touched.kinds
+    return { entry: { ...touched, ...patch, kinds }, outcome }
   }
-  const promotes = a.promotes ?? PROMOTING_DIMENSIONS.includes(a.dim)
-  if (!promotes) return done({}, 'recorded')
+  if (!a.promotes) return done({}, 'recorded')
 
   if (!a.correct) {
     // One failure transition per recovery period: a miss while already relearning / rechecking only restarts the relearning gap.
@@ -157,21 +152,22 @@ const num = (v: unknown, min: number, max: number, fallback: number) => (typeof 
 /** A timestamp that cannot lie in the future (a future value is clamped to `now`, which only makes a requirement wait, never pass). */
 const past = (v: unknown, now: number, fallback: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(now, Math.max(0, Math.floor(v))) : fallback)
 
-function cleanDims(raw: unknown, now: number): SchedEntry['dims'] {
-  const out: SchedEntry['dims'] = {}
+/** Only kinds in `known` survive; a save written before evidence was kept per kind has `dims` instead of `kinds`, which is ignored (nothing read it). */
+function cleanKinds(raw: unknown, known: readonly string[], now: number): SchedEntry['kinds'] {
+  const out: SchedEntry['kinds'] = {}
   if (!isObj(raw)) return out
-  for (const k of DIMENSIONS) {
+  for (const k of known) {
     const v = raw[k]; if (!isObj(v)) continue
     const n = num(v.n, 0, MAX_COUNT, 0)
-    const s: DimStat = { n, ok: num(v.ok, 0, n, 0), last: past(v.last, now, 0), lastOk: past(v.lastOk, now, 0), lastQual: past(v.lastQual, now, 0) }
-    if (k === 'reading') { s.toneOk = num(v.toneOk, 0, MAX_COUNT, 0); s.toneBad = num(v.toneBad, 0, MAX_COUNT, 0) }
+    const s: KindStat = { n, ok: num(v.ok, 0, n, 0), last: past(v.last, now, 0), lastOk: past(v.lastOk, now, 0), lastQual: past(v.lastQual, now, 0) }
+    if (v.toneOk !== undefined || v.toneBad !== undefined) { s.toneOk = num(v.toneOk, 0, MAX_COUNT, 0); s.toneBad = num(v.toneBad, 0, MAX_COUNT, 0) }
     out[k] = s
   }
   return out
 }
 
 /** Validates a stored entry (ids are handled by the caller). Null when it is not an entry. Preserves overdue dates, clamps future ones. */
-export function sanitizeSched(raw: unknown, now: number, maxSeq: number): SchedEntry | null {
+export function sanitizeSched(raw: unknown, now: number, maxSeq: number, knownKinds: readonly string[]): SchedEntry | null {
   if (!isObj(raw)) return null
   const lv = num(raw.lv, 0, MAX_LV, 0)
   const ok = lv >= 2 ? INITIAL_SUCCESS_TARGET : lv === 0 ? 0 : num(raw.ok, 1, INITIAL_SUCCESS_TARGET - 1, 1)
@@ -187,7 +183,7 @@ export function sanitizeSched(raw: unknown, now: number, maxSeq: number): SchedE
   return {
     lv, ok, due, ...(recovery ? { rel: recovery } : {}),
     g: { at: past(g.at, now, now), seq: num(g.seq, 0, maxSeq, 0), own: num(g.own, 0, MAX_COUNT, 0) },
-    lastSeq: num(raw.lastSeq, 0, maxSeq, 0), adv: past(raw.adv, now, now), reveal: past(raw.reveal, now, 0), dims: cleanDims(raw.dims, now)
+    lastSeq: num(raw.lastSeq, 0, maxSeq, 0), adv: past(raw.adv, now, now), reveal: past(raw.reveal, now, 0), kinds: cleanKinds(raw.kinds, knownKinds, now)
   }
 }
 
@@ -208,7 +204,7 @@ export function fromLegacyEntry(raw: unknown, now: number, seq = 0): SchedEntry 
   if (!isObj(raw)) return null
   const noon = localNoon(raw.at)
   const lv = num(raw.lv, 0, noon === null ? MAX_LV - 1 : MAX_LV, 0)   // a level-5 word without a date cannot have been earned
-  const e: SchedEntry = { lv, ok: lv >= 2 ? INITIAL_SUCCESS_TARGET : lv, g: reset(now, seq), lastSeq: 0, adv: noon === null ? now : Math.min(noon, now), due: null, reveal: 0, dims: {} }
+  const e: SchedEntry = { lv, ok: lv >= 2 ? INITIAL_SUCCESS_TARGET : lv, g: reset(now, seq), lastSeq: 0, adv: noon === null ? now : Math.min(noon, now), due: null, reveal: 0, kinds: {} }
   if (lv >= 2) e.due = noon === null ? now : Math.min(noon + intervalFor(lv), now + intervalFor(lv))
   return e
 }
@@ -216,5 +212,5 @@ export function fromLegacyEntry(raw: unknown, now: number, seq = 0): SchedEntry 
 /** An entry at a given level without history, for fixtures, previews and tools: established words (level 2+) are due at `now`. */
 export const entryAtLevel = (lv: number, now = 0, seq = 0): SchedEntry => {
   const l = num(lv, 0, MAX_LV, 0)
-  return { lv: l, ok: l >= 2 ? INITIAL_SUCCESS_TARGET : l, g: reset(now, seq), lastSeq: 0, adv: now, due: l >= 2 ? now : null, reveal: 0, dims: {} }
+  return { lv: l, ok: l >= 2 ? INITIAL_SUCCESS_TARGET : l, g: reset(now, seq), lastSeq: 0, adv: now, due: l >= 2 ? now : null, reveal: 0, kinds: {} }
 }

@@ -5,7 +5,7 @@ import { SIM_ANSWER_MS, newPace, simulate } from '../tools/simulate.ts'
 
 test('hundreds of answers at one timestamp earn no spaced learning', () => {
   let e = introduce(1_000, 0)
-  for (let seq = 1; seq <= 300; seq++) e = recordAnswer(e, { correct: true, assisted: false, dim: 'meaning', now: 1_000, seq }).entry
+  for (let seq = 1; seq <= 300; seq++) e = recordAnswer(e, { correct: true, assisted: false, kind: 'meaning', promotes: true, now: 1_000, seq }).entry
   assert.deepEqual([e.lv, e.ok], [0, 0])
 })
 

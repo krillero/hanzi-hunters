@@ -9,7 +9,7 @@ const T = Date.UTC(2026, 10, 1, 12), H = 3_600_000, MIN = 60_000
 const [A, B, C, D, E] = WORDS.slice(0, 5).map(w => w.id)
 const pickMany = (m: Mastery, o: Parameters<typeof selectReview>[2], n = 60) => { const out = new Set<string>(); for (let i = 0; i < n; i++) out.add(selectReview(WORDS, m, { ...o, rng: Math.random })!.id); return out }
 /** relearning with its gap met: failed at T, now 10 min later */
-const relearning = (): SchedEntry => recordAnswer({ ...entryAtLevel(3, T), due: T + 72 * H }, { correct: false, assisted: false, dim: 'meaning', now: T, seq: 1 }).entry
+const relearning = (): SchedEntry => recordAnswer({ ...entryAtLevel(3, T), due: T + 72 * H }, { correct: false, assisted: false, kind: 'meaning', promotes: true, now: T, seq: 1 }).entry
 
 test('priority: relearning, then due reviews, then initial learning, then everything else', () => {
   assert.deepEqual(SCHEDULE_PRIORITY, ['relearn', 'due', 'initial', 'other'])

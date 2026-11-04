@@ -9,6 +9,7 @@ agent might otherwise undo, and move an open question up to the decisions when i
 | Topic | Decision |
 |---|---|
 | Audience and platform | **Complete beginners, on a phone, in short sessions.** A mobile-first browser game (PWA); desktop works but is not the target. 360 CSS px is the narrowest supported width (2026-11-01); nothing is styled for narrower screens. |
+| Progress rule | **Which answers move a word on is decided per question kind** (`PROMOTING_KINDS`, `src/game/learning.ts`): any question that shows or asks for the written character counts (incl. character→pinyin and audio→character); meaning→pinyin, audio→meaning, audio→pinyin and particle sentences do not (2026-11-03). Evidence is kept per question kind; there are no "dimensions" (2026-11-04), so strengths and weaknesses per direction can be read later. |
 | Script | **Simplified Chinese only.** Traditional forms are kept in imported source records but never taught. |
 | Run structure | **Roguelite expeditions** (2026-11-01): 5 floors of 4 fights, each floor ending in a boss, a final boss, 5 depths. Gold is banked when a run ends and buys permanent upgrades; level and gear are lost; word progress always stays. |
 | Health | **Hearts, not HP** (2026-11-01): a wrong answer costs exactly one heart, a right answer never does; enemies have no attack. Reward knowing, never speed or guessing. |

@@ -4,7 +4,7 @@ import { LEVEL_NAMES, MAX_LEARNING, MAX_LV, MIN_KNOWN, SESSION_LV, STARTING_POOL
 import { DUE_PER_FIGHT, introCapacity, selectReview } from '../src/game/course.ts'
 import { WORDS } from '../src/data.ts'
 import { INITIAL_GAPS, STAGE_INTERVAL_MS, entryAtLevel } from '../src/game/schedule.ts'
-import { answerRevealed, applyAnswer, applyIntroduce, applyReveal, dimensionOf, learningNote, promotesProgress, toneCorrect } from '../src/game/learning.ts'
+import { answerRevealed, applyAnswer, applyIntroduce, applyReveal, learningNote, promotesProgress, toneCorrect } from '../src/game/learning.ts'
 import { sanitizeSave } from '../src/game/save.ts'
 import { buildQuestion } from '../src/game/questions.ts'
 import type { Mastery, Saved } from '../src/game/types.ts'
@@ -57,12 +57,11 @@ test('a full path through the API: introduce, three spaced successes, delayed re
   const late = applyAnswer(s, { id: '人', kind: 'meaning', correct: true, assisted: false, now: s.mastery.人.due! }); assert.equal(late.after, 3)
 })
 
-test('help and answer-revealing questions are assisted; dimensions map to question kinds', () => {
+test('help and answer-revealing questions are assisted', () => {
   const w = WORDS.find(x => x.hanzi === '人')!
   const byKind = (kind: Parameters<typeof buildQuestion>[3] extends infer O ? NonNullable<(O & { kind?: unknown })['kind']> : never) => buildQuestion(w, entryAtLevel(2), WORDS, { kind, canListen: false, known: new Set(WORDS.map(x => x.id)) })
   assert.equal(answerRevealed(byKind('meaning')), false)
   assert.equal(answerRevealed(buildQuestion(w, undefined, WORDS)), true, 'the intro question shows everything')
-  assert.deepEqual(['meaning', 'pinyin', 'character', 'listen', 'particle'].map(k => dimensionOf(k as never)), ['meaning', 'reading', 'reverse', 'listening', 'sentence'])
 })
 
 test('only questions that involve the written character can move a word on', () => {

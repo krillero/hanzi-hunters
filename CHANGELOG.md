@@ -3,6 +3,10 @@
 History, newest first: what changed and how it was tested. Older entries describe designs that were later changed or removed;
 the current state is in the topic docs (map in `README.md`).
 
+## 2026-11-04 — Dimensions removed: evidence is kept per question kind
+
+- `SchedEntry.dims` (per "dimension") became `SchedEntry.kinds` (per `QKind`); `Answer.dim` became `Answer.kind` and `promotes` is required; `DIMENSIONS`, `PROMOTING_DIMENSIONS` and `dimensionOf` are gone (`PROMOTING_KINDS` is the one rule). Character→pinyin and meaning→pinyin were merged in "reading"; now each has its own stats. Nothing read the old data. Save: `kinds` is optional and rebuilt when missing, no version bump; the old `dims` are ignored on load (`sanitizeSched` now takes the list of known kinds). Tested: `npm run typecheck`, `npm run test:brief`, and `node tools/simulate.ts --report` gives the same report before and after (the scheduling rules did not change).
+
 ## 2026-11-03 — Character→pinyin and audio→character now count
 
 - Which answers move a word on is now decided per question kind (`PROMOTING_KINDS`, `promotesProgress` in `src/game/learning.ts`): every question that shows or asks for the written character counts, including character→pinyin and audio→character (before, only meaning and character-answer questions did). Meaning→pinyin, audio→meaning, audio→pinyin and particle sentences are still recorded only. `Answer.promotes` is optional; without it the dimension rule applies. Existing saves need no migration. Docs: `docs/SCHEDULING.md`. Tested: `npm run typecheck`, `npm run test:brief` (new test in `tests/mastery.test.ts`); the simulator was not re-run, so its quoted pacing numbers predate this.

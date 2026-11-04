@@ -10,7 +10,7 @@ export const advance = (ms: number) => { now += ms }
 export function learn(m: Mastery, id: string, correct = true): Mastery {
   if (!m[id]) return { ...m, [id]: introduce(now, seq) }
   now += LONG_BREAK_MS; seq++
-  return { ...m, [id]: recordAnswer(m[id], { correct, assisted: false, dim: 'meaning', now, seq }).entry }
+  return { ...m, [id]: recordAnswer(m[id], { correct, assisted: false, kind: 'meaning', promotes: true, now, seq }).entry }
 }
 
 /** `{ id: level }` of a mastery map, for assertions about levels (the entries also carry scheduling data). */

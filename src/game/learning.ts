@@ -2,25 +2,15 @@
 // (callers pass `now`). Used by App.tsx and tools/simulate.ts so both follow the same rules. See docs/SCHEDULING.md.
 import { splitSyllables } from '../content/pinyin.ts'
 import type { QKind, Question } from './questions.ts'
-import { INITIAL_SUCCESS_TARGET, MAX_LV, formatWait, introduce, recordAnswer, recordReveal, type Dimension, type Outcome } from './schedule.ts'
+import { INITIAL_SUCCESS_TARGET, MAX_LV, formatWait, introduce, recordAnswer, recordReveal, type Outcome } from './schedule.ts'
 import { LEVEL_NAMES } from './mastery.ts'
 import type { Mastery, Saved } from './types.ts'
-
-/** The tested dimension of a question kind. Every kind has one; only PROMOTING_DIMENSIONS (schedule.ts) can move the scheduler. */
-const DIMENSION: Record<QKind, Dimension> = {
-  intro: 'meaning', meaning: 'meaning',
-  pinyin: 'reading', meaning2pinyin: 'reading',
-  listen: 'listening', listen2meaning: 'listening', listen2pinyin: 'listening',
-  character: 'reverse', pinyin2char: 'reverse', homophone: 'reverse', lookalike: 'reverse',
-  particle: 'sentence'
-}
-export const dimensionOf = (kind: QKind): Dimension => DIMENSION[kind]
 
 /**
  * Question kinds whose correct answers can move the scheduler: those that reinforce the written character, either because it is
  * shown (character→meaning, character→pinyin) or because it is the answer (meaning/pinyin/homophone/look-alike/audio→character).
  * Meaning→pinyin and the other audio questions never involve the character, so they are recorded as evidence only. This is
- * chosen per kind, not per dimension: character→pinyin and meaning→pinyin share the 'reading' dimension.
+ * chosen per kind: character→pinyin counts and meaning→pinyin does not.
  */
 const PROMOTING_KINDS: readonly QKind[] = ['intro', 'meaning', 'pinyin', 'character', 'listen', 'pinyin2char', 'homophone', 'lookalike']
 export const promotesProgress = (kind: QKind): boolean => PROMOTING_KINDS.includes(kind)
@@ -61,9 +51,9 @@ export function applyAnswer(s: Saved, a: Submission, seq = s.answerSeq + 1): Lea
   const existing = s.mastery[a.id]
   const before = existing?.lv ?? -1
   const entry = existing ?? introduce(a.now, seq - 1)   // asked without an introduction: created now; the intro question shows the answer, so it is assisted
-  const dim = dimensionOf(a.kind)
-  const toneOk = dim === 'reading' && a.chosen !== undefined && a.answer !== undefined ? toneCorrect(a.answer, a.chosen) : undefined
-  const r = recordAnswer(entry, { correct: a.correct, assisted: a.assisted || !existing, dim, promotes: promotesProgress(a.kind), now: a.now, seq, toneOk })
+  const isPinyinAnswer = a.kind === 'pinyin' || a.kind === 'meaning2pinyin'   // the pinyin the player picked has a tone to check
+  const toneOk = isPinyinAnswer && a.chosen !== undefined && a.answer !== undefined ? toneCorrect(a.answer, a.chosen) : undefined
+  const r = recordAnswer(entry, { correct: a.correct, assisted: a.assisted || !existing, kind: a.kind, promotes: promotesProgress(a.kind), now: a.now, seq, toneOk })
   if (r.outcome === 'ignored') return { save: s, outcome: 'ignored', before, after: entry.lv }
   return { save: { ...s, answerSeq: Math.max(s.answerSeq, seq), mastery: { ...s.mastery, [a.id]: r.entry } }, outcome: r.outcome, before, after: r.entry.lv }
 }
